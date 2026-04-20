@@ -1,6 +1,6 @@
 # BareMetalBind
 
-Tiny reactive state + DOM directive binder, ~75 lines, no dependencies.
+Reactive state + DOM directive binder with formatters, list rendering, transitions, and computed expressions — ~280 lines, no dependencies.
 
 ## API
 
@@ -17,35 +17,277 @@ Wraps `initial` in a `Proxy`. Mutating any property of `state` notifies all watc
 * `watch(key, fn)` — register a callback to fire when `key` changes.
 * `data` — the underlying plain object (read-only inspection).
 
+**Reactive arrays** — Arrays are automatically wrapped in a Proxy that intercepts mutating methods (`push`, `pop`, `shift`, `unshift`, `splice`, `sort`, `reverse`). Mutations trigger watchers just like reassignment:
+
+```js
+state.items.push('new');  // watchers fire — no reassignment needed
+```
+
+Newly assigned arrays are also auto-wrapped.
+
 ### `bind(root, state, watch)`
 
 Scans the subtree of `root` for directive attributes and wires them up:
 
 | Directive | On | Effect |
 |---|---|---|
-| `m-value="key"`     | `<input>`, `<select>`, `<textarea>` | Two-way binding. Handles `checkbox`, `date`, `datetime-local`. |
-| `m-text="key"`      | any element | One-way text content binding. |
-| `m-if="key"`        | any element | Hides element when value is falsy. |
-| `m-click="fn"`   | any element | Calls `state[fn](event)` on click. |
-| `m-submit="fn"`  | `<form>`   | Calls `state[fn](event)` on submit, with `preventDefault()`. |
+| `m-value="path"` | `<input>`, `<select>`, `<textarea>` | Two-way binding. Handles `checkbox`, `date`, `datetime-local`. |
+| `m-text="path"` | any element | One-way text content binding. Supports formatters. |
+| `m-if="path"` | any element | Hides element when value is falsy. |
+| `m-class="cls:path,cls2:path2"` | any element | Toggles CSS classes based on state truthiness. |
+| `m-attr="attr:path,attr2:path2"` | any element | Sets/removes attributes. Removes on `null`/`undefined`/`false`; keeps `0` and `""`. |
+| `m-each="key"` | container with `<template>` | List rendering from arrays. |
+| `m-each="key key:prop"` | container with `<template>` | Keyed list rendering with DOM reuse and diffing. |
+| `m-navbar="key"` | `<nav>` | Renders navigation links from array. Supports dropdowns. |
+| `m-click="fn"` | any element | Calls `state[fn](event)` on click. |
+| `m-submit="fn"` | `<form>` | Calls `state[fn](event)` on submit, with `preventDefault()`. |
+| `m-transition="name"` | with `m-if` | CSS-class-driven enter/leave transitions. |
+| `m-expression="target = expr"` | any element | Computed value — evaluates expression reactively. |
 
-## Example
+### `BareMetalBind.formatters`
+
+A plain object registry for pipe transforms used in `m-text`:
+
+```js
+BareMetalBind.formatters.currency = (v, symbol) => (symbol || '$') + Number(v).toFixed(2);
+BareMetalBind.formatters.upper = v => String(v).toUpperCase();
+```
+
+---
+
+## Dot-path resolution
+
+All directives support nested paths:
 
 ```html
-<form>
-  <input m-value="email" type="email">
-  <input m-value="agree" type="checkbox">
-  <button m-click="save" m-if="agree">Save</button>
-  <p m-text="status"></p>
-</form>
+<span m-text="user.address.city"></span>
+<input m-value="config.theme">
+<div m-if="flags.visible">...</div>
+<div m-class="active:ui.selected"></div>
+<a m-attr="href:link.url">go</a>
+```
+
+Watchers are registered on the top-level key (`user`, `config`, etc.). To trigger updates, reassign the top-level object:
+
+```js
+state.user = { ...state.user, name: 'Bob' };
+```
+
+---
+
+## Formatters (pipes)
+
+Chain transforms in `m-text` bindings using `|`. Formatters can accept one argument after `:`.
+
+```html
+<span m-text="price|currency:£"></span>
+<span m-text="name|upper|exclaim"></span>
+```
+
+Register formatters before calling `bind()`:
+
+```js
+BareMetalBind.formatters.currency = (val, symbol) => (symbol || '$') + Number(val).toFixed(2);
+BareMetalBind.formatters.upper = val => String(val).toUpperCase();
+BareMetalBind.formatters.exclaim = val => val + '!';
+```
+
+> **Note:** Formatters are one-way (read-only). They are not supported on `m-value`.
+
+---
+
+## List rendering (`m-each`)
+
+Render arrays using a `<template>` child. Inside the template, prefix property names with `.` to read from the current item:
+
+```html
+<!-- Array of objects -->
+<ul m-each="users">
+  <template>
+    <li m-text=".name"></li>
+  </template>
+</ul>
+
+<!-- Array of primitives -->
+<ul m-each="tags">
+  <template>
+    <li m-text="."></li>
+  </template>
+</ul>
+```
+
+### Scope variables
+
+Inside `m-each` templates, these special paths are available:
+
+| Path | Resolves to |
+|---|---|
+| `.` | The current item itself |
+| `.propName` | `item.propName` |
+| `.prop.nested` | `item.prop.nested` (dot-path traversal) |
+| `.index` | Current array index (number) |
+| `.root` | The root state object |
+| `.root.someKey` | A property on root state |
+| `.parent` | Parent item (for nested loops) |
+| `.parent.prop` | A property on the parent item |
+
+### Keyed diffing
+
+Add `key:prop` to enable DOM reuse when reordering:
+
+```html
+<ul m-each="items key:id">
+  <template>
+    <li m-text=".name"></li>
+  </template>
+</ul>
+```
+
+When the array changes, items with the same key value keep their existing DOM node — only additions and removals touch the DOM.
+
+### Using directives inside templates
+
+`m-text`, `m-class`, `m-attr`, and `m-if` all work inside `m-each` templates with `.` scope:
+
+```html
+<ul m-each="items">
+  <template>
+    <li m-class="active:.selected" m-attr="title:.tooltip" m-text=".name"></li>
+  </template>
+</ul>
+```
+
+---
+
+## Navbar (`m-navbar`)
+
+Renders navigation links from an array of `{ href, text, active? }` objects:
+
+```html
+<nav m-navbar="links"></nav>
+```
+
+```js
+state.links = [
+  { href: '/', text: 'Home', active: true },
+  { href: '/about', text: 'About' }
+];
+```
+
+### Dropdown menus
+
+Pass a nested array where the first element is the title string:
+
+```js
+state.links = [
+  { href: '/', text: 'Home' },
+  ['Products', { href: '/alpha', text: 'Alpha' }, { href: '/beta', text: 'Beta' }],
+  { href: '/about', text: 'About' }
+];
+```
+
+Generates: `<div class="dropdown"><button class="dropdown-toggle">Products</button><div class="dropdown-menu"><a>...</a></div></div>`
+
+---
+
+## Transitions (`m-transition`)
+
+Pair with `m-if` for CSS-driven enter/leave animations:
+
+```html
+<div m-if="show" m-transition="fade">Content</div>
+```
+
+Class lifecycle:
+
+| Phase | Classes applied | Then |
+|---|---|---|
+| **Enter** | `fade-enter` | Next frame: remove `fade-enter`, add `fade-enter-active` |
+| **Enter done** | | On `transitionend`: remove `fade-enter-active` |
+| **Leave** | `fade-leave` | Next frame: remove `fade-leave`, add `fade-leave-active` |
+| **Leave done** | | On `transitionend`: remove `fade-leave-active`, set `display: none` |
+
+Example CSS:
+
+```css
+.fade-enter        { opacity: 0; }
+.fade-enter-active { opacity: 1; transition: opacity 0.3s; }
+.fade-leave-active { opacity: 0; transition: opacity 0.3s; }
+```
+
+If no name is given (`m-transition=""`), classes default to `m-enter`, `m-enter-active`, `m-leave`, `m-leave-active`.
+
+---
+
+## Computed expressions (`m-expression`)
+
+Evaluate a JS expression and assign the result to a state key, re-evaluating when dependencies change:
+
+```html
+<div m-expression="total = price * qty"></div>
+<span m-text="total"></span>
+```
+
+```js
+const { state, watch } = BareMetalBind.reactive({ price: 10, qty: 3, total: 0 });
+BareMetalBind.bind(root, state, watch);
+// state.total is now 30
+state.price = 20;
+// state.total is now 60
+```
+
+Dependencies are extracted automatically from the right-hand side. Standard globals (`Math`, `Date`, `Number`, etc.) are available.
+
+> **Note:** The target key must not appear in the expression's dependencies (to avoid infinite loops). Expression evaluation errors are silently ignored.
+
+---
+
+## Full example
+
+```html
+<div id="app">
+  <input m-value="name" placeholder="Your name">
+  <p>Hello, <span m-text="name|upper"></span>!</p>
+
+  <div m-expression="total = price * qty"></div>
+  <p>Total: <span m-text="total|currency:£"></span></p>
+
+  <ul m-each="todos key:id">
+    <template>
+      <li m-class="done:.completed" m-text=".text"></li>
+    </template>
+  </ul>
+
+  <div m-if="showTip" m-transition="fade">
+    <p>Pro tip: reactive arrays work with push()!</p>
+  </div>
+
+  <nav m-navbar="nav"></nav>
+</div>
 
 <script src="src/BareMetalBind.js"></script>
 <script>
+  BareMetalBind.formatters.upper = v => String(v).toUpperCase();
+  BareMetalBind.formatters.currency = (v, s) => (s || '$') + Number(v).toFixed(2);
+
   const { state, watch } = BareMetalBind.reactive({
-    email: '', agree: false, status: '',
-    save() { state.status = `Saving ${state.email}…`; }
+    name: 'World',
+    price: 10, qty: 3, total: 0,
+    showTip: true,
+    todos: [
+      { id: 1, text: 'Learn BareMetalBind', completed: true },
+      { id: 2, text: 'Build something', completed: false }
+    ],
+    nav: [
+      { href: '/', text: 'Home', active: true },
+      ['Docs', { href: '/guide', text: 'Guide' }, { href: '/api', text: 'API' }]
+    ]
   });
-  BareMetalBind.bind(document.querySelector('form'), state, watch);
+
+  BareMetalBind.bind(document.getElementById('app'), state, watch);
+
+  // Reactive array — no reassignment needed
+  state.todos.push({ id: 3, text: 'Ship it', completed: false });
 </script>
 ```
 
@@ -54,3 +296,5 @@ Scans the subtree of `root` for directive attributes and wires them up:
 * No virtual DOM. Bindings touch only the elements that change.
 * `m-value` parses date inputs to ISO strings (`YYYY-MM-DD` / `YYYY-MM-DDTHH:MM`).
 * Re-running `bind()` on the same root is safe — it reuses the same listener slots.
+* Formatters are not supported on `m-value` (no reverse parsing).
+* Dot-path writes via `m-value` use `setPath()` internally and notify the top-level key.

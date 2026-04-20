@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BareMetalJsTools — Examples</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <style>
+    .example-card { transition: transform .15s ease, box-shadow .15s ease; }
+    .example-card:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.1); }
+    .example-card a { text-decoration: none; color: inherit; display: block; height: 100%; }
+    .icon { font-size: 2.5rem; margin-bottom: .5rem; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="site-header site-header-dark">
+      <a class="brand" href="#">🔩 BareMetalJsTools</a>
+      <nav>
+        <a href="layout.html">Layout</a>
+        <a href="components.html">Components</a>
+        <a href="charts.html">Charts</a>
+        <a href="graph.html">Graph</a>
+      </nav>
+    </header>
+
+    <main class="main-content" style="overflow-y:auto;">
+      <div class="container py-5">
+        <div class="text-center mb-4">
+          <h1 class="fluid-type-xl fw-bold">BareMetalJsTools</h1>
+          <p class="lead text-muted">Tiny, zero-dependency vanilla-JS primitives. No build step. No framework.</p>
+          <a href="tutorial.html" class="btn btn-primary btn-sm mt-2">📖 Start the Tutorial</a>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="card example-card h-100">
+              <a href="layout.html">
+                <div class="card-body text-center py-4">
+                  <div class="icon">📐</div>
+                  <h5 class="card-title">Layout</h5>
+                  <p class="card-text small text-muted">Header, footer, sidebar, letterbox viewport. Full page shell in pure CSS.</p>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card example-card h-100">
+              <a href="components.html">
+                <div class="card-body text-center py-4">
+                  <div class="icon">🧱</div>
+                  <h5 class="card-title">Components</h5>
+                  <p class="card-text small text-muted">Buttons, forms, tables, cards, badges, alerts, modals, user cards.</p>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card example-card h-100">
+              <a href="charts.html">
+                <div class="card-body text-center py-4">
+                  <div class="icon">📊</div>
+                  <h5 class="card-title">Charts</h5>
+                  <p class="card-text small text-muted">Bar, line, sparkline, donut, and gauge. SVG rendered, animated.</p>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card example-card h-100">
+              <a href="graph.html">
+                <div class="card-body text-center py-4">
+                  <div class="icon">🕸️</div>
+                  <h5 class="card-title">Graph</h5>
+                  <p class="card-text small text-muted">Force-directed graph with drag, zoom, hover, live mutations.</p>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center mt-5">
+          <p class="small text-muted">All examples use only <code>BareMetalStyles.css</code>, <code>BareMetalCharts.js</code>, and <code>BareMetalGraph.js</code>. No other dependencies.</p>
+          <a href="https://github.com/WillEastbury/BareMetalJsTools" class="btn btn-outline-primary btn-sm">View on GitHub</a>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer site-footer-dark text-center">
+      © 2026 Will Eastbury · <a href="https://github.com/WillEastbury/BareMetalJsTools">BareMetalJsTools</a>
+    </footer>
+  </div>
+</body>
+</html>

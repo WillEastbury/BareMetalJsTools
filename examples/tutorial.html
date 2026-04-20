@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BareMetalJsTools — Tutorial: Build a Dashboard</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <style>
+    .bm-graph { border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); background: #fafbfc; }
+    .step { scroll-margin-top: 1rem; }
+    .step-number {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 2rem; height: 2rem; border-radius: 50%;
+      background: var(--bs-primary); color: #fff; font-weight: 700; font-size: .875rem;
+      margin-right: .5rem; flex-shrink: 0;
+    }
+    .code-block {
+      background: #1e293b; color: #e2e8f0; padding: 1rem 1.25rem;
+      border-radius: var(--bs-border-radius); font-family: var(--bs-font-mono);
+      font-size: .8125rem; line-height: 1.6; overflow-x: auto; margin: .75rem 0 1.25rem;
+      white-space: pre;
+    }
+    .code-block .comment { color: #64748b; }
+    .code-block .keyword { color: #7dd3fc; }
+    .code-block .string { color: #86efac; }
+    .code-block .tag { color: #fbbf24; }
+    .result-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--bs-secondary); font-weight: 600; margin-bottom: .5rem; }
+    .tutorial-nav a { border-left: 3px solid transparent; padding-left: .75rem; }
+    .tutorial-nav a.active { border-color: var(--bs-primary); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <!-- ===== HEADER ===== -->
+    <header class="site-header site-header-dark">
+      <a class="brand" href="#">🔩 BareMetalJsTools Tutorial</a>
+      <nav>
+        <a href="https://github.com/WillEastbury/BareMetalJsTools">GitHub</a>
+      </nav>
+      <div class="user-card-trigger">
+        <img class="user-avatar" src="https://i.pravatar.cc/64?u=will" alt="Will">
+        <div class="user-card user-card-right user-card-dark">
+          <div class="user-card-header">
+            <img class="user-avatar-lg" src="https://i.pravatar.cc/96?u=will" alt="">
+            <div>
+              <div class="user-name">Will Eastbury</div>
+              <div class="user-role">Tutorial Author</div>
+            </div>
+          </div>
+          <div class="user-card-body">
+            <div class="user-detail"><span class="user-detail-label">Stack</span> BareMetalJsTools</div>
+            <div class="user-detail"><span class="user-detail-label">Deps</span> Zero 🎉</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-body">
+
+      <!-- ===== SIDEBAR (table of contents) ===== -->
+      <aside class="site-sidebar sidebar-left site-sidebar-dark">
+        <span class="sidebar-heading">Tutorial Steps</span>
+        <nav class="tutorial-nav">
+          <a href="#step-0">Introduction</a>
+          <a href="#step-1">Step 1: Page Shell</a>
+          <a href="#step-2">Step 2: KPI Cards</a>
+          <a href="#step-3">Step 3: Sparklines</a>
+          <a href="#step-4">Step 4: Data Table</a>
+          <a href="#step-5">Step 5: Charts</a>
+          <a href="#step-6">Step 6: Gauges</a>
+          <a href="#step-7">Step 7: Architecture</a>
+          <a href="#step-8">Step 8: Forms & Modal</a>
+          <a href="#step-9">Step 9: Reactive Bind</a>
+          <a href="#step-10">Step 10: All Together</a>
+        </nav>
+      </aside>
+
+      <!-- ===== MAIN CONTENT ===== -->
+      <main class="main-content p-4">
+        <div class="container">
+
+          <!-- INTRO -->
+          <section id="step-0" class="step mb-5">
+            <h1 class="fluid-type-xl fw-bold mb-2">Build a Dashboard</h1>
+            <p class="lead text-muted">A step-by-step tutorial showing how every BareMetalJsTools module works together to build a complete, interactive operations dashboard — with zero dependencies and no build step.</p>
+            <div class="alert alert-info">
+              <strong>What you'll use:</strong> BareMetalStyles.css (layout + components), BareMetalCharts.js (data viz), BareMetalGraph.js (architecture diagram), and BareMetalBind.js (reactivity). That's it — 4 files, ~90KB total.
+            </div>
+            <p>Every code snippet below is <strong>live</strong> — the rendered result appears right after it. Scroll down to follow the tutorial, or use the sidebar to jump to a step.</p>
+          </section>
+
+          <!-- STEP 1: Page Shell -->
+          <section id="step-1" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">1</span> Page Shell</h2>
+            <p>Start with the letterbox layout — a fixed header and footer with scrollable content between them. Add a sidebar for navigation.</p>
+            <div class="code-block"><span class="tag">&lt;link</span> <span class="keyword">rel=</span><span class="string">"stylesheet"</span> <span class="keyword">href=</span><span class="string">"BareMetalStyles.css"</span><span class="tag">&gt;</span>
+
+<span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"page-wrapper"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;header</span> <span class="keyword">class=</span><span class="string">"site-header site-header-dark"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;a</span> <span class="keyword">class=</span><span class="string">"brand"</span><span class="tag">&gt;</span>🔩 My Dashboard<span class="tag">&lt;/a&gt;</span>
+  <span class="tag">&lt;/header&gt;</span>
+  <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"page-body"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;aside</span> <span class="keyword">class=</span><span class="string">"site-sidebar sidebar-left"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/aside&gt;</span>
+    <span class="tag">&lt;main</span> <span class="keyword">class=</span><span class="string">"main-content p-4"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/main&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+  <span class="tag">&lt;footer</span> <span class="keyword">class=</span><span class="string">"site-footer site-footer-dark"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/footer&gt;</span>
+<span class="tag">&lt;/div&gt;</span></div>
+            <div class="result-label">✅ Result — you're looking at it! This entire page uses the page-wrapper layout.</div>
+          </section>
+
+          <!-- STEP 2: KPI Cards -->
+          <section id="step-2" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">2</span> KPI Cards</h2>
+            <p>Use the grid system and cards to create a row of key metrics.</p>
+            <div class="code-block"><span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"row g-3"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"col-md-3"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"card"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"card-body"</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"small text-muted"</span><span class="tag">&gt;</span>Users<span class="tag">&lt;/div&gt;</span>
+        <span class="tag">&lt;h3&gt;</span>12,847<span class="tag">&lt;/h3&gt;</span>
+        <span class="tag">&lt;span</span> <span class="keyword">class=</span><span class="string">"badge bg-success"</span><span class="tag">&gt;</span>+12%<span class="tag">&lt;/span&gt;</span>
+      <span class="tag">&lt;/div&gt;</span>
+    <span class="tag">&lt;/div&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+  <span class="comment">&lt;!-- ... more cards --&gt;</span>
+<span class="tag">&lt;/div&gt;</span></div>
+
+            <div class="result-label">Result</div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-3">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="small text-muted mb-1">Users</div>
+                    <div class="d-flex align-items-end justify-content-between">
+                      <h3 class="mb-0">12,847</h3>
+                      <span class="badge bg-success">+12%</span>
+                    </div>
+                    <div id="kpi-spark-1" class="mt-2"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="small text-muted mb-1">Revenue</div>
+                    <div class="d-flex align-items-end justify-content-between">
+                      <h3 class="mb-0">$84.2k</h3>
+                      <span class="badge bg-success">+8%</span>
+                    </div>
+                    <div id="kpi-spark-2" class="mt-2"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="small text-muted mb-1">Latency</div>
+                    <div class="d-flex align-items-end justify-content-between">
+                      <h3 class="mb-0">42ms</h3>
+                      <span class="badge bg-warning">+3ms</span>
+                    </div>
+                    <div id="kpi-spark-3" class="mt-2"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card">
+                  <div class="card-body">
+                    <div class="small text-muted mb-1">Errors</div>
+                    <div class="d-flex align-items-end justify-content-between">
+                      <h3 class="mb-0">0.02%</h3>
+                      <span class="badge bg-success">−0.01%</span>
+                    </div>
+                    <div id="kpi-spark-4" class="mt-2"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- STEP 3: Sparklines -->
+          <section id="step-3" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">3</span> Add Sparklines</h2>
+            <p>Each KPI card gets a sparkline showing trend data — one line of JS per chart.</p>
+            <div class="code-block"><span class="tag">&lt;script</span> <span class="keyword">src=</span><span class="string">"BareMetalCharts.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+<span class="keyword">BareMetalCharts</span>.sparkline(<span class="string">'#kpi-spark-1'</span>, [8,10,9,12,11,13,12], {
+  <span class="keyword">color</span>: <span class="string">'--bs-success'</span>, <span class="keyword">fill</span>: <span class="keyword">true</span>
+});</div>
+            <div class="result-label">✅ Already rendered in the cards above — scroll up to see the sparklines.</div>
+          </section>
+
+          <!-- STEP 4: Data Table -->
+          <section id="step-4" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">4</span> Data Table</h2>
+            <p>A responsive, striped, hoverable table with badges and action buttons.</p>
+            <div class="code-block"><span class="tag">&lt;table</span> <span class="keyword">class=</span><span class="string">"table table-hover table-striped"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;thead&gt;&lt;tr&gt;</span>
+    <span class="tag">&lt;th&gt;</span>Service<span class="tag">&lt;/th&gt;&lt;th&gt;</span>Status<span class="tag">&lt;/th&gt;&lt;th&gt;</span>Uptime<span class="tag">&lt;/th&gt;</span>
+  <span class="tag">&lt;/tr&gt;&lt;/thead&gt;</span>
+  <span class="tag">&lt;tbody&gt;</span>...rows...<span class="tag">&lt;/tbody&gt;</span>
+<span class="tag">&lt;/table&gt;</span></div>
+
+            <div class="result-label">Result</div>
+            <div class="table-responsive mb-3">
+              <table class="table table-hover table-striped table-sm">
+                <thead><tr><th>Service</th><th>Status</th><th>Uptime</th><th>Latency</th><th>Load</th><th class="text-end">Actions</th></tr></thead>
+                <tbody>
+                  <tr><td class="fw-semibold">API Gateway</td><td><span class="badge bg-success">Healthy</span></td><td>99.99%</td><td>12ms</td><td><div id="table-spark-1" class="d-inline-block"></div></td><td class="text-end"><button class="btn btn-sm btn-outline-primary">Details</button></td></tr>
+                  <tr><td class="fw-semibold">Auth Service</td><td><span class="badge bg-success">Healthy</span></td><td>99.95%</td><td>18ms</td><td><div id="table-spark-2" class="d-inline-block"></div></td><td class="text-end"><button class="btn btn-sm btn-outline-primary">Details</button></td></tr>
+                  <tr><td class="fw-semibold">User Service</td><td><span class="badge bg-warning">Degraded</span></td><td>99.80%</td><td>45ms</td><td><div id="table-spark-3" class="d-inline-block"></div></td><td class="text-end"><button class="btn btn-sm btn-outline-primary">Details</button></td></tr>
+                  <tr><td class="fw-semibold">Order Service</td><td><span class="badge bg-success">Healthy</span></td><td>99.97%</td><td>22ms</td><td><div id="table-spark-4" class="d-inline-block"></div></td><td class="text-end"><button class="btn btn-sm btn-outline-primary">Details</button></td></tr>
+                  <tr><td class="fw-semibold">Notification Svc</td><td><span class="badge bg-danger">Down</span></td><td>97.20%</td><td>—</td><td><div id="table-spark-5" class="d-inline-block"></div></td><td class="text-end"><button class="btn btn-sm btn-outline-danger">Investigate</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- STEP 5: Charts -->
+          <section id="step-5" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">5</span> Charts</h2>
+            <p>Add full charts for deeper analysis — bar chart for traffic by endpoint, smooth line for throughput over time, donut for error breakdown.</p>
+            <div class="code-block"><span class="keyword">BareMetalCharts</span>.bar(<span class="string">'#traffic-chart'</span>, data);
+<span class="keyword">BareMetalCharts</span>.line(<span class="string">'#throughput-chart'</span>, series, { <span class="keyword">smooth</span>: <span class="keyword">true</span> });
+<span class="keyword">BareMetalCharts</span>.donut(<span class="string">'#error-chart'</span>, errors, { <span class="keyword">centerText</span>: <span class="string">'142'</span> });</div>
+
+            <div class="result-label">Result</div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-header fw-semibold">Traffic by Endpoint</div>
+                  <div class="card-body"><div id="traffic-chart"></div></div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-header fw-semibold">Throughput (req/s)</div>
+                  <div class="card-body"><div id="throughput-chart"></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <div class="card h-100">
+                  <div class="card-header fw-semibold">Error Breakdown</div>
+                  <div class="card-body text-center"><div id="error-chart"></div></div>
+                </div>
+              </div>
+              <div class="col-md-8">
+                <div class="card h-100">
+                  <div class="card-header fw-semibold">Response Time (ms)</div>
+                  <div class="card-body"><div id="response-chart"></div></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- STEP 6: Gauges -->
+          <section id="step-6" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">6</span> System Gauges</h2>
+            <p>Gauges with colour zones show at-a-glance health. The colour shifts automatically from green → yellow → red.</p>
+            <div class="code-block"><span class="keyword">BareMetalCharts</span>.gauge(<span class="string">'#cpu-gauge'</span>, 72, {
+  <span class="keyword">label</span>: <span class="string">'CPU %'</span>,
+  <span class="keyword">zones</span>: [
+    { <span class="keyword">from</span>: 0,  <span class="keyword">to</span>: 40,  <span class="keyword">color</span>: <span class="string">'--bs-success'</span> },
+    { <span class="keyword">from</span>: 40, <span class="keyword">to</span>: 70,  <span class="keyword">color</span>: <span class="string">'--bs-warning'</span> },
+    { <span class="keyword">from</span>: 70, <span class="keyword">to</span>: 100, <span class="keyword">color</span>: <span class="string">'--bs-danger'</span> }
+  ]
+});</div>
+
+            <div class="result-label">Result</div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-3 text-center">
+                <div class="card"><div class="card-body"><div id="gauge-cpu"></div></div></div>
+              </div>
+              <div class="col-md-3 text-center">
+                <div class="card"><div class="card-body"><div id="gauge-mem"></div></div></div>
+              </div>
+              <div class="col-md-3 text-center">
+                <div class="card"><div class="card-body"><div id="gauge-disk"></div></div></div>
+              </div>
+              <div class="col-md-3 text-center">
+                <div class="card"><div class="card-body"><div id="gauge-net"></div></div></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- STEP 7: Architecture Graph -->
+          <section id="step-7" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">7</span> Architecture Diagram</h2>
+            <p>Visualise service dependencies with a force-directed graph. Drag nodes, scroll to zoom, hover to highlight connections.</p>
+            <div class="code-block"><span class="tag">&lt;script</span> <span class="keyword">src=</span><span class="string">"BareMetalGraph.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+<span class="keyword">const</span> graph = <span class="keyword">BareMetalGraph</span>.create(<span class="string">'#arch-graph'</span>, {
+  <span class="keyword">nodes</span>: [
+    { <span class="keyword">id</span>: <span class="string">'gateway'</span>, <span class="keyword">label</span>: <span class="string">'API Gateway'</span>, <span class="keyword">group</span>: <span class="string">'infra'</span> },
+    <span class="comment">// ... more nodes</span>
+  ],
+  <span class="keyword">edges</span>: [
+    { <span class="keyword">source</span>: <span class="string">'gateway'</span>, <span class="keyword">target</span>: <span class="string">'auth'</span>, <span class="keyword">label</span>: <span class="string">'JWT'</span> },
+    <span class="comment">// ... more edges</span>
+  ]
+}, { <span class="keyword">directed</span>: <span class="keyword">true</span>, <span class="keyword">groupField</span>: <span class="string">'group'</span> });</div>
+
+            <div class="result-label">Result — drag nodes, scroll to zoom, hover for details</div>
+            <div class="card mb-3">
+              <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+                System Architecture
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-primary" id="graph-add">+ Add Service</button>
+                  <button class="btn btn-sm btn-outline-danger" id="graph-remove">− Remove Last</button>
+                </div>
+              </div>
+              <div class="card-body p-0"><div id="arch-graph"></div></div>
+            </div>
+          </section>
+
+          <!-- STEP 8: Forms & Modal -->
+          <section id="step-8" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">8</span> Forms & Modal</h2>
+            <p>Use form components for input, and a modal for confirmation dialogs. The modal is pure CSS — just toggle the <code>.show</code> class.</p>
+
+            <div class="result-label">Result</div>
+            <div class="card mb-3">
+              <div class="card-header fw-semibold">Add Alert Rule</div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Service</label>
+                    <select class="form-select" id="rule-service">
+                      <option>API Gateway</option>
+                      <option>Auth Service</option>
+                      <option>User Service</option>
+                      <option>Order Service</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Metric</label>
+                    <select class="form-select" id="rule-metric">
+                      <option>Latency &gt; threshold</option>
+                      <option>Error rate &gt; threshold</option>
+                      <option>CPU &gt; threshold</option>
+                    </select>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Threshold</label>
+                    <div class="input-group">
+                      <input type="number" class="form-control" id="rule-threshold" value="100">
+                      <span class="input-group-text">ms</span>
+                    </div>
+                  </div>
+                  <div class="col-12 d-flex gap-2">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="rule-enabled" checked>
+                      <label class="form-check-label" for="rule-enabled">Enabled</label>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <button class="btn btn-primary" onclick="document.getElementById('confirmModal').classList.add('show')">Save Rule</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal" id="confirmModal" onclick="if(event.target===this)this.classList.remove('show')">
+              <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Confirm</h5>
+                    <button class="btn-close" onclick="document.getElementById('confirmModal').classList.remove('show')"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p class="mb-0">Create this alert rule? You'll be notified when the threshold is exceeded.</p>
+                  </div>
+                  <div class="modal-footer">
+                    <button class="btn btn-sm btn-secondary" onclick="document.getElementById('confirmModal').classList.remove('show')">Cancel</button>
+                    <button class="btn btn-sm btn-primary" onclick="document.getElementById('confirmModal').classList.remove('show');document.getElementById('rule-alert').style.display='block'">Confirm</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="alert alert-success" id="rule-alert" style="display:none;">✅ Alert rule created successfully!</div>
+          </section>
+
+          <!-- STEP 9: Reactive Binding -->
+          <section id="step-9" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">9</span> Reactive Binding</h2>
+            <p>Use <code>BareMetalBind</code> to create reactive state that auto-updates the DOM. Bind inputs with <code>m-value</code>, text with <code>m-text</code>, visibility with <code>m-if</code>.</p>
+            <div class="code-block"><span class="tag">&lt;script</span> <span class="keyword">src=</span><span class="string">"BareMetalBind.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+<span class="keyword">const</span> state = <span class="keyword">BareMetalBind</span>.create({ name: <span class="string">''</span>, count: 0 });
+<span class="keyword">BareMetalBind</span>.bind(document.getElementById(<span class="string">'app'</span>), state);
+
+<span class="comment">// Now any change to state.name or state.count auto-updates the DOM</span>
+state.count++; <span class="comment">// UI updates instantly</span></div>
+
+            <div class="result-label">Result — type your name, click the button</div>
+            <div class="card mb-3" id="bind-demo">
+              <div class="card-body">
+                <div class="row g-3 align-items-center">
+                  <div class="col-md-4">
+                    <label class="form-label">Your name</label>
+                    <input type="text" class="form-control" m-value="name" placeholder="Type here...">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Greeting</label>
+                    <div class="p-2 bg-primary-subtle rounded">Hello, <strong m-text="name"></strong>!</div>
+                  </div>
+                  <div class="col-md-4 text-center">
+                    <div class="small text-muted mb-1">Click count</div>
+                    <h2 m-text="count" class="mb-1">0</h2>
+                    <button class="btn btn-sm btn-primary" m-click="increment">Count Up</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- STEP 10: Complete -->
+          <section id="step-10" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">10</span> All Together</h2>
+            <p>That's the complete dashboard! Let's recap what we used:</p>
+
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">📦 Files Used</h5>
+                    <table class="table table-sm mb-0">
+                      <tbody>
+                        <tr><td class="fw-semibold">BareMetalStyles.css</td><td>Layout, grid, buttons, forms, tables, cards, alerts, modals, user cards</td></tr>
+                        <tr><td class="fw-semibold">BareMetalCharts.js</td><td>Bar, line, sparkline, donut, gauge</td></tr>
+                        <tr><td class="fw-semibold">BareMetalGraph.js</td><td>Force-directed architecture diagram</td></tr>
+                        <tr><td class="fw-semibold">BareMetalBind.js</td><td>Reactive data binding</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <h5 class="card-title">🚫 Not Used</h5>
+                    <ul class="list-unstyled mb-0">
+                      <li class="mb-1">❌ No npm install</li>
+                      <li class="mb-1">❌ No build step</li>
+                      <li class="mb-1">❌ No framework (React, Vue, Angular)</li>
+                      <li class="mb-1">❌ No jQuery</li>
+                      <li class="mb-1">❌ No bundler (webpack, vite, rollup)</li>
+                      <li>❌ No external CDN dependencies</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="alert alert-info">
+              <strong>Total payload:</strong> ~90KB across 4 files. Compare to Bootstrap (200KB CSS + JS), Chart.js (200KB), D3 (270KB), React (140KB) — that's <strong>~90KB vs ~810KB</strong> for equivalent functionality.
+            </div>
+
+            <div class="text-center">
+              <a href="https://github.com/WillEastbury/BareMetalJsTools" class="btn btn-primary">⭐ View on GitHub</a>
+            </div>
+          </section>
+
+        </div>
+      </main>
+    </div>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer site-footer-dark text-center">
+      © 2026 Will Eastbury · Built with <a href="https://github.com/WillEastbury/BareMetalJsTools">BareMetalJsTools</a> · Zero dependencies
+    </footer>
+  </div>
+
+  <!-- ===== SCRIPTS ===== -->
+  <script src="../src/BareMetalCharts.js"></script>
+  <script src="../src/BareMetalGraph.js"></script>
+  <script src="../src/BareMetalBind.js"></script>
+  <script>
+    // --- Step 3: Sparklines in KPI cards ---
+    BareMetalCharts.sparkline('#kpi-spark-1', [8,10,9,12,11,13,12,14], { color: '--bs-success', fill: true });
+    BareMetalCharts.sparkline('#kpi-spark-2', [52,58,55,62,60,68,72,84], { color: '--bs-success', fill: true });
+    BareMetalCharts.sparkline('#kpi-spark-3', [38,35,40,42,39,44,41,42], { color: '--bs-warning' });
+    BareMetalCharts.sparkline('#kpi-spark-4', [0.05,0.04,0.03,0.04,0.03,0.02,0.03,0.02], { color: '--bs-success', fill: true });
+
+    // --- Step 4: Table sparklines ---
+    BareMetalCharts.sparkline('#table-spark-1', [20,25,22,28,24,30,26], { width: 80, height: 20, color: '--bs-primary' });
+    BareMetalCharts.sparkline('#table-spark-2', [15,18,14,20,17,22,19], { width: 80, height: 20, color: '--bs-primary' });
+    BareMetalCharts.sparkline('#table-spark-3', [40,55,48,62,70,65,72], { width: 80, height: 20, color: '--bs-warning' });
+    BareMetalCharts.sparkline('#table-spark-4', [12,15,11,18,14,16,13], { width: 80, height: 20, color: '--bs-primary' });
+    BareMetalCharts.sparkline('#table-spark-5', [8,12,6,0,0,0,0], { width: 80, height: 20, color: '--bs-danger' });
+
+    // --- Step 5: Full charts ---
+    BareMetalCharts.bar('#traffic-chart', [
+      { label: '/api/users', value: 4200 }, { label: '/api/orders', value: 3100 },
+      { label: '/api/auth', value: 2800 },  { label: '/api/search', value: 1900 },
+      { label: '/api/notify', value: 850 }
+    ]);
+
+    BareMetalCharts.line('#throughput-chart', [
+      { name: 'Reads',  values: [1200, 1350, 1280, 1450, 1520, 1680, 1590] },
+      { name: 'Writes', values: [400, 450, 420, 480, 510, 550, 530] }
+    ], { smooth: true, labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] });
+
+    BareMetalCharts.donut('#error-chart', [
+      { label: '5xx', value: 42 }, { label: '4xx', value: 78 },
+      { label: 'Timeout', value: 22 }
+    ], { size: 180, centerText: '142', centerLabel: 'errors/hr' });
+
+    BareMetalCharts.line('#response-chart', [
+      { label: '00:00', value: 35 }, { label: '04:00', value: 28 },
+      { label: '08:00', value: 42 }, { label: '12:00', value: 65 },
+      { label: '16:00', value: 55 }, { label: '20:00', value: 48 },
+      { label: 'Now', value: 42 }
+    ], { smooth: true, fill: true });
+
+    // --- Step 6: Gauges ---
+    const zones = [
+      { from: 0, to: 40, color: '--bs-success' },
+      { from: 40, to: 70, color: '--bs-warning' },
+      { from: 70, to: 100, color: '--bs-danger' }
+    ];
+    BareMetalCharts.gauge('#gauge-cpu',  72, { label: 'CPU %',  zones });
+    BareMetalCharts.gauge('#gauge-mem',  58, { label: 'Memory %', zones });
+    BareMetalCharts.gauge('#gauge-disk', 34, { label: 'Disk %', zones });
+    BareMetalCharts.gauge('#gauge-net',  85, { label: 'Network %', zones });
+
+    // --- Step 7: Architecture graph ---
+    const archGraph = BareMetalGraph.create('#arch-graph', {
+      nodes: [
+        { id: 'client',   label: 'Browser',        group: 'infra',    detail: 'End users' },
+        { id: 'cdn',      label: 'CDN',             group: 'infra',    detail: 'Static assets' },
+        { id: 'gateway',  label: 'API Gateway',     group: 'infra',    detail: 'Routes & rate limits' },
+        { id: 'auth',     label: 'Auth Service',    group: 'services', detail: 'JWT + OAuth2' },
+        { id: 'users',    label: 'User Service',    group: 'services', detail: 'CRUD, profiles' },
+        { id: 'orders',   label: 'Order Service',   group: 'services', detail: 'Order pipeline' },
+        { id: 'notify',   label: 'Notifications',   group: 'services', detail: 'Email, push, SMS' },
+        { id: 'postgres', label: 'PostgreSQL',      group: 'data',     detail: 'Primary store' },
+        { id: 'redis',    label: 'Redis',            group: 'data',     detail: 'Session cache' },
+        { id: 'kafka',    label: 'Kafka',            group: 'data',     detail: 'Event bus' }
+      ],
+      edges: [
+        { source: 'client',  target: 'cdn' },
+        { source: 'client',  target: 'gateway' },
+        { source: 'gateway', target: 'auth',     label: 'verify' },
+        { source: 'gateway', target: 'users' },
+        { source: 'gateway', target: 'orders' },
+        { source: 'auth',    target: 'redis',    label: 'sessions' },
+        { source: 'users',   target: 'postgres' },
+        { source: 'orders',  target: 'postgres' },
+        { source: 'orders',  target: 'kafka',    label: 'events' },
+        { source: 'kafka',   target: 'notify' },
+        { source: 'notify',  target: 'users' }
+      ]
+    }, {
+      directed: true, groupField: 'group',
+      groupColors: ['--bs-info', '--bs-primary', '--bs-success'],
+      width: 800, height: 400, repulsion: 1200, springLen: 140
+    });
+
+    // Dynamic controls
+    let graphCounter = 0;
+    document.getElementById('graph-add').addEventListener('click', () => {
+      graphCounter++;
+      const id = 'svc-' + graphCounter;
+      archGraph.addNode({ id, label: 'Service ' + graphCounter, group: 'services' });
+      archGraph.addEdge({ source: 'gateway', target: id });
+    });
+    document.getElementById('graph-remove').addEventListener('click', () => {
+      if (graphCounter > 0) { archGraph.removeNode('svc-' + graphCounter); graphCounter--; }
+    });
+
+    // --- Step 9: Reactive binding ---
+    const state = BareMetalBind.create({ name: '', count: 0 });
+    state.increment = () => { state.count++; };
+    BareMetalBind.bind(document.getElementById('bind-demo'), state);
+
+    // --- Sidebar active link tracking ---
+    const navLinks = document.querySelectorAll('.tutorial-nav a');
+    const sections = document.querySelectorAll('.step');
+    const main = document.querySelector('.main-content');
+    if (main) {
+      main.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(s => {
+          if (s.getBoundingClientRect().top < 200) current = s.id;
+        });
+        navLinks.forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

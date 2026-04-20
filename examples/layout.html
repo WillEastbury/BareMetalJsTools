@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Layout — BareMetalJsTools</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="site-header site-header-dark">
+      <a class="brand" href="index.html">🔩 BareMetalJsTools</a>
+      <nav>
+        <a href="layout.html" class="active">Layout</a>
+        <a href="components.html">Components</a>
+        <a href="charts.html">Charts</a>
+        <a href="graph.html">Graph</a>
+      </nav>
+
+      <!-- User card demo in header -->
+      <div class="user-card-trigger">
+        <img class="user-avatar" src="https://i.pravatar.cc/64?u=will" alt="User">
+        <div class="user-card user-card-right user-card-dark">
+          <div class="user-card-header">
+            <img class="user-avatar-lg" src="https://i.pravatar.cc/96?u=will" alt="">
+            <div>
+              <div class="user-name">Will Eastbury</div>
+              <div class="user-role">Administrator</div>
+            </div>
+          </div>
+          <div class="user-card-body">
+            <div class="user-detail"><span class="user-detail-label">Email</span> will@example.com</div>
+            <div class="user-detail"><span class="user-detail-label">Team</span> Engineering</div>
+            <div class="user-detail"><span class="user-detail-label">Status</span> <span class="badge bg-success">Online</span></div>
+          </div>
+          <div class="user-card-footer">
+            <a href="#" class="btn btn-sm btn-outline-light">Profile</a>
+            <a href="#" class="btn btn-sm btn-outline-light">Sign out</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-body">
+      <aside class="site-sidebar sidebar-left site-sidebar-dark">
+        <span class="sidebar-heading">Navigation</span>
+        <nav>
+          <a href="#" class="active">Dashboard</a>
+          <a href="#">Users</a>
+          <a href="#">Settings</a>
+          <a href="#">Reports</a>
+        </nav>
+        <span class="sidebar-heading mt-3">Favourites</span>
+        <nav>
+          <a href="#">Project Alpha</a>
+          <a href="#">Project Beta</a>
+        </nav>
+      </aside>
+
+      <main class="main-content p-4">
+        <h2 class="mb-3">Layout Demo</h2>
+        <p class="text-muted mb-4">This page demonstrates the full letterbox layout: fixed header with user card, dark sidebar, scrollable main content, and fixed footer.</p>
+
+        <div class="card mb-3">
+          <div class="card-header fw-semibold">Page Structure</div>
+          <div class="card-body">
+<pre class="mb-0"><code>&lt;div class="page-wrapper"&gt;
+  &lt;header class="site-header site-header-dark"&gt;...&lt;/header&gt;
+  &lt;div class="page-body"&gt;
+    &lt;aside class="site-sidebar sidebar-left"&gt;...&lt;/aside&gt;
+    &lt;main class="main-content"&gt;...&lt;/main&gt;
+  &lt;/div&gt;
+  &lt;footer class="site-footer site-footer-dark"&gt;...&lt;/footer&gt;
+&lt;/div&gt;</code></pre>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-header fw-semibold">Features</div>
+          <div class="card-body">
+            <ul>
+              <li><strong>Letterbox layout</strong> — header and footer are fixed, main content scrolls independently</li>
+              <li><strong>Stacking sidebars</strong> — add multiple <code>.site-sidebar</code> elements inside <code>.page-body</code></li>
+              <li><strong>Responsive collapse</strong> — sidebars auto-hide below 768px, toggle with <code>.show</code></li>
+              <li><strong>Dark variants</strong> — <code>.site-header-dark</code>, <code>.site-sidebar-dark</code>, <code>.site-footer-dark</code></li>
+              <li><strong>User card</strong> — hover popup with avatar, name, role, details, actions</li>
+            </ul>
+          </div>
+        </div>
+
+        <h4 class="mt-4 mb-3">Grid System</h4>
+        <div class="row g-2 mb-4">
+          <div class="col-md-4"><div class="p-3 bg-primary-subtle rounded text-center">.col-md-4</div></div>
+          <div class="col-md-4"><div class="p-3 bg-primary-subtle rounded text-center">.col-md-4</div></div>
+          <div class="col-md-4"><div class="p-3 bg-primary-subtle rounded text-center">.col-md-4</div></div>
+        </div>
+        <div class="row g-2 mb-4">
+          <div class="col-md-3"><div class="p-3 bg-primary-subtle rounded text-center">.col-md-3</div></div>
+          <div class="col-md-6"><div class="p-3 bg-primary-subtle rounded text-center">.col-md-6</div></div>
+          <div class="col-md-3"><div class="p-3 bg-primary-subtle rounded text-center">.col-md-3</div></div>
+        </div>
+
+        <h4 class="mt-4 mb-3">Spacing & Typography</h4>
+        <p class="fluid-type-xl fw-bold">Fluid XL heading</p>
+        <p class="fluid-type-lg">Fluid large heading</p>
+        <p class="fluid-type">Fluid body text — scales smoothly between viewports.</p>
+        <p class="display-5">Display 5</p>
+        <p class="lead">Lead paragraph text for introductions.</p>
+        <p><span class="badge bg-primary">Badge</span> <span class="badge bg-success">Success</span> <span class="badge bg-warning">Warning</span> <span class="badge bg-danger">Danger</span></p>
+
+        <!-- Extra content to demonstrate scrolling -->
+        <div class="mt-4 p-4 bg-body-secondary rounded">
+          <h5>Scroll Test</h5>
+          <p>This content is here to demonstrate that only the main panel scrolls, while the header, sidebar, and footer remain fixed.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+          <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+          <p>Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet.</p>
+          <p>At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident.</p>
+        </div>
+      </main>
+    </div>
+
+    <footer class="site-footer site-footer-dark text-center">
+      © 2026 Will Eastbury · <a href="https://github.com/WillEastbury/BareMetalJsTools">BareMetalJsTools</a>
+    </footer>
+  </div>
+</body>
+</html>

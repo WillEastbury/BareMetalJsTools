@@ -11,7 +11,7 @@ Tiny, zero-dependency vanilla-JS primitives for building fully client-rendered a
 | Module | Size | What it does |
 |---|---:|---|
 | [`BareMetalBinary`](docs/BareMetalBinary.md)   | 31 KB | BSO1 binary wire serialiser. Zero-copy `DataView` reads, HMAC-SHA256 signing via Web Crypto. |
-| [`BareMetalBind`](docs/BareMetalBind.md)       | 2 KB  | Reactive `Proxy` state + `m-*` directive binder (`m-value`, `m-text`, `m-if`, `m-click`, `m-submit`). |
+| [`BareMetalBind`](docs/BareMetalBind.md)       | 8 KB  | Reactive `Proxy` state + `m-*` directive binder. Dot-paths, formatters, reactive arrays, keyed list diffing, transitions, computed expressions. |
 | [`BareMetalRest`](docs/BareMetalRest.md)       | 16 KB | REST + WebSocket binary transport. Negotiates BMW WS frames → BSO1 → JSON fallback. CSRF, 401-redirect, request multiplexing. |
 | [`BareMetalTemplate`](docs/BareMetalTemplate.md) | 14 KB | Schema-driven DOM builder. `buildForm(layout, fields)` and `buildTable(fields, items, callbacks)` produce Bootstrap-compatible markup. |
 | [`BareMetalRendering`](docs/BareMetalRendering.md) | 4 KB  | Glues Rest + Bind + Template into an entity lifecycle (`createEntity`, `listEntities`). Also exposes `window.minibind`. |
@@ -68,14 +68,18 @@ import BareMetalRest from 'baremetal-js-tools/rest';
 ## Quick start
 
 ```js
-const { state, watch } = BareMetalBind.reactive({ name: 'World' });
+const { state, watch } = BareMetalBind.reactive({ name: 'World', items: [] });
 
 document.body.innerHTML = `
   <input m-value="name">
   <p>Hello, <span m-text="name"></span>!</p>
+  <ul m-each="items key:id">
+    <template><li m-text=".text"></li></template>
+  </ul>
 `;
 BareMetalBind.bind(document.body, state, watch);
-state.name = 'BareMetal';   // UI updates automatically
+state.name = 'BareMetal';            // UI updates automatically
+state.items.push({ id: 1, text: 'First' }); // reactive array — no reassignment needed
 ```
 
 ```js
@@ -113,7 +117,7 @@ Tests run under Node + `jest-environment-jsdom`. Each module is loaded via `new 
 
 | File | Coverage |
 |---|---|
-| `tests/BareMetalBind.test.js`       | `reactive()`, all `m-*` directives |
+| `tests/BareMetalBind.test.js`       | `reactive()`, all `m-*` directives, dot-paths, formatters, reactive arrays, keyed diffing, scoped m-each, transitions, expressions |
 | `tests/BareMetalRest.test.js`       | `setRoot`/`getRoot`, CRUD, fetch errors, CSRF, FormData |
 | `tests/BareMetalTemplate.test.js`   | `buildForm` field types, layout, lookup; `buildTable` cells, callbacks, badges |
 | `tests/BareMetalRouting.test.js`    | Pattern matching, params, query parsing, `navigate()` |

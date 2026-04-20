@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Graph — BareMetalJsTools</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <style>
+    .bm-graph { border: 1px solid var(--bs-border-color); border-radius: var(--bs-border-radius); background: #fafbfc; }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="site-header site-header-dark">
+      <a class="brand" href="index.html">🔩 BareMetalJsTools</a>
+      <nav>
+        <a href="layout.html">Layout</a>
+        <a href="components.html">Components</a>
+        <a href="charts.html">Charts</a>
+        <a href="graph.html" class="active">Graph</a>
+      </nav>
+    </header>
+
+    <main class="main-content p-4" style="overflow-y:auto;">
+      <div class="container">
+        <h2 class="mb-2">Force-Directed Graph</h2>
+        <p class="text-muted mb-3">Drag nodes, scroll to zoom, click background to pan. Hover nodes to highlight connections.</p>
+
+        <!-- Controls -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <button class="btn btn-sm btn-outline-primary" id="add-node-btn">+ Add Node</button>
+          <button class="btn btn-sm btn-outline-success" id="add-edge-btn">+ Add Edge</button>
+          <button class="btn btn-sm btn-outline-danger" id="remove-btn">− Remove Last</button>
+          <button class="btn btn-sm btn-outline-secondary" id="reset-btn">↻ Reset</button>
+        </div>
+
+        <!-- Graph 1: Architecture -->
+        <div class="card mb-4">
+          <div class="card-header fw-semibold">Microservice Architecture</div>
+          <div class="card-body p-0">
+            <div id="graph-arch"></div>
+          </div>
+        </div>
+
+        <!-- Graph 2: Knowledge Graph -->
+        <div class="card mb-4">
+          <div class="card-header fw-semibold">Knowledge Graph (Grouped)</div>
+          <div class="card-body p-0">
+            <div id="graph-knowledge"></div>
+          </div>
+        </div>
+
+        <!-- Graph 3: BareMetalJsTools module deps -->
+        <div class="card mb-4">
+          <div class="card-header fw-semibold">BareMetalJsTools — Module Dependencies</div>
+          <div class="card-body p-0">
+            <div id="graph-modules"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer site-footer-dark text-center">
+      © 2026 Will Eastbury · <a href="https://github.com/WillEastbury/BareMetalJsTools">BareMetalJsTools</a>
+    </footer>
+  </div>
+
+  <script src="../src/BareMetalGraph.js"></script>
+  <script>
+    // --- Architecture graph ---
+    const archGraph = BareMetalGraph.create('#graph-arch', {
+      nodes: [
+        { id: 'gateway', label: 'API Gateway', detail: 'Routes all traffic', group: 'infra' },
+        { id: 'auth', label: 'Auth Service', detail: 'JWT + OAuth2', group: 'services' },
+        { id: 'users', label: 'User Service', group: 'services' },
+        { id: 'orders', label: 'Order Service', group: 'services' },
+        { id: 'notify', label: 'Notifications', group: 'services' },
+        { id: 'postgres', label: 'PostgreSQL', detail: 'Primary DB', group: 'data' },
+        { id: 'redis', label: 'Redis', detail: 'Session cache', group: 'data' },
+        { id: 'kafka', label: 'Kafka', detail: 'Event bus', group: 'data' },
+        { id: 'cdn', label: 'CDN', group: 'infra' },
+        { id: 'client', label: 'Browser', group: 'infra' }
+      ],
+      edges: [
+        { source: 'client', target: 'cdn' },
+        { source: 'client', target: 'gateway' },
+        { source: 'gateway', target: 'auth', label: 'verify' },
+        { source: 'gateway', target: 'users' },
+        { source: 'gateway', target: 'orders' },
+        { source: 'auth', target: 'redis', label: 'sessions' },
+        { source: 'users', target: 'postgres' },
+        { source: 'orders', target: 'postgres' },
+        { source: 'orders', target: 'kafka', label: 'events' },
+        { source: 'kafka', target: 'notify' },
+        { source: 'notify', target: 'users' }
+      ]
+    }, {
+      directed: true,
+      groupField: 'group',
+      groupColors: ['--bs-info', '--bs-primary', '--bs-success'],
+      width: 800, height: 450,
+      repulsion: 1200, springLen: 140
+    });
+
+    // --- Dynamic controls ---
+    let nodeCounter = 0;
+    document.getElementById('add-node-btn').addEventListener('click', () => {
+      nodeCounter++;
+      const id = 'new-' + nodeCounter;
+      archGraph.addNode({ id, label: 'Service ' + nodeCounter, group: 'services' });
+      // connect to gateway
+      archGraph.addEdge({ source: 'gateway', target: id });
+    });
+
+    document.getElementById('add-edge-btn').addEventListener('click', () => {
+      const nodes = archGraph.nodes;
+      if (nodes.length < 2) return;
+      const a = nodes[Math.floor(Math.random() * nodes.length)];
+      const b = nodes[Math.floor(Math.random() * nodes.length)];
+      if (a.id !== b.id) archGraph.addEdge({ source: a.id, target: b.id });
+    });
+
+    document.getElementById('remove-btn').addEventListener('click', () => {
+      if (nodeCounter > 0) {
+        archGraph.removeNode('new-' + nodeCounter);
+        nodeCounter--;
+      }
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      while (nodeCounter > 0) {
+        archGraph.removeNode('new-' + nodeCounter);
+        nodeCounter--;
+      }
+    });
+
+    // --- Knowledge graph ---
+    BareMetalGraph.create('#graph-knowledge', {
+      nodes: [
+        { id: 'js', label: 'JavaScript', group: 'lang' },
+        { id: 'ts', label: 'TypeScript', group: 'lang' },
+        { id: 'py', label: 'Python', group: 'lang' },
+        { id: 'react', label: 'React', group: 'framework' },
+        { id: 'vue', label: 'Vue', group: 'framework' },
+        { id: 'django', label: 'Django', group: 'framework' },
+        { id: 'node', label: 'Node.js', group: 'runtime' },
+        { id: 'deno', label: 'Deno', group: 'runtime' },
+        { id: 'dom', label: 'DOM', group: 'concept' },
+        { id: 'spa', label: 'SPA', group: 'concept' },
+        { id: 'rest', label: 'REST', group: 'concept' },
+        { id: 'ws', label: 'WebSocket', group: 'concept' }
+      ],
+      edges: [
+        ['js', 'ts'], ['js', 'react'], ['js', 'vue'], ['js', 'node'], ['js', 'deno'],
+        ['ts', 'react'], ['ts', 'deno'],
+        ['py', 'django'],
+        ['react', 'dom'], ['react', 'spa'], ['vue', 'dom'], ['vue', 'spa'],
+        ['node', 'rest'], ['node', 'ws'], ['deno', 'rest'],
+        ['django', 'rest']
+      ]
+    }, {
+      groupField: 'group',
+      groupColors: ['--bs-warning', '--bs-primary', '--bs-success', '--bs-info'],
+      width: 800, height: 400,
+      repulsion: 1000, springLen: 100
+    });
+
+    // --- Module dependency graph ---
+    BareMetalGraph.create('#graph-modules', {
+      nodes: [
+        { id: 'rendering', label: 'BareMetalRendering', color: '--bs-danger', radius: 25 },
+        { id: 'bind', label: 'BareMetalBind', color: '--bs-primary' },
+        { id: 'template', label: 'BareMetalTemplate', color: '--bs-primary' },
+        { id: 'rest', label: 'BareMetalRest', color: '--bs-primary' },
+        { id: 'binary', label: 'BareMetalBinary', color: '--bs-success' },
+        { id: 'compress', label: 'PicoCompress', color: '--bs-success' },
+        { id: 'routing', label: 'BareMetalRouting', color: '--bs-info' },
+        { id: 'styles', label: 'BareMetalStyles', color: '--bs-warning' },
+        { id: 'charts', label: 'BareMetalCharts', color: '--bs-warning' },
+        { id: 'graph', label: 'BareMetalGraph', color: '--bs-warning' }
+      ],
+      edges: [
+        { source: 'rendering', target: 'bind', label: 'uses' },
+        { source: 'rendering', target: 'template', label: 'uses' },
+        { source: 'rendering', target: 'rest', label: 'uses' },
+        { source: 'rest', target: 'binary', label: 'BSO1' },
+        { source: 'rest', target: 'compress', label: 'opt-in' },
+        { source: 'template', target: 'styles', label: 'classes' },
+        { source: 'charts', target: 'styles', label: 'theme' },
+        { source: 'graph', target: 'styles', label: 'theme' }
+      ]
+    }, {
+      directed: true,
+      width: 800, height: 400,
+      repulsion: 1500, springLen: 160
+    });
+  </script>
+</body>
+</html>
