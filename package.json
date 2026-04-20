@@ -22,7 +22,7 @@
     "./components":         "./src/BareMetal.Components.js",
     "./component-factories":"./src/BareMetal.ComponentFactories.js",
     "./rendering":          "./src/BareMetal.Rendering.js",
-    "./rest":               "./src/BareMetal.Rest.js",
+    "./communications":    "./src/BareMetal.Communications.js",
     "./routing":            "./src/BareMetal.Routing.js",
     "./template":           "./src/BareMetal.Template.js",
     "./metadata":           "./src/BareMetal.Metadata.js",

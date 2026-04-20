@@ -127,8 +127,8 @@ BareMetal.Metadata = (() => {
 
   function fetchAndRegister(url) {
     var promise;
-    if (typeof BareMetal !== 'undefined' && BareMetal.Rest) {
-      promise = BareMetal.Rest.call(url, 'GET');
+    if (typeof BareMetal !== 'undefined' && BareMetal.Communications) {
+      promise = BareMetal.Communications.call(url, 'GET');
     } else {
       promise = fetch(url).then(function (r) { return r.json(); });
     }

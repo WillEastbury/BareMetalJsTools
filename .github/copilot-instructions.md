@@ -23,7 +23,7 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 | `BareMetal.Bind.js` | `BareMetal.Bind` | Core reactive proxy binding, directives (m-value, m-text, m-each, m-if, etc.) |
 | `BareMetal.Components.js` | `BareMetal.Components` | Widget directives (m-chatbot, m-calendar, m-gantt, m-table, m-tree, m-toast, m-navbar, m-img) |
 | `BareMetal.ComponentFactories.js` | `BareMetal.ComponentFactories` | Object factories (`create`, `chatEndpoint`) |
-| `BareMetal.Rest.js` | `BareMetal.Rest` | REST/WebSocket transport, WAL, compression |
+| `BareMetal.Communications.js` | `BareMetal.Communications` | REST/WebSocket transport, WAL, compression |
 | `BareMetal.Binary.js` | `BareMetal.Binary` | BSO1 binary serialisation |
 | `BareMetal.Template.js` | `BareMetal.Template` | Schema-driven DOM templating |
 | `BareMetal.Rendering.js` | `BareMetal.Rendering` | Entity rendering pipeline |
@@ -37,9 +37,9 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 **Dependency graph (load order matters):**
 
 - `BareMetal.Components` → depends on `BareMetal.Bind`
-- `BareMetal.ComponentFactories` → soft deps on `BareMetal.Bind`, `BareMetal.Rest`
-- `BareMetal.Rendering` → depends on `BareMetal.Rest`, `BareMetal.Bind`, `BareMetal.Template`
-- `BareMetal.Rest` → depends on `BareMetal.Binary`; optionally uses `BareMetal.Compress`
+- `BareMetal.ComponentFactories` → soft deps on `BareMetal.Bind`, `BareMetal.Communications`
+- `BareMetal.Rendering` → depends on `BareMetal.Communications`, `BareMetal.Bind`, `BareMetal.Template`
+- `BareMetal.Communications` → depends on `BareMetal.Binary`; optionally uses `BareMetal.Compress`
 - All others → fully standalone
 
 ## Key Conventions

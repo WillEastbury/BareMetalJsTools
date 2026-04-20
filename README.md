@@ -22,14 +22,14 @@ Every module follows the same pattern: small, obvious, fast. You can read the so
 | [`BareMetal.ComponentFactories`](docs/BareMetalBind.md) | `create.*` helpers and `chatEndpoint()` auto-wire for REST-backed chatbots. | 2 KB | Hand-rolled boilerplate |
 | [`BareMetal.Template`](docs/BareMetalTemplate.md) | Schema-driven DOM builder. Hand it metadata, get a form or table back. | 7 KB | Formly (≈80 KB), JSON Forms (≈200 KB) |
 | [`BareMetal.Metadata`](docs/BareMetalMetadata.md) | Client-side entity schema registry. Inline JSON, server fetch, or PicoWAL binary — declare your entities and render them automatically. | 8 KB | GraphQL schema + codegen toolchain |
-| [`BareMetal.Rest`](docs/BareMetalRest.md) | REST + WebSocket transport. Negotiates WS binary frames → BSO1 → JSON fallback. CSRF, 401-redirect, request multiplexing. | 19 KB | Axios (≈14 KB) + socket.io-client (≈45 KB) |
+| [`BareMetal.Communications`](docs/BareMetalRest.md) | REST + WebSocket transport. Negotiates WS binary frames → BSO1 → JSON fallback. CSRF, 401-redirect, request multiplexing. | 19 KB | Axios (≈14 KB) + socket.io-client (≈45 KB) |
 | [`BareMetal.Binary`](docs/BareMetalBinary.md) | BSO1 binary wire serialiser. Zero-copy `DataView` reads, HMAC-SHA256 signing via Web Crypto. | 31 KB | Protocol Buffers JS (≈230 KB), MessagePack (≈25 KB) |
-| [`BareMetal.Compress`](docs/PicoCompress.md) | Block-based LZ compressor. Byte-identical to the [C reference](https://github.com/WillEastbury/picocompress). Opt-in wire compression for Rest. | 27 KB | pako/zlib.js (≈46 KB), lz4js (≈20 KB) |
+| [`BareMetal.Compress`](docs/PicoCompress.md) | Block-based LZ compressor. Byte-identical to the [C reference](https://github.com/WillEastbury/picocompress). Opt-in wire compression for Rest. | 27 KB | Brotli.js (≈300 KB), HeatShrink (≈8 KB) |
 | [`BareMetal.Rendering`](docs/BareMetalRendering.md) | Glue layer — wires Rest + Bind + Template into an entity lifecycle (`createEntity`, `listEntities`). | 4 KB | Custom Redux middleware + React container layer |
 | [`BareMetal.Routing`](docs/BareMetalRouting.md) | History-API SPA router. Named segments (`:param`), catch-all (`*`), query parsing. | 7 KB | vue-router (≈18 KB), react-router (≈30 KB) |
 | [`BareMetal.Charts`](docs/BareMetalCharts.md) | SVG charts — bar, line, sparkline, donut, gauge. Animated, themeable via CSS custom properties. | 16 KB | Chart.js (≈200 KB), D3 (≈250 KB) |
 | [`BareMetal.Graph`](docs/BareMetalGraph.md) | Force-directed graph visualiser. Drag, zoom, hover, dynamic add/remove. | 18 KB | D3-force (≈30 KB) + D3-selection (≈20 KB), Cytoscape.js (≈600 KB) |
-| **Total** | **The whole toolkit** | **≈232 KB** | **≈1,577 KB** (picking the smaller option from each row) |
+| **Total** | **The whole toolkit** | **≈232 KB** | **≈1,565 KB** (picking the smaller option from each row) |
 
 ### Architecture
 
@@ -128,8 +128,8 @@ BareMetal.Routing.start();
 ### REST client
 
 ```js
-BareMetal.Rest.setRoot('/api/');
-const customer = BareMetal.Rest.entity('customer');
+BareMetal.Communications.setRoot('/api/');
+const customer = BareMetal.Communications.entity('customer');
 const all      = await customer.list();
 await customer.update(42, { name: 'Acme' });
 ```
@@ -199,7 +199,7 @@ This toolkit doesn't exist in isolation. The same "strip away the nonsense" phil
 |---|---|
 | [**BareMetalWeb**](https://github.com/WillEastbury/BareMetalWeb) | The web server and application framework this toolkit was extracted from. A minimal, metadata-driven .NET web host that serves these JS modules and renders server-driven UI. This is what happens when you apply the same philosophy to the *server*. |
 | [**PicoWAL**](https://github.com/WillEastbury/PicoWAL) | A write-ahead-log database engine built from scratch. Binary schema cards, Pack-0 wire format, embedded storage — no ORM, no query planner committee meetings. This is what happens when you apply it to the *database*. |
-| [**picocompress**](https://github.com/WillEastbury/picocompress) | Block-based LZ compression in pure C and JS (byte-identical output). Integrated into `BareMetal.Rest` for opt-in wire compression. This is what happens when you apply it to *data on the wire*. |
+| [**picocompress**](https://github.com/WillEastbury/picocompress) | Block-based LZ compression in pure C and JS (byte-identical output). Integrated into `BareMetal.Communications` for opt-in wire compression. This is what happens when you apply it to *data on the wire*. |
 | [**RP2350B_Bitnet**](https://github.com/WillEastbury/RP2350B_Bitnet) | A 1-bit quantised SLM that runs on a Raspberry Pi Pico 2 with 512 KB of RAM. This is what happens when you apply it to *machine learning* — and refuse to accept that "AI" requires a data centre. |
 
 The whole point is the same everywhere: understand what the machine actually needs to do, throw away everything that doesn't serve that goal, and keep the result small enough that one person can hold the entire system in their head.

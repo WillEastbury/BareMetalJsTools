@@ -1,9 +1,9 @@
-// BareMetal.Rest — lean REST client for BareMetalWeb
+// BareMetal.Communications — lean REST client for BareMetalWeb
 // Handles CRUD, metadata fetch and 401 redirect.
 // Uses BMW WebSocket binary transport when connected, BSO1 when available, JSON as fallback.
 // API: setRoot(url), getRoot(), entity(slug), call(method, url, body), connectWs()
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
-BareMetal.Rest = (() => {
+BareMetal.Communications = (() => {
   'use strict';
   let root = '/api/';
   let _binaryReady = false;

@@ -17,7 +17,7 @@ const JS_DIR = path.resolve(
 // individual tests can mock global.fetch.
 
 function loadAll() {
-  const restCode     = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Rest.js'), 'utf8');
+  const restCode     = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Communications.js'), 'utf8');
   const bindCode     = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Bind.js'), 'utf8');
   const templateCode = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Template.js'), 'utf8');
   const renderCode   = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Rendering.js'), 'utf8');
@@ -25,7 +25,7 @@ function loadAll() {
   const fn = new Function(
     'fetch', 'document', 'window', 'FormData', 'URLSearchParams', 'Promise', 'requestAnimationFrame',
     restCode + '\n' + bindCode + '\n' + templateCode + '\n' + renderCode +
-    '\nreturn { BareMetalRest: BareMetal.Rest, BareMetalBind: BareMetal.Bind, BareMetalTemplate: BareMetal.Template, BareMetalRendering: BareMetal.Rendering };'
+    '\nreturn { BareMetalRest: BareMetal.Communications, BareMetalBind: BareMetal.Bind, BareMetalTemplate: BareMetal.Template, BareMetalRendering: BareMetal.Rendering };'
   );
 
   const win = { minibind: null };
@@ -327,7 +327,7 @@ describe('BareMetalRendering – window.minibind surface', () => {
     });
 
     const win = { minibind: null };
-    const restCode     = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Rest.js'), 'utf8');
+    const restCode     = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Communications.js'), 'utf8');
     const bindCode     = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Bind.js'), 'utf8');
     const templateCode = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Template.js'), 'utf8');
     const renderCode   = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Rendering.js'), 'utf8');

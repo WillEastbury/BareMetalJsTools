@@ -7,7 +7,7 @@ const path = require('path');
 const fs   = require('fs');
 
 const SRC = path.resolve(
-  __dirname, '../src/BareMetal.Rest.js'
+  __dirname, '../src/BareMetal.Communications.js'
 );
 
 // Helper: load the module so its `fetch` references global.fetch at call time.
@@ -16,7 +16,7 @@ function loadRest() {
   const fn = new Function(
     'fetch', 'document', 'location', 'FormData', 'URLSearchParams',
     'WebSocket', 'TextEncoder', 'TextDecoder', 'DataView', 'Uint8Array',
-    code + '\nreturn BareMetal.Rest;'
+    code + '\nreturn BareMetal.Communications;'
   );
   return fn(
     (...args) => global.fetch(...args),

@@ -60,7 +60,7 @@ Scans all `<script type="application/bm-meta">` tags in the document, parses and
 
 ### `fetchAndRegister(url)` → Promise\<entity\>
 
-Fetches JSON from `url` (uses `BareMetal.Rest` if loaded, otherwise `fetch`), registers the result.
+Fetches JSON from `url` (uses `BareMetal.Communications` if loaded, otherwise `fetch`), registers the result.
 
 ```js
 await BareMetal.Metadata.fetchAndRegister('/api/metadata/customer');
@@ -165,6 +165,6 @@ When using `BareMetal.Components`, you can render entities declaratively:
 |---|---|
 | `renderForm()` | `BareMetal.Template`, optionally `BareMetal.Bind` |
 | `renderTable()` | `BareMetal.Template` |
-| `fetchAndRegister()` | `BareMetal.Rest` or native `fetch` |
+| `fetchAndRegister()` | `BareMetal.Communications` or native `fetch` |
 | `fromBinary()` | `BareMetal.Binary` |
 | `m-entity` directive | `BareMetal.Components` + `BareMetal.Metadata` |

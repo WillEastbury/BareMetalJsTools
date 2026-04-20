@@ -6,7 +6,7 @@
 const path = require('path');
 const fs   = require('fs');
 
-const REST_SRC = path.resolve(__dirname, '../src/BareMetal.Rest.js');
+const REST_SRC = path.resolve(__dirname, '../src/BareMetal.Communications.js');
 const PC_SRC   = path.resolve(__dirname, '../src/BareMetal.Compress.js');
 
 function loadRestWithPico() {
@@ -16,7 +16,7 @@ function loadRestWithPico() {
   const fn = new Function(
     'fetch', 'document', 'window', 'FormData', 'URLSearchParams', 'Promise',
     pcCode + '\n' + restCode +
-    '\nreturn { BareMetalRest: BareMetal.Rest, PicoCompress: BareMetal.Compress };'
+    '\nreturn { BareMetalRest: BareMetal.Communications, PicoCompress: BareMetal.Compress };'
   );
   return fn(
     (...args) => global.fetch(...args),

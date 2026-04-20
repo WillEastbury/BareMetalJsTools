@@ -1,5 +1,5 @@
 // BareMetal.Rendering — entity lifecycle orchestrator
-// Depends on: BareMetal.Rest, BareMetal.Bind, BareMetal.Template (load in order)
+// Depends on: BareMetal.Communications, BareMetal.Bind, BareMetal.Template (load in order)
 // API: createEntity(slug), listEntities()
 // Also exposes window.minibind for the declarative usage pattern:
 //   minibind.setRoot('/api/');
@@ -12,7 +12,7 @@ BareMetal.Rendering = (() => {
   let _cache = null;  // entity list cache (populated by listEntities)
 
   async function createEntity(slug) {
-    const api  = BareMetal.Rest.entity(slug);
+    const api  = BareMetal.Communications.entity(slug);
     const meta = await api.metadata();
 
     // Hydrate lookup options for select fields before rendering
@@ -21,7 +21,7 @@ BareMetal.Rendering = (() => {
       Object.entries(schemaFields).map(async ([, f]) => {
         if (f && f.lookupUrl) {
           try {
-            const items = await BareMetal.Rest.call('GET', f.lookupUrl);
+            const items = await BareMetal.Communications.call('GET', f.lookupUrl);
             const _lst = Array.isArray(items) ? items : (items?.data || []);
             f.options = _lst.map(i => ({
               value: String(i[f.lookupValueField] ?? i.Id ?? i.id ?? ''),
@@ -87,13 +87,13 @@ BareMetal.Rendering = (() => {
   }
 
   async function listEntities() {
-    if (!_cache) _cache = await BareMetal.Rest.call('GET', BareMetal.Rest.getRoot() + '_meta');
+    if (!_cache) _cache = await BareMetal.Communications.call('GET', BareMetal.Communications.getRoot() + '_meta');
     return _cache;
   }
 
   // Expose minibind-compatible surface as window.minibind
   window.minibind = {
-    setRoot:         r => BareMetal.Rest.setRoot(r),
+    setRoot:         r => BareMetal.Communications.setRoot(r),
     createNewEntity: n => createEntity(n),
     listEntities,
     bind:            BareMetal.Bind.bind

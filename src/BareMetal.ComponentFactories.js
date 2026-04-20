@@ -18,7 +18,7 @@ BareMetal.ComponentFactories = (() => {
     listItem: (key, data) => Object.assign({ id: key }, data)
   };
 
-  // chatEndpoint — uses BareMetal.Rest at runtime if available
+  // chatEndpoint — uses BareMetal.Communications at runtime if available
   function chatEndpoint(messagesKey, url, opts) {
     var o = Object.assign({ method: 'POST', bodyKey: 'message', responseKey: 'reply', botAvatar: '🤖', botName: 'Assistant' }, opts);
     return function(state) {
@@ -27,7 +27,7 @@ BareMetal.ComponentFactories = (() => {
         var arr = getPath(state, messagesKey);
         if (!Array.isArray(arr)) return;
         arr.push(create.message(text));
-        var rest = (typeof BareMetal !== 'undefined' && BareMetal.Rest) ? BareMetal.Rest : null;
+        var rest = (typeof BareMetal !== 'undefined' && BareMetal.Communications) ? BareMetal.Communications : null;
         if (rest) {
           var body = {}; body[o.bodyKey] = text;
           rest.call(url, o.method, body).then(function(res) {
