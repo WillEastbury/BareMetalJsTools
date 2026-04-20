@@ -581,6 +581,67 @@ small, .small { font-size: .875em; }
 /* ============================================================
    GANTT CHART (m-gantt)
    ============================================================ */
+/* ============================================================
+   CALENDAR (m-calendar)
+   ============================================================ */
+.bm-calendar { border: 1px solid var(--bs-gray-200, #e9ecef); border-radius: var(--bs-border-radius, .25rem); overflow: hidden; font-size: .875rem; user-select: none; }
+.bm-cal-header { display: flex; align-items: center; justify-content: space-between; padding: .5rem .75rem; background: var(--bs-primary, #0d6efd); color: #fff; font-weight: 600; }
+.bm-cal-nav { background: none; border: none; color: #fff; font-size: 1rem; cursor: pointer; padding: .25rem .5rem; border-radius: .25rem; }
+.bm-cal-nav:hover { background: rgba(255,255,255,.2); }
+.bm-cal-title { font-size: 1rem; }
+.bm-cal-row { display: grid; grid-template-columns: repeat(7, 1fr); }
+.bm-cal-dow-cell { text-align: center; padding: .375rem 0; font-weight: 600; color: var(--bs-gray-600, #6c757d); background: var(--bs-gray-100, #f8f9fa); font-size: .75rem; }
+.bm-cal-cell { min-height: 3.5rem; padding: .25rem; border-bottom: 1px solid var(--bs-gray-100, #f8f9fa); border-right: 1px solid var(--bs-gray-100, #f8f9fa); position: relative; }
+.bm-cal-empty { background: var(--bs-gray-50, #fafafa); }
+.bm-cal-day { cursor: pointer; transition: background .15s; }
+.bm-cal-day:hover { background: var(--bs-gray-100, #f8f9fa); }
+.bm-cal-today { background: rgba(13,110,253,.08); }
+.bm-cal-today .bm-cal-num { color: var(--bs-primary, #0d6efd); font-weight: 700; }
+.bm-cal-selected { background: rgba(13,110,253,.15) !important; outline: 2px solid var(--bs-primary, #0d6efd); outline-offset: -2px; }
+.bm-cal-num { font-size: .8rem; font-weight: 500; color: var(--bs-gray-700, #495057); }
+.bm-cal-dots { display: flex; gap: 3px; margin-top: 2px; flex-wrap: wrap; align-items: center; }
+.bm-cal-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--bs-primary, #0d6efd); display: inline-block; }
+.bm-cal-more { font-size: .65rem; color: var(--bs-gray-500, #adb5bd); }
+
+/* Dark variant */
+.bm-calendar-dark { background: var(--bs-gray-900, #212529); border-color: var(--bs-gray-700, #495057); }
+.bm-calendar-dark .bm-cal-dow-cell { background: var(--bs-gray-800, #343a40); color: var(--bs-gray-400, #ced4da); }
+.bm-calendar-dark .bm-cal-cell { border-color: var(--bs-gray-800, #343a40); }
+.bm-calendar-dark .bm-cal-day:hover { background: var(--bs-gray-800, #343a40); }
+.bm-calendar-dark .bm-cal-num { color: var(--bs-gray-300, #dee2e6); }
+.bm-calendar-dark .bm-cal-empty { background: var(--bs-gray-900, #212529); }
+
+/* ============================================================
+   CHATBOT (m-chatbot)
+   ============================================================ */
+.bm-chat { display: flex; flex-direction: column; border: 1px solid var(--bs-gray-200, #e9ecef); border-radius: var(--bs-border-radius, .25rem); overflow: hidden; height: 400px; font-size: .875rem; }
+.bm-chat-log { flex: 1; overflow-y: auto; padding: .75rem; display: flex; flex-direction: column; gap: .5rem; background: var(--bs-gray-50, #fafafa); }
+.bm-chat-bubble { display: flex; gap: .5rem; max-width: 80%; animation: bm-chat-in .2s ease-out; }
+.bm-chat-user { align-self: flex-end; flex-direction: row-reverse; }
+.bm-chat-bot { align-self: flex-start; }
+.bm-chat-avatar { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+.bm-chat-body { padding: .5rem .75rem; border-radius: .75rem; line-height: 1.4; }
+.bm-chat-user .bm-chat-body { background: var(--bs-primary, #0d6efd); color: #fff; border-bottom-right-radius: .2rem; }
+.bm-chat-bot .bm-chat-body { background: var(--bs-gray-200, #e9ecef); color: var(--bs-gray-800, #343a40); border-bottom-left-radius: .2rem; }
+.bm-chat-name { font-weight: 600; font-size: .75rem; margin-bottom: .15rem; }
+.bm-chat-time { font-size: .7rem; opacity: .65; margin-top: .2rem; }
+.bm-chat-text { word-break: break-word; }
+.bm-chat-input { display: flex; border-top: 1px solid var(--bs-gray-200, #e9ecef); }
+.bm-chat-field { flex: 1; border: none; padding: .625rem .75rem; font-size: .875rem; outline: none; }
+.bm-chat-send { border: none; background: var(--bs-primary, #0d6efd); color: #fff; padding: .625rem 1rem; font-size: 1rem; cursor: pointer; transition: background .15s; }
+.bm-chat-send:hover { background: var(--bs-primary-dark, #0b5ed7); }
+@keyframes bm-chat-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Dark variant */
+.bm-chat-dark { border-color: var(--bs-gray-700, #495057); }
+.bm-chat-dark .bm-chat-log { background: var(--bs-gray-900, #212529); }
+.bm-chat-dark .bm-chat-bot .bm-chat-body { background: var(--bs-gray-700, #495057); color: var(--bs-gray-100, #f8f9fa); }
+.bm-chat-dark .bm-chat-field { background: var(--bs-gray-800, #343a40); color: var(--bs-gray-100, #f8f9fa); }
+.bm-chat-dark .bm-chat-input { border-color: var(--bs-gray-700, #495057); }
+
+/* ============================================================
+   GANTT CHART (m-gantt)
+   ============================================================ */
 .bm-gantt { overflow-x: auto; border: 1px solid var(--bs-gray-200, #e9ecef); border-radius: var(--bs-border-radius, .25rem); background: #fff; }
 .bm-gantt svg { display: block; min-width: 100%; }
 .bm-gantt-dark { background: var(--bs-gray-900, #212529); border-color: var(--bs-gray-700, #495057); }

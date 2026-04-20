@@ -1,6 +1,6 @@
 # BareMetalBind
 
-Reactive state + DOM directive binder with formatters, list rendering, transitions, computed expressions, toast notifications, image binding, Gantt charts, table rendering, and treeview — ~750 lines, no dependencies.
+Reactive state + DOM directive binder with formatters, list rendering, transitions, computed expressions, toast notifications, image binding, chatbot, calendar, Gantt charts, table rendering, and treeview — ~950 lines, no dependencies.
 
 ## API
 
@@ -48,6 +48,8 @@ Scans the subtree of `root` for directive attributes and wires them up:
 | `m-tree="key"` | any container | Collapsible treeview from nested array with icons, selection, and expand/collapse. |
 | `m-table="key"` | `<table>` | Sortable data table from an array of objects, with column config and row selection. |
 | `m-gantt="key"` | any container | Read-only SVG Gantt chart with groups, progress bars, milestones, and month gridlines. |
+| `m-calendar="key"` | any container | Month grid calendar with event dots, prev/next navigation, and day selection. |
+| `m-chatbot="key"` | any container | Chat UI with message bubbles, avatars, timestamps, and input box. |
 
 ### `BareMetalBind.formatters`
 
@@ -315,6 +317,106 @@ Bind an element's image source to a reactive state property. On `<img>` elements
 | `m-img-lazy` | ❌ | Defer loading until the element enters the viewport (uses `IntersectionObserver` with 200px margin) |
 
 When the state value changes, the image updates reactively. On `<img>` elements, an `error` event listener automatically swaps to the fallback URL if provided.
+
+---
+
+## Chatbot (`m-chatbot`)
+
+Render a chat UI from a reactive message array with user/bot bubbles, avatars, timestamps, and a built-in input box.
+
+```html
+<div m-chatbot="messages" m-chatbot-send="onSend"></div>
+```
+
+```js
+const { state, watch } = BareMetalBind.reactive({
+  messages: [
+    { text: 'Hello! How can I help?', from: 'bot', name: 'Assistant', avatar: '🤖', time: '10:30' },
+    { text: 'Show me the dashboard', from: 'user', avatar: '😀', time: '10:31' }
+  ],
+  onSend: (text) => {
+    state.messages.push({ text, from: 'user', time: new Date().toLocaleTimeString().slice(0, 5) });
+    // Call your API and push the bot response…
+    setTimeout(() => state.messages.push({ text: 'Here you go!', from: 'bot', avatar: '🤖' }), 500);
+  }
+});
+BareMetalBind.bind(document.getElementById('app'), state, watch);
+```
+
+### Attributes
+
+| Attribute | Required | Description |
+|---|---|---|
+| `m-chatbot="key"` | ✅ | State path to the messages array |
+| `m-chatbot-send="fn"` | ❌ | State function called with the input text when the user submits. If omitted, pushes `{ text, from:'user' }` to the array. |
+| `m-chatbot-placeholder="text"` | ❌ | Input placeholder (default: `Type a message…`) |
+| `m-chatbot-text="field"` | ❌ | Property name for message text (default: `text`) |
+| `m-chatbot-from="field"` | ❌ | Property name for sender (default: `from`). Value `'user'` = right-aligned; anything else = left-aligned bot. |
+
+### Message object properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `text` | string | `''` | Message body |
+| `from` | string | `'user'` | `'user'` for right-aligned bubble, anything else for bot/left |
+| `avatar` | string | *(none)* | Emoji or text shown beside the bubble |
+| `name` | string | *(none)* | Sender name shown above the message |
+| `time` | string | *(none)* | Timestamp shown below the message |
+
+New messages slide in with animation. The log auto-scrolls to the latest message. Add `bm-chat-dark` for dark mode.
+
+> **Requires:** BareMetalStyles.css for chat styling.
+
+---
+
+## Calendar (`m-calendar`)
+
+Render a month-grid calendar with event dots, prev/next navigation, and day click selection.
+
+```html
+<div m-calendar="events" m-calendar-select="onDayClick"></div>
+```
+
+```js
+const { state, watch } = BareMetalBind.reactive({
+  events: [
+    { date: '2025-04-20', label: 'Sprint review', color: '#0d6efd' },
+    { date: '2025-04-20', label: 'Team lunch', color: '#198754' },
+    { date: '2025-04-25', label: 'Release v2.0', color: '#dc3545' }
+  ],
+  onDayClick: (dateStr, events, e) => console.log(dateStr, events)
+});
+BareMetalBind.bind(document.getElementById('app'), state, watch);
+```
+
+### Attributes
+
+| Attribute | Required | Description |
+|---|---|---|
+| `m-calendar="key"` | ✅ | State path to the events array |
+| `m-calendar-select="fn"` | ❌ | State function called with `(dateString, eventsForDay, event)` on day click |
+| `m-calendar-date="field"` | ❌ | Property name for event date (default: `date`, format: `YYYY-MM-DD`) |
+| `m-calendar-label="field"` | ❌ | Property name for event label (default: `label`) |
+
+### Event object properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `date` | string | — | Date in `YYYY-MM-DD` format |
+| `label` | string | `''` | Event name (shown as dot tooltip) |
+| `color` | string | primary | Dot colour |
+
+### Features
+
+- **Month navigation** — ◀/▶ buttons to step through months
+- **Today highlight** — current date has a tinted background and bold number
+- **Event dots** — up to 3 coloured dots per day, with `+N` overflow badge
+- **Day selection** — click to highlight with outline; callback receives date and events
+- **Reactive** — push events to the array and the calendar re-renders
+
+Add `bm-calendar-dark` for dark mode styling.
+
+> **Requires:** BareMetalStyles.css for calendar styling.
 
 ---
 

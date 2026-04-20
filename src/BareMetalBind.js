@@ -1,7 +1,7 @@
 // BareMetalBind — reactive Proxy state and m-* directive binder
 // Directives: m-value, m-text, m-if, m-click, m-submit, m-class, m-attr,
 //             m-each (keyed), m-navbar, m-transition, m-expression,
-//             m-toast, m-img, m-gantt, m-table, m-tree
+//             m-toast, m-img, m-chatbot, m-calendar, m-gantt, m-table, m-tree
 // API: reactive(initial) → { state, watch, data }
 //      bind(root, state, watch)
 //      formatters   – registry object for pipe transforms
@@ -453,6 +453,252 @@ const BareMetalBind = (() => {
           }
         });
       };
+      render(); watch(wk, render);
+    });
+
+    // ── m-chatbot (message array → chat UI) ──
+    // Usage: <div m-chatbot="messages" m-chatbot-send="onSend"></div>
+    // State: [{ text:'Hello', from:'user', time:'10:30', avatar:'😀' }]
+    root.querySelectorAll('[m-chatbot]').forEach(n => {
+      const arrKey = n.getAttribute('m-chatbot'), wk = topKey(arrKey);
+      const sendFn = n.getAttribute('m-chatbot-send') || '';
+      const placeholder = n.getAttribute('m-chatbot-placeholder') || 'Type a message…';
+      const textField = n.getAttribute('m-chatbot-text') || 'text';
+      const fromField = n.getAttribute('m-chatbot-from') || 'from';
+
+      n.classList.add('bm-chat');
+      var log = document.createElement('div');
+      log.className = 'bm-chat-log';
+      var form = document.createElement('form');
+      form.className = 'bm-chat-input';
+      var input = document.createElement('input');
+      input.type = 'text'; input.placeholder = placeholder; input.className = 'bm-chat-field';
+      var btn = document.createElement('button');
+      btn.type = 'submit'; btn.className = 'bm-chat-send'; btn.textContent = '➤';
+      form.appendChild(input); form.appendChild(btn);
+      n.appendChild(log); n.appendChild(form);
+
+      var lastLen = 0;
+
+      function renderMsg(msg) {
+        var m = typeof msg === 'string' ? { text: msg, from: 'user' } : msg;
+        var isBot = (m[fromField] || '') !== 'user';
+        var bubble = document.createElement('div');
+        bubble.className = 'bm-chat-bubble' + (isBot ? ' bm-chat-bot' : ' bm-chat-user');
+
+        if (m.avatar) {
+          var av = document.createElement('span');
+          av.className = 'bm-chat-avatar';
+          av.textContent = m.avatar;
+          bubble.appendChild(av);
+        }
+
+        var body = document.createElement('div');
+        body.className = 'bm-chat-body';
+
+        if (m.name) {
+          var nm = document.createElement('div');
+          nm.className = 'bm-chat-name';
+          nm.textContent = m.name;
+          body.appendChild(nm);
+        }
+
+        var txt = document.createElement('div');
+        txt.className = 'bm-chat-text';
+        txt.textContent = m[textField] || '';
+        body.appendChild(txt);
+
+        if (m.time) {
+          var tm = document.createElement('div');
+          tm.className = 'bm-chat-time';
+          tm.textContent = m.time;
+          body.appendChild(tm);
+        }
+
+        bubble.appendChild(body);
+        log.appendChild(bubble);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      function sync() {
+        var arr = getPath(state, arrKey);
+        if (!Array.isArray(arr)) return;
+        while (lastLen < arr.length) { renderMsg(arr[lastLen]); lastLen++; }
+        if (arr.length < lastLen) {
+          log.innerHTML = ''; lastLen = 0;
+          arr.forEach(function(m) { renderMsg(m); lastLen++; });
+        }
+      }
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var val = input.value.trim();
+        if (!val) return;
+        input.value = '';
+        if (sendFn && typeof state[sendFn] === 'function') {
+          state[sendFn](val);
+        } else {
+          var arr = getPath(state, arrKey);
+          if (Array.isArray(arr)) arr.push({ text: val, from: 'user' });
+        }
+      });
+
+      sync(); watch(wk, sync);
+    });
+
+    // ── m-calendar (month grid with events) ──
+    // Usage: <div m-calendar="events" m-calendar-select="onDay"></div>
+    // State: [{ date:'2025-04-20', label:'Meeting', color:'#0d6efd' }]
+    root.querySelectorAll('[m-calendar]').forEach(n => {
+      const arrKey = n.getAttribute('m-calendar'), wk = topKey(arrKey);
+      const selectFn = n.getAttribute('m-calendar-select') || '';
+      const dateField = n.getAttribute('m-calendar-date') || 'date';
+      const labelField = n.getAttribute('m-calendar-label') || 'label';
+      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+      var viewYear = new Date().getFullYear(), viewMonth = new Date().getMonth();
+
+      function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+      function render() {
+        var arr = getPath(state, arrKey);
+        if (!Array.isArray(arr)) arr = [];
+        n.innerHTML = '';
+        n.classList.add('bm-calendar');
+
+        // Build event lookup: 'YYYY-MM-DD' → [events]
+        var evMap = {};
+        arr.forEach(function(ev) {
+          var d = ev[dateField];
+          if (!d) return;
+          var key = d.substring(0, 10);
+          if (!evMap[key]) evMap[key] = [];
+          evMap[key].push(ev);
+        });
+
+        // Header: ◀ Month Year ▶
+        var header = document.createElement('div');
+        header.className = 'bm-cal-header';
+
+        var prev = document.createElement('button');
+        prev.className = 'bm-cal-nav';
+        prev.textContent = '◀';
+        prev.addEventListener('click', function() {
+          viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+          render();
+        });
+
+        var next = document.createElement('button');
+        next.className = 'bm-cal-nav';
+        next.textContent = '▶';
+        next.addEventListener('click', function() {
+          viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+          render();
+        });
+
+        var title = document.createElement('span');
+        title.className = 'bm-cal-title';
+        title.textContent = months[viewMonth] + ' ' + viewYear;
+
+        header.appendChild(prev);
+        header.appendChild(title);
+        header.appendChild(next);
+        n.appendChild(header);
+
+        // Day-of-week header
+        var dowRow = document.createElement('div');
+        dowRow.className = 'bm-cal-row bm-cal-dow';
+        days.forEach(function(d) {
+          var cell = document.createElement('div');
+          cell.className = 'bm-cal-cell bm-cal-dow-cell';
+          cell.textContent = d;
+          dowRow.appendChild(cell);
+        });
+        n.appendChild(dowRow);
+
+        // Calendar grid
+        var first = new Date(viewYear, viewMonth, 1);
+        var startDay = first.getDay();
+        var daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+        var today = new Date();
+        var todayStr = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate());
+
+        var row = document.createElement('div');
+        row.className = 'bm-cal-row';
+
+        // Leading blanks
+        for (var b = 0; b < startDay; b++) {
+          var blank = document.createElement('div');
+          blank.className = 'bm-cal-cell bm-cal-empty';
+          row.appendChild(blank);
+        }
+
+        for (var d = 1; d <= daysInMonth; d++) {
+          var dateStr = viewYear + '-' + pad(viewMonth + 1) + '-' + pad(d);
+          var cell = document.createElement('div');
+          cell.className = 'bm-cal-cell bm-cal-day';
+          if (dateStr === todayStr) cell.classList.add('bm-cal-today');
+
+          var num = document.createElement('span');
+          num.className = 'bm-cal-num';
+          num.textContent = d;
+          cell.appendChild(num);
+
+          // Event dots/badges
+          var cellEvents = evMap[dateStr];
+          if (cellEvents) {
+            cell.classList.add('bm-cal-has-events');
+            var dots = document.createElement('div');
+            dots.className = 'bm-cal-dots';
+            cellEvents.forEach(function(ev, i) {
+              if (i >= 3) return; // max 3 dots
+              var dot = document.createElement('span');
+              dot.className = 'bm-cal-dot';
+              if (ev.color) dot.style.background = ev.color;
+              dot.title = ev[labelField] || '';
+              dots.appendChild(dot);
+            });
+            if (cellEvents.length > 3) {
+              var more = document.createElement('span');
+              more.className = 'bm-cal-more';
+              more.textContent = '+' + (cellEvents.length - 3);
+              dots.appendChild(more);
+            }
+            cell.appendChild(dots);
+          }
+
+          // Click handler
+          (function(ds, evts) {
+            cell.addEventListener('click', function(e) {
+              var prev = n.querySelector('.bm-cal-selected');
+              if (prev) prev.classList.remove('bm-cal-selected');
+              cell.classList.add('bm-cal-selected');
+              if (selectFn && typeof state[selectFn] === 'function') state[selectFn](ds, evts || [], e);
+            });
+          })(dateStr, cellEvents);
+
+          row.appendChild(cell);
+
+          if ((startDay + d) % 7 === 0) {
+            n.appendChild(row);
+            row = document.createElement('div');
+            row.className = 'bm-cal-row';
+          }
+        }
+
+        // Trailing blanks
+        var remaining = (startDay + daysInMonth) % 7;
+        if (remaining > 0) {
+          for (var t = remaining; t < 7; t++) {
+            var blank2 = document.createElement('div');
+            blank2.className = 'bm-cal-cell bm-cal-empty';
+            row.appendChild(blank2);
+          }
+          n.appendChild(row);
+        }
+      }
+
       render(); watch(wk, render);
     });
 
