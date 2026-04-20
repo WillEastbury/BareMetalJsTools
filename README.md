@@ -17,6 +17,7 @@ Tiny, zero-dependency vanilla-JS primitives for building fully client-rendered a
 | [`BareMetalRendering`](docs/BareMetalRendering.md) | 4 KB  | Glues Rest + Bind + Template into an entity lifecycle (`createEntity`, `listEntities`). Also exposes `window.minibind`. |
 | [`BareMetalRouting`](docs/BareMetalRouting.md) | 8 KB  | History-API SPA router. Named segments (`:param`) and catch-all (`*`) patterns. Exposed as `window.BMRouter`. |
 | [`PicoCompress`](docs/PicoCompress.md)     | 27 KB | Block-based LZ compressor. Zero deps. Byte-identical to the [C reference](https://github.com/WillEastbury/picocompress). Integrated into `BareMetalRest` for opt-in wire compression. |
+| [`BareMetalStyles`](docs/BareMetalStyles.md) | 34 KB | Minimal CSS framework. Drop-in Bootstrap 5 subset (~200 classes) covering grid, flexbox, spacing, buttons, forms, tables, cards, modals, alerts, and more. Zero JS required. |
 
 ### Dependency graph
 

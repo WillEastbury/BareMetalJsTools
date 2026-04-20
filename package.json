@@ -25,7 +25,8 @@
     "./rest":         { "import": "./esm/BareMetalRest.js",      "default": "./src/BareMetalRest.js" },
     "./routing":      { "import": "./esm/BareMetalRouting.js",   "default": "./src/BareMetalRouting.js" },
     "./template":     { "import": "./esm/BareMetalTemplate.js",  "default": "./src/BareMetalTemplate.js" },
-    "./picocompress": { "import": "./esm/picocompress.js",       "default": "./src/picocompress.js" }
+    "./picocompress": { "import": "./esm/picocompress.js",       "default": "./src/picocompress.js" },
+    "./styles":       "./src/BareMetalStyles.css"
   },
   "scripts": {
     "test": "jest",
@@ -44,6 +45,6 @@
   "keywords": [
     "vanilla-js", "no-build", "reactive", "proxy", "binding",
     "spa-router", "rest-client", "websocket", "binary", "bso1",
-    "templating", "schema-driven", "lightweight"
+    "templating", "schema-driven", "lightweight", "css", "minimal-css"
   ]
 }
