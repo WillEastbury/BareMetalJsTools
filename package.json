@@ -36,6 +36,7 @@
     "minify": "for %f in (src\\BareMetal.*.js) do npx terser %f --compress --mangle -o %~dpnf.min.js"
   },
   "devDependencies": {
+    "csso-cli": "^4.0.2",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
     "terser": "^5.46.1"

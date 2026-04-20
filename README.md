@@ -1,6 +1,6 @@
 # BareMetalJsTools
 
-> *84 KB minified for a complete reactive UI framework, binary serialisation, compression, REST+WebSocket transport, routing, charting, and graph visualisation. Most people pull in more than that just for a toast notification library.*
+> *122 KB minified for a complete reactive UI framework, CSS toolkit, binary serialisation, compression, REST+WebSocket transport, routing, charting, and graph visualisation. Most people pull in more than that just for a toast notification library.*
 
 Modern web development has become absurdly complicated. You need a bundler, a transpiler, a framework, a meta-framework, a state manager, a CSS-in-JS solution, and forty-seven config files before you can render "Hello World". Then you wait for it to compile.
 
@@ -34,7 +34,7 @@ The whole point is the same everywhere: understand what the machine actually nee
 
 | Module | What it does | Source | Min | Nearest equivalent for the not-quite-insane |
 |---|---|---|---|---|
-| [`BareMetal.Styles`](docs/BareMetalStyles.md) | CSS framework. Grid, flex, buttons, forms, tables, cards, modals, alerts, toasts — all with short class names optimised for wire size. Zero JS. | [53 KB](src/BareMetalStyles.css) | — | Bootstrap (227 KB), Tailwind (≈300 KB+), Fabric UI (≈350 KB), React (≈140 KB) |
+| [`BareMetal.Styles`](docs/BareMetalStyles.md) | CSS framework. Grid, flex, buttons, forms, tables, cards, modals, alerts, toasts — all with short class names optimised for wire size. Zero JS. | [53 KB](src/BareMetalStyles.css) | [38 KB](src/BareMetalStyles.min.css) | Bootstrap (227 KB), Tailwind (≈300 KB+), Fabric UI (≈350 KB), React (≈140 KB) |
 | [`BareMetal.Bind`](docs/BareMetalBind.md) | Reactive `Proxy` state + `m-*` directives. Two-way forms, lists, toasts, chatbot, calendar, Gantt charts, sortable tables, tree views. | [13 KB](src/BareMetal.Bind.js) | [6 KB](src/BareMetal.Bind.min.js) | Vue.js (≈40 KB min), Alpine.js (≈15 KB), Rivets.js ❤️, Knockout.js ❤️, TinyBind 💕 |
 | [`BareMetal.Components`](docs/BareMetalBind.md) | Widget directives (m-img, m-toast, m-chatbot, m-calendar, m-gantt, m-table, m-tree, m-entity) that extend Bind. | [25 KB](src/BareMetal.Components.js) | [13 KB](src/BareMetal.Components.min.js) | PrimeVue, Vuetify, Material UI (hundreds of KB each) |
 | [`BareMetal.ComponentFactories`](docs/BareMetalBind.md) | `create.*` helpers and `chatEndpoint()` auto-wire for REST-backed chatbots. | [2 KB](src/BareMetal.ComponentFactories.js) | [1 KB](src/BareMetal.ComponentFactories.min.js) | Hand-rolled boilerplate |
@@ -47,7 +47,7 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.Routing`](docs/BareMetalRouting.md) | History-API SPA router. Named segments (`:param`), catch-all (`*`), query parsing. | [7 KB](src/BareMetal.Routing.js) | [2 KB](src/BareMetal.Routing.min.js) | vue-router (≈18 KB), react-router (≈30 KB) |
 | [`BareMetal.Charts`](docs/BareMetalCharts.md) | SVG charts — bar, line, sparkline, donut, gauge. Animated, themeable via CSS custom properties. | [16 KB](src/BareMetal.Charts.js) | [8 KB](src/BareMetal.Charts.min.js) | Chart.js (≈200 KB), D3 (≈250 KB) |
 | [`BareMetal.Graph`](docs/BareMetalGraph.md) | Force-directed graph visualiser. Drag, zoom, hover, dynamic add/remove. | [18 KB](src/BareMetal.Graph.js) | [9 KB](src/BareMetal.Graph.min.js) | D3-force (≈30 KB) + D3-selection (≈20 KB), Cytoscape.js (≈600 KB) |
-| **Total** | **The whole toolkit** | **≈216 KB** | **≈84 KB** | **≈1,565 KB** (picking the smaller option from each row) |
+| **Total** | **The whole toolkit** | **≈216 KB** | **≈122 KB** | **≈1,565 KB** (picking the smaller option from each row) |
 
 ### Architecture
 
