@@ -69,10 +69,11 @@
           <a href="#step-4">Step 4: Data Table</a>
           <a href="#step-5">Step 5: Charts</a>
           <a href="#step-6">Step 6: Gauges</a>
-          <a href="#step-7">Step 7: Architecture</a>
-          <a href="#step-8">Step 8: Forms & Modal</a>
-          <a href="#step-9">Step 9: Reactive Bind</a>
-          <a href="#step-10">Step 10: All Together</a>
+          <a href="#step-7">Step 7: Toasts</a>
+          <a href="#step-8">Step 8: Architecture</a>
+          <a href="#step-9">Step 9: Forms & Modal</a>
+          <a href="#step-10">Step 10: Reactive Bind</a>
+          <a href="#step-11">Step 11: All Together</a>
         </nav>
       </aside>
 
@@ -285,9 +286,72 @@
             </div>
           </section>
 
-          <!-- STEP 7: Architecture Graph -->
+          <!-- STEP 7: Toasts -->
           <section id="step-7" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">7</span> Architecture Diagram</h2>
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">7</span> Toast Notifications</h2>
+            <p>Toasts are pure CSS — no JavaScript needed. They slide in, and auto-dismiss toasts fade themselves out after a set duration using CSS animations. Add a <code>.toast-progress</code> bar for a visual countdown.</p>
+            <div class="code-block"><span class="comment">&lt;!-- Container positions toasts on screen --&gt;</span>
+<span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"toast-container toast-container-top-right"</span><span class="tag">&gt;</span>
+
+  <span class="comment">&lt;!-- Manual toast (stays until removed) --&gt;</span>
+  <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"toast toast-success"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"toast-header"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;span</span> <span class="keyword">class=</span><span class="string">"toast-title"</span><span class="tag">&gt;</span>Saved<span class="tag">&lt;/span&gt;</span>
+      <span class="tag">&lt;span</span> <span class="keyword">class=</span><span class="string">"toast-time"</span><span class="tag">&gt;</span>just now<span class="tag">&lt;/span&gt;</span>
+    <span class="tag">&lt;/div&gt;</span>
+    <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"toast-body"</span><span class="tag">&gt;</span>Changes saved.<span class="tag">&lt;/div&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+
+  <span class="comment">&lt;!-- Auto-dismiss after 5s --&gt;</span>
+  <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"toast toast-auto toast-info"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"toast-body"</span><span class="tag">&gt;</span>This will disappear...<span class="tag">&lt;/div&gt;</span>
+    <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"toast-progress"</span><span class="tag">&gt;&lt;/div&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+
+<span class="tag">&lt;/div&gt;</span></div>
+
+            <div class="result-label">Result — click the buttons to fire toasts</div>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <button class="btn btn-sm btn-success" onclick="fireToast('success','Saved','Alert rule saved successfully.')">✅ Success Toast</button>
+              <button class="btn btn-sm btn-danger" onclick="fireToast('danger','Error','Connection to database failed.')">❌ Error Toast</button>
+              <button class="btn btn-sm btn-warning" onclick="fireToast('warning','Warning','CPU usage above 80%.')">⚠️ Warning Toast</button>
+              <button class="btn btn-sm btn-info" onclick="fireToast('info','Info','Deployment completed in 42s.')">ℹ️ Info Toast</button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="fireToast('dark','System','Background sync complete.', true)">🌙 Dark Toast</button>
+            </div>
+
+            <!-- Inline static demo -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <div class="small text-muted mb-1">Static toast (stays visible)</div>
+                <div class="toast toast-success" style="position:relative; animation:none;">
+                  <div class="toast-header">
+                    <span class="toast-title">✅ Saved</span>
+                    <span class="toast-time">just now</span>
+                  </div>
+                  <div class="toast-body">Alert rule created successfully.</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="small text-muted mb-1">With progress countdown</div>
+                <div class="toast toast-danger" style="position:relative; animation:none;">
+                  <div class="toast-header">
+                    <span class="toast-title">❌ Connection Failed</span>
+                    <span class="toast-time">2s ago</span>
+                  </div>
+                  <div class="toast-body">Retrying in 5 seconds...</div>
+                  <div class="toast-progress" style="animation:none; width:60%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="alert alert-info">
+              <strong>Zero JS needed for styling!</strong> The <code>.toast-auto</code> class uses CSS <code>@keyframes</code> to auto-dismiss after 5s (customise with <code>.toast-3s</code>, <code>.toast-8s</code>, <code>.toast-10s</code>). The only JS here is creating the DOM element when you click the button — the animation and removal is pure CSS.
+            </div>
+          </section>
+
+          <!-- STEP 8: Architecture Graph -->
+          <section id="step-8" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">8</span> Architecture Diagram</h2>
             <p>Visualise service dependencies with a force-directed graph. Drag nodes, scroll to zoom, hover to highlight connections.</p>
             <div class="code-block"><span class="tag">&lt;script</span> <span class="keyword">src=</span><span class="string">"BareMetalGraph.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
 <span class="keyword">const</span> graph = <span class="keyword">BareMetalGraph</span>.create(<span class="string">'#arch-graph'</span>, {
@@ -314,9 +378,9 @@
             </div>
           </section>
 
-          <!-- STEP 8: Forms & Modal -->
-          <section id="step-8" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">8</span> Forms & Modal</h2>
+          <!-- STEP 9: Forms & Modal -->
+          <section id="step-9" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">9</span> Forms & Modal</h2>
             <p>Use form components for input, and a modal for confirmation dialogs. The modal is pure CSS — just toggle the <code>.show</code> class.</p>
 
             <div class="result-label">Result</div>
@@ -382,9 +446,9 @@
             <div class="alert alert-success" id="rule-alert" style="display:none;">✅ Alert rule created successfully!</div>
           </section>
 
-          <!-- STEP 9: Reactive Binding -->
-          <section id="step-9" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">9</span> Reactive Binding</h2>
+          <!-- STEP 10: Reactive Binding -->
+          <section id="step-10" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">10</span> Reactive Binding</h2>
             <p>Use <code>BareMetalBind</code> to create reactive state that auto-updates the DOM. Bind inputs with <code>m-value</code>, text with <code>m-text</code>, visibility with <code>m-if</code>.</p>
             <div class="code-block"><span class="tag">&lt;script</span> <span class="keyword">src=</span><span class="string">"BareMetalBind.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
 <span class="keyword">const</span> state = <span class="keyword">BareMetalBind</span>.create({ name: <span class="string">''</span>, count: 0 });
@@ -415,9 +479,9 @@ state.count++; <span class="comment">// UI updates instantly</span></div>
             </div>
           </section>
 
-          <!-- STEP 10: Complete -->
-          <section id="step-10" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">10</span> All Together</h2>
+          <!-- STEP 11: Complete -->
+          <section id="step-11" class="step mb-5">
+            <h2 class="d-flex align-items-center mb-3"><span class="step-number">11</span> All Together</h2>
             <p>That's the complete dashboard! Let's recap what we used:</p>
 
             <div class="row g-3 mb-4">
@@ -472,6 +536,9 @@ state.count++; <span class="comment">// UI updates instantly</span></div>
     </footer>
   </div>
 
+  <!-- Toast container (fixed position, top-right) -->
+  <div class="toast-container toast-container-top-right" id="toast-container"></div>
+
   <!-- ===== SCRIPTS ===== -->
   <script src="../src/BareMetalCharts.js"></script>
   <script src="../src/BareMetalGraph.js"></script>
@@ -525,7 +592,26 @@ state.count++; <span class="comment">// UI updates instantly</span></div>
     BareMetalCharts.gauge('#gauge-disk', 34, { label: 'Disk %', zones });
     BareMetalCharts.gauge('#gauge-net',  85, { label: 'Network %', zones });
 
-    // --- Step 7: Architecture graph ---
+    // --- Step 7: Toast helper (only JS is creating the element — animation is CSS) ---
+    function fireToast(type, title, message, dark) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast toast-auto toast-5s' + (dark ? ' toast-dark' : ' toast-' + type);
+      toast.innerHTML =
+        '<div class="toast-header">' +
+          '<span class="toast-title">' + title + '</span>' +
+          '<span class="toast-time">just now</span>' +
+        '</div>' +
+        '<div class="toast-body">' + message + '</div>' +
+        '<div class="toast-progress"></div>';
+      container.appendChild(toast);
+      // Remove from DOM after animation completes
+      toast.addEventListener('animationend', function(e) {
+        if (e.animationName === 'toast-auto-dismiss') toast.remove();
+      });
+    }
+
+    // --- Step 8: Architecture graph ---
     const archGraph = BareMetalGraph.create('#arch-graph', {
       nodes: [
         { id: 'client',   label: 'Browser',        group: 'infra',    detail: 'End users' },
