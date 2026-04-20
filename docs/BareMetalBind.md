@@ -1,6 +1,6 @@
 # BareMetalBind
 
-Reactive state + DOM directive binder with formatters, list rendering, transitions, and computed expressions — ~280 lines, no dependencies.
+Reactive state + DOM directive binder with formatters, list rendering, transitions, computed expressions, and toast notifications — ~490 lines, no dependencies.
 
 ## API
 
@@ -43,6 +43,7 @@ Scans the subtree of `root` for directive attributes and wires them up:
 | `m-submit="fn"` | `<form>` | Calls `state[fn](event)` on submit, with `preventDefault()`. |
 | `m-transition="name"` | with `m-if` | CSS-class-driven enter/leave transitions. |
 | `m-expression="target = expr"` | any element | Computed value — evaluates expression reactively. |
+| `m-toast="key"` | `.toast-container` | Creates toast popups when items are pushed to the array. |
 
 ### `BareMetalBind.formatters`
 
@@ -239,6 +240,47 @@ state.price = 20;
 Dependencies are extracted automatically from the right-hand side. Standard globals (`Math`, `Date`, `Number`, etc.) are available.
 
 > **Note:** The target key must not appear in the expression's dependencies (to avoid infinite loops). Expression evaluation errors are silently ignored.
+
+---
+
+## Toast binding (`m-toast`)
+
+Bind a `.toast-container` element to a reactive array. When items are pushed, toast notifications are created automatically using BareMetalStyles toast classes.
+
+```html
+<div class="toast-container toast-container-top-right" m-toast="notifications"></div>
+```
+
+```js
+const { state, watch } = BareMetalBind.reactive({ notifications: [] });
+BareMetalBind.bind(root, state, watch);
+
+// Push an object → toast appears and auto-dismisses
+state.notifications.push({
+  type: 'success',        // success | danger | warning | info | dark
+  title: 'Deployed',
+  message: 'v2.1.0 is live!',
+  duration: '5s'          // 3s | 5s | 8s | 10s (default: 5s)
+});
+
+// Push a plain string for a quick info toast
+state.notifications.push('Quick notification!');
+```
+
+### Toast object properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `message` | string | `''` | Toast body text |
+| `title` | string | *(none)* | If set, adds a toast header with title and close button |
+| `type` | string | `'info'` | Colour variant: `success`, `danger`, `warning`, `info`, `dark` |
+| `duration` | string | `'5s'` | Auto-dismiss timing: `3s`, `5s`, `8s`, `10s` |
+| `time` | string | *(none)* | Optional timestamp shown in the header |
+| `progress` | boolean | `true` | Set to `false` to hide the countdown progress bar |
+
+Toasts are removed from the DOM automatically when the CSS `toast-auto-dismiss` animation ends. The close button (on toasts with a header) also removes the toast immediately.
+
+> **Requires:** BareMetalStyles.css for the toast container, animation, and colour classes.
 
 ---
 
