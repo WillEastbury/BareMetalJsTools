@@ -1,0 +1,49 @@
+{
+  "name": "baremetal-js-tools",
+  "version": "0.1.0",
+  "description": "Tiny dependency-free vanilla-JS primitives for reactive binding, declarative routing, REST/WebSocket transport, BSO1 binary serialisation, schema-driven DOM templating and entity rendering. Extracted from BareMetalWeb.",
+  "license": "MIT",
+  "author": "Will Eastbury",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WillEastbury/BareMetalJsTools.git"
+  },
+  "files": [
+    "src",
+    "esm",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "src/index.js",
+  "module": "esm/index.js",
+  "exports": {
+    ".":              { "import": "./esm/index.js" },
+    "./binary":       { "import": "./esm/BareMetalBinary.js",    "default": "./src/BareMetalBinary.js" },
+    "./bind":         { "import": "./esm/BareMetalBind.js",      "default": "./src/BareMetalBind.js" },
+    "./rendering":    { "import": "./esm/BareMetalRendering.js", "default": "./src/BareMetalRendering.js" },
+    "./rest":         { "import": "./esm/BareMetalRest.js",      "default": "./src/BareMetalRest.js" },
+    "./routing":      { "import": "./esm/BareMetalRouting.js",   "default": "./src/BareMetalRouting.js" },
+    "./template":     { "import": "./esm/BareMetalTemplate.js",  "default": "./src/BareMetalTemplate.js" },
+    "./picocompress": { "import": "./esm/picocompress.js",       "default": "./src/picocompress.js" }
+  },
+  "scripts": {
+    "test": "jest",
+    "test:coverage": "jest --coverage"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0"
+  },
+  "jest": {
+    "testEnvironment": "jest-environment-jsdom",
+    "testMatch": ["**/tests/**/*.test.js"],
+    "setupFiles": ["./jest.setup.js"],
+    "verbose": true
+  },
+  "keywords": [
+    "vanilla-js", "no-build", "reactive", "proxy", "binding",
+    "spa-router", "rest-client", "websocket", "binary", "bso1",
+    "templating", "schema-driven", "lightweight"
+  ]
+}

@@ -1,0 +1,8 @@
+// Aggregate ESM entry — re-exports every primitive.
+export { default as BareMetalBinary }    from './BareMetalBinary.js';
+export { default as BareMetalBind }      from './BareMetalBind.js';
+export { default as BareMetalRest }      from './BareMetalRest.js';
+export { default as BareMetalTemplate }  from './BareMetalTemplate.js';
+export { default as BareMetalRendering } from './BareMetalRendering.js';
+export { default as BMRouter }           from './BareMetalRouting.js';
+export { default as PicoCompress }       from './picocompress.js';

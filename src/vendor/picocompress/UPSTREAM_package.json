@@ -1,0 +1,33 @@
+{
+  "name": "picocompress",
+  "version": "1.0.0",
+  "description": "Tiny block-based LZ compressor with static dictionary — JavaScript port of the picocompress C library",
+  "type": "module",
+  "main": "./picocompress.cjs",
+  "module": "./picocompress.mjs",
+  "exports": {
+    ".": {
+      "import": "./picocompress.mjs",
+      "require": "./picocompress.cjs"
+    }
+  },
+  "files": [
+    "picocompress.mjs",
+    "picocompress.cjs",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node test.mjs"
+  },
+  "keywords": [
+    "compression",
+    "lz",
+    "embedded",
+    "iot",
+    "picocompress"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
