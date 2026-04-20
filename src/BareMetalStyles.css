@@ -511,9 +511,10 @@ small, .small { font-size: .875em; }
 .sticky-top { position: sticky; top: 0; z-index: 1020; }
 .sticky-bottom { position: sticky; bottom: 0; z-index: 1020; }
 
-/* full-height page layout helper */
-.page-wrapper { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
-.page-wrapper > main, .page-wrapper > .main-content { flex: 1 1 auto; }
+/* full-height page layout — letterbox mode: fixed header + footer, scrollable main */
+.page-wrapper { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+.page-wrapper > main, .page-wrapper > .main-content { flex: 1 1 auto; overflow-y: auto; }
+.page-wrapper > .site-header, .page-wrapper > .site-footer { flex-shrink: 0; }
 
 /* ============================================================
    SITE HEADER
@@ -526,8 +527,6 @@ small, .small { font-size: .875em; }
   padding: var(--sp-2) var(--sp-3);
   border-bottom: var(--bs-border-width) solid var(--bs-border-color);
   background-color: var(--bs-body-bg);
-  position: sticky;
-  top: 0;
   z-index: 1030;
 }
 .site-header .brand {
@@ -566,7 +565,6 @@ small, .small { font-size: .875em; }
    ============================================================ */
 .site-footer {
   padding: var(--sp-3) var(--sp-3);
-  margin-top: auto;
   border-top: var(--bs-border-width) solid var(--bs-border-color);
   font-size: .875rem;
   color: var(--bs-secondary);
