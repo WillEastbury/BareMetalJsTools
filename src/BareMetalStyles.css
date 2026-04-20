@@ -572,6 +572,9 @@ small, .small { font-size: .875em; }
   .site-sidebar.show { display: block; position: absolute; z-index: 1040; height: 100%; box-shadow: 0 .5rem 1rem rgba(0,0,0,.15); }
 }
 
+/* stacked sidebars — remove duplicate borders between adjacent ones */
+.site-sidebar + .site-sidebar { border-left: 0; }
+
 /* ============================================================
    SITE HEADER
    ============================================================ */
