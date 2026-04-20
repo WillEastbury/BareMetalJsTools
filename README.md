@@ -23,13 +23,13 @@ Every module follows the same pattern: small, obvious, fast. You can read the so
 | [`BareMetal.Template`](docs/BareMetalTemplate.md) | Schema-driven DOM builder. Hand it metadata, get a form or table back. | 7 KB | Formly (≈80 KB), JSON Forms (≈200 KB) |
 | [`BareMetal.Metadata`](docs/BareMetalMetadata.md) | Client-side entity schema registry. Inline JSON, server fetch, or PicoWAL binary — declare your entities and render them automatically. | 8 KB | GraphQL schema + codegen toolchain |
 | [`BareMetal.Communications`](docs/BareMetalRest.md) | REST + WebSocket transport. Negotiates WS binary frames → BSO1 → JSON fallback. CSRF, 401-redirect, request multiplexing. | 19 KB | Axios (≈14 KB) + socket.io-client (≈45 KB) |
-| [`BareMetal.Binary`](docs/BareMetalBinary.md) | BSO1 binary wire serialiser. Zero-copy `DataView` reads, HMAC-SHA256 signing via Web Crypto. | 31 KB | Protocol Buffers JS (≈230 KB), MessagePack (≈25 KB) |
-| [`BareMetal.Compress`](docs/PicoCompress.md) | Block-based LZ compressor. Byte-identical to the [C reference](https://github.com/WillEastbury/picocompress). Opt-in wire compression for Rest. | 27 KB | Brotli.js (≈300 KB), HeatShrink (≈8 KB) |
+| [`BareMetal.Binary`](docs/BareMetalBinary.md) | BSO1 binary wire serialiser. Zero-copy `DataView` reads, HMAC-SHA256 signing via Web Crypto. | 23 KB | Protocol Buffers JS (≈230 KB), MessagePack (≈25 KB) |
+| [`BareMetal.Compress`](docs/PicoCompress.md) | Block-based LZ compressor. Byte-identical to the [C reference](https://github.com/WillEastbury/picocompress). Opt-in wire compression for Rest. | 19 KB | Brotli.js (≈300 KB), HeatShrink (≈8 KB) |
 | [`BareMetal.Rendering`](docs/BareMetalRendering.md) | Glue layer — wires Rest + Bind + Template into an entity lifecycle (`createEntity`, `listEntities`). | 4 KB | Custom Redux middleware + React container layer |
 | [`BareMetal.Routing`](docs/BareMetalRouting.md) | History-API SPA router. Named segments (`:param`), catch-all (`*`), query parsing. | 7 KB | vue-router (≈18 KB), react-router (≈30 KB) |
 | [`BareMetal.Charts`](docs/BareMetalCharts.md) | SVG charts — bar, line, sparkline, donut, gauge. Animated, themeable via CSS custom properties. | 16 KB | Chart.js (≈200 KB), D3 (≈250 KB) |
 | [`BareMetal.Graph`](docs/BareMetalGraph.md) | Force-directed graph visualiser. Drag, zoom, hover, dynamic add/remove. | 18 KB | D3-force (≈30 KB) + D3-selection (≈20 KB), Cytoscape.js (≈600 KB) |
-| **Total** | **The whole toolkit** | **≈232 KB** | **≈1,565 KB** (picking the smaller option from each row) |
+| **Total** | **The whole toolkit** | **≈216 KB** | **≈1,565 KB** (picking the smaller option from each row) |
 
 ### Architecture
 
