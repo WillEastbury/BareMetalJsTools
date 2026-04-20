@@ -203,7 +203,7 @@ BareMetal.Rest = (() => {
   async function _maybeDecompress(response) {
     const enc = (response.headers.get('content-encoding') || '').toLowerCase();
     const buf = await response.arrayBuffer();
-    if (enc !== 'BareMetal.Compress') return buf;
+    if (enc !== 'baremetal.compress') return buf;
     if (typeof BareMetal === 'undefined' || !BareMetal.Compress || typeof BareMetal.Compress.decompress !== 'function') {
       throw new Error('Response was BareMetal.Compress-encoded but BareMetal.Compress is not loaded');
     }
@@ -240,7 +240,7 @@ BareMetal.Rest = (() => {
     const ct = r.headers.get('content-type') || '';
     if (!ct.includes('application/json')) return null;
     const enc = (r.headers.get('content-encoding') || '').toLowerCase();
-    if (enc === 'BareMetal.Compress') {
+    if (enc === 'baremetal.compress') {
       const buf = await _maybeDecompress(r);
       const txt = new TextDecoder().decode(new Uint8Array(buf));
       return txt ? JSON.parse(txt) : null;

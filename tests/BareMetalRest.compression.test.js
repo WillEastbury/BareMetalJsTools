@@ -6,26 +6,19 @@
 const path = require('path');
 const fs   = require('fs');
 
-const REST_SRC = path.resolve(__dirname, '../src/BareMetalRest.js');
-const PC_SRC   = path.resolve(__dirname, '../src/picocompress.js');
+const REST_SRC = path.resolve(__dirname, '../src/BareMetal.Rest.js');
+const PC_SRC   = path.resolve(__dirname, '../src/BareMetal.Compress.js');
 
 function loadRestWithPico() {
+  const pcCode   = fs.readFileSync(PC_SRC, 'utf8');
   const restCode = fs.readFileSync(REST_SRC, 'utf8');
-  const restIife = restCode
-    .replace(/const BareMetalRest\s*=\s*/, '')
-    .replace(/;\s*$/, '');
-  const pcCode = fs.readFileSync(PC_SRC, 'utf8');
 
-  const factory = new Function(
-    'fetchFn', 'document', 'window', 'FormData', 'URLSearchParams', 'Promise',
-    [
-      'var fetch = fetchFn;',
-      pcCode,                                         // installs PicoCompress on globalThis
-      `var BareMetalRest = (${restIife});`,
-      'return { BareMetalRest, PicoCompress };'
-    ].join('\n')
+  const fn = new Function(
+    'fetch', 'document', 'window', 'FormData', 'URLSearchParams', 'Promise',
+    pcCode + '\n' + restCode +
+    '\nreturn { BareMetalRest: BareMetal.Rest, PicoCompress: BareMetal.Compress };'
   );
-  return factory(
+  return fn(
     (...args) => global.fetch(...args),
     global.document, global.window, global.FormData, global.URLSearchParams, global.Promise
   );
@@ -61,8 +54,8 @@ describe('BareMetalRest – compression (picocompress)', () => {
     });
 
     await mod.BareMetalRest.call('POST', '/x', big);
-    expect(captured.headers['Content-Encoding']).toBe('picocompress');
-    expect(captured.headers['Accept-Encoding']).toBe('picocompress');
+    expect(captured.headers['Content-Encoding']).toBe('BareMetal.Compress');
+    expect(captured.headers['Accept-Encoding']).toBe('BareMetal.Compress');
     expect(captured.body.byteLength).toBeLessThan(jsonBytes.length);
   });
 
@@ -75,7 +68,7 @@ describe('BareMetalRest – compression (picocompress)', () => {
     });
     await mod.BareMetalRest.call('POST', '/x', { tiny: true });
     expect(captured.headers['Content-Encoding']).toBeUndefined();
-    expect(captured.headers['Accept-Encoding']).toBe('picocompress');
+    expect(captured.headers['Accept-Encoding']).toBe('BareMetal.Compress');
   });
 
   test('does NOT compress when disabled', async () => {
@@ -101,7 +94,7 @@ describe('BareMetalRest – compression (picocompress)', () => {
       status: 200,
       headers: {
         get: (h) => {
-          const v = { 'content-type': 'application/json', 'content-encoding': 'picocompress' };
+          const v = { 'content-type': 'application/json', 'content-encoding': 'BareMetal.Compress' };
           return v[String(h).toLowerCase()] || null;
         }
       },
