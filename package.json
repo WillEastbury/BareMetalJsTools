@@ -15,39 +15,56 @@
     "README.md",
     "LICENSE"
   ],
-
   "exports": {
-    "./binary":             "./src/BareMetal.Binary.js",
-    "./bind":               "./src/BareMetal.Bind.js",
-    "./components":         "./src/BareMetal.Components.js",
-    "./component-factories":"./src/BareMetal.ComponentFactories.js",
-    "./rendering":          "./src/BareMetal.Rendering.js",
-    "./communications":    "./src/BareMetal.Communications.js",
-    "./routing":            "./src/BareMetal.Routing.js",
-    "./template":           "./src/BareMetal.Template.js",
-    "./metadata":           "./src/BareMetal.Metadata.js",
-    "./compress":           "./src/BareMetal.Compress.js",
-    "./charts":             "./src/BareMetal.Charts.js",
-    "./graph":              "./src/BareMetal.Graph.js",
-    "./styles":             "./src/BareMetalStyles.css"
+    "./binary": "./src/BareMetal.Binary.js",
+    "./bind": "./src/BareMetal.Bind.js",
+    "./components": "./src/BareMetal.Components.js",
+    "./component-factories": "./src/BareMetal.ComponentFactories.js",
+    "./rendering": "./src/BareMetal.Rendering.js",
+    "./communications": "./src/BareMetal.Communications.js",
+    "./routing": "./src/BareMetal.Routing.js",
+    "./template": "./src/BareMetal.Template.js",
+    "./metadata": "./src/BareMetal.Metadata.js",
+    "./compress": "./src/BareMetal.Compress.js",
+    "./charts": "./src/BareMetal.Charts.js",
+    "./graph": "./src/BareMetal.Graph.js",
+    "./styles": "./src/BareMetalStyles.css"
   },
   "scripts": {
     "test": "jest",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "minify": "for %f in (src\\BareMetal.*.js) do npx terser %f --compress --mangle -o %~dpnf.min.js"
   },
   "devDependencies": {
     "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0"
+    "jest-environment-jsdom": "^30.3.0",
+    "terser": "^5.46.1"
   },
   "jest": {
     "testEnvironment": "jest-environment-jsdom",
-    "testMatch": ["**/tests/**/*.test.js"],
-    "setupFiles": ["./jest.setup.js"],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "setupFiles": [
+      "./jest.setup.js"
+    ],
     "verbose": true
   },
   "keywords": [
-    "vanilla-js", "no-build", "reactive", "proxy", "binding",
-    "spa-router", "rest-client", "websocket", "binary", "bso1",
-    "templating", "schema-driven", "lightweight", "css", "minimal-css"
+    "vanilla-js",
+    "no-build",
+    "reactive",
+    "proxy",
+    "binding",
+    "spa-router",
+    "rest-client",
+    "websocket",
+    "binary",
+    "bso1",
+    "templating",
+    "schema-driven",
+    "lightweight",
+    "css",
+    "minimal-css"
   ]
 }
