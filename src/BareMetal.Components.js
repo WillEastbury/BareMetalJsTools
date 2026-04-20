@@ -553,6 +553,31 @@ BareMetal.Components = (() => {
       };
       sync(); watch(wk, sync);
     });
+    // m-entity — auto-render form/table from metadata
+    root.querySelectorAll('[m-entity]').forEach(n => {
+      const slug = n.getAttribute('m-entity');
+      const mode = n.getAttribute('m-mode') || 'form';
+      if (typeof BareMetal === 'undefined' || !BareMetal.Metadata) return;
+      const meta = BareMetal.Metadata.get(slug);
+      if (!meta) return;
+
+      if (mode === 'form') {
+        const result = BareMetal.Metadata.renderForm(meta, n, state, watch);
+        if (result && result.state) {
+          // merge entity state keys into parent state
+          for (const k of Object.keys(result.state)) {
+            if (!(k in state)) state[k] = result.state[k];
+          }
+        }
+      } else if (mode === 'table') {
+        const items = getPath(state, n.getAttribute('m-items') || slug + 'List') || [];
+        BareMetal.Metadata.renderTable(meta, n, items, {
+          onView: n.getAttribute('m-on-view') ? getPath(state, n.getAttribute('m-on-view')) : undefined,
+          onEdit: n.getAttribute('m-on-edit') ? getPath(state, n.getAttribute('m-on-edit')) : undefined,
+          onDelete: n.getAttribute('m-on-delete') ? getPath(state, n.getAttribute('m-on-delete')) : undefined
+        });
+      }
+    });
   }
 
   return { bindComponents };

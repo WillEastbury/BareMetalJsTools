@@ -1,77 +1,73 @@
 # BareMetalJsTools
 
-Tiny, zero-dependency vanilla-JS primitives for building fully client-rendered apps **without a build step, without a framework**. Extracted from [BareMetalWeb](https://github.com/WillEastbury/BareMetalWeb) so they can be reused, evolved, and tested in isolation.
+Modern web development has become absurdly complicated. You need a bundler, a transpiler, a framework, a meta-framework, a state manager, a CSS-in-JS solution, and forty-seven config files before you can render "Hello World". Then you wait for it to compile.
 
-> All modules are **classic IIFEs** (`const X = (() => {...})()`) that work as drop-in `<script>` tags. ESM wrappers are also provided for bundler / Node use.
+**This toolkit takes a different approach: just host some damn files.**
+
+BareMetalJsTools is a collection of tiny, zero-dependency vanilla-JS modules that give you reactive UI, REST transport, SPA routing, charts, and a full CSS framework — all as plain `<script>` tags. No build step. No compile phase. No node_modules black hole. Save your file, refresh your browser, and get on with your life.
+
+Every module follows the same pattern: small, obvious, fast. You can read the source in one sitting. You can understand what it does without a tutorial series. And because there's nothing to build, your deploy is just... serving files. *How* you serve them matters — cache headers, compression, CDN — but the point is your toolchain stays out of your way.
+
+> Extracted from [BareMetalWeb](https://github.com/WillEastbury/BareMetalWeb) and maintained separately so each piece can be reused, evolved, and tested in isolation.
 
 ---
 
-## Modules
+## What's in the box
 
-| Module | Size | What it does |
-|---|---:|---|
-| [`BareMetalBinary`](docs/BareMetalBinary.md)   | 31 KB | BSO1 binary wire serialiser. Zero-copy `DataView` reads, HMAC-SHA256 signing via Web Crypto. |
-| [`BareMetalBind`](docs/BareMetalBind.md)       | 8 KB  | Reactive `Proxy` state + 19 `m-*` directives. Forms, lists, toasts, chatbot, calendar, Gantt, tables, trees. `create` factories & `chatEndpoint` auto-wire. |
-| [`BareMetalRest`](docs/BareMetalRest.md)       | 16 KB | REST + WebSocket binary transport. Negotiates BMW WS frames → BSO1 → JSON fallback. CSRF, 401-redirect, request multiplexing. |
-| [`BareMetalTemplate`](docs/BareMetalTemplate.md) | 14 KB | Schema-driven DOM builder. `buildForm(layout, fields)` and `buildTable(fields, items, callbacks)` produce Bootstrap-compatible markup. |
-| [`BareMetalRendering`](docs/BareMetalRendering.md) | 4 KB  | Glues Rest + Bind + Template into an entity lifecycle (`createEntity`, `listEntities`). Also exposes `window.minibind`. |
-| [`BareMetalRouting`](docs/BareMetalRouting.md) | 8 KB  | History-API SPA router. Named segments (`:param`) and catch-all (`*`) patterns. Exposed as `window.BMRouter`. |
-| [`PicoCompress`](docs/PicoCompress.md)     | 27 KB | Block-based LZ compressor. Zero deps. Byte-identical to the [C reference](https://github.com/WillEastbury/picocompress). Integrated into `BareMetalRest` for opt-in wire compression. |
-| [`BareMetalStyles`](docs/BareMetalStyles.md) | 34 KB | Minimal CSS framework. Drop-in Bootstrap 5 subset (~200 classes) covering grid, flexbox, spacing, buttons, forms, tables, cards, modals, alerts, and more. Zero JS required. |
-| [`BareMetalCharts`](docs/BareMetalCharts.md) | 17 KB | Lightweight SVG chart renderer. Bar, line, sparkline, donut, and gauge charts. Animated, themed via CSS custom properties. |
-| [`BareMetalGraph`](docs/BareMetalGraph.md)   | 19 KB | Force-directed graph visualiser. Interactive node/edge diagrams with drag, zoom, hover highlighting, and dynamic add/remove. |
+| Module | What it does |
+|---|---|
+| [`BareMetal.Styles`](docs/BareMetalStyles.md) | CSS framework. Grid, flex, buttons, forms, tables, cards, modals, alerts, toasts — all with short class names optimised for wire size. Zero JS. |
+| [`BareMetal.Bind`](docs/BareMetalBind.md) | Reactive `Proxy` state + `m-*` directives. Two-way forms, lists, toasts, chatbot, calendar, Gantt charts, sortable tables, tree views. |
+| [`BareMetal.Components`](docs/BareMetalBind.md) | Widget directives (m-img, m-toast, m-chatbot, m-calendar, m-gantt, m-table, m-tree, m-entity) that extend Bind. |
+| [`BareMetal.ComponentFactories`](docs/BareMetalBind.md) | `create.*` helpers and `chatEndpoint()` auto-wire for REST-backed chatbots. |
+| [`BareMetal.Template`](docs/BareMetalTemplate.md) | Schema-driven DOM builder. Hand it metadata, get a form or table back. |
+| [`BareMetal.Metadata`](docs/BareMetalMetadata.md) | Client-side entity schema registry. Inline JSON, server fetch, or PicoWAL binary — declare your entities and render them automatically. |
+| [`BareMetal.Rest`](docs/BareMetalRest.md) | REST + WebSocket transport. Negotiates WS binary frames → BSO1 → JSON fallback. CSRF, 401-redirect, request multiplexing. |
+| [`BareMetal.Binary`](docs/BareMetalBinary.md) | BSO1 binary wire serialiser. Zero-copy `DataView` reads, HMAC-SHA256 signing via Web Crypto. |
+| [`BareMetal.Compress`](docs/PicoCompress.md) | Block-based LZ compressor. Byte-identical to the [C reference](https://github.com/WillEastbury/picocompress). Opt-in wire compression for Rest. |
+| [`BareMetal.Rendering`](docs/BareMetalRendering.md) | Glue layer — wires Rest + Bind + Template into an entity lifecycle (`createEntity`, `listEntities`). |
+| [`BareMetal.Routing`](docs/BareMetalRouting.md) | History-API SPA router. Named segments (`:param`), catch-all (`*`), query parsing. |
+| [`BareMetal.Charts`](docs/BareMetalCharts.md) | SVG charts — bar, line, sparkline, donut, gauge. Animated, themeable via CSS custom properties. |
+| [`BareMetal.Graph`](docs/BareMetalGraph.md) | Force-directed graph visualiser. Drag, zoom, hover, dynamic add/remove. |
 
-### Architecture diagram
+### Architecture
 
 ```mermaid
 graph TB
-  subgraph "Presentation Layer"
-    Styles["🎨 BareMetalStyles.css<br/><i>Grid · Buttons · Cards · Modals<br/>Toasts · Sidebar · Header/Footer</i>"]
-    Charts["📊 BareMetalCharts.js<br/><i>Bar · Line · Sparkline<br/>Donut · Gauge</i>"]
-    Graph["🕸️ BareMetalGraph.js<br/><i>Force-directed graph<br/>Drag · Zoom · Groups</i>"]
+  subgraph "Presentation"
+    Styles["🎨 Styles<br/><i>Grid · Buttons · Cards<br/>Modals · Toasts · Layout</i>"]
+    Charts["📊 Charts<br/><i>Bar · Line · Sparkline<br/>Donut · Gauge</i>"]
+    Graph["🕸️ Graph<br/><i>Force-directed<br/>Drag · Zoom</i>"]
   end
 
-  subgraph "Reactive Binding Layer"
-    Bind["⚡ BareMetalBind.js<br/><i>Proxy state · 19 directives · create factories</i>"]
-    subgraph "m-* Directives"
-      direction LR
-      Core["m-value · m-text<br/>m-if · m-class · m-attr"]
-      Lists["m-each · m-navbar<br/>m-expression"]
-      UI["m-toast · m-img<br/>m-table · m-tree"]
-      Rich["m-chatbot · m-calendar<br/>m-gantt"]
-      Events["m-click · m-submit<br/>m-transition"]
-    end
+  subgraph "Reactive Binding"
+    Bind["⚡ Bind + Components<br/><i>Proxy state · m-* directives</i>"]
+    Factories["🏭 Factories<br/><i>create.* · chatEndpoint</i>"]
+    Metadata["📋 Metadata<br/><i>Entity schemas · m-entity</i>"]
   end
 
-  subgraph "Transport Layer"
-    Rest["🌐 BareMetalRest.js<br/><i>REST + WebSocket<br/>CSRF · 401-redirect · Multiplexing</i>"]
-    Binary["📦 BareMetalBinary.js<br/><i>BSO1 binary codec<br/>DataView · HMAC-SHA256</i>"]
-    Pico["🗜️ PicoCompress.js<br/><i>Block-based LZ compression<br/>opt-in wire compression</i>"]
+  subgraph "Transport"
+    Rest["🌐 Rest<br/><i>REST + WebSocket<br/>CSRF · Multiplexing</i>"]
+    Binary["📦 Binary<br/><i>BSO1 codec · HMAC</i>"]
+    Compress["🗜️ Compress<br/><i>LZ compression</i>"]
   end
 
   subgraph "Orchestration"
-    Rendering["🔧 BareMetalRendering.js<br/><i>Entity lifecycle glue<br/>createEntity · listEntities</i>"]
-    Template["📝 BareMetalTemplate.js<br/><i>Schema-driven DOM builder<br/>buildForm · buildTable</i>"]
-    Routing["🧭 BareMetalRouting.js<br/><i>SPA router · :params · catch-all</i>"]
+    Rendering["🔧 Rendering<br/><i>Entity lifecycle</i>"]
+    Template["📝 Template<br/><i>buildForm · buildTable</i>"]
+    Routing["🧭 Routing<br/><i>SPA router</i>"]
   end
 
-  %% Dependencies
   Rendering --> Bind
   Rendering --> Template
   Rendering --> Rest
+  Metadata --> Template
+  Metadata -.-> Bind
+  Metadata -.-> Rest
   Rest --> Binary
-  Rest -.->|opt-in| Pico
-  Bind -.->|chatEndpoint| Rest
-
-  %% Styling uses
+  Rest -.->|opt-in| Compress
+  Factories -.-> Rest
   Bind --> Styles
-  UI --> Styles
-  Rich --> Styles
-
-  %% Standalone
-  Routing -.- Standalone["Independent — no deps"]
-  Charts -.- Standalone2["Independent — no deps"]
-  Graph -.- Standalone3["Independent — no deps"]
 
   style Bind fill:#0d6efd,color:#fff
   style Styles fill:#198754,color:#fff
@@ -79,87 +75,80 @@ graph TB
   style Charts fill:#fd7e14,color:#fff
   style Graph fill:#d63384,color:#fff
   style Rendering fill:#495057,color:#fff
+  style Metadata fill:#20c997,color:#fff
 ```
-
-#### How the pieces connect
-
-| Layer | Modules | Role |
-|---|---|---|
-| **Presentation** | Styles, Charts, Graph | Visual rendering — CSS framework, SVG charts, force-directed graphs. Zero JS deps. |
-| **Reactive Binding** | Bind (19 directives) | Proxy-based state → DOM. Covers forms, lists, toasts, chatbot, calendar, Gantt, tables, trees. `create` factories for each. |
-| **Transport** | Rest, Binary, PicoCompress | Server communication — REST/WS with binary BSO1 codec and optional LZ compression. |
-| **Orchestration** | Rendering, Template, Routing | Glue layer — entity lifecycle, schema-driven forms/tables, SPA routing. |
-
-> **Key integration:** `BareMetalBind.chatEndpoint()` auto-wires `m-chatbot` to `BareMetalRest` — user messages POST to your API and bot replies are pushed back reactively.
 
 ---
 
-## Install
+## Getting started
 
-### As a `<script>` tag (the original use case)
+### Drop in the scripts
 
 ```html
-<script src="src/picocompress.js"></script>  <!-- optional, for wire compression -->
-<script src="src/BareMetalBind.js"></script>
-<script src="src/BareMetalRest.js"></script>
-<script src="src/BareMetalTemplate.js"></script>
-<script src="src/BareMetalRendering.js"></script>
-<script src="src/BareMetalRouting.js"></script>
+<link rel="stylesheet" href="src/BareMetal.Styles.css">
+<script src="src/BareMetal.Bind.js"></script>
+<script src="src/BareMetal.Components.js"></script>
+<!-- add whichever modules you need — order only matters where dependencies exist -->
 ```
 
-Order matters only where dependencies exist — `BareMetalRendering` needs Rest, Bind, Template loaded first.
+That's it. No install. No config. No waiting.
 
-### As an npm package (Node / bundler)
+### Or use npm (if you must)
 
 ```bash
 npm install github:WillEastbury/BareMetalJsTools
-```
-
-```js
-import { BareMetalBind, BareMetalRest, BMRouter } from 'baremetal-js-tools';
-// or per-module:
-import BareMetalRest from 'baremetal-js-tools/rest';
 ```
 
 ---
 
 ## Quick start
 
+### Reactive UI in five lines
+
 ```js
-const { state, watch } = BareMetalBind.reactive({ name: 'World', items: [] });
+const { state, watch } = BareMetal.Bind.reactive({ name: 'World', items: [] });
 
 document.body.innerHTML = `
   <input m-value="name">
   <p>Hello, <span m-text="name"></span>!</p>
-  <ul m-each="items key:id">
-    <template><li m-text=".text"></li></template>
-  </ul>
 `;
-BareMetalBind.bind(document.body, state, watch);
-state.name = 'BareMetal';            // UI updates automatically
-state.items.push({ id: 1, text: 'First' }); // reactive array — no reassignment needed
+BareMetal.Bind.bind(document.body, state, watch);
+state.name = 'BareMetal';  // UI updates instantly
 ```
 
-```js
-BMRouter.on('/users',         () => renderList('user'));
-BMRouter.on('/users/:id',     ctx => renderDetail('user', ctx.params.id));
-BMRouter.start();
-```
+### SPA routing
 
 ```js
-BareMetalRest.setRoot('/api/');
-const customer = BareMetalRest.entity('customer');
+BareMetal.Routing.on('/users',     () => renderList('user'));
+BareMetal.Routing.on('/users/:id', ctx => renderDetail('user', ctx.params.id));
+BareMetal.Routing.start();
+```
+
+### REST client
+
+```js
+BareMetal.Rest.setRoot('/api/');
+const customer = BareMetal.Rest.entity('customer');
 const all      = await customer.list();
-const one      = await customer.get(42);
 await customer.update(42, { name: 'Acme' });
 ```
 
-### Opt-in compression (picocompress)
+### Metadata-driven forms
 
-```js
-// Load picocompress.js before BareMetalRest.js, then:
-BareMetalRest.setCompression({ enabled: true, profile: 'balanced', minSize: 256 });
-// All requests > 256 bytes are now picocompress-encoded; responses too if the server supports it.
+```html
+<script type="application/bm-meta">
+{ "name": "Customer", "schema": { "fields": {
+    "name":  { "type": "text", "label": "Name", "required": true },
+    "email": { "type": "Email", "label": "Email" }
+  }}, "layout": { "columns": 2, "fields": ["name", "email"] }}
+</script>
+
+<div m-entity="customer" m-mode="form"></div>
+
+<script>
+  BareMetal.Metadata.scanInline();
+  // form is auto-rendered and bound — done.
+</script>
 ```
 
 ---
@@ -167,33 +156,37 @@ BareMetalRest.setCompression({ enabled: true, profile: 'balanced', minSize: 256 
 ## Tests
 
 ```bash
-npm install
-npm test
+npm install && npm test
 ```
 
-Tests run under Node + `jest-environment-jsdom`. Each module is loaded via `new Function(...)` so globals (`fetch`, `document`, ...) can be mocked per test.
+Tests run under Node + jsdom. Each module is loaded in isolation via `new Function(...)` so globals can be mocked per test.
 
-| File | Coverage |
+| Suite | What's covered |
 |---|---|
-| `tests/BareMetalBind.test.js`       | `reactive()`, all `m-*` directives, dot-paths, formatters, reactive arrays, keyed diffing, scoped m-each, transitions, expressions |
-| `tests/BareMetalRest.test.js`       | `setRoot`/`getRoot`, CRUD, fetch errors, CSRF, FormData |
-| `tests/BareMetalTemplate.test.js`   | `buildForm` field types, layout, lookup; `buildTable` cells, callbacks, badges |
-| `tests/BareMetalRouting.test.js`    | Pattern matching, params, query parsing, `navigate()` |
-| `tests/BareMetalRendering.test.js`  | `createEntity`, `listEntities`, `renderUI`, lookup hydration, `window.minibind` |
-| `tests/BareMetalRest.compression.test.js` | `setCompression`/`getCompression`, outgoing compression, response decompression |
-| `tests/picocompress.test.js`       | IIFE wrapper, round-trip, profiles, `compressBound` |
-
-`BareMetalBinary` does not yet have unit tests — contributions welcome.
+| Bind | `reactive()`, all `m-*` directives, dot-paths, formatters, reactive arrays, keyed diffing, transitions, expressions |
+| Rest | CRUD, fetch errors, CSRF, FormData |
+| Template | `buildForm` field types, layout, lookup; `buildTable` cells, callbacks, badges |
+| Routing | Pattern matching, params, query parsing, `navigate()` |
+| Rendering | Entity lifecycle, lookup hydration, `minibind` |
+| Compress | Round-trip, profiles, `compressBound` |
+| Metadata | Register, get, scanInline, type normalisation, toTemplateFields |
 
 ---
 
-## Design philosophy
+## Why this exists
 
-* **No build step.** No webpack, no rollup, no TypeScript compile. Save and refresh.
-* **No framework.** No virtual DOM. The browser already has one.
-* **No runtime dependencies.** Everything is plain ES2017+ that runs in any modern browser.
-* **Composable, not monolithic.** Use any one module in isolation; combine for full SPAs.
-* **Server-driven UI.** Forms and tables are produced from metadata sent by the server, not hand-rolled per page.
+Web development got complicated for no good reason. Somewhere along the way, "make a web page" turned into "configure a seventeen-stage build pipeline, wait for it to compile, debug the bundler, then discover your CSS got tree-shaken into oblivion."
+
+BareMetalJsTools exists because we think that's insane.
+
+* **No build step.** Save the file. Refresh the browser. Done.
+* **No framework tax.** No virtual DOM diffing. The browser already has a perfectly good DOM — use it.
+* **No dependencies.** Every module is plain ES2017+ that works in any modern browser, right now.
+* **Pick what you need.** Use one module or all of them. They compose cleanly but don't demand each other.
+* **Server-driven where it counts.** Forms and tables render from metadata — declare your schema, not your markup.
+* **Wire-efficient.** Short class names, binary transport, optional LZ compression. Every byte earns its place.
+
+The hard part isn't the JavaScript. The hard part is serving your files well — cache headers, compression, CDN placement, HTTP/2 push. Focus your energy there, not on configuring webpack.
 
 ---
 
@@ -201,4 +194,4 @@ Tests run under Node + `jest-environment-jsdom`. Each module is loaded via `new 
 
 MIT — see [LICENSE](./LICENSE).
 
-Originally extracted from [BareMetalWeb](https://github.com/WillEastbury/BareMetalWeb) and maintained separately for reuse.
+Extracted from [BareMetalWeb](https://github.com/WillEastbury/BareMetalWeb) and maintained here for independent reuse.

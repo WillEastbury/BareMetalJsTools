@@ -50,7 +50,7 @@ BareMetal.Metadata = (() => {
       fields[f.name] = fd;
 
       if (!fd.hidden) layoutFields.push(f.name);
-      initialData[f.name] = fd.type === 'number' ? 0 : fd.type === 'checkbox' ? false : '';
+      initialData[f.name] = fd.type === 'number' ? 0 : (fd.type === 'boolean' || fd.type === 'checkbox') ? false : '';
     }
 
     return {
