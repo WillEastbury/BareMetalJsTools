@@ -1,26 +1,18 @@
-// BareMetalBind — reactive Proxy state and m-* directive binder
-// Directives: m-value, m-text, m-if, m-click, m-submit, m-class, m-attr,
-//             m-each (keyed), m-navbar, m-transition, m-expression,
-//             m-toast, m-img, m-chatbot, m-calendar, m-gantt, m-table, m-tree
-// API: reactive(initial) → { state, watch, data }
-//      bind(root, state, watch)
-//      formatters   – registry object for pipe transforms
-//      create       – factory helpers: message, botMessage, toast, calendarEvent, ganttTask, treeNode, tableRow, navLink, navDropdown, listItem
-//      chatEndpoint – auto-wires chatbot to BareMetalRest
+// BareMetalBind — reactive m-* directive binder
+// API: reactive(init), bind(root,state,watch), formatters, create, chatEndpoint
 const BareMetalBind = (() => {
   'use strict';
 
-  // ── Formatter registry ──────────────────────────────────────────────
+  // Formatter registry
   const formatters = {};
 
-  // ── Path helpers ────────────────────────────────────────────────────
+  // Path helpers
   function getPath(obj, path) {
     const segs = path.split('.');
     let cur = obj;
     for (let i = 0; i < segs.length && cur != null; i++) cur = cur[segs[i]];
     return cur;
   }
-
   function setPath(obj, path, val) {
     const segs = path.split('.');
     let cur = obj;
@@ -30,11 +22,9 @@ const BareMetalBind = (() => {
     }
     cur[segs[segs.length - 1]] = val;
   }
-
   function topKey(path) { return path.split('.')[0]; }
 
-  // ── Binding expression parser ───────────────────────────────────────
-  // "path|fmt1|fmt2:arg" → { path, pipes:[{name,arg}] }
+  // Binding expression parser
   function parseBinding(expr) {
     const parts = expr.split('|').map(s => s.trim());
     const path = parts[0];
@@ -46,7 +36,6 @@ const BareMetalBind = (() => {
     }
     return { path, pipes };
   }
-
   function applyPipes(val, pipes) {
     for (const p of pipes) {
       const fn = formatters[p.name];
@@ -55,8 +44,7 @@ const BareMetalBind = (() => {
     return val;
   }
 
-  // ── Scope-aware value resolution ────────────────────────────────────
-  // scope: { item, index, parent, root } | undefined
+  // Scope-aware value resolution
   function resolveInScope(path, state, scope) {
     if (scope) {
       if (path === '.') return scope.item;
@@ -69,17 +57,14 @@ const BareMetalBind = (() => {
     }
     return getPath(state, path);
   }
-
-  // Full resolve: parse binding, resolve in scope, apply pipes.
   function resolveBinding(expr, state, scope) {
     const { path, pipes } = parseBinding(expr);
     const val = resolveInScope(path, state, scope);
     return pipes.length ? applyPipes(val, pipes) : val;
   }
 
-  // ── Reactive arrays ─────────────────────────────────────────────────
+  // Reactive arrays
   const ARRAY_MUTATORS = ['push','pop','shift','unshift','splice','sort','reverse'];
-
   function wrapArray(arr, notify) {
     return new Proxy(arr, {
       get(t, p) {
@@ -96,7 +81,7 @@ const BareMetalBind = (() => {
     });
   }
 
-  // ── Parse "name:stateKey,name2:stateKey2" pairs ─────────────────────
+  // Parse "name:stateKey,name2:stateKey2" pairs
   function parsePairs(attr) {
     return attr.split(',').map(p => {
       const i = p.indexOf(':');
@@ -104,21 +89,17 @@ const BareMetalBind = (() => {
     }).filter(Boolean);
   }
 
-  // ── reactive() ──────────────────────────────────────────────────────
+  // reactive()
   function reactive(initial) {
     const L = new Map();
     const notify = k => (L.get(k) || []).forEach(fn => fn());
     const watch  = (k, fn) => { L.has(k) || L.set(k, []); L.get(k).push(fn); };
     const data   = { ...initial };
-
-    // Wrap any initial arrays
     for (const k of Object.keys(data)) {
       if (Array.isArray(data[k])) data[k] = wrapArray(data[k], () => notify(k));
     }
-
     const state  = new Proxy(data, {
       set(t, k, v) {
-        // auto-wrap arrays assigned later
         t[k] = Array.isArray(v) ? wrapArray(v, () => notify(k)) : v;
         notify(k);
         return true;
@@ -127,41 +108,31 @@ const BareMetalBind = (() => {
     return { state, watch, data };
   }
 
-  // ── Transition helpers ──────────────────────────────────────────────
+  // Transition helpers — shared double-rAF pattern
+  function doubleRaf(fn) { requestAnimationFrame(() => { requestAnimationFrame(fn); }); }
   function transitionIn(el, name) {
     el.style.display = '';
-    const enter = name ? name + '-enter' : 'm-enter';
-    const active = name ? name + '-enter-active' : 'm-enter-active';
+    const enter = (name || 'm') + '-enter', active = (name || 'm') + '-enter-active';
     el.classList.add(enter);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        el.classList.add(active);
-        el.classList.remove(enter);
-        const done = () => { el.classList.remove(active); el.removeEventListener('transitionend', done); };
-        el.addEventListener('transitionend', done);
-      });
+    doubleRaf(() => {
+      el.classList.add(active);
+      el.classList.remove(enter);
+      const done = () => { el.classList.remove(active); el.removeEventListener('transitionend', done); };
+      el.addEventListener('transitionend', done);
     });
   }
-
   function transitionOut(el, name, cb) {
-    const leave = name ? name + '-leave' : 'm-leave';
-    const active = name ? name + '-leave-active' : 'm-leave-active';
+    const leave = (name || 'm') + '-leave', active = (name || 'm') + '-leave-active';
     el.classList.add(leave);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        el.classList.add(active);
-        el.classList.remove(leave);
-        const done = () => {
-          el.classList.remove(active);
-          el.removeEventListener('transitionend', done);
-          cb();
-        };
-        el.addEventListener('transitionend', done);
-      });
+    doubleRaf(() => {
+      el.classList.add(active);
+      el.classList.remove(leave);
+      const done = () => { el.classList.remove(active); el.removeEventListener('transitionend', done); cb(); };
+      el.addEventListener('transitionend', done);
     });
   }
 
-  // ── Apply directives to a row (non-reactive, for m-each) ───────────
+  // Apply directives to a row (non-reactive, for m-each)
   function applyRow(el, state, scope) {
     el.querySelectorAll('[m-text]').forEach(n => {
       n.textContent = resolveBinding(n.getAttribute('m-text'), state, scope) ?? '';
@@ -184,14 +155,12 @@ const BareMetalBind = (() => {
     });
   }
 
-  // ── m-expression helpers ────────────────────────────────────────────
-  // "target = expr" → { target, expr, deps[] }
+  // m-expression helpers
   function parseExpression(raw) {
     const eq = raw.indexOf('=');
     if (eq < 0) return null;
     const target = raw.slice(0, eq).trim();
     const expr = raw.slice(eq + 1).trim();
-    // Extract top-level identifiers from RHS (skip dotted suffixes, strings, numbers)
     const ids = new Set();
     expr.replace(/\b([a-zA-Z_$][a-zA-Z0-9_$]*)\b/g, (m, id) => {
       if (!/^(true|false|null|undefined|NaN|Infinity|Math|Date|Number|String|Boolean|Array|Object|parseInt|parseFloat|isNaN|isFinite)$/.test(id)) {
@@ -201,10 +170,13 @@ const BareMetalBind = (() => {
     return { target, expr, deps: [...ids] };
   }
 
-  // ── bind() ──────────────────────────────────────────────────────────
+  // DOM helper: create element with className
+  function el(tag, cls) { var e = document.createElement(tag); if (cls) e.className = cls; return e; }
+
+  // bind()
   function bind(root, state, watch) {
 
-    // ── m-expression (process first so computed values exist for other directives) ──
+    // m-expression (process first so computed values exist for other directives)
     root.querySelectorAll('[m-expression]').forEach(n => {
       const parsed = parseExpression(n.getAttribute('m-expression'));
       if (!parsed) return;
@@ -220,13 +192,12 @@ const BareMetalBind = (() => {
       };
       evaluate();
       const watchKeys = new Set(deps.map(d => topKey(d)));
-      // Don't watch target's own key if it's also a dep (avoid infinite loop)
       const targetTop = topKey(target);
       watchKeys.delete(targetTop);
       watchKeys.forEach(k => watch(k, evaluate));
     });
 
-    // ── m-value (two-way, no formatters) ──
+    // m-value (two-way, no formatters)
     root.querySelectorAll('[m-value]').forEach(n => {
       const path = n.getAttribute('m-value'), chk = n.type === 'checkbox';
       const isDate = n.type === 'date', isDtLocal = n.type === 'datetime-local';
@@ -248,14 +219,12 @@ const BareMetalBind = (() => {
       });
     });
 
-    // ── m-img (reactive src + lazy loading + fallback) ──
-    // Usage: <img m-img="user.avatar" m-img-fallback="/placeholder.png" m-img-lazy>
+    // m-img (reactive src + lazy loading + fallback)
     root.querySelectorAll('[m-img]').forEach(n => {
       const path = n.getAttribute('m-img'), wk = topKey(path);
       const fallback = n.getAttribute('m-img-fallback') || '';
       const lazy = n.hasAttribute('m-img-lazy');
       const tag = n.tagName;
-
       function applySrc(src) {
         const url = src || fallback;
         if (tag === 'IMG') {
@@ -265,11 +234,9 @@ const BareMetalBind = (() => {
           n.style.backgroundImage = url ? 'url(' + url + ')' : '';
         }
       }
-
       function onError() {
         if (fallback && n.src !== fallback) n.src = fallback;
       }
-
       if (tag === 'IMG') {
         if (fallback) n.addEventListener('error', onError);
         if (lazy && typeof IntersectionObserver !== 'undefined') {
@@ -284,12 +251,11 @@ const BareMetalBind = (() => {
           return;
         }
       }
-
       const sync = () => applySrc(getPath(state, path));
       sync(); watch(wk, sync);
     });
 
-    // ── m-text ──
+    // m-text
     root.querySelectorAll('[m-text]').forEach(n => {
       if (n.closest('[m-each],[m-navbar]')) return;
       const expr = n.getAttribute('m-text');
@@ -299,7 +265,7 @@ const BareMetalBind = (() => {
       sync(); watch(wk, sync);
     });
 
-    // ── m-if (with m-transition support) ──
+    // m-if (with m-transition support)
     root.querySelectorAll('[m-if]').forEach(n => {
       if (n.closest('[m-each],[m-navbar]')) return;
       const k = n.getAttribute('m-if'), wk = topKey(k);
@@ -317,7 +283,7 @@ const BareMetalBind = (() => {
       });
     });
 
-    // ── m-class ──
+    // m-class
     root.querySelectorAll('[m-class]').forEach(n => {
       if (n.closest('[m-each],[m-navbar]')) return;
       parsePairs(n.getAttribute('m-class')).forEach(([cls, k]) => {
@@ -327,7 +293,7 @@ const BareMetalBind = (() => {
       });
     });
 
-    // ── m-attr ──
+    // m-attr
     root.querySelectorAll('[m-attr]').forEach(n => {
       if (n.closest('[m-each],[m-navbar]')) return;
       parsePairs(n.getAttribute('m-attr')).forEach(([attr, k]) => {
@@ -341,7 +307,7 @@ const BareMetalBind = (() => {
       });
     });
 
-    // ── m-each (keyed diffing) ──
+    // m-each (keyed diffing)
     root.querySelectorAll('[m-each]').forEach(n => {
       const raw = n.getAttribute('m-each');
       const keyMatch = raw.match(/^(\S+)\s+key:(\S+)$/);
@@ -351,43 +317,33 @@ const BareMetalBind = (() => {
       const tpl = n.querySelector('template');
       if (!tpl) return;
       const frag = tpl.content;
-
-      // Map of keyValue → { el, item } for keyed diffing
       let rowMap = new Map();
-
       function makeRow(item, index, parentScope) {
         const scope = { item, index, parent: parentScope ? parentScope.item : undefined, root: state };
         const clone = frag.cloneNode(true);
         const wrap = document.createElement('div');
         wrap.appendChild(clone);
         applyRow(wrap, state, scope);
-        // Use first element child as the row root (for keyed reuse)
         const el = wrap.firstElementChild || wrap.firstChild;
         if (el) el.__bmScope = scope;
         return { el, wrap };
       }
-
       function updateRow(el, item, index, parentScope) {
         const scope = { item, index, parent: parentScope ? parentScope.item : undefined, root: state };
         el.__bmScope = scope;
-        // Re-apply directives to the existing element
         const container = document.createElement('div');
         container.appendChild(el);
         applyRow(container, state, scope);
         return container.firstElementChild || container.firstChild;
       }
-
       const render = () => {
         const arr = getPath(state, arrKey);
         if (!Array.isArray(arr)) {
-          // Clear all rendered children
           Array.from(n.children).forEach(c => { if (c !== tpl) n.removeChild(c); });
           rowMap.clear();
           return;
         }
-
         if (keyProp) {
-          // ── Keyed diff ──
           const newMap = new Map();
           const newOrder = [];
           arr.forEach((item, index) => {
@@ -403,15 +359,12 @@ const BareMetalBind = (() => {
             newMap.set(kv, { el, item });
             newOrder.push(el);
           });
-          // Remove old rows not in new set
           for (const [kv, { el }] of rowMap) {
             if (!newMap.has(kv) && el && el.parentNode) el.parentNode.removeChild(el);
           }
-          // Append in correct order (insertBefore reorders existing nodes)
           newOrder.forEach(el => { if (el) n.appendChild(el); });
           rowMap = newMap;
         } else {
-          // ── Full rebuild (no key) ──
           Array.from(n.children).forEach(c => { if (c !== tpl) n.removeChild(c); });
           rowMap.clear();
           arr.forEach((item, index) => {
@@ -423,14 +376,14 @@ const BareMetalBind = (() => {
       render(); watch(wk, render);
     });
 
-    // ── m-navbar ──
+    // m-navbar
     root.querySelectorAll('[m-navbar]').forEach(n => {
       const k = n.getAttribute('m-navbar'), wk = topKey(k);
       const mkLink = link => {
         const a = document.createElement('a');
         a.href = link.href || '#';
         a.textContent = link.text || '';
-        if (link.active) a.classList.add('active');
+        if (link.active) a.classList.add('act');
         return a;
       };
       const render = () => {
@@ -439,14 +392,11 @@ const BareMetalBind = (() => {
         if (!Array.isArray(arr)) return;
         arr.forEach(item => {
           if (Array.isArray(item)) {
-            const dd = document.createElement('div');
-            dd.classList.add('dropdown');
-            const btn = document.createElement('button');
-            btn.className = 'dropdown-toggle';
+            const dd = el('div', 'dd');
+            const btn = el('button', 'dd-t');
             btn.textContent = item[0] || '';
             dd.appendChild(btn);
-            const menu = document.createElement('div');
-            menu.className = 'dropdown-menu';
+            const menu = el('div', 'dd-m');
             for (let i = 1; i < item.length; i++) menu.appendChild(mkLink(item[i]));
             dd.appendChild(menu);
             n.appendChild(dd);
@@ -458,70 +408,50 @@ const BareMetalBind = (() => {
       render(); watch(wk, render);
     });
 
-    // ── m-chatbot (message array → chat UI) ──
-    // Usage: <div m-chatbot="messages" m-chatbot-send="onSend"></div>
-    // State: [{ text:'Hello', from:'user', time:'10:30', avatar:'😀' }]
+    // m-chatbot (message array → chat UI)
     root.querySelectorAll('[m-chatbot]').forEach(n => {
       const arrKey = n.getAttribute('m-chatbot'), wk = topKey(arrKey);
       const sendFn = n.getAttribute('m-chatbot-send') || '';
       const placeholder = n.getAttribute('m-chatbot-placeholder') || 'Type a message…';
       const textField = n.getAttribute('m-chatbot-text') || 'text';
       const fromField = n.getAttribute('m-chatbot-from') || 'from';
-
       n.classList.add('bm-chat');
-      var log = document.createElement('div');
-      log.className = 'bm-chat-log';
-      var form = document.createElement('form');
-      form.className = 'bm-chat-input';
-      var input = document.createElement('input');
-      input.type = 'text'; input.placeholder = placeholder; input.className = 'bm-chat-field';
-      var btn = document.createElement('button');
-      btn.type = 'submit'; btn.className = 'bm-chat-send'; btn.textContent = '➤';
+      var log = el('div', 'bm-chat-log');
+      var form = el('form', 'bm-chat-input');
+      var input = el('input', 'bm-chat-field');
+      input.type = 'text'; input.placeholder = placeholder;
+      var btn = el('button', 'bm-chat-send');
+      btn.type = 'submit'; btn.textContent = '➤';
       form.appendChild(input); form.appendChild(btn);
       n.appendChild(log); n.appendChild(form);
-
       var lastLen = 0;
-
       function renderMsg(msg) {
         var m = typeof msg === 'string' ? { text: msg, from: 'user' } : msg;
         var isBot = (m[fromField] || '') !== 'user';
-        var bubble = document.createElement('div');
-        bubble.className = 'bm-chat-bubble' + (isBot ? ' bm-chat-bot' : ' bm-chat-user');
-
+        var bubble = el('div', 'bm-chat-bubble' + (isBot ? ' bm-chat-bot' : ' bm-chat-user'));
         if (m.avatar) {
-          var av = document.createElement('span');
-          av.className = 'bm-chat-avatar';
+          var av = el('span', 'bm-chat-avatar');
           av.textContent = m.avatar;
           bubble.appendChild(av);
         }
-
-        var body = document.createElement('div');
-        body.className = 'bm-chat-body';
-
+        var body = el('div', 'bm-chat-body');
         if (m.name) {
-          var nm = document.createElement('div');
-          nm.className = 'bm-chat-name';
+          var nm = el('div', 'bm-chat-name');
           nm.textContent = m.name;
           body.appendChild(nm);
         }
-
-        var txt = document.createElement('div');
-        txt.className = 'bm-chat-text';
+        var txt = el('div', 'bm-chat-text');
         txt.textContent = m[textField] || '';
         body.appendChild(txt);
-
         if (m.time) {
-          var tm = document.createElement('div');
-          tm.className = 'bm-chat-time';
+          var tm = el('div', 'bm-chat-time');
           tm.textContent = m.time;
           body.appendChild(tm);
         }
-
         bubble.appendChild(body);
         log.appendChild(bubble);
         log.scrollTop = log.scrollHeight;
       }
-
       function sync() {
         var arr = getPath(state, arrKey);
         if (!Array.isArray(arr)) return;
@@ -531,7 +461,6 @@ const BareMetalBind = (() => {
           arr.forEach(function(m) { renderMsg(m); lastLen++; });
         }
       }
-
       form.addEventListener('submit', function(e) {
         e.preventDefault();
         var val = input.value.trim();
@@ -544,13 +473,10 @@ const BareMetalBind = (() => {
           if (Array.isArray(arr)) arr.push({ text: val, from: 'user' });
         }
       });
-
       sync(); watch(wk, sync);
     });
 
-    // ── m-calendar (month grid with events) ──
-    // Usage: <div m-calendar="events" m-calendar-select="onDay"></div>
-    // State: [{ date:'2025-04-20', label:'Meeting', color:'#0d6efd' }]
+    // m-calendar (month grid with events)
     root.querySelectorAll('[m-calendar]').forEach(n => {
       const arrKey = n.getAttribute('m-calendar'), wk = topKey(arrKey);
       const selectFn = n.getAttribute('m-calendar-select') || '';
@@ -558,18 +484,13 @@ const BareMetalBind = (() => {
       const labelField = n.getAttribute('m-calendar-label') || 'label';
       const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
       const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
       var viewYear = new Date().getFullYear(), viewMonth = new Date().getMonth();
-
       function pad(n) { return n < 10 ? '0' + n : '' + n; }
-
       function render() {
         var arr = getPath(state, arrKey);
         if (!Array.isArray(arr)) arr = [];
         n.innerHTML = '';
         n.classList.add('bm-calendar');
-
-        // Build event lookup: 'YYYY-MM-DD' → [events]
         var evMap = {};
         arr.forEach(function(ev) {
           var d = ev[dateField];
@@ -578,99 +499,69 @@ const BareMetalBind = (() => {
           if (!evMap[key]) evMap[key] = [];
           evMap[key].push(ev);
         });
-
         // Header: ◀ Month Year ▶
-        var header = document.createElement('div');
-        header.className = 'bm-cal-header';
-
-        var prev = document.createElement('button');
-        prev.className = 'bm-cal-nav';
+        var header = el('div', 'bm-cal-header');
+        var prev = el('button', 'bm-cal-nav');
         prev.textContent = '◀';
         prev.addEventListener('click', function() {
           viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
           render();
         });
-
-        var next = document.createElement('button');
-        next.className = 'bm-cal-nav';
+        var next = el('button', 'bm-cal-nav');
         next.textContent = '▶';
         next.addEventListener('click', function() {
           viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
           render();
         });
-
-        var title = document.createElement('span');
-        title.className = 'bm-cal-title';
+        var title = el('span', 'bm-cal-title');
         title.textContent = months[viewMonth] + ' ' + viewYear;
-
         header.appendChild(prev);
         header.appendChild(title);
         header.appendChild(next);
         n.appendChild(header);
-
         // Day-of-week header
-        var dowRow = document.createElement('div');
-        dowRow.className = 'bm-cal-row bm-cal-dow';
+        var dowRow = el('div', 'bm-cal-row bm-cal-dow');
         days.forEach(function(d) {
-          var cell = document.createElement('div');
-          cell.className = 'bm-cal-cell bm-cal-dow-cell';
+          var cell = el('div', 'bm-cal-cell bm-cal-dow-cell');
           cell.textContent = d;
           dowRow.appendChild(cell);
         });
         n.appendChild(dowRow);
-
         // Calendar grid
         var first = new Date(viewYear, viewMonth, 1);
         var startDay = first.getDay();
         var daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
         var today = new Date();
         var todayStr = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate());
-
-        var row = document.createElement('div');
-        row.className = 'bm-cal-row';
-
-        // Leading blanks
+        var row = el('div', 'bm-cal-row');
         for (var b = 0; b < startDay; b++) {
-          var blank = document.createElement('div');
-          blank.className = 'bm-cal-cell bm-cal-empty';
-          row.appendChild(blank);
+          row.appendChild(el('div', 'bm-cal-cell bm-cal-empty'));
         }
-
         for (var d = 1; d <= daysInMonth; d++) {
           var dateStr = viewYear + '-' + pad(viewMonth + 1) + '-' + pad(d);
-          var cell = document.createElement('div');
-          cell.className = 'bm-cal-cell bm-cal-day';
+          var cell = el('div', 'bm-cal-cell bm-cal-day');
           if (dateStr === todayStr) cell.classList.add('bm-cal-today');
-
-          var num = document.createElement('span');
-          num.className = 'bm-cal-num';
+          var num = el('span', 'bm-cal-num');
           num.textContent = d;
           cell.appendChild(num);
-
-          // Event dots/badges
           var cellEvents = evMap[dateStr];
           if (cellEvents) {
             cell.classList.add('bm-cal-has-events');
-            var dots = document.createElement('div');
-            dots.className = 'bm-cal-dots';
+            var dots = el('div', 'bm-cal-dots');
             cellEvents.forEach(function(ev, i) {
-              if (i >= 3) return; // max 3 dots
-              var dot = document.createElement('span');
-              dot.className = 'bm-cal-dot';
+              if (i >= 3) return;
+              var dot = el('span', 'bm-cal-dot');
               if (ev.color) dot.style.background = ev.color;
               dot.title = ev[labelField] || '';
               dots.appendChild(dot);
             });
             if (cellEvents.length > 3) {
-              var more = document.createElement('span');
-              more.className = 'bm-cal-more';
+              var more = el('span', 'bm-cal-more');
               more.textContent = '+' + (cellEvents.length - 3);
               dots.appendChild(more);
             }
             cell.appendChild(dots);
           }
-
-          // Click handler
           (function(ds, evts) {
             cell.addEventListener('click', function(e) {
               var prev = n.querySelector('.bm-cal-selected');
@@ -679,34 +570,24 @@ const BareMetalBind = (() => {
               if (selectFn && typeof state[selectFn] === 'function') state[selectFn](ds, evts || [], e);
             });
           })(dateStr, cellEvents);
-
           row.appendChild(cell);
-
           if ((startDay + d) % 7 === 0) {
             n.appendChild(row);
-            row = document.createElement('div');
-            row.className = 'bm-cal-row';
+            row = el('div', 'bm-cal-row');
           }
         }
-
-        // Trailing blanks
         var remaining = (startDay + daysInMonth) % 7;
         if (remaining > 0) {
           for (var t = remaining; t < 7; t++) {
-            var blank2 = document.createElement('div');
-            blank2.className = 'bm-cal-cell bm-cal-empty';
-            row.appendChild(blank2);
+            row.appendChild(el('div', 'bm-cal-cell bm-cal-empty'));
           }
           n.appendChild(row);
         }
       }
-
       render(); watch(wk, render);
     });
 
-    // ── m-gantt (array → timeline Gantt chart) ──
-    // Usage: <div m-gantt="tasks"></div>
-    // State: [{ label:'Design', start:'2025-01-01', end:'2025-01-15', group:'Phase 1', color:'#0d6efd', progress:0.6 }]
+    // m-gantt (array → timeline Gantt chart)
     root.querySelectorAll('[m-gantt]').forEach(n => {
       const arrKey = n.getAttribute('m-gantt'), wk = topKey(arrKey);
       const labelField = n.getAttribute('m-gantt-label') || 'label';
@@ -714,16 +595,13 @@ const BareMetalBind = (() => {
       const endField = n.getAttribute('m-gantt-end') || 'end';
       const groupField = n.getAttribute('m-gantt-group') || 'group';
       const rowH = 32, headerH = 40, padL = 180, padR = 20;
-
       function toDay(s) { return Math.floor(new Date(s).getTime() / 864e5); }
-
+      function svgEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
       function render() {
         var arr = getPath(state, arrKey);
         n.innerHTML = '';
         n.classList.add('bm-gantt');
         if (!Array.isArray(arr) || arr.length === 0) return;
-
-        // Compute date range
         var minD = Infinity, maxD = -Infinity;
         arr.forEach(function(t) {
           var s = toDay(t[startField]), e = toDay(t[endField]);
@@ -731,8 +609,6 @@ const BareMetalBind = (() => {
           if (e > maxD) maxD = e;
         });
         var span = maxD - minD || 1;
-
-        // Group tasks
         var groups = [], groupMap = {}, ordered = [];
         arr.forEach(function(t) {
           var g = t[groupField] || '';
@@ -743,17 +619,14 @@ const BareMetalBind = (() => {
           arr.forEach(function(t) { if ((t[groupField] || '') === g) ordered.push(t); });
         });
         arr.forEach(function(t) { if (!(t[groupField] || '')) ordered.push(t); });
-
         var totalH = headerH + ordered.length * rowH + 4;
         var chartW = Math.max(n.clientWidth || 600, 400);
         var barArea = chartW - padL - padR;
-
-        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        var svg = svgEl('svg');
         svg.setAttribute('width', '100%');
         svg.setAttribute('viewBox', '0 0 ' + chartW + ' ' + totalH);
         svg.style.fontFamily = 'system-ui,sans-serif';
         svg.style.fontSize = '12px';
-
         // Header month markers
         var d0 = new Date(minD * 864e5), dEnd = new Date(maxD * 864e5);
         var cur = new Date(d0.getFullYear(), d0.getMonth(), 1);
@@ -761,12 +634,12 @@ const BareMetalBind = (() => {
           var dx = toDay(cur) - minD;
           var x = padL + (dx / span) * barArea;
           if (x >= padL) {
-            var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            var line = svgEl('line');
             line.setAttribute('x1', x); line.setAttribute('x2', x);
             line.setAttribute('y1', headerH); line.setAttribute('y2', totalH);
             line.setAttribute('stroke', '#dee2e6'); line.setAttribute('stroke-dasharray', '3,3');
             svg.appendChild(line);
-            var txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            var txt = svgEl('text');
             txt.setAttribute('x', x + 4); txt.setAttribute('y', headerH - 8);
             txt.setAttribute('fill', '#6c757d'); txt.setAttribute('font-size', '11');
             var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -775,116 +648,90 @@ const BareMetalBind = (() => {
           }
           cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
         }
-
         // Rows
         ordered.forEach(function(item, i) {
           var y = headerH + i * rowH;
-
-          // Zebra stripe
           if (i % 2 === 0) {
-            var bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            var bg = svgEl('rect');
             bg.setAttribute('x', 0); bg.setAttribute('y', y);
             bg.setAttribute('width', chartW); bg.setAttribute('height', rowH);
             bg.setAttribute('fill', '#f8f9fa');
             svg.appendChild(bg);
           }
-
           if (item._groupHeader) {
-            var gt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            var gt = svgEl('text');
             gt.setAttribute('x', 8); gt.setAttribute('y', y + rowH * 0.65);
             gt.setAttribute('font-weight', '700'); gt.setAttribute('fill', '#212529');
             gt.textContent = item._groupHeader;
             svg.appendChild(gt);
             return;
           }
-
-          // Label
-          var lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          var lbl = svgEl('text');
           lbl.setAttribute('x', 12); lbl.setAttribute('y', y + rowH * 0.65);
           lbl.setAttribute('fill', '#495057');
           var labelText = item[labelField] || '';
           if (labelText.length > 22) labelText = labelText.substring(0, 20) + '…';
           lbl.textContent = labelText;
           svg.appendChild(lbl);
-
-          // Bar
           var s = toDay(item[startField]) - minD, e = toDay(item[endField]) - minD;
           var bx = padL + (s / span) * barArea;
           var bw = Math.max(((e - s) / span) * barArea, 4);
           var by = y + 6, bh = rowH - 12;
           var color = item.color || 'var(--bs-primary, #0d6efd)';
-
-          // Background bar
-          var bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          var bar = svgEl('rect');
           bar.setAttribute('x', bx); bar.setAttribute('y', by);
           bar.setAttribute('width', bw); bar.setAttribute('height', bh);
           bar.setAttribute('rx', 3); bar.setAttribute('fill', color);
           bar.setAttribute('opacity', '0.25');
           svg.appendChild(bar);
-
-          // Progress fill
           var prog = item.progress != null ? item.progress : 1;
           if (prog > 0) {
-            var pbar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            var pbar = svgEl('rect');
             pbar.setAttribute('x', bx); pbar.setAttribute('y', by);
             pbar.setAttribute('width', bw * Math.min(prog, 1)); pbar.setAttribute('height', bh);
             pbar.setAttribute('rx', 3); pbar.setAttribute('fill', color);
             svg.appendChild(pbar);
           }
-
-          // Milestone diamond (if start === end)
           if (s === e) {
             bar.setAttribute('width', 0);
-            var dia = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            var dia = svgEl('polygon');
             var cx = bx, cy = by + bh / 2, r = bh / 2;
             dia.setAttribute('points', cx + ',' + (cy - r) + ' ' + (cx + r) + ',' + cy + ' ' + cx + ',' + (cy + r) + ' ' + (cx - r) + ',' + cy);
             dia.setAttribute('fill', color);
             svg.appendChild(dia);
           }
-
-          // Tooltip title
-          var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+          var title = svgEl('title');
           title.textContent = (item[labelField] || '') + '\n' + item[startField] + ' → ' + item[endField] +
             (prog != null && prog < 1 ? '\nProgress: ' + Math.round(prog * 100) + '%' : '');
           bar.appendChild(title.cloneNode(true));
           if (prog > 0 && pbar) pbar.appendChild(title);
         });
-
         n.appendChild(svg);
       }
-
       render(); watch(wk, render);
     });
 
-    // ── m-table (array of objects → sortable table) ──
-    // Usage: <table m-table="users" m-table-cols="name,email,role" m-table-select="onRow"></table>
-    // If m-table-cols omitted, columns are inferred from first item's keys.
+    // m-table (array of objects → sortable table)
     root.querySelectorAll('[m-table]').forEach(n => {
       const arrKey = n.getAttribute('m-table'), wk = topKey(arrKey);
       const selectFn = n.getAttribute('m-table-select') || '';
       const colsDef = n.getAttribute('m-table-cols') || '';
       const sortable = !n.hasAttribute('m-table-nosort');
       let sortCol = null, sortAsc = true, selectedRow = null;
-
       function parseCol(s) {
-        // "Name:name" → { header:'Name', key:'name' } or "name" → { header:'name', key:'name' }
         var i = s.indexOf(':');
         if (i > -1) return { header: s.substring(0, i).trim(), key: s.substring(i + 1).trim() };
         s = s.trim();
         return { header: s.charAt(0).toUpperCase() + s.slice(1), key: s };
       }
-
       function render() {
         var arr = getPath(state, arrKey);
         n.innerHTML = '';
         selectedRow = null;
         if (!Array.isArray(arr) || arr.length === 0) return;
-
         var cols = colsDef
           ? colsDef.split(',').map(parseCol)
           : Object.keys(arr[0]).map(function(k) { return { header: k.charAt(0).toUpperCase() + k.slice(1), key: k }; });
-
-        // Sort data
         var data = arr.slice();
         if (sortCol !== null) {
           var key = cols[sortCol].key;
@@ -897,8 +744,6 @@ const BareMetalBind = (() => {
             return sortAsc ? (va < vb ? -1 : va > vb ? 1 : 0) : (va > vb ? -1 : va < vb ? 1 : 0);
           });
         }
-
-        // Header
         var thead = document.createElement('thead');
         var hrow = document.createElement('tr');
         cols.forEach(function(col, ci) {
@@ -917,8 +762,6 @@ const BareMetalBind = (() => {
         });
         thead.appendChild(hrow);
         n.appendChild(thead);
-
-        // Body
         var tbody = document.createElement('tbody');
         data.forEach(function(item) {
           var tr = document.createElement('tr');
@@ -940,56 +783,38 @@ const BareMetalBind = (() => {
         n.appendChild(tbody);
         n.classList.add('bm-table');
       }
-
       render(); watch(wk, render);
     });
 
-    // ── m-tree (recursive collapsible treeview) ──
-    // Usage: <div m-tree="files" m-tree-select="onSelect"></div>
-    // State: [{ label:'src', icon:'📁', children:[{ label:'index.js', icon:'📄' }] }]
+    // m-tree (recursive collapsible treeview)
     root.querySelectorAll('[m-tree]').forEach(n => {
       const arrKey = n.getAttribute('m-tree'), wk = topKey(arrKey);
       const selectFn = n.getAttribute('m-tree-select') || '';
       const labelField = n.getAttribute('m-tree-label') || 'label';
       const childField = n.getAttribute('m-tree-children') || 'children';
       const iconField = n.getAttribute('m-tree-icon') || 'icon';
-
       let selectedEl = null;
-
       function buildNode(item, depth) {
         const hasKids = Array.isArray(item[childField]) && item[childField].length > 0;
-        const row = document.createElement('div');
-        row.className = 'bm-tree-row';
+        const row = el('div', 'bm-tree-row');
         row.style.paddingLeft = (depth * 1.25) + 'rem';
-
         if (hasKids) {
-          const toggle = document.createElement('span');
-          toggle.className = 'bm-tree-toggle';
+          const toggle = el('span', 'bm-tree-toggle');
           toggle.textContent = '▸';
           row.appendChild(toggle);
         } else {
-          const spacer = document.createElement('span');
-          spacer.className = 'bm-tree-spacer';
-          row.appendChild(spacer);
+          row.appendChild(el('span', 'bm-tree-spacer'));
         }
-
         if (item[iconField]) {
-          const ico = document.createElement('span');
-          ico.className = 'bm-tree-icon';
+          const ico = el('span', 'bm-tree-icon');
           ico.textContent = item[iconField];
           row.appendChild(ico);
         }
-
-        const lbl = document.createElement('span');
-        lbl.className = 'bm-tree-label';
+        const lbl = el('span', 'bm-tree-label');
         lbl.textContent = item[labelField] || '';
         row.appendChild(lbl);
-
-        const wrapper = document.createElement('div');
-        wrapper.className = 'bm-tree-node';
+        const wrapper = el('div', 'bm-tree-node');
         wrapper.appendChild(row);
-
-        // Selection
         row.addEventListener('click', function(e) {
           e.stopPropagation();
           if (selectedEl) selectedEl.classList.remove('bm-tree-selected');
@@ -997,17 +822,12 @@ const BareMetalBind = (() => {
           selectedEl = row;
           if (selectFn && typeof state[selectFn] === 'function') state[selectFn](item, e);
         });
-
-        // Children container (collapsed by default unless item.open)
         if (hasKids) {
-          const kids = document.createElement('div');
-          kids.className = 'bm-tree-children';
+          const kids = el('div', 'bm-tree-children');
           if (!item.open) kids.style.display = 'none';
           else row.querySelector('.bm-tree-toggle').textContent = '▾';
-
           item[childField].forEach(function(child) { kids.appendChild(buildNode(child, depth + 1)); });
           wrapper.appendChild(kids);
-
           row.querySelector('.bm-tree-toggle').addEventListener('click', function(e) {
             e.stopPropagation();
             const open = kids.style.display === 'none';
@@ -1015,10 +835,8 @@ const BareMetalBind = (() => {
             this.textContent = open ? '▾' : '▸';
           });
         }
-
         return wrapper;
       }
-
       function render() {
         const arr = getPath(state, arrKey);
         n.innerHTML = '';
@@ -1027,73 +845,50 @@ const BareMetalBind = (() => {
         if (!Array.isArray(arr)) return;
         arr.forEach(function(item) { n.appendChild(buildNode(item, 0)); });
       }
-
       render(); watch(wk, render);
     });
 
-    // ── m-toast (array → toast popup) ──
-    // Usage: <div class="toast-container toast-container-top-right" m-toast="notifications"></div>
-    // Push: state.notifications.push({ type:'success', title:'Saved', message:'Done.', duration:'5s' })
+    // m-toast (array → toast popup)
     root.querySelectorAll('[m-toast]').forEach(n => {
       const arrKey = n.getAttribute('m-toast'), wk = topKey(arrKey);
       let lastLen = 0;
-
       function createToast(item) {
         const t = typeof item === 'string' ? { message: item } : item;
         const type = t.type || 'info';
         const dur = t.duration || '5s';
-        const durClass = 'toast-' + dur.replace(/\s/g, '');
+        const durClass = 'to-' + dur.replace(/\s/g, '');
         const dark = type === 'dark';
-
-        const toast = document.createElement('div');
-        toast.className = 'toast toast-auto ' + durClass + (dark ? ' toast-dark' : ' toast-' + type);
-
+        const toast = el('div', 'to to-au ' + durClass + (dark ? ' to-dk' : ' to-' + type));
         if (t.title) {
-          const header = document.createElement('div');
-          header.className = 'toast-header';
-          header.innerHTML = '<span class="toast-title">' + (t.title || '') + '</span>' +
-            (t.time ? '<span class="toast-time">' + t.time + '</span>' : '');
-          const closeBtn = document.createElement('button');
-          closeBtn.className = 'btn-close' + (dark ? ' btn-close-white' : '');
+          const header = el('div', 'to-h');
+          header.innerHTML = '<span class="to-t">' + (t.title || '') + '</span>' +
+            (t.time ? '<span class="to-tm">' + t.time + '</span>' : '');
+          const closeBtn = el('button', 'bt-x' + (dark ? ' bt-xw' : ''));
           closeBtn.addEventListener('click', () => toast.remove());
           header.appendChild(closeBtn);
           toast.appendChild(header);
         }
-
-        const body = document.createElement('div');
-        body.className = 'toast-body';
+        const body = el('div', 'to-b');
         body.textContent = t.message || '';
         toast.appendChild(body);
-
         if (t.progress !== false) {
-          const bar = document.createElement('div');
-          bar.className = 'toast-progress';
-          toast.appendChild(bar);
+          toast.appendChild(el('div', 'to-pg'));
         }
-
         toast.addEventListener('animationend', function(e) {
           if (e.animationName === 'toast-auto-dismiss') toast.remove();
         });
-
         n.appendChild(toast);
       }
-
       const sync = () => {
         const arr = getPath(state, arrKey);
         if (!Array.isArray(arr)) return;
-        // Only render newly added items
-        while (lastLen < arr.length) {
-          createToast(arr[lastLen]);
-          lastLen++;
-        }
-        // Handle array being replaced (reset)
+        while (lastLen < arr.length) { createToast(arr[lastLen]); lastLen++; }
         if (arr.length < lastLen) lastLen = arr.length;
       };
-
       sync(); watch(wk, sync);
     });
 
-    // ── m-click / m-submit ──
+    // m-click / m-submit
     root.querySelectorAll('[m-click],[m-submit]').forEach(n => {
       const sub = n.hasAttribute('m-submit');
       const fn  = n.getAttribute(sub ? 'm-submit' : 'm-click');
@@ -1105,40 +900,22 @@ const BareMetalBind = (() => {
     });
   }
 
-  // ── Convenience factories ───────────────────────────────────────────
+  // Convenience factories
   function now() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
-
   const create = {
-    // m-chatbot message
     message: (text, opts) => Object.assign({ text: text || '', from: 'user', time: now() }, opts),
     botMessage: (text, opts) => Object.assign({ text: text || '', from: 'bot', time: now() }, opts),
-
-    // m-toast notification
     toast: (message, opts) => Object.assign({ message: message || '', type: 'info', duration: '5s' }, opts),
-
-    // m-calendar event
     calendarEvent: (date, label, opts) => Object.assign({ date: date || '', label: label || '' }, opts),
-
-    // m-gantt task
     ganttTask: (label, start, end, opts) => Object.assign({ label: label || '', start: start || '', end: end || '', progress: 0 }, opts),
-
-    // m-tree node
     treeNode: (label, opts) => Object.assign({ label: label || '', children: [] }, opts),
-
-    // m-table row (passthrough, but ensures object)
     tableRow: (obj) => Object.assign({}, obj),
-
-    // m-navbar link
     navLink: (text, href, opts) => Object.assign({ text: text || '', href: href || '#' }, opts),
     navDropdown: (title, ...links) => [title, ...links],
-
-    // m-each item with key
     listItem: (key, data) => Object.assign({ id: key }, data)
   };
 
-  // ── Chatbot auto-wire to BareMetalRest ─────────────────────────────
-  // If BareMetalRest is loaded, provides a helper that creates an onSend
-  // function which POSTs the user message and pushes the bot response.
+  // Chatbot auto-wire to BareMetalRest
   function chatEndpoint(messagesKey, url, opts) {
     var o = Object.assign({ method: 'POST', bodyKey: 'message', responseKey: 'reply', botAvatar: '🤖', botName: 'Assistant' }, opts);
     return function(state) {
@@ -1146,7 +923,6 @@ const BareMetalBind = (() => {
         var arr = getPath(state, messagesKey);
         if (!Array.isArray(arr)) return;
         arr.push(create.message(text));
-        // Auto-call BareMetalRest if available
         var rest = typeof BareMetalRest !== 'undefined' ? BareMetalRest : null;
         if (rest) {
           var body = {}; body[o.bodyKey] = text;

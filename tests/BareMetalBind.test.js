@@ -454,8 +454,8 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
     });
     bind.bind(root, state, watch);
     const links = root.querySelectorAll('a');
-    expect(links[0].classList.contains('active')).toBe(true);
-    expect(links[1].classList.contains('active')).toBe(false);
+    expect(links[0].classList.contains('act')).toBe(true);
+    expect(links[1].classList.contains('act')).toBe(false);
   });
 
   test('re-renders when nav array is reassigned', () => {
@@ -487,10 +487,10 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
       ]
     });
     bind.bind(root, state, watch);
-    const dd = root.querySelector('.dropdown');
+    const dd = root.querySelector('.dd');
     expect(dd).not.toBeNull();
-    expect(dd.querySelector('.dropdown-toggle').textContent).toBe('Products');
-    const links = dd.querySelectorAll('.dropdown-menu a');
+    expect(dd.querySelector('.dd-t').textContent).toBe('Products');
+    const links = dd.querySelectorAll('.dd-m a');
     expect(links.length).toBe(2);
     expect(links[0].textContent).toBe('Alpha');
     expect(links[1].getAttribute('href')).toBe('/b');
@@ -508,10 +508,10 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
     });
     bind.bind(root, state, watch);
     const nav = root.querySelector('nav');
-    // 3 direct children: <a>, <div.dropdown>, <a>
+    // 3 direct children: <a>, <div.dd>, <a>
     expect(nav.children.length).toBe(3);
     expect(nav.children[0].tagName).toBe('A');
-    expect(nav.children[1].classList.contains('dropdown')).toBe(true);
+    expect(nav.children[1].classList.contains('dd')).toBe(true);
     expect(nav.children[2].tagName).toBe('A');
   });
 
@@ -522,9 +522,9 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
       nav: [['Menu', { href: '/a', text: 'A', active: true }, { href: '/b', text: 'B' }]]
     });
     bind.bind(root, state, watch);
-    const links = root.querySelectorAll('.dropdown-menu a');
-    expect(links[0].classList.contains('active')).toBe(true);
-    expect(links[1].classList.contains('active')).toBe(false);
+    const links = root.querySelectorAll('.dd-m a');
+    expect(links[0].classList.contains('act')).toBe(true);
+    expect(links[1].classList.contains('act')).toBe(false);
   });
 });
 

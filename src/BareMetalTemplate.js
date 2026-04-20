@@ -1,5 +1,5 @@
 // BareMetalTemplate — DOM builder from schema/layout metadata
-// Builds Bootstrap-compatible forms and list tables from server-driven structure.
+// Builds BareMetalStyles-compatible forms and list tbs from server-driven structure.
 // API: buildForm(layout, fields) → HTMLElement,  buildTable(fields, items, callbacks) → HTMLElement
 const BareMetalTemplate = (() => {
   'use strict';
@@ -26,85 +26,93 @@ const BareMetalTemplate = (() => {
   ];
   const mk = (tag, props) => Object.assign(document.createElement(tag), props);
 
+  // Shared: build the appropriate input element for a field schema
+  function buildInput(name, f) {
+    let inp;
+    if (f.type === 'boolean') {
+      inp = mk('input', { type: 'checkbox', className: 'fch-i' });
+    } else if (f.type === 'textarea') {
+      inp = mk('textarea', { className: 'fc', rows: f.rows || 3 });
+    } else if (f.type === 'select') {
+      inp = mk('select', { className: 'fsl' });
+      [{ value: '', label: '— select —' }, ...(f.options || [])].forEach(o => {
+        const isObj = o !== null && typeof o === 'object';
+        inp.appendChild(mk('option', {
+          value: isObj ? String(o.value ?? '') : String(o),
+          textContent: isObj ? String(o.label ?? o.value ?? o) : String(o)
+        }));
+      });
+    } else if (f.type === 'Country') {
+      inp = mk('select', { className: 'fsl' });
+      COUNTRY_OPTIONS.forEach(c => {
+        inp.appendChild(mk('option', { value: c[0], textContent: c[1] }));
+      });
+    } else if (f.type === 'file') {
+      inp = mk('input', { type: 'file', className: 'fc' });
+      if (f.accept) inp.accept = f.accept;
+    } else {
+      inp = mk('input', { className: 'fc', type: INPUT_TYPES[f.type] || 'text' });
+      if (f.type === 'Integer') inp.step = '1';
+    }
+
+    inp.setAttribute('m-value', name);
+    if (f.required) inp.required = true;
+    if (f.placeholder) inp.placeholder = f.placeholder;
+    if (f.readonly) { inp.disabled = true; inp.classList.add('bg-lt'); }
+    return inp;
+  }
+
+  function buildLabel(name, f) {
+    return mk('label', {
+      className: 'fl fsb',
+      textContent: f.label || name.replace(/([A-Z])/g, ' $1').trim()
+    });
+  }
+
   function buildForm(layout, fields) {
-    const form = mk('form', { className: 'mb-3' });
+    const form = mk('form', { className: 'mb3' });
     form.setAttribute('m-submit', 'save');
     const cols = layout.columns || 1;
-    const row  = mk('div', { className: 'row g-3' });
+    const rw  = mk('div', { className: 'rw g3' });
 
     (layout.fields || Object.keys(fields)).forEach(name => {
       const f = fields[name] || {};
 
-      // Hidden fields: carry the value without a visible widget
       if (f.type === 'hidden') {
         const inp = mk('input', { type: 'hidden' });
         inp.setAttribute('m-value', name);
-        row.appendChild(inp);
+        rw.appendChild(inp);
         return;
       }
 
-      const col = mk('div', { className: 'col-md-' + Math.floor(12 / cols) });
-      const lbl = mk('label', {
-        className: 'form-label fw-semibold',
-        textContent: f.label || name.replace(/([A-Z])/g, ' $1').trim()
-      });
+      const col = mk('div', { className: 'cm' + Math.floor(12 / cols) });
 
-      let inp;
       if (f.type === 'boolean') {
-        // Use Bootstrap form-check: checkbox then label (avoids label-then-checkbox odd layout)
-        const wrap = mk('div', { className: 'form-check mt-2' });
+        const wrap = mk('div', { className: 'fch mt2' });
         const chkId = 'f_' + name;
-        inp = mk('input', { type: 'checkbox', className: 'form-check-input', id: chkId });
-        inp.setAttribute('m-value', name);
-        if (f.required) inp.required = true;
-        const chkLabel = mk('label', { className: 'form-check-label', htmlFor: chkId,
+        const inp = buildInput(name, f);
+        inp.id = chkId;
+        const chkLabel = mk('label', { className: 'fch-l', htmlFor: chkId,
           textContent: f.label || name.replace(/([A-Z])/g, ' $1').trim() });
         wrap.append(inp, chkLabel);
         col.appendChild(wrap);
-        row.appendChild(col);
-        return; // skip standard append below
-      } else if (f.type === 'textarea') {
-        inp = mk('textarea', { className: 'form-control', rows: f.rows || 3 });
-      } else if (f.type === 'select') {
-        inp = mk('select', { className: 'form-select' });
-        [{ value: '', label: '— select —' }, ...(f.options || [])].forEach(o => {
-          const isObj = o !== null && typeof o === 'object';
-          inp.appendChild(mk('option', {
-            value: isObj ? String(o.value ?? '') : String(o),
-            textContent: isObj ? String(o.label ?? o.value ?? o) : String(o)
-          }));
-        });
-      } else if (f.type === 'Country') {
-        inp = mk('select', { className: 'form-select' });
-        COUNTRY_OPTIONS.forEach(c => {
-          inp.appendChild(mk('option', { value: c[0], textContent: c[1] }));
-        });
-      } else if (f.type === 'file') {
-        inp = mk('input', { type: 'file', className: 'form-control' });
-        if (f.accept) inp.accept = f.accept;
-      } else {
-        inp = mk('input', { className: 'form-control', type: INPUT_TYPES[f.type] || 'text' });
-        if (f.type === 'Integer') inp.step = '1';
+        rw.appendChild(col);
+        return;
       }
 
-      inp.setAttribute('m-value', name);
-      if (f.required) inp.required = true;
-      if (f.placeholder) inp.placeholder = f.placeholder;
-      // Readonly/computed fields are shown with their value but cannot be edited
-      if (f.readonly) { inp.disabled = true; inp.className += ' bg-light'; }
+      const lbl = buildLabel(name, f);
+      const inp = buildInput(name, f);
 
-      // For lookup selects: wrap in input-group and add Add/Refresh buttons
       if (f.type === 'select' && f.lookupUrl) {
-        const grp = mk('div', { className: 'input-group input-group-sm' });
+        const grp = mk('div', { className: 'ig ig-s' });
         grp.appendChild(inp);
         const targetSlug = f.lookupUrl.replace(/[?#].*$/, '').replace(/\/$/, '').split('/').pop();
         const addBtn = mk('a', {
           href: '/' + targetSlug + '/create',
-          className: 'btn btn-outline-secondary', title: 'Add new', target: '_blank'
+          className: 'bt bt-os', title: 'Add new', target: '_blank',
+          textContent: '+'
         });
-        addBtn.innerHTML = '<i class="bi bi-plus"></i>';
-        const refBtn = mk('button', { type: 'button', className: 'btn btn-outline-secondary', title: 'Refresh' });
-        refBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+        const refBtn = mk('button', { type: 'button', className: 'bt bt-os', title: 'Refresh', textContent: '↻' });
         refBtn.dataset.lookupRefresh = name;
         refBtn.dataset.lookupUrl = f.lookupUrl;
         refBtn.dataset.lookupValueField = f.lookupValueField || 'id';
@@ -114,13 +122,13 @@ const BareMetalTemplate = (() => {
       } else {
         col.append(lbl, inp);
       }
-      row.appendChild(col);
+      rw.appendChild(col);
     });
 
-    const foot = mk('div', { className: 'col-12 mt-2 d-flex gap-2' });
-    foot.appendChild(mk('button', { type: 'submit', className: 'btn btn-primary', textContent: 'Save' }));
-    row.appendChild(foot);
-    form.appendChild(row);
+    const foot = mk('div', { className: 'c12 mt2 fx gp2' });
+    foot.appendChild(mk('button', { type: 'submit', className: 'bt bt-p', textContent: 'Save' }));
+    rw.appendChild(foot);
+    form.appendChild(rw);
     return form;
   }
 
@@ -128,11 +136,11 @@ const BareMetalTemplate = (() => {
     const cb    = callbacks || {};
     const resolve = cb.resolve || ((name, v) => String(v ?? ''));
     const names = Object.keys(fields).filter(n => !fields[n].readonly).slice(0, 6);
-    const wrap  = mk('div', { className: 'table-responsive' });
-    const tbl   = mk('table', { className: 'table table-hover table-sm align-middle' });
-    const hrow  = tbl.createTHead().insertRow();
-    names.forEach(n => hrow.appendChild(mk('th', { textContent: fields[n]?.label || n })));
-    hrow.appendChild(mk('th', { className: 'text-end' }));
+    const wrap  = mk('div', { className: 'tb-r' });
+    const tbl   = mk('table', { className: 'tb tb-h tb-s vam' });
+    const hrw  = tbl.createTHead().insertRow();
+    names.forEach(n => hrw.appendChild(mk('th', { textContent: fields[n]?.label || n })));
+    hrw.appendChild(mk('th', { className: 'te' }));
     const tbody = tbl.createTBody();
     items.forEach(item => {
       const tr = tbody.insertRow();
@@ -141,24 +149,24 @@ const BareMetalTemplate = (() => {
         if (fields[n]?.type === 'boolean') {
           const v = item[n];
           td.innerHTML = (v === true || v === 'true' || v === 1)
-            ? '<span class="badge bg-success"><i class="bi bi-check-lg"></i></span>'
-            : '<span class="badge bg-secondary"><i class="bi bi-x-lg"></i></span>';
+            ? '<span class="bd bg-ok">✓</span>'
+            : '<span class="bd bg-s">✗</span>';
         } else {
           td.textContent = resolve(n, item[n]);
         }
       });
-      const td = tr.insertCell(); td.className = 'text-end';
+      const td = tr.insertCell(); td.className = 'te';
       const id = item.id || item.Id || '';
       if (cb.onView) {
-        const b = mk('button', { className: 'btn btn-sm btn-outline-primary me-1', textContent: '\uD83D\uDC41' });
+        const b = mk('button', { className: 'bt bt-s bt-op me1', textContent: '👁' });
         b.onclick = () => cb.onView(id, item); td.appendChild(b);
       }
       if (cb.onEdit) {
-        const b = mk('button', { className: 'btn btn-sm btn-outline-secondary me-1', textContent: '\u270F' });
+        const b = mk('button', { className: 'bt bt-s bt-os me1', textContent: '✏' });
         b.onclick = () => cb.onEdit(id, item); td.appendChild(b);
       }
       if (cb.onDelete) {
-        const b = mk('button', { className: 'btn btn-sm btn-outline-danger', textContent: '\uD83D\uDDD1' });
+        const b = mk('button', { className: 'bt bt-s bt-oer', textContent: '🗑' });
         b.onclick = () => cb.onDelete(id, item); td.appendChild(b);
       }
     });
@@ -166,137 +174,5 @@ const BareMetalTemplate = (() => {
     return wrap;
   }
 
-  // ── BMW Layout Grammar helpers ──
-  // Build lightweight custom element DOM: ds=stack dr=row dc=column db=box dn=nav ta=table
-  const ds = (children) => { const e = document.createElement('ds'); (children||[]).forEach(c => e.appendChild(c)); return e; };
-  const dr = (children, attrs) => { const e = document.createElement('dr'); if (attrs) Object.entries(attrs).forEach(([k,v]) => e.setAttribute(k,v)); (children||[]).forEach(c => e.appendChild(c)); return e; };
-  const dc = (children) => { const e = document.createElement('dc'); (children||[]).forEach(c => e.appendChild(c)); return e; };
-  const db = (children, title) => {
-    const e = document.createElement('db');
-    if (title) { const h = mk('strong', { textContent: title }); e.appendChild(h); }
-    (children||[]).forEach(c => e.appendChild(c));
-    return e;
-  };
-  const dn = (text, children) => {
-    const e = document.createElement('dn');
-    if (text) e.appendChild(mk('span', { textContent: text }));
-    (children||[]).forEach(c => e.appendChild(c));
-    return e;
-  };
-  const ta = (tableEl) => { const e = document.createElement('ta'); if (tableEl) e.appendChild(tableEl); return e; };
-  const ch = () => document.createElement('ch');
-  const gt = () => document.createElement('gt');
-  const cl = () => document.createElement('cl');
-
-  // Build a BMW grammar form — uses ds/dr/dc instead of Bootstrap grid
-  function buildBmwForm(layout, fields) {
-    const form = mk('form', {});
-    form.setAttribute('m-submit', 'save');
-    const stack = document.createElement('ds');
-    const cols = layout.columns || 2;
-    let currentRow = null;
-    let colCount = 0;
-
-    (layout.fields || Object.keys(fields)).forEach(name => {
-      const f = fields[name] || {};
-      if (f.type === 'hidden') {
-        const inp = mk('input', { type: 'hidden' });
-        inp.setAttribute('m-value', name);
-        form.appendChild(inp);
-        return;
-      }
-
-      if (!currentRow || colCount >= cols) {
-        currentRow = document.createElement('dr');
-        stack.appendChild(currentRow);
-        colCount = 0;
-      }
-
-      const col = document.createElement('dc');
-      const lbl = mk('label', {
-        textContent: f.label || name.replace(/([A-Z])/g, ' $1').trim()
-      });
-      lbl.style.fontWeight = '600';
-      lbl.style.fontSize = '0.85rem';
-
-      let inp;
-      if (f.type === 'boolean') {
-        inp = mk('input', { type: 'checkbox' });
-      } else if (f.type === 'textarea') {
-        inp = mk('textarea', { rows: f.rows || 3 });
-        inp.style.width = '100%';
-      } else if (f.type === 'select') {
-        inp = mk('select', {});
-        inp.style.width = '100%';
-        [{ value: '', label: '— select —' }, ...(f.options || [])].forEach(o => {
-          const isObj = o !== null && typeof o === 'object';
-          inp.appendChild(mk('option', {
-            value: isObj ? String(o.value ?? '') : String(o),
-            textContent: isObj ? String(o.label ?? o.value ?? o) : String(o)
-          }));
-        });
-      } else if (f.type === 'Country') {
-        inp = mk('select', {});
-        inp.style.width = '100%';
-        COUNTRY_OPTIONS.forEach(c => {
-          inp.appendChild(mk('option', { value: c[0], textContent: c[1] }));
-        });
-      } else if (f.type === 'file') {
-        inp = mk('input', { type: 'file' });
-        if (f.accept) inp.accept = f.accept;
-      } else {
-        inp = mk('input', { type: INPUT_TYPES[f.type] || 'text' });
-        inp.style.width = '100%';
-        if (f.type === 'Integer') inp.step = '1';
-      }
-
-      inp.setAttribute('m-value', name);
-      if (f.required) inp.required = true;
-      if (f.placeholder) inp.placeholder = f.placeholder;
-      if (f.readonly) inp.disabled = true;
-
-      col.append(lbl, inp);
-      currentRow.appendChild(col);
-      colCount++;
-    });
-
-    const foot = document.createElement('dr');
-    const saveBtn = mk('button', { type: 'submit', textContent: 'Save' });
-    saveBtn.style.cssText = 'padding:6px 16px;font-weight:600;cursor:pointer';
-    foot.appendChild(saveBtn);
-    stack.appendChild(foot);
-    form.appendChild(stack);
-    return form;
-  }
-
-  // Build a BMW grammar table — uses <ta> wrapper with plain <table>
-  function buildBmwTable(fields, items, callbacks) {
-    const cb = callbacks || {};
-    const resolve = cb.resolve || ((name, v) => String(v ?? ''));
-    const names = Object.keys(fields).filter(n => !fields[n].readonly).slice(0, 6);
-    const tbl = mk('table', {});
-    const hrow = tbl.createTHead().insertRow();
-    names.forEach(n => hrow.appendChild(mk('th', { textContent: fields[n]?.label || n })));
-    hrow.appendChild(mk('th', {}));
-    const tbody = tbl.createTBody();
-    items.forEach(item => {
-      const tr = tbody.insertRow();
-      names.forEach(n => {
-        const td = tr.insertCell();
-        if (fields[n]?.type === 'boolean') {
-          td.textContent = (item[n] === true || item[n] === 'true' || item[n] === 1) ? '✓' : '✗';
-        } else {
-          td.textContent = resolve(n, item[n]);
-        }
-      });
-      const td = tr.insertCell(); td.style.textAlign = 'right';
-      const id = item.id || item.Id || '';
-      if (cb.onView) { const b = mk('button', { textContent: '👁' }); b.onclick = () => cb.onView(id, item); td.appendChild(b); }
-      if (cb.onEdit) { const b = mk('button', { textContent: '✏' }); b.onclick = () => cb.onEdit(id, item); td.appendChild(b); }
-      if (cb.onDelete) { const b = mk('button', { textContent: '🗑' }); b.onclick = () => cb.onDelete(id, item); td.appendChild(b); }
-    });
-    return ta(tbl);
-  }
-
-  return { buildForm, buildTable, buildBmwForm, buildBmwTable, ds, dr, dc, db, dn, ta, ch, gt, cl };
+  return { buildForm, buildTable, buildInput, buildLabel };
 })();
