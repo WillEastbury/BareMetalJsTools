@@ -18,6 +18,8 @@ Tiny, zero-dependency vanilla-JS primitives for building fully client-rendered a
 | [`BareMetalRouting`](docs/BareMetalRouting.md) | 8 KB  | History-API SPA router. Named segments (`:param`) and catch-all (`*`) patterns. Exposed as `window.BMRouter`. |
 | [`PicoCompress`](docs/PicoCompress.md)     | 27 KB | Block-based LZ compressor. Zero deps. Byte-identical to the [C reference](https://github.com/WillEastbury/picocompress). Integrated into `BareMetalRest` for opt-in wire compression. |
 | [`BareMetalStyles`](docs/BareMetalStyles.md) | 34 KB | Minimal CSS framework. Drop-in Bootstrap 5 subset (~200 classes) covering grid, flexbox, spacing, buttons, forms, tables, cards, modals, alerts, and more. Zero JS required. |
+| [`BareMetalCharts`](docs/BareMetalCharts.md) | 17 KB | Lightweight SVG chart renderer. Bar, line, sparkline, donut, and gauge charts. Animated, themed via CSS custom properties. |
+| [`BareMetalGraph`](docs/BareMetalGraph.md)   | 19 KB | Force-directed graph visualiser. Interactive node/edge diagrams with drag, zoom, hover highlighting, and dynamic add/remove. |
 
 ### Dependency graph
 

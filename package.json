@@ -26,6 +26,8 @@
     "./routing":      { "import": "./esm/BareMetalRouting.js",   "default": "./src/BareMetalRouting.js" },
     "./template":     { "import": "./esm/BareMetalTemplate.js",  "default": "./src/BareMetalTemplate.js" },
     "./picocompress": { "import": "./esm/picocompress.js",       "default": "./src/picocompress.js" },
+    "./charts":       { "import": "./esm/BareMetalCharts.js",    "default": "./src/BareMetalCharts.js" },
+    "./graph":        { "import": "./esm/BareMetalGraph.js",     "default": "./src/BareMetalGraph.js" },
     "./styles":       "./src/BareMetalStyles.css"
   },
   "scripts": {

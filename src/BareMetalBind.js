@@ -60,6 +60,8 @@ const BareMetalBind = (() => {
       if (path === '.index') return scope.index;
       if (path === '.parent') return scope.parent;
       if (path === '.root') return scope.root;
+      if (path.startsWith('.root.')) return getPath(scope.root, path.slice(6));
+      if (path.startsWith('.parent.')) return getPath(scope.parent, path.slice(8));
       if (path.startsWith('.')) return getPath(scope.item, path.slice(1));
     }
     return getPath(state, path);

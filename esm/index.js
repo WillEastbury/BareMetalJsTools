@@ -6,3 +6,5 @@ export { default as BareMetalTemplate }  from './BareMetalTemplate.js';
 export { default as BareMetalRendering } from './BareMetalRendering.js';
 export { default as BMRouter }           from './BareMetalRouting.js';
 export { default as PicoCompress }       from './picocompress.js';
+export { default as BareMetalCharts }   from './BareMetalCharts.js';
+export { default as BareMetalGraph }    from './BareMetalGraph.js';

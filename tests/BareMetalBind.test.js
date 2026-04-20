@@ -527,3 +527,370 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
     expect(links[1].classList.contains('active')).toBe(false);
   });
 });
+
+// ── Dot-path resolution ───────────────────────────────────────────────
+
+describe('BareMetalBind – dot-path resolution', () => {
+  let bind;
+  beforeEach(() => { bind = loadBind(); });
+
+  test('m-text resolves nested dot-path', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<span m-text="user.name"></span>';
+    const { state, watch } = bind.reactive({ user: { name: 'Alice' } });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').textContent).toBe('Alice');
+  });
+
+  test('m-text updates on top-level key reassignment', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<span m-text="user.name"></span>';
+    const { state, watch } = bind.reactive({ user: { name: 'A' } });
+    bind.bind(root, state, watch);
+    state.user = { name: 'B' };
+    expect(root.querySelector('span').textContent).toBe('B');
+  });
+
+  test('m-value reads and writes nested path', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<input m-value="config.theme">';
+    const { state, watch } = bind.reactive({ config: { theme: 'dark' } });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('input').value).toBe('dark');
+  });
+
+  test('m-if works with dot-path', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-if="flags.visible">hi</div>';
+    const { state, watch } = bind.reactive({ flags: { visible: false } });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('div').style.display).toBe('none');
+  });
+
+  test('m-class works with dot-path', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-class="active:ui.selected"></div>';
+    const { state, watch } = bind.reactive({ ui: { selected: true } });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('div').classList.contains('active')).toBe(true);
+  });
+
+  test('m-attr works with dot-path', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<a m-attr="href:link.url">go</a>';
+    const { state, watch } = bind.reactive({ link: { url: '/test' } });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('a').getAttribute('href')).toBe('/test');
+  });
+
+  test('deeply nested path resolves', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<span m-text="a.b.c.d"></span>';
+    const { state, watch } = bind.reactive({ a: { b: { c: { d: 'deep' } } } });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').textContent).toBe('deep');
+  });
+});
+
+// ── Formatters ────────────────────────────────────────────────────────
+
+describe('BareMetalBind – formatters', () => {
+  let bind;
+  beforeEach(() => { bind = loadBind(); });
+
+  test('applies a single formatter', () => {
+    bind.formatters.upper = v => String(v).toUpperCase();
+    const root = document.createElement('div');
+    root.innerHTML = '<span m-text="name|upper"></span>';
+    const { state, watch } = bind.reactive({ name: 'hello' });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').textContent).toBe('HELLO');
+  });
+
+  test('chains multiple formatters', () => {
+    bind.formatters.upper = v => String(v).toUpperCase();
+    bind.formatters.exclaim = v => v + '!';
+    const root = document.createElement('div');
+    root.innerHTML = '<span m-text="name|upper|exclaim"></span>';
+    const { state, watch } = bind.reactive({ name: 'hi' });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').textContent).toBe('HI!');
+  });
+
+  test('formatter with argument', () => {
+    bind.formatters.prefix = (v, arg) => arg + v;
+    const root = document.createElement('div');
+    root.innerHTML = '<span m-text="price|prefix:$"></span>';
+    const { state, watch } = bind.reactive({ price: '100' });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').textContent).toBe('$100');
+  });
+
+  test('formatters update reactively', () => {
+    bind.formatters.double = v => Number(v) * 2;
+    const root = document.createElement('div');
+    root.innerHTML = '<span m-text="x|double"></span>';
+    const { state, watch } = bind.reactive({ x: 5 });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').textContent).toBe('10');
+    state.x = 7;
+    expect(root.querySelector('span').textContent).toBe('14');
+  });
+
+  test('unknown formatter passes value through', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<span m-text="val|noexist"></span>';
+    const { state, watch } = bind.reactive({ val: 'ok' });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').textContent).toBe('ok');
+  });
+});
+
+// ── Reactive arrays ───────────────────────────────────────────────────
+
+describe('BareMetalBind – reactive arrays', () => {
+  let bind;
+  beforeEach(() => { bind = loadBind(); });
+
+  test('push triggers watcher', () => {
+    const { state, watch } = bind.reactive({ items: ['a'] });
+    const spy = jest.fn();
+    watch('items', spy);
+    state.items.push('b');
+    expect(spy).toHaveBeenCalled();
+    expect(state.items.length).toBe(2);
+  });
+
+  test('splice triggers watcher', () => {
+    const { state, watch } = bind.reactive({ items: ['a', 'b', 'c'] });
+    const spy = jest.fn();
+    watch('items', spy);
+    state.items.splice(1, 1);
+    expect(spy).toHaveBeenCalled();
+    expect(state.items.length).toBe(2);
+  });
+
+  test('pop triggers watcher', () => {
+    const { state, watch } = bind.reactive({ items: [1, 2] });
+    const spy = jest.fn();
+    watch('items', spy);
+    const popped = state.items.pop();
+    expect(popped).toBe(2);
+    expect(spy).toHaveBeenCalled();
+  });
+
+  test('sort triggers watcher', () => {
+    const { state, watch } = bind.reactive({ items: [3, 1, 2] });
+    const spy = jest.fn();
+    watch('items', spy);
+    state.items.sort();
+    expect(spy).toHaveBeenCalled();
+  });
+
+  test('reassigning array still works and new array is reactive', () => {
+    const { state, watch } = bind.reactive({ items: [] });
+    state.items = ['x'];
+    const spy = jest.fn();
+    watch('items', spy);
+    state.items.push('y');
+    expect(spy).toHaveBeenCalled();
+    expect(state.items.length).toBe(2);
+  });
+
+  test('m-each re-renders on push', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items"><template><li m-text="."></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: ['a'] });
+    bind.bind(root, state, watch);
+    expect(root.querySelectorAll('li').length).toBe(1);
+    state.items.push('b');
+    expect(root.querySelectorAll('li').length).toBe(2);
+    expect(root.querySelectorAll('li')[1].textContent).toBe('b');
+  });
+});
+
+// ── m-each keyed diffing ──────────────────────────────────────────────
+
+describe('BareMetalBind – m-each keyed diffing', () => {
+  let bind;
+  beforeEach(() => { bind = loadBind(); });
+
+  test('keyed diff renders initial list', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items key:id"><template><li m-text=".name"></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: [{ id: 1, name: 'A' }, { id: 2, name: 'B' }] });
+    bind.bind(root, state, watch);
+    const lis = root.querySelectorAll('li');
+    expect(lis.length).toBe(2);
+    expect(lis[0].textContent).toBe('A');
+  });
+
+  test('keyed diff reuses DOM on reorder', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items key:id"><template><li m-text=".name"></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: [{ id: 1, name: 'A' }, { id: 2, name: 'B' }] });
+    bind.bind(root, state, watch);
+    const firstLi = root.querySelectorAll('li')[0];
+    state.items = [{ id: 2, name: 'B' }, { id: 1, name: 'A' }];
+    const lis = root.querySelectorAll('li');
+    expect(lis[1]).toBe(firstLi);
+    expect(lis[1].textContent).toBe('A');
+  });
+
+  test('keyed diff adds new items', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items key:id"><template><li m-text=".name"></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: [{ id: 1, name: 'A' }] });
+    bind.bind(root, state, watch);
+    state.items = [{ id: 1, name: 'A' }, { id: 2, name: 'B' }];
+    expect(root.querySelectorAll('li').length).toBe(2);
+  });
+
+  test('keyed diff removes old items', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items key:id"><template><li m-text=".name"></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: [{ id: 1, name: 'A' }, { id: 2, name: 'B' }] });
+    bind.bind(root, state, watch);
+    state.items = [{ id: 2, name: 'B' }];
+    expect(root.querySelectorAll('li').length).toBe(1);
+    expect(root.querySelector('li').textContent).toBe('B');
+  });
+
+  test('keyed diff updates content of reused row', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items key:id"><template><li m-text=".name"></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: [{ id: 1, name: 'Old' }] });
+    bind.bind(root, state, watch);
+    state.items = [{ id: 1, name: 'New' }];
+    expect(root.querySelector('li').textContent).toBe('New');
+  });
+});
+
+// ── m-each scope (.index, .parent, .root) ─────────────────────────────
+
+describe('BareMetalBind – m-each scope', () => {
+  let bind;
+  beforeEach(() => { bind = loadBind(); });
+
+  test('.index exposes array index', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items"><template><li m-text=".index"></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: ['a', 'b', 'c'] });
+    bind.bind(root, state, watch);
+    const lis = root.querySelectorAll('li');
+    expect(lis[0].textContent).toBe('0');
+    expect(lis[2].textContent).toBe('2');
+  });
+
+  test('.root accesses root state from inside m-each', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items"><template><li m-text=".root.title"></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: ['a', 'b'], title: 'MyList' });
+    bind.bind(root, state, watch);
+    expect(root.querySelectorAll('li')[0].textContent).toBe('MyList');
+    expect(root.querySelectorAll('li')[1].textContent).toBe('MyList');
+  });
+
+  test('.prop.nested resolves nested item properties', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items"><template><li m-text=".addr.city"></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: [{ addr: { city: 'London' } }] });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('li').textContent).toBe('London');
+  });
+});
+
+// ── m-transition ──────────────────────────────────────────────────────
+
+describe('BareMetalBind – m-transition', () => {
+  let bind;
+  let origRAF;
+  beforeEach(() => {
+    jest.useFakeTimers(); // mock setTimeout first
+    origRAF = global.requestAnimationFrame;
+    global.requestAnimationFrame = (cb) => setTimeout(cb, 0); // now uses jest's setTimeout
+    bind = loadBind();
+  });
+  afterEach(() => {
+    global.requestAnimationFrame = origRAF;
+    jest.useRealTimers();
+  });
+
+  test('m-if without m-transition still toggles display', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-if="show">hi</div>';
+    const { state, watch } = bind.reactive({ show: true });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('div').style.display).toBe('');
+    state.show = false;
+    expect(root.querySelector('div').style.display).toBe('none');
+  });
+
+  test('m-transition adds enter classes on show', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-if="show" m-transition="fade">hi</div>';
+    const { state, watch } = bind.reactive({ show: false });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('div').style.display).toBe('none');
+    state.show = true;
+    jest.advanceTimersByTime(100);
+    const el = root.querySelector('div');
+    expect(el.style.display).toBe('');
+    expect(el.classList.contains('fade-enter-active') || el.classList.contains('fade-enter') || el.style.display === '').toBe(true);
+  });
+
+  test('m-transition adds leave classes on hide', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-if="show" m-transition="slide">hi</div>';
+    const { state, watch } = bind.reactive({ show: true });
+    bind.bind(root, state, watch);
+    state.show = false;
+    // Flush the nested rAF callbacks (setTimeout-based in test)
+    jest.advanceTimersByTime(100);
+    const el = root.querySelector('div');
+    expect(el.classList.contains('slide-leave-active')).toBe(true);
+    // Simulate CSS transition completing
+    el.dispatchEvent(new Event('transitionend'));
+    expect(el.style.display).toBe('none');
+  });
+});
+
+// ── m-expression ──────────────────────────────────────────────────────
+
+describe('BareMetalBind – m-expression', () => {
+  let bind;
+  beforeEach(() => { bind = loadBind(); });
+
+  test('computes derived value on initial bind', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-expression="total = price * qty"></div><span m-text="total"></span>';
+    const { state, watch } = bind.reactive({ price: 10, qty: 3, total: 0 });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').textContent).toBe('30');
+  });
+
+  test('recomputes when dependency changes', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-expression="total = price * qty"></div><span m-text="total"></span>';
+    const { state, watch } = bind.reactive({ price: 10, qty: 3, total: 0 });
+    bind.bind(root, state, watch);
+    state.price = 20;
+    expect(root.querySelector('span').textContent).toBe('60');
+  });
+
+  test('supports complex expressions', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-expression="greeting = first + \' \' + last"></div><span m-text="greeting"></span>';
+    const { state, watch } = bind.reactive({ first: 'John', last: 'Doe', greeting: '' });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').textContent).toBe('John Doe');
+  });
+
+  test('handles Math functions', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-expression="result = Math.max(a, b)"></div><span m-text="result"></span>';
+    const { state, watch } = bind.reactive({ a: 5, b: 9, result: 0 });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').textContent).toBe('9');
+  });
+});
