@@ -28,7 +28,7 @@ const BareMetalTemplate = (() => {
 
   function buildForm(layout, fields) {
     const form = mk('form', { className: 'mb-3' });
-    form.setAttribute('rv-on-submit', 'save');
+    form.setAttribute('m-submit', 'save');
     const cols = layout.columns || 1;
     const row  = mk('div', { className: 'row g-3' });
 
@@ -38,7 +38,7 @@ const BareMetalTemplate = (() => {
       // Hidden fields: carry the value without a visible widget
       if (f.type === 'hidden') {
         const inp = mk('input', { type: 'hidden' });
-        inp.setAttribute('rv-value', name);
+        inp.setAttribute('m-value', name);
         row.appendChild(inp);
         return;
       }
@@ -55,7 +55,7 @@ const BareMetalTemplate = (() => {
         const wrap = mk('div', { className: 'form-check mt-2' });
         const chkId = 'f_' + name;
         inp = mk('input', { type: 'checkbox', className: 'form-check-input', id: chkId });
-        inp.setAttribute('rv-value', name);
+        inp.setAttribute('m-value', name);
         if (f.required) inp.required = true;
         const chkLabel = mk('label', { className: 'form-check-label', htmlFor: chkId,
           textContent: f.label || name.replace(/([A-Z])/g, ' $1').trim() });
@@ -87,7 +87,7 @@ const BareMetalTemplate = (() => {
         if (f.type === 'Integer') inp.step = '1';
       }
 
-      inp.setAttribute('rv-value', name);
+      inp.setAttribute('m-value', name);
       if (f.required) inp.required = true;
       if (f.placeholder) inp.placeholder = f.placeholder;
       // Readonly/computed fields are shown with their value but cannot be edited
@@ -191,7 +191,7 @@ const BareMetalTemplate = (() => {
   // Build a BMW grammar form — uses ds/dr/dc instead of Bootstrap grid
   function buildBmwForm(layout, fields) {
     const form = mk('form', {});
-    form.setAttribute('rv-on-submit', 'save');
+    form.setAttribute('m-submit', 'save');
     const stack = document.createElement('ds');
     const cols = layout.columns || 2;
     let currentRow = null;
@@ -201,7 +201,7 @@ const BareMetalTemplate = (() => {
       const f = fields[name] || {};
       if (f.type === 'hidden') {
         const inp = mk('input', { type: 'hidden' });
-        inp.setAttribute('rv-value', name);
+        inp.setAttribute('m-value', name);
         form.appendChild(inp);
         return;
       }
@@ -250,7 +250,7 @@ const BareMetalTemplate = (() => {
         if (f.type === 'Integer') inp.step = '1';
       }
 
-      inp.setAttribute('rv-value', name);
+      inp.setAttribute('m-value', name);
       if (f.required) inp.required = true;
       if (f.placeholder) inp.placeholder = f.placeholder;
       if (f.readonly) inp.disabled = true;

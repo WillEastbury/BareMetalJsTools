@@ -23,20 +23,20 @@ Scans the subtree of `root` for directive attributes and wires them up:
 
 | Directive | On | Effect |
 |---|---|---|
-| `rv-value="key"`     | `<input>`, `<select>`, `<textarea>` | Two-way binding. Handles `checkbox`, `date`, `datetime-local`. |
-| `rv-text="key"`      | any element | One-way text content binding. |
-| `rv-if="key"`        | any element | Hides element when value is falsy. |
-| `rv-on-click="fn"`   | any element | Calls `state[fn](event)` on click. |
-| `rv-on-submit="fn"`  | `<form>`   | Calls `state[fn](event)` on submit, with `preventDefault()`. |
+| `m-value="key"`     | `<input>`, `<select>`, `<textarea>` | Two-way binding. Handles `checkbox`, `date`, `datetime-local`. |
+| `m-text="key"`      | any element | One-way text content binding. |
+| `m-if="key"`        | any element | Hides element when value is falsy. |
+| `m-click="fn"`   | any element | Calls `state[fn](event)` on click. |
+| `m-submit="fn"`  | `<form>`   | Calls `state[fn](event)` on submit, with `preventDefault()`. |
 
 ## Example
 
 ```html
 <form>
-  <input rv-value="email" type="email">
-  <input rv-value="agree" type="checkbox">
-  <button rv-on-click="save" rv-if="agree">Save</button>
-  <p rv-text="status"></p>
+  <input m-value="email" type="email">
+  <input m-value="agree" type="checkbox">
+  <button m-click="save" m-if="agree">Save</button>
+  <p m-text="status"></p>
 </form>
 
 <script src="src/BareMetalBind.js"></script>
@@ -52,5 +52,5 @@ Scans the subtree of `root` for directive attributes and wires them up:
 ## Notes
 
 * No virtual DOM. Bindings touch only the elements that change.
-* `rv-value` parses date inputs to ISO strings (`YYYY-MM-DD` / `YYYY-MM-DDTHH:MM`).
+* `m-value` parses date inputs to ISO strings (`YYYY-MM-DD` / `YYYY-MM-DDTHH:MM`).
 * Re-running `bind()` on the same root is safe — it reuses the same listener slots.

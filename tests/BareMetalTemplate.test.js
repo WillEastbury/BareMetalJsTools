@@ -28,16 +28,16 @@ describe('BareMetalTemplate – buildForm()', () => {
     expect(form.tagName).toBe('FORM');
   });
 
-  test('form has rv-on-submit attribute set to "save"', () => {
+  test('form has m-submit attribute set to "save"', () => {
     const form = tmpl.buildForm({ fields: ['x'] }, { x: {} });
-    expect(form.getAttribute('rv-on-submit')).toBe('save');
+    expect(form.getAttribute('m-submit')).toBe('save');
   });
 
-  test('renders a text input with rv-value', () => {
+  test('renders a text input with m-value', () => {
     const form = tmpl.buildForm({ fields: ['email'] }, { email: { type: 'email', label: 'Email' } });
     const inp = form.querySelector('input[type="email"]');
     expect(inp).not.toBeNull();
-    expect(inp.getAttribute('rv-value')).toBe('email');
+    expect(inp.getAttribute('m-value')).toBe('email');
   });
 
   test('renders a hidden input without a visible column', () => {
@@ -120,8 +120,8 @@ describe('BareMetalTemplate – buildForm()', () => {
     const form = tmpl.buildForm({ fields: ['c', 'a'] }, fields);
     const inputs = form.querySelectorAll('input:not([type="submit"])');
     // First rendered is 'c', second is 'a'
-    expect(inputs[0].getAttribute('rv-value')).toBe('c');
-    expect(inputs[1].getAttribute('rv-value')).toBe('a');
+    expect(inputs[0].getAttribute('m-value')).toBe('c');
+    expect(inputs[1].getAttribute('m-value')).toBe('a');
   });
 
   test('adds input-group wrapper and Add/Refresh buttons for lookup select', () => {
@@ -323,16 +323,16 @@ describe('BareMetalTemplate – buildBmwForm()', () => {
     expect(form.querySelector('dc')).not.toBeNull();
   });
 
-  test('form has rv-on-submit attribute', () => {
+  test('form has m-submit attribute', () => {
     const form = tmpl.buildBmwForm({ fields: ['x'] }, { x: {} });
-    expect(form.getAttribute('rv-on-submit')).toBe('save');
+    expect(form.getAttribute('m-submit')).toBe('save');
   });
 
-  test('renders input with rv-value', () => {
+  test('renders input with m-value', () => {
     const form = tmpl.buildBmwForm({ fields: ['email'] }, { email: { type: 'email' } });
     const inp = form.querySelector('input[type="email"]');
     expect(inp).not.toBeNull();
-    expect(inp.getAttribute('rv-value')).toBe('email');
+    expect(inp.getAttribute('m-value')).toBe('email');
   });
 
   test('renders hidden inputs outside grid', () => {

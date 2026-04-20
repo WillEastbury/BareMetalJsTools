@@ -1,5 +1,5 @@
-// BareMetalBind — reactive Proxy state and rv-* directive binder
-// Directives: rv-value, rv-text, rv-if, rv-on-click, rv-on-submit
+// BareMetalBind — reactive Proxy state and m-* directive binder
+// Directives: m-value, m-text, m-if, m-click, m-submit
 // API: reactive(initial) → { state, watch, data },  bind(root, state, watch)
 const BareMetalBind = (() => {
   'use strict';
@@ -16,8 +16,8 @@ const BareMetalBind = (() => {
   }
 
   function bind(root, state, watch) {
-    root.querySelectorAll('[rv-value]').forEach(n => {
-      const k = n.getAttribute('rv-value'), chk = n.type === 'checkbox';
+    root.querySelectorAll('[m-value]').forEach(n => {
+      const k = n.getAttribute('m-value'), chk = n.type === 'checkbox';
       const isDate = n.type === 'date', isDtLocal = n.type === 'datetime-local';
       const fmt = v => {
         if (v == null || v === '') return '';
@@ -32,17 +32,17 @@ const BareMetalBind = (() => {
       sync(); watch(k, sync);
       n.addEventListener(chk ? 'change' : 'input', () => state[k] = chk ? n.checked : n.value);
     });
-    root.querySelectorAll('[rv-text]').forEach(n => {
-      const k = n.getAttribute('rv-text'), sync = () => n.textContent = state[k] ?? '';
+    root.querySelectorAll('[m-text]').forEach(n => {
+      const k = n.getAttribute('m-text'), sync = () => n.textContent = state[k] ?? '';
       sync(); watch(k, sync);
     });
-    root.querySelectorAll('[rv-if]').forEach(n => {
-      const k = n.getAttribute('rv-if'), sync = () => n.style.display = state[k] ? '' : 'none';
+    root.querySelectorAll('[m-if]').forEach(n => {
+      const k = n.getAttribute('m-if'), sync = () => n.style.display = state[k] ? '' : 'none';
       sync(); watch(k, sync);
     });
-    root.querySelectorAll('[rv-on-click],[rv-on-submit]').forEach(n => {
-      const sub = n.hasAttribute('rv-on-submit');
-      const fn  = n.getAttribute(sub ? 'rv-on-submit' : 'rv-on-click');
+    root.querySelectorAll('[m-click],[m-submit]').forEach(n => {
+      const sub = n.hasAttribute('m-submit');
+      const fn  = n.getAttribute(sub ? 'm-submit' : 'm-click');
       n.addEventListener(sub ? 'submit' : 'click', e => {
         e.preventDefault();
         typeof state[fn] === 'function' && state[fn](e);

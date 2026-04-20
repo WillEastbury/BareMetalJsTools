@@ -43,7 +43,7 @@ const BareMetalRendering = (() => {
         payload = new FormData();
         Object.entries(data).forEach(([k, v]) => { if (v != null) payload.append(k, v); });
         formEl.querySelectorAll('input[type="file"]').forEach(i => {
-          if (i.files.length > 0) payload.append(i.getAttribute('rv-value') || i.name, i.files[0]);
+          if (i.files.length > 0) payload.append(i.getAttribute('m-value') || i.name, i.files[0]);
         });
       } else {
         payload = { ...data };

@@ -11,7 +11,7 @@ Tiny, zero-dependency vanilla-JS primitives for building fully client-rendered a
 | Module | Size | What it does |
 |---|---:|---|
 | [`BareMetalBinary`](docs/BareMetalBinary.md)   | 31 KB | BSO1 binary wire serialiser. Zero-copy `DataView` reads, HMAC-SHA256 signing via Web Crypto. |
-| [`BareMetalBind`](docs/BareMetalBind.md)       | 2 KB  | Reactive `Proxy` state + `rv-*` directive binder (`rv-value`, `rv-text`, `rv-if`, `rv-on-click`, `rv-on-submit`). |
+| [`BareMetalBind`](docs/BareMetalBind.md)       | 2 KB  | Reactive `Proxy` state + `m-*` directive binder (`m-value`, `m-text`, `m-if`, `m-click`, `m-submit`). |
 | [`BareMetalRest`](docs/BareMetalRest.md)       | 16 KB | REST + WebSocket binary transport. Negotiates BMW WS frames → BSO1 → JSON fallback. CSRF, 401-redirect, request multiplexing. |
 | [`BareMetalTemplate`](docs/BareMetalTemplate.md) | 14 KB | Schema-driven DOM builder. `buildForm(layout, fields)` and `buildTable(fields, items, callbacks)` produce Bootstrap-compatible markup. |
 | [`BareMetalRendering`](docs/BareMetalRendering.md) | 4 KB  | Glues Rest + Bind + Template into an entity lifecycle (`createEntity`, `listEntities`). Also exposes `window.minibind`. |
@@ -68,8 +68,8 @@ import BareMetalRest from 'baremetal-js-tools/rest';
 const { state, watch } = BareMetalBind.reactive({ name: 'World' });
 
 document.body.innerHTML = `
-  <input rv-value="name">
-  <p>Hello, <span rv-text="name"></span>!</p>
+  <input m-value="name">
+  <p>Hello, <span m-text="name"></span>!</p>
 `;
 BareMetalBind.bind(document.body, state, watch);
 state.name = 'BareMetal';   // UI updates automatically
@@ -110,7 +110,7 @@ Tests run under Node + `jest-environment-jsdom`. Each module is loaded via `new 
 
 | File | Coverage |
 |---|---|
-| `tests/BareMetalBind.test.js`       | `reactive()`, all `rv-*` directives |
+| `tests/BareMetalBind.test.js`       | `reactive()`, all `m-*` directives |
 | `tests/BareMetalRest.test.js`       | `setRoot`/`getRoot`, CRUD, fetch errors, CSRF, FormData |
 | `tests/BareMetalTemplate.test.js`   | `buildForm` field types, layout, lookup; `buildTable` cells, callbacks, badges |
 | `tests/BareMetalRouting.test.js`    | Pattern matching, params, query parsing, `navigate()` |

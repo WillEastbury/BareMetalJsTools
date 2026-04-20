@@ -75,15 +75,15 @@ describe('BareMetalBind – reactive()', () => {
   });
 });
 
-// ── bind() – rv-text ──────────────────────────────────────────────────────
+// ── bind() – m-text ──────────────────────────────────────────────────────
 
-describe('BareMetalBind – bind() rv-text directive', () => {
+describe('BareMetalBind – bind() m-text directive', () => {
   let bind;
   beforeEach(() => { bind = loadBind(); });
 
   test('sets textContent from state on initial bind', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<span rv-text="greeting"></span>';
+    root.innerHTML = '<span m-text="greeting"></span>';
     const { state, watch } = bind.reactive({ greeting: 'Hello' });
     bind.bind(root, state, watch);
     expect(root.querySelector('span').textContent).toBe('Hello');
@@ -91,7 +91,7 @@ describe('BareMetalBind – bind() rv-text directive', () => {
 
   test('updates textContent when state changes', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<span rv-text="msg"></span>';
+    root.innerHTML = '<span m-text="msg"></span>';
     const { state, watch } = bind.reactive({ msg: 'before' });
     bind.bind(root, state, watch);
     state.msg = 'after';
@@ -100,22 +100,22 @@ describe('BareMetalBind – bind() rv-text directive', () => {
 
   test('textContent is empty string when state value is undefined', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<span rv-text="missing"></span>';
+    root.innerHTML = '<span m-text="missing"></span>';
     const { state, watch } = bind.reactive({});
     bind.bind(root, state, watch);
     expect(root.querySelector('span').textContent).toBe('');
   });
 });
 
-// ── bind() – rv-value ─────────────────────────────────────────────────────
+// ── bind() – m-value ─────────────────────────────────────────────────────
 
-describe('BareMetalBind – bind() rv-value directive', () => {
+describe('BareMetalBind – bind() m-value directive', () => {
   let bind;
   beforeEach(() => { bind = loadBind(); });
 
   test('sets input value from state on initial bind', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<input rv-value="name">';
+    root.innerHTML = '<input m-value="name">';
     const { state, watch } = bind.reactive({ name: 'Bob' });
     bind.bind(root, state, watch);
     expect(root.querySelector('input').value).toBe('Bob');
@@ -123,7 +123,7 @@ describe('BareMetalBind – bind() rv-value directive', () => {
 
   test('updates input value when state changes', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<input rv-value="city">';
+    root.innerHTML = '<input m-value="city">';
     const { state, watch } = bind.reactive({ city: 'London' });
     bind.bind(root, state, watch);
     state.city = 'Paris';
@@ -132,7 +132,7 @@ describe('BareMetalBind – bind() rv-value directive', () => {
 
   test('input event updates state', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<input rv-value="val">';
+    root.innerHTML = '<input m-value="val">';
     const { state, watch } = bind.reactive({ val: '' });
     bind.bind(root, state, watch);
     const inp = root.querySelector('input');
@@ -143,7 +143,7 @@ describe('BareMetalBind – bind() rv-value directive', () => {
 
   test('checkbox reflects boolean state', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<input type="checkbox" rv-value="active">';
+    root.innerHTML = '<input type="checkbox" m-value="active">';
     const { state, watch } = bind.reactive({ active: true });
     bind.bind(root, state, watch);
     expect(root.querySelector('input').checked).toBe(true);
@@ -151,7 +151,7 @@ describe('BareMetalBind – bind() rv-value directive', () => {
 
   test('checkbox change event updates boolean state', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<input type="checkbox" rv-value="flag">';
+    root.innerHTML = '<input type="checkbox" m-value="flag">';
     const { state, watch } = bind.reactive({ flag: false });
     bind.bind(root, state, watch);
     const chk = root.querySelector('input');
@@ -162,22 +162,22 @@ describe('BareMetalBind – bind() rv-value directive', () => {
 
   test('date input formats value to YYYY-MM-DD', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<input type="date" rv-value="dob">';
+    root.innerHTML = '<input type="date" m-value="dob">';
     const { state, watch } = bind.reactive({ dob: '2000-06-15T00:00:00Z' });
     bind.bind(root, state, watch);
     expect(root.querySelector('input').value).toBe('2000-06-15');
   });
 });
 
-// ── bind() – rv-if ────────────────────────────────────────────────────────
+// ── bind() – m-if ────────────────────────────────────────────────────────
 
-describe('BareMetalBind – bind() rv-if directive', () => {
+describe('BareMetalBind – bind() m-if directive', () => {
   let bind;
   beforeEach(() => { bind = loadBind(); });
 
   test('shows element when state value is truthy', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<div rv-if="visible">content</div>';
+    root.innerHTML = '<div m-if="visible">content</div>';
     const { state, watch } = bind.reactive({ visible: true });
     bind.bind(root, state, watch);
     expect(root.querySelector('div').style.display).toBe('');
@@ -185,7 +185,7 @@ describe('BareMetalBind – bind() rv-if directive', () => {
 
   test('hides element when state value is falsy', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<div rv-if="visible">content</div>';
+    root.innerHTML = '<div m-if="visible">content</div>';
     const { state, watch } = bind.reactive({ visible: false });
     bind.bind(root, state, watch);
     expect(root.querySelector('div').style.display).toBe('none');
@@ -193,7 +193,7 @@ describe('BareMetalBind – bind() rv-if directive', () => {
 
   test('toggles display when state changes', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<div rv-if="show">x</div>';
+    root.innerHTML = '<div m-if="show">x</div>';
     const { state, watch } = bind.reactive({ show: true });
     bind.bind(root, state, watch);
     state.show = false;
@@ -203,15 +203,15 @@ describe('BareMetalBind – bind() rv-if directive', () => {
   });
 });
 
-// ── bind() – rv-on-click ──────────────────────────────────────────────────
+// ── bind() – m-click ──────────────────────────────────────────────────
 
-describe('BareMetalBind – bind() rv-on-click directive', () => {
+describe('BareMetalBind – bind() m-click directive', () => {
   let bind;
   beforeEach(() => { bind = loadBind(); });
 
   test('calls state function when button is clicked', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<button rv-on-click="handleClick">click me</button>';
+    root.innerHTML = '<button m-click="handleClick">click me</button>';
     const handler = jest.fn();
     const { state, watch } = bind.reactive({ handleClick: handler });
     bind.bind(root, state, watch);
@@ -219,24 +219,24 @@ describe('BareMetalBind – bind() rv-on-click directive', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  test('does not throw when rv-on-click references a non-function state key', () => {
+  test('does not throw when m-click references a non-function state key', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<button rv-on-click="notAFn">x</button>';
+    root.innerHTML = '<button m-click="notAFn">x</button>';
     const { state, watch } = bind.reactive({ notAFn: 'oops' });
     bind.bind(root, state, watch);
     expect(() => root.querySelector('button').click()).not.toThrow();
   });
 });
 
-// ── bind() – rv-on-submit ─────────────────────────────────────────────────
+// ── bind() – m-submit ─────────────────────────────────────────────────
 
-describe('BareMetalBind – bind() rv-on-submit directive', () => {
+describe('BareMetalBind – bind() m-submit directive', () => {
   let bind;
   beforeEach(() => { bind = loadBind(); });
 
   test('calls state function on form submit', () => {
     const root = document.createElement('div');
-    root.innerHTML = '<form rv-on-submit="save"><button type="submit">go</button></form>';
+    root.innerHTML = '<form m-submit="save"><button type="submit">go</button></form>';
     const saveHandler = jest.fn();
     const { state, watch } = bind.reactive({ save: saveHandler });
     bind.bind(root, state, watch);
