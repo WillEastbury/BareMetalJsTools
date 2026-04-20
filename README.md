@@ -1,6 +1,18 @@
 # BareMetalJsTools
 
-Tiny, zero-dependency vanilla-JS primitives for building fully client-rendered apps **without a build step, without a framework**. Extracted from [BareMetalWeb](https://github.com/WillEastbury/BareMetalWeb) so they can be reused, evolved, and tested in isolation.
+Tiny, zero-dependency vanilla-JS primitives for building fully client-rendered apps **without a build step, without a framework**. 
+
+As I work on various projects I often find a lot of the working tools to heavyweight, or over engineered / too damn complex to work with, especially in the modern-day JS world; every time I want to do data binding or layout, I find myself dropping back to the likes to KnockoutJs and Bootstrap - because they are clean, simple and **JUST WORK**. 
+
+I do however, like the modular approach and even bootstrap is getting a touch on the large side for me, SO.... here is a set of simple, clean, functional and FAST primitives to build a modern web SPA, use these together and you will create fast, clean, responsive, mobile first web applications that are slick and easy to maintain and manage, without dependency hell. 
+
+NOT ONE OF THESE LIBRARIES HAS A DEPENDENCY ON ANOTHER COMPONENT NOT ON THIS LIST. Clone this repo and they will all **JUST WORK**. Try me ;) 
+
+In fact only the items in this list that have dependencies are there because I want you to choose which bits you can use (think VueJs), but without vite etc ruining your day.
+
+You choose what you want to do / use / be / have / explore / break. And let me know when you do ! 
+
+Most importantly, NONE of these tools force a build step, and they can all simply be hosted off local storage or cloud storage.
 
 > All modules are **classic IIFEs** (`const X = (() => {...})()`) that work as drop-in `<script>` tags. ESM wrappers are also provided for bundler / Node use.
 
