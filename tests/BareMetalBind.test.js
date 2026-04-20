@@ -245,3 +245,233 @@ describe('BareMetalBind – bind() m-submit directive', () => {
     expect(saveHandler).toHaveBeenCalledTimes(1);
   });
 });
+
+// ── bind() – m-class ──────────────────────────────────────────────────
+
+describe('BareMetalBind – bind() m-class directive', () => {
+  let bind;
+  beforeEach(() => { bind = loadBind(); });
+
+  test('adds class when state is truthy on initial bind', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-class="highlight:active"></div>';
+    const { state, watch } = bind.reactive({ active: true });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('div').classList.contains('highlight')).toBe(true);
+  });
+
+  test('does not add class when state is falsy', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-class="highlight:active"></div>';
+    const { state, watch } = bind.reactive({ active: false });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('div').classList.contains('highlight')).toBe(false);
+  });
+
+  test('toggles class when state changes', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-class="on:flag"></div>';
+    const { state, watch } = bind.reactive({ flag: false });
+    bind.bind(root, state, watch);
+    state.flag = true;
+    expect(root.querySelector('div').classList.contains('on')).toBe(true);
+    state.flag = false;
+    expect(root.querySelector('div').classList.contains('on')).toBe(false);
+  });
+
+  test('supports multiple comma-separated pairs', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-class="bold:b,italic:i"></div>';
+    const { state, watch } = bind.reactive({ b: true, i: false });
+    bind.bind(root, state, watch);
+    const el = root.querySelector('div');
+    expect(el.classList.contains('bold')).toBe(true);
+    expect(el.classList.contains('italic')).toBe(false);
+    state.i = true;
+    expect(el.classList.contains('italic')).toBe(true);
+  });
+});
+
+// ── bind() – m-attr ──────────────────────────────────────────────────
+
+describe('BareMetalBind – bind() m-attr directive', () => {
+  let bind;
+  beforeEach(() => { bind = loadBind(); });
+
+  test('sets boolean attribute when state is true', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<button m-attr="disabled:loading">go</button>';
+    const { state, watch } = bind.reactive({ loading: true });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('button').hasAttribute('disabled')).toBe(true);
+  });
+
+  test('removes attribute when state is false', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<button m-attr="disabled:loading">go</button>';
+    const { state, watch } = bind.reactive({ loading: false });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('button').hasAttribute('disabled')).toBe(false);
+  });
+
+  test('removes attribute when state is null or undefined', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<span m-attr="title:tip"></span>';
+    const { state, watch } = bind.reactive({ tip: null });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').hasAttribute('title')).toBe(false);
+  });
+
+  test('sets attribute to string value for non-boolean truthy', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<span m-attr="title:tip"></span>';
+    const { state, watch } = bind.reactive({ tip: 'hello' });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').getAttribute('title')).toBe('hello');
+  });
+
+  test('keeps attribute when value is 0 (not false/null)', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<span m-attr="tabindex:idx"></span>';
+    const { state, watch } = bind.reactive({ idx: 0 });
+    bind.bind(root, state, watch);
+    expect(root.querySelector('span').getAttribute('tabindex')).toBe('0');
+  });
+
+  test('updates attribute reactively', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<a m-attr="href:url">link</a>';
+    const { state, watch } = bind.reactive({ url: '/a' });
+    bind.bind(root, state, watch);
+    state.url = '/b';
+    expect(root.querySelector('a').getAttribute('href')).toBe('/b');
+  });
+});
+
+// ── bind() – m-each ──────────────────────────────────────────────────
+
+describe('BareMetalBind – bind() m-each directive', () => {
+  let bind;
+  beforeEach(() => { bind = loadBind(); });
+
+  test('renders list items from array of objects', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items"><template><li m-text=".name"></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: [{ name: 'A' }, { name: 'B' }] });
+    bind.bind(root, state, watch);
+    const lis = root.querySelectorAll('li');
+    expect(lis.length).toBe(2);
+    expect(lis[0].textContent).toBe('A');
+    expect(lis[1].textContent).toBe('B');
+  });
+
+  test('renders primitives with m-text="."', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="tags"><template><li m-text="."></li></template></ul>';
+    const { state, watch } = bind.reactive({ tags: ['x', 'y', 'z'] });
+    bind.bind(root, state, watch);
+    const lis = root.querySelectorAll('li');
+    expect(lis.length).toBe(3);
+    expect(lis[1].textContent).toBe('y');
+  });
+
+  test('re-renders when array is reassigned', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items"><template><li m-text="."></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: ['a'] });
+    bind.bind(root, state, watch);
+    expect(root.querySelectorAll('li').length).toBe(1);
+    state.items = ['a', 'b', 'c'];
+    expect(root.querySelectorAll('li').length).toBe(3);
+  });
+
+  test('clears list when set to empty array', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items"><template><li m-text="."></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: ['a', 'b'] });
+    bind.bind(root, state, watch);
+    state.items = [];
+    expect(root.querySelectorAll('li').length).toBe(0);
+  });
+
+  test('supports m-class inside template', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items"><template><li m-class="on:.active" m-text=".name"></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: [{ name: 'A', active: true }, { name: 'B', active: false }] });
+    bind.bind(root, state, watch);
+    const lis = root.querySelectorAll('li');
+    expect(lis[0].classList.contains('on')).toBe(true);
+    expect(lis[1].classList.contains('on')).toBe(false);
+  });
+
+  test('supports m-attr inside template', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<div m-each="links"><template><a m-attr="href:.url" m-text=".label"></a></template></div>';
+    const { state, watch } = bind.reactive({ links: [{ url: '/home', label: 'Home' }] });
+    bind.bind(root, state, watch);
+    const a = root.querySelector('a');
+    expect(a.getAttribute('href')).toBe('/home');
+    expect(a.textContent).toBe('Home');
+  });
+
+  test('handles non-array state gracefully', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<ul m-each="items"><template><li m-text="."></li></template></ul>';
+    const { state, watch } = bind.reactive({ items: null });
+    bind.bind(root, state, watch);
+    expect(root.querySelectorAll('li').length).toBe(0);
+  });
+});
+
+// ── bind() – m-navbar ─────────────────────────────────────────────────
+
+describe('BareMetalBind – bind() m-navbar directive', () => {
+  let bind;
+  beforeEach(() => { bind = loadBind(); });
+
+  test('renders anchor elements from link array', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<nav m-navbar="nav"></nav>';
+    const { state, watch } = bind.reactive({
+      nav: [{ href: '/', text: 'Home' }, { href: '/about', text: 'About' }]
+    });
+    bind.bind(root, state, watch);
+    const links = root.querySelectorAll('a');
+    expect(links.length).toBe(2);
+    expect(links[0].href).toContain('/');
+    expect(links[0].textContent).toBe('Home');
+    expect(links[1].textContent).toBe('About');
+  });
+
+  test('adds active class when link.active is truthy', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<nav m-navbar="nav"></nav>';
+    const { state, watch } = bind.reactive({
+      nav: [{ href: '/', text: 'Home', active: true }, { href: '/x', text: 'X' }]
+    });
+    bind.bind(root, state, watch);
+    const links = root.querySelectorAll('a');
+    expect(links[0].classList.contains('active')).toBe(true);
+    expect(links[1].classList.contains('active')).toBe(false);
+  });
+
+  test('re-renders when nav array is reassigned', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<nav m-navbar="nav"></nav>';
+    const { state, watch } = bind.reactive({ nav: [{ href: '/', text: 'Home' }] });
+    bind.bind(root, state, watch);
+    expect(root.querySelectorAll('a').length).toBe(1);
+    state.nav = [{ href: '/', text: 'Home' }, { href: '/new', text: 'New' }];
+    expect(root.querySelectorAll('a').length).toBe(2);
+  });
+
+  test('defaults href to # and text to empty', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<nav m-navbar="nav"></nav>';
+    const { state, watch } = bind.reactive({ nav: [{}] });
+    bind.bind(root, state, watch);
+    const a = root.querySelector('a');
+    expect(a.getAttribute('href')).toBe('#');
+    expect(a.textContent).toBe('');
+  });
+});

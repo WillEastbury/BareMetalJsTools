@@ -55,7 +55,12 @@ th { text-align: inherit; }
 /* ============================================================
    LAYOUT / GRID  (flexbox-based, 12-column)
    ============================================================ */
-.container-fluid { width: 100%; padding-right: calc(var(--bs-gutter-x) * .5); padding-left: calc(var(--bs-gutter-x) * .5); margin: 0 auto; }
+.container, .container-fluid { width: 100%; padding-right: calc(var(--bs-gutter-x) * .5); padding-left: calc(var(--bs-gutter-x) * .5); margin: 0 auto; }
+@media (min-width: 576px) { .container { max-width: 540px; } }
+@media (min-width: 768px) { .container { max-width: 720px; } }
+@media (min-width: 992px) { .container { max-width: 960px; } }
+@media (min-width: 1200px) { .container { max-width: 1140px; } }
+@media (min-width: 1400px) { .container { max-width: 1320px; } }
 .row { display: flex; flex-wrap: wrap; margin-top: calc(-1 * var(--bs-gutter-y)); margin-right: calc(-.5 * var(--bs-gutter-x)); margin-left: calc(-.5 * var(--bs-gutter-x)); }
 .row > * { flex-shrink: 0; width: 100%; max-width: 100%; padding-right: calc(var(--bs-gutter-x) * .5); padding-left: calc(var(--bs-gutter-x) * .5); margin-top: var(--bs-gutter-y); }
 
@@ -483,3 +488,50 @@ small, .small { font-size: .875em; }
 .collapse.show { display: block; }
 .active { font-weight: 600; }
 .disabled { pointer-events: none; opacity: .65; }
+
+/* ============================================================
+   VIEWPORT / FLUID SCALING
+   ============================================================ */
+.vh-100 { height: 100vh !important; }
+.vw-100 { width: 100vw !important; }
+.min-vh-100 { min-height: 100vh !important; }
+.min-vw-100 { min-width: 100vw !important; }
+.max-vh-100 { max-height: 100vh !important; }
+
+/* dynamic viewport units (modern browsers) */
+.min-dvh-100 { min-height: 100dvh !important; }
+.dvh-100 { height: 100dvh !important; }
+
+/* fluid typography — scales between 1rem (320px) and 1.25rem (1200px) */
+.fluid-type { font-size: clamp(1rem, 0.909rem + 0.45vw, 1.25rem); }
+.fluid-type-lg { font-size: clamp(1.25rem, 1rem + 1.25vw, 2rem); }
+.fluid-type-xl { font-size: clamp(2rem, 1.5rem + 2.5vw, 3.5rem); }
+
+/* sticky top/bottom helpers */
+.sticky-top { position: sticky; top: 0; z-index: 1020; }
+.sticky-bottom { position: sticky; bottom: 0; z-index: 1020; }
+
+/* full-height page layout helper */
+.page-wrapper { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+.page-wrapper > main, .page-wrapper > .main-content { flex: 1 1 auto; }
+
+/* ============================================================
+   SITE FOOTER
+   ============================================================ */
+.site-footer {
+  padding: var(--sp-3) var(--sp-3);
+  margin-top: auto;
+  border-top: var(--bs-border-width) solid var(--bs-border-color);
+  font-size: .875rem;
+  color: var(--bs-secondary);
+  background-color: var(--bs-body-bg);
+}
+.site-footer a { color: var(--bs-secondary); text-decoration: none; }
+.site-footer a:hover { color: var(--bs-primary); text-decoration: underline; }
+.site-footer-dark {
+  background-color: var(--bs-dark);
+  color: rgba(255,255,255,.6);
+  border-color: rgba(255,255,255,.1);
+}
+.site-footer-dark a { color: rgba(255,255,255,.6); }
+.site-footer-dark a:hover { color: #fff; }
