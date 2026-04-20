@@ -1,5 +1,7 @@
 # BareMetalJsTools
 
+> *84 KB minified for a complete reactive UI framework, binary serialisation, compression, REST+WebSocket transport, routing, charting, and graph visualisation. Most people pull in more than that just for a toast notification library.*
+
 Modern web development has become absurdly complicated. You need a bundler, a transpiler, a framework, a meta-framework, a state manager, a CSS-in-JS solution, and forty-seven config files before you can render "Hello World". Then you wait for it to compile.
 
 **This toolkit takes a different approach: just host some damn files.**
