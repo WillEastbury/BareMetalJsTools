@@ -1,6 +1,6 @@
 {
   "name": "baremetal-js-tools",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Tiny dependency-free vanilla-JS primitives for reactive binding, declarative routing, REST/WebSocket transport, BSO1 binary serialisation, schema-driven DOM templating and entity rendering. Extracted from BareMetalWeb.",
   "license": "MIT",
   "author": "Will Eastbury",
