@@ -1,6 +1,6 @@
 // BareMetalBind — reactive Proxy state and m-* directive binder
 // Directives: m-value, m-text, m-if, m-click, m-submit, m-class, m-attr,
-//             m-each (keyed), m-navbar, m-transition, m-expression
+//             m-each (keyed), m-navbar, m-transition, m-expression, m-toast
 // API: reactive(initial) → { state, watch, data }
 //      bind(root, state, watch)
 //      formatters   – registry object for pipe transforms
@@ -412,6 +412,68 @@ const BareMetalBind = (() => {
         });
       };
       render(); watch(wk, render);
+    });
+
+    // ── m-toast (array → toast popup) ──
+    // Usage: <div class="toast-container toast-container-top-right" m-toast="notifications"></div>
+    // Push: state.notifications.push({ type:'success', title:'Saved', message:'Done.', duration:'5s' })
+    root.querySelectorAll('[m-toast]').forEach(n => {
+      const arrKey = n.getAttribute('m-toast'), wk = topKey(arrKey);
+      let lastLen = 0;
+
+      function createToast(item) {
+        const t = typeof item === 'string' ? { message: item } : item;
+        const type = t.type || 'info';
+        const dur = t.duration || '5s';
+        const durClass = 'toast-' + dur.replace(/\s/g, '');
+        const dark = type === 'dark';
+
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-auto ' + durClass + (dark ? ' toast-dark' : ' toast-' + type);
+
+        if (t.title) {
+          const header = document.createElement('div');
+          header.className = 'toast-header';
+          header.innerHTML = '<span class="toast-title">' + (t.title || '') + '</span>' +
+            (t.time ? '<span class="toast-time">' + t.time + '</span>' : '');
+          const closeBtn = document.createElement('button');
+          closeBtn.className = 'btn-close' + (dark ? ' btn-close-white' : '');
+          closeBtn.addEventListener('click', () => toast.remove());
+          header.appendChild(closeBtn);
+          toast.appendChild(header);
+        }
+
+        const body = document.createElement('div');
+        body.className = 'toast-body';
+        body.textContent = t.message || '';
+        toast.appendChild(body);
+
+        if (t.progress !== false) {
+          const bar = document.createElement('div');
+          bar.className = 'toast-progress';
+          toast.appendChild(bar);
+        }
+
+        toast.addEventListener('animationend', function(e) {
+          if (e.animationName === 'toast-auto-dismiss') toast.remove();
+        });
+
+        n.appendChild(toast);
+      }
+
+      const sync = () => {
+        const arr = getPath(state, arrKey);
+        if (!Array.isArray(arr)) return;
+        // Only render newly added items
+        while (lastLen < arr.length) {
+          createToast(arr[lastLen]);
+          lastLen++;
+        }
+        // Handle array being replaced (reset)
+        if (arr.length < lastLen) lastLen = arr.length;
+      };
+
+      sync(); watch(wk, sync);
     });
 
     // ── m-click / m-submit ──

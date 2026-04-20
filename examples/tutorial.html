@@ -347,6 +347,30 @@
             <div class="alert alert-info">
               <strong>Zero JS needed for styling!</strong> The <code>.toast-auto</code> class uses CSS <code>@keyframes</code> to auto-dismiss after 5s (customise with <code>.toast-3s</code>, <code>.toast-8s</code>, <code>.toast-10s</code>). The only JS here is creating the DOM element when you click the button — the animation and removal is pure CSS.
             </div>
+
+            <h4 class="mt-4 mb-2">Reactive Toast Binding</h4>
+            <p>Even better — bind a toast container to an array with <code>m-toast</code>. Just push objects and toasts appear automatically:</p>
+            <div class="code-block"><span class="comment">&lt;!-- Bind toast container to state array --&gt;</span>
+<span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"toast-container toast-container-top-right"</span>
+     <span class="keyword">m-toast=</span><span class="string">"notifications"</span><span class="tag">&gt;&lt;/div&gt;</span>
+
+<span class="keyword">const</span> { state } = <span class="keyword">BareMetalBind</span>.reactive({
+  <span class="keyword">notifications</span>: []
+});
+
+<span class="comment">// Push an object → toast pops up and auto-dismisses</span>
+state.notifications.push({
+  <span class="keyword">type</span>: <span class="string">'success'</span>,       <span class="comment">// success | danger | warning | info | dark</span>
+  <span class="keyword">title</span>: <span class="string">'Deployed'</span>,
+  <span class="keyword">message</span>: <span class="string">'v2.1.0 is live!'</span>,
+  <span class="keyword">duration</span>: <span class="string">'5s'</span>        <span class="comment">// 3s | 5s | 8s | 10s</span>
+});</div>
+            <div class="result-label">Result — click to fire reactive toasts</div>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <button class="btn btn-sm btn-success" onclick="toastState.notifications.push({type:'success',title:'Deployed',message:'v2.1.0 is live on production!'})">🚀 Deploy</button>
+              <button class="btn btn-sm btn-danger" onclick="toastState.notifications.push({type:'danger',title:'Alert',message:'CPU exceeded 90% on node-3.'})">🔥 Alert</button>
+              <button class="btn btn-sm btn-info" onclick="toastState.notifications.push({type:'info',title:'Sync',message:'Database replica is up to date.'})">🔄 Sync</button>
+            </div>
           </section>
 
           <!-- STEP 8: Architecture Graph -->
@@ -536,8 +560,10 @@ state.count++; <span class="comment">// UI updates instantly</span></div>
     </footer>
   </div>
 
-  <!-- Toast container (fixed position, top-right) -->
+  <!-- Toast container for button demo -->
   <div class="toast-container toast-container-top-right" id="toast-container"></div>
+  <!-- Toast container for reactive m-toast demo -->
+  <div class="toast-container toast-container-top-right" id="reactive-toasts" m-toast="notifications" style="top:0;right:0;"></div>
 
   <!-- ===== SCRIPTS ===== -->
   <script src="../src/BareMetalCharts.js"></script>
@@ -610,6 +636,11 @@ state.count++; <span class="comment">// UI updates instantly</span></div>
         if (e.animationName === 'toast-auto-dismiss') toast.remove();
       });
     }
+
+    // --- Step 7b: Reactive toast binding ---
+    const toastReactive = BareMetalBind.reactive({ notifications: [] });
+    const toastState = toastReactive.state;
+    BareMetalBind.bind(document.getElementById('reactive-toasts'), toastState, toastReactive.watch);
 
     // --- Step 8: Architecture graph ---
     const archGraph = BareMetalGraph.create('#arch-graph', {
