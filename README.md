@@ -16,8 +16,8 @@ Every module follows the same pattern: small, obvious, fast. You can read the so
 
 | Module | What it does | Size | Nearest equivalent for the not-quite-insane |
 |---|---|---|---|
-| [`BareMetal.Styles`](docs/BareMetalStyles.md) | CSS framework. Grid, flex, buttons, forms, tables, cards, modals, alerts, toasts — all with short class names optimised for wire size. Zero JS. | 53 KB | Bootstrap (227 KB), Tailwind (≈300 KB+) |
-| [`BareMetal.Bind`](docs/BareMetalBind.md) | Reactive `Proxy` state + `m-*` directives. Two-way forms, lists, toasts, chatbot, calendar, Gantt charts, sortable tables, tree views. | 13 KB | Vue.js (≈40 KB min), Alpine.js (≈15 KB) |
+| [`BareMetal.Styles`](docs/BareMetalStyles.md) | CSS framework. Grid, flex, buttons, forms, tables, cards, modals, alerts, toasts — all with short class names optimised for wire size. Zero JS. | 53 KB | Bootstrap (227 KB), Tailwind (≈300 KB+), Fabric UI (≈350 KB), React (≈140 KB) |
+| [`BareMetal.Bind`](docs/BareMetalBind.md) | Reactive `Proxy` state + `m-*` directives. Two-way forms, lists, toasts, chatbot, calendar, Gantt charts, sortable tables, tree views. | 13 KB | Vue.js (≈40 KB min), Alpine.js (≈15 KB), Rivets.js ❤️, Knockout.js ❤️, TinyBind 💕 |
 | [`BareMetal.Components`](docs/BareMetalBind.md) | Widget directives (m-img, m-toast, m-chatbot, m-calendar, m-gantt, m-table, m-tree, m-entity) that extend Bind. | 25 KB | PrimeVue, Vuetify, Material UI (hundreds of KB each) |
 | [`BareMetal.ComponentFactories`](docs/BareMetalBind.md) | `create.*` helpers and `chatEndpoint()` auto-wire for REST-backed chatbots. | 2 KB | Hand-rolled boilerplate |
 | [`BareMetal.Template`](docs/BareMetalTemplate.md) | Schema-driven DOM builder. Hand it metadata, get a form or table back. | 7 KB | Formly (≈80 KB), JSON Forms (≈200 KB) |
