@@ -5,6 +5,8 @@
 // API: reactive(initial) → { state, watch, data }
 //      bind(root, state, watch)
 //      formatters   – registry object for pipe transforms
+//      create       – factory helpers: message, botMessage, toast, calendarEvent, ganttTask, treeNode, tableRow, navLink, navDropdown, listItem
+//      chatEndpoint – auto-wires chatbot to BareMetalRest
 const BareMetalBind = (() => {
   'use strict';
 
@@ -1103,5 +1105,61 @@ const BareMetalBind = (() => {
     });
   }
 
-  return { reactive, bind, formatters };
+  // ── Convenience factories ───────────────────────────────────────────
+  function now() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+
+  const create = {
+    // m-chatbot message
+    message: (text, opts) => Object.assign({ text: text || '', from: 'user', time: now() }, opts),
+    botMessage: (text, opts) => Object.assign({ text: text || '', from: 'bot', time: now() }, opts),
+
+    // m-toast notification
+    toast: (message, opts) => Object.assign({ message: message || '', type: 'info', duration: '5s' }, opts),
+
+    // m-calendar event
+    calendarEvent: (date, label, opts) => Object.assign({ date: date || '', label: label || '' }, opts),
+
+    // m-gantt task
+    ganttTask: (label, start, end, opts) => Object.assign({ label: label || '', start: start || '', end: end || '', progress: 0 }, opts),
+
+    // m-tree node
+    treeNode: (label, opts) => Object.assign({ label: label || '', children: [] }, opts),
+
+    // m-table row (passthrough, but ensures object)
+    tableRow: (obj) => Object.assign({}, obj),
+
+    // m-navbar link
+    navLink: (text, href, opts) => Object.assign({ text: text || '', href: href || '#' }, opts),
+    navDropdown: (title, ...links) => [title, ...links],
+
+    // m-each item with key
+    listItem: (key, data) => Object.assign({ id: key }, data)
+  };
+
+  // ── Chatbot auto-wire to BareMetalRest ─────────────────────────────
+  // If BareMetalRest is loaded, provides a helper that creates an onSend
+  // function which POSTs the user message and pushes the bot response.
+  function chatEndpoint(messagesKey, url, opts) {
+    var o = Object.assign({ method: 'POST', bodyKey: 'message', responseKey: 'reply', botAvatar: '🤖', botName: 'Assistant' }, opts);
+    return function(state) {
+      return function(text) {
+        var arr = getPath(state, messagesKey);
+        if (!Array.isArray(arr)) return;
+        arr.push(create.message(text));
+        // Auto-call BareMetalRest if available
+        var rest = typeof BareMetalRest !== 'undefined' ? BareMetalRest : null;
+        if (rest) {
+          var body = {}; body[o.bodyKey] = text;
+          rest.call(url, o.method, body).then(function(res) {
+            var reply = (res && res[o.responseKey]) || (typeof res === 'string' ? res : JSON.stringify(res));
+            arr.push(create.botMessage(reply, { avatar: o.botAvatar, name: o.botName }));
+          }).catch(function(err) {
+            arr.push(create.botMessage('Error: ' + (err.message || err), { avatar: '⚠️', name: 'System' }));
+          });
+        }
+      };
+    };
+  }
+
+  return { reactive, bind, formatters, create, chatEndpoint };
 })();

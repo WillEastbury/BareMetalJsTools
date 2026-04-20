@@ -60,6 +60,65 @@ BareMetalBind.formatters.currency = (v, symbol) => (symbol || '$') + Number(v).t
 BareMetalBind.formatters.upper = v => String(v).toUpperCase();
 ```
 
+### `BareMetalBind.create`
+
+Factory helpers that return correctly-shaped objects for each directive. No more guessing property names:
+
+```js
+// m-chatbot messages
+BareMetalBind.create.message('Hello!')                        // { text, from:'user', time:'10:30' }
+BareMetalBind.create.botMessage('Hi there!', { avatar:'🤖' }) // { text, from:'bot', time, avatar }
+
+// m-toast notifications
+BareMetalBind.create.toast('Saved!', { type:'success' })      // { message, type, duration:'5s' }
+
+// m-calendar events
+BareMetalBind.create.calendarEvent('2025-04-20', 'Sprint review', { color:'#0d6efd' })
+
+// m-gantt tasks
+BareMetalBind.create.ganttTask('Design', '2025-01-01', '2025-02-01', { group:'Phase 1', progress:0.8 })
+
+// m-tree nodes
+BareMetalBind.create.treeNode('src', { icon:'📁', children: [
+  BareMetalBind.create.treeNode('index.js', { icon:'📄' })
+]})
+
+// m-table rows
+BareMetalBind.create.tableRow({ name:'Alice', email:'alice@co.dev' })
+
+// m-navbar links & dropdowns
+BareMetalBind.create.navLink('Home', '/', { active: true })
+BareMetalBind.create.navDropdown('Docs', { text:'Guide', href:'/guide' }, { text:'API', href:'/api' })
+
+// m-each items with key
+BareMetalBind.create.listItem('user-1', { name:'Alice' })     // { id:'user-1', name:'Alice' }
+```
+
+All factories accept an optional trailing `opts` object that is merged in, so you can override or add any property.
+
+### `BareMetalBind.chatEndpoint(messagesKey, url, opts?)`
+
+Auto-wires a chatbot to a REST API via BareMetalRest (if loaded). Returns a factory that produces an `onSend` function for a given state:
+
+```js
+// Wire up: user types → POST to /api/chat → bot reply pushed to array
+const onSend = BareMetalBind.chatEndpoint('messages', '/api/chat', {
+  bodyKey: 'message',       // request body property (default: 'message')
+  responseKey: 'reply',     // response property to extract (default: 'reply')
+  botAvatar: '🤖',
+  botName: 'Assistant'
+});
+
+const { state, watch } = BareMetalBind.reactive({
+  messages: [],
+  onSend: onSend(state)     // pass state so it can push messages
+});
+// Or after creation:
+state.onSend = onSend(state);
+```
+
+When BareMetalRest is not loaded, the user message is still pushed to the array but no API call is made.
+
 ---
 
 ## Dot-path resolution
