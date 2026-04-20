@@ -7,22 +7,30 @@ const path = require('path');
 const fs   = require('fs');
 
 const SRC = path.resolve(
-  __dirname, '../src/BareMetalBind.js'
+  __dirname, '../src/BareMetal.Bind.js'
 );
 
-// Helper: load BareMetalBind into the current jsdom context each time.
-// Uses new Function so each test suite starts from a fresh module instance.
+// Helper: load BareMetal.Bind into the current jsdom context each time.
 function loadBind() {
   const code = fs.readFileSync(SRC, 'utf8');
-  const iife = code.replace(/const BareMetalBind\s*=\s*/, '').replace(/;\s*$/, '');
-  const factory = new Function(
-    'document', 'requestAnimationFrame',
-    `return (${iife});`
+  const fn = new Function('document', 'requestAnimationFrame',
+    code + '\nreturn BareMetal.Bind;'
   );
   const raf = typeof globalThis.requestAnimationFrame === 'function'
-    ? globalThis.requestAnimationFrame
-    : (cb) => setTimeout(cb, 0);
-  return factory(global.document, raf);
+    ? globalThis.requestAnimationFrame : (cb) => setTimeout(cb, 0);
+  return fn(global.document, raf);
+}
+
+// Helper: load Bind + Components for widget directive tests.
+function loadBindWithComponents() {
+  const bindCode = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Bind.js'), 'utf8');
+  const compCode = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Components.js'), 'utf8');
+  const fn = new Function('document', 'requestAnimationFrame',
+    bindCode + '\n' + compCode + '\nreturn { Bind: BareMetal.Bind, Components: BareMetal.Components };'
+  );
+  const raf = typeof globalThis.requestAnimationFrame === 'function'
+    ? globalThis.requestAnimationFrame : (cb) => setTimeout(cb, 0);
+  return fn(global.document, raf);
 }
 
 // ── reactive() ────────────────────────────────────────────────────────────
@@ -429,8 +437,12 @@ describe('BareMetalBind – bind() m-each directive', () => {
 // ── bind() – m-navbar ─────────────────────────────────────────────────
 
 describe('BareMetalBind – bind() m-navbar directive', () => {
-  let bind;
-  beforeEach(() => { bind = loadBind(); });
+  let bind, components;
+  beforeEach(() => {
+    const mods = loadBindWithComponents();
+    bind = mods.Bind;
+    components = mods.Components;
+  });
 
   test('renders anchor elements from link array', () => {
     const root = document.createElement('div');
@@ -439,6 +451,7 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
       nav: [{ href: '/', text: 'Home' }, { href: '/about', text: 'About' }]
     });
     bind.bind(root, state, watch);
+    components.bindComponents(root, state, watch);
     const links = root.querySelectorAll('a');
     expect(links.length).toBe(2);
     expect(links[0].href).toContain('/');
@@ -453,6 +466,7 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
       nav: [{ href: '/', text: 'Home', active: true }, { href: '/x', text: 'X' }]
     });
     bind.bind(root, state, watch);
+    components.bindComponents(root, state, watch);
     const links = root.querySelectorAll('a');
     expect(links[0].classList.contains('act')).toBe(true);
     expect(links[1].classList.contains('act')).toBe(false);
@@ -463,6 +477,7 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
     root.innerHTML = '<nav m-navbar="nav"></nav>';
     const { state, watch } = bind.reactive({ nav: [{ href: '/', text: 'Home' }] });
     bind.bind(root, state, watch);
+    components.bindComponents(root, state, watch);
     expect(root.querySelectorAll('a').length).toBe(1);
     state.nav = [{ href: '/', text: 'Home' }, { href: '/new', text: 'New' }];
     expect(root.querySelectorAll('a').length).toBe(2);
@@ -473,6 +488,7 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
     root.innerHTML = '<nav m-navbar="nav"></nav>';
     const { state, watch } = bind.reactive({ nav: [{}] });
     bind.bind(root, state, watch);
+    components.bindComponents(root, state, watch);
     const a = root.querySelector('a');
     expect(a.getAttribute('href')).toBe('#');
     expect(a.textContent).toBe('');
@@ -487,6 +503,7 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
       ]
     });
     bind.bind(root, state, watch);
+    components.bindComponents(root, state, watch);
     const dd = root.querySelector('.dd');
     expect(dd).not.toBeNull();
     expect(dd.querySelector('.dd-t').textContent).toBe('Products');
@@ -507,6 +524,7 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
       ]
     });
     bind.bind(root, state, watch);
+    components.bindComponents(root, state, watch);
     const nav = root.querySelector('nav');
     // 3 direct children: <a>, <div.dd>, <a>
     expect(nav.children.length).toBe(3);
@@ -522,6 +540,7 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
       nav: [['Menu', { href: '/a', text: 'A', active: true }, { href: '/b', text: 'B' }]]
     });
     bind.bind(root, state, watch);
+    components.bindComponents(root, state, watch);
     const links = root.querySelectorAll('.dd-m a');
     expect(links[0].classList.contains('act')).toBe(true);
     expect(links[1].classList.contains('act')).toBe(false);

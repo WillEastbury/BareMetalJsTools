@@ -16,43 +16,29 @@ const JS_DIR = path.resolve(
 // the references resolve correctly, injecting a lazy-fetch delegate so
 // individual tests can mock global.fetch.
 
-function extractIife(filename) {
-  const code = fs.readFileSync(path.join(JS_DIR, filename), 'utf8');
-  const varName = filename.replace('.js', '');
-  return code.replace(new RegExp(`const ${varName}\\s*=\\s*`), '').replace(/;\s*$/, '');
-}
-
 function loadAll() {
-  const restIife      = extractIife('BareMetalRest.js');
-  const bindIife      = extractIife('BareMetalBind.js');
-  const templateIife  = extractIife('BareMetalTemplate.js');
+  const restCode     = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Rest.js'), 'utf8');
+  const bindCode     = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Bind.js'), 'utf8');
+  const templateCode = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Template.js'), 'utf8');
+  const renderCode   = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Rendering.js'), 'utf8');
 
-  // BareMetalRendering.js assigns to window.minibind and returns a module object
-  const renderCode = fs.readFileSync(path.join(JS_DIR, 'BareMetalRendering.js'), 'utf8');
-  const renderIife = renderCode
-    .replace(/const BareMetalRendering\s*=\s*/, '')
-    .replace(/;\s*$/, '');
-
-  const factory = new Function(
-    'fetchFn', 'document', 'window', 'FormData', 'URLSearchParams', 'Promise',
-    [
-      'var fetch = fetchFn;',
-      `var BareMetalRest     = (${restIife});`,
-      `var BareMetalBind     = (${bindIife});`,
-      `var BareMetalTemplate = (${templateIife});`,
-      `var BareMetalRendering = (${renderIife});`,
-      'return { BareMetalRest, BareMetalBind, BareMetalTemplate, BareMetalRendering };'
-    ].join('\n')
+  const fn = new Function(
+    'fetch', 'document', 'window', 'FormData', 'URLSearchParams', 'Promise', 'requestAnimationFrame',
+    restCode + '\n' + bindCode + '\n' + templateCode + '\n' + renderCode +
+    '\nreturn { BareMetalRest: BareMetal.Rest, BareMetalBind: BareMetal.Bind, BareMetalTemplate: BareMetal.Template, BareMetalRendering: BareMetal.Rendering };'
   );
 
   const win = { minibind: null };
-  return factory(
+  const raf = typeof globalThis.requestAnimationFrame === 'function'
+    ? globalThis.requestAnimationFrame : (cb) => setTimeout(cb, 0);
+  return fn(
     (...args) => global.fetch(...args),
     global.document,
     win,
     global.FormData,
     global.URLSearchParams,
-    global.Promise
+    global.Promise,
+    raf
   );
 }
 
@@ -341,30 +327,25 @@ describe('BareMetalRendering – window.minibind surface', () => {
     });
 
     const win = { minibind: null };
-    const renderCode = fs.readFileSync(path.join(JS_DIR, 'BareMetalRendering.js'), 'utf8');
-    const renderIife = renderCode.replace(/const BareMetalRendering\s*=\s*/, '').replace(/;\s*$/, '');
+    const restCode     = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Rest.js'), 'utf8');
+    const bindCode     = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Bind.js'), 'utf8');
+    const templateCode = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Template.js'), 'utf8');
+    const renderCode   = fs.readFileSync(path.join(JS_DIR, 'BareMetal.Rendering.js'), 'utf8');
 
-    const restIife     = extractIife('BareMetalRest.js');
-    const bindIife     = extractIife('BareMetalBind.js');
-    const templateIife = extractIife('BareMetalTemplate.js');
-
-    const factory = new Function(
-      'fetchFn', 'document', 'window', 'FormData', 'URLSearchParams', 'Promise',
-      [
-        'var fetch = fetchFn;',
-        `var BareMetalRest     = (${restIife});`,
-        `var BareMetalBind     = (${bindIife});`,
-        `var BareMetalTemplate = (${templateIife});`,
-        `(${renderIife});`
-      ].join('\n')
+    const fn = new Function(
+      'fetch', 'document', 'window', 'FormData', 'URLSearchParams', 'Promise', 'requestAnimationFrame',
+      restCode + '\n' + bindCode + '\n' + templateCode + '\n' + renderCode
     );
-    factory(
+    const raf = typeof globalThis.requestAnimationFrame === 'function'
+      ? globalThis.requestAnimationFrame : (cb) => setTimeout(cb, 0);
+    fn(
       (...args) => global.fetch(...args),
       global.document,
       win,
       global.FormData,
       global.URLSearchParams,
-      global.Promise
+      global.Promise,
+      raf
     );
 
     expect(typeof win.minibind.setRoot).toBe('function');

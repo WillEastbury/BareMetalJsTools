@@ -7,27 +7,19 @@ const path = require('path');
 const fs   = require('fs');
 
 const SRC = path.resolve(
-  __dirname, '../src/BareMetalRest.js'
+  __dirname, '../src/BareMetal.Rest.js'
 );
 
 // Helper: load the module so its `fetch` references global.fetch at call time.
-// We extract the IIFE by removing the `const BareMetalRest = ` assignment and
-// wrapping it in a factory function that receives explicit globals, allowing
-// `fetch` to be lazily delegated so per-test mocks work at call time.
 function loadRest() {
   const code = fs.readFileSync(SRC, 'utf8');
-  // Remove the outer `const BareMetalRest = ` assignment (note: no ^ so it finds it after comments)
-  const iife = code.replace(/const BareMetalRest\s*=\s*/, '').replace(/;\s*$/, '');
-  // Build a factory that injects globals; fetch is wrapped so tests can swap global.fetch
-  const factory = new Function(
-    'fetchFn', 'document', 'location', 'FormData', 'URLSearchParams',
+  const fn = new Function(
+    'fetch', 'document', 'location', 'FormData', 'URLSearchParams',
     'WebSocket', 'TextEncoder', 'TextDecoder', 'DataView', 'Uint8Array',
-    // Shadow bare `fetch` with our injectable wrapper inside the IIFE body
-    'var fetch = fetchFn;\n' +
-    `return (${iife});`
+    code + '\nreturn BareMetal.Rest;'
   );
-  return factory(
-    (...args) => global.fetch(...args),  // lazy delegate — test mocks work at call time
+  return fn(
+    (...args) => global.fetch(...args),
     global.document,
     global.location,
     global.FormData,

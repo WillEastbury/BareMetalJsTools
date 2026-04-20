@@ -8,7 +8,7 @@ const fs   = require('fs');
 
 // ── Load the library under test ────────────────────────────────────────────
 const SRC = path.resolve(
-  __dirname, '../src/BareMetalRouting.js'
+  __dirname, '../src/BareMetal.Routing.js'
 );
 
 function loadRouter() {

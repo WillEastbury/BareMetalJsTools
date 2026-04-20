@@ -7,14 +7,13 @@ const path = require('path');
 const fs   = require('fs');
 
 const SRC = path.resolve(
-  __dirname, '../src/BareMetalTemplate.js'
+  __dirname, '../src/BareMetal.Template.js'
 );
 
 function loadTemplate() {
   const code = fs.readFileSync(SRC, 'utf8');
-  const iife = code.replace(/const BareMetalTemplate\s*=\s*/, '').replace(/;\s*$/, '');
-  const factory = new Function('document', `return (${iife});`);
-  return factory(global.document);
+  const fn = new Function('document', code + '\nreturn BareMetal.Template;');
+  return fn(global.document);
 }
 
 // ── buildForm ──────────────────────────────────────────────────────────────

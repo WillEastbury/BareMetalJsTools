@@ -8,7 +8,7 @@ const path = require('path');
 describe('picocompress IIFE wrapper', () => {
   let pc;
   beforeAll(() => {
-    require(path.resolve(__dirname, '../src/picocompress.js'));
+    require(path.resolve(__dirname, '../src/BareMetal.Compress.js'));
     pc = global.PicoCompress;
   });
 
