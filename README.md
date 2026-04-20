@@ -11,7 +11,7 @@ Tiny, zero-dependency vanilla-JS primitives for building fully client-rendered a
 | Module | Size | What it does |
 |---|---:|---|
 | [`BareMetalBinary`](docs/BareMetalBinary.md)   | 31 KB | BSO1 binary wire serialiser. Zero-copy `DataView` reads, HMAC-SHA256 signing via Web Crypto. |
-| [`BareMetalBind`](docs/BareMetalBind.md)       | 8 KB  | Reactive `Proxy` state + `m-*` directive binder. Dot-paths, formatters, reactive arrays, keyed list diffing, transitions, computed expressions. |
+| [`BareMetalBind`](docs/BareMetalBind.md)       | 8 KB  | Reactive `Proxy` state + 19 `m-*` directives. Forms, lists, toasts, chatbot, calendar, Gantt, tables, trees. `create` factories & `chatEndpoint` auto-wire. |
 | [`BareMetalRest`](docs/BareMetalRest.md)       | 16 KB | REST + WebSocket binary transport. Negotiates BMW WS frames → BSO1 → JSON fallback. CSRF, 401-redirect, request multiplexing. |
 | [`BareMetalTemplate`](docs/BareMetalTemplate.md) | 14 KB | Schema-driven DOM builder. `buildForm(layout, fields)` and `buildTable(fields, items, callbacks)` produce Bootstrap-compatible markup. |
 | [`BareMetalRendering`](docs/BareMetalRendering.md) | 4 KB  | Glues Rest + Bind + Template into an entity lifecycle (`createEntity`, `listEntities`). Also exposes `window.minibind`. |
@@ -21,18 +21,76 @@ Tiny, zero-dependency vanilla-JS primitives for building fully client-rendered a
 | [`BareMetalCharts`](docs/BareMetalCharts.md) | 17 KB | Lightweight SVG chart renderer. Bar, line, sparkline, donut, and gauge charts. Animated, themed via CSS custom properties. |
 | [`BareMetalGraph`](docs/BareMetalGraph.md)   | 19 KB | Force-directed graph visualiser. Interactive node/edge diagrams with drag, zoom, hover highlighting, and dynamic add/remove. |
 
-### Dependency graph
+### Architecture diagram
 
-```
-                 BareMetalRendering          ← orchestrator
-                  ↓        ↓     ↓
-           BareMetalBind  Template  Rest ──→ WebSocket / BSO1 / JSON
-                                     ↓ ↘
-                          BareMetalBinary    PicoCompress (opt-in)
-                            ← BSO1 codec, HMAC
+```mermaid
+graph TB
+  subgraph "Presentation Layer"
+    Styles["🎨 BareMetalStyles.css<br/><i>Grid · Buttons · Cards · Modals<br/>Toasts · Sidebar · Header/Footer</i>"]
+    Charts["📊 BareMetalCharts.js<br/><i>Bar · Line · Sparkline<br/>Donut · Gauge</i>"]
+    Graph["🕸️ BareMetalGraph.js<br/><i>Force-directed graph<br/>Drag · Zoom · Groups</i>"]
+  end
 
-           BareMetalRouting                  (independent)
+  subgraph "Reactive Binding Layer"
+    Bind["⚡ BareMetalBind.js<br/><i>Proxy state · 19 directives · create factories</i>"]
+    subgraph "m-* Directives"
+      direction LR
+      Core["m-value · m-text<br/>m-if · m-class · m-attr"]
+      Lists["m-each · m-navbar<br/>m-expression"]
+      UI["m-toast · m-img<br/>m-table · m-tree"]
+      Rich["m-chatbot · m-calendar<br/>m-gantt"]
+      Events["m-click · m-submit<br/>m-transition"]
+    end
+  end
+
+  subgraph "Transport Layer"
+    Rest["🌐 BareMetalRest.js<br/><i>REST + WebSocket<br/>CSRF · 401-redirect · Multiplexing</i>"]
+    Binary["📦 BareMetalBinary.js<br/><i>BSO1 binary codec<br/>DataView · HMAC-SHA256</i>"]
+    Pico["🗜️ PicoCompress.js<br/><i>Block-based LZ compression<br/>opt-in wire compression</i>"]
+  end
+
+  subgraph "Orchestration"
+    Rendering["🔧 BareMetalRendering.js<br/><i>Entity lifecycle glue<br/>createEntity · listEntities</i>"]
+    Template["📝 BareMetalTemplate.js<br/><i>Schema-driven DOM builder<br/>buildForm · buildTable</i>"]
+    Routing["🧭 BareMetalRouting.js<br/><i>SPA router · :params · catch-all</i>"]
+  end
+
+  %% Dependencies
+  Rendering --> Bind
+  Rendering --> Template
+  Rendering --> Rest
+  Rest --> Binary
+  Rest -.->|opt-in| Pico
+  Bind -.->|chatEndpoint| Rest
+
+  %% Styling uses
+  Bind --> Styles
+  UI --> Styles
+  Rich --> Styles
+
+  %% Standalone
+  Routing -.- Standalone["Independent — no deps"]
+  Charts -.- Standalone2["Independent — no deps"]
+  Graph -.- Standalone3["Independent — no deps"]
+
+  style Bind fill:#0d6efd,color:#fff
+  style Styles fill:#198754,color:#fff
+  style Rest fill:#6f42c1,color:#fff
+  style Charts fill:#fd7e14,color:#fff
+  style Graph fill:#d63384,color:#fff
+  style Rendering fill:#495057,color:#fff
 ```
+
+#### How the pieces connect
+
+| Layer | Modules | Role |
+|---|---|---|
+| **Presentation** | Styles, Charts, Graph | Visual rendering — CSS framework, SVG charts, force-directed graphs. Zero JS deps. |
+| **Reactive Binding** | Bind (19 directives) | Proxy-based state → DOM. Covers forms, lists, toasts, chatbot, calendar, Gantt, tables, trees. `create` factories for each. |
+| **Transport** | Rest, Binary, PicoCompress | Server communication — REST/WS with binary BSO1 codec and optional LZ compression. |
+| **Orchestration** | Rendering, Template, Routing | Glue layer — entity lifecycle, schema-driven forms/tables, SPA routing. |
+
+> **Key integration:** `BareMetalBind.chatEndpoint()` auto-wires `m-chatbot` to `BareMetalRest` — user messages POST to your API and bot replies are pushed back reactively.
 
 ---
 
