@@ -572,6 +572,69 @@ small, .small { font-size: .875em; }
 /* ============================================================
    USER CARD (hover popup)
    ============================================================ */
+/* ============================================================
+   TREEVIEW (m-tree)
+   ============================================================ */
+/* ============================================================
+   TABLE BINDING (m-table)
+   ============================================================ */
+.bm-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+.bm-table thead { border-bottom: 2px solid var(--bs-gray-300, #dee2e6); }
+.bm-table .bm-table-th {
+  padding: .5rem .75rem; text-align: left; font-weight: 600;
+  color: var(--bs-gray-700, #495057); white-space: nowrap;
+}
+.bm-table .bm-table-th:hover { color: var(--bs-gray-900, #212529); }
+.bm-table tbody td { padding: .5rem .75rem; border-bottom: 1px solid var(--bs-gray-200, #e9ecef); }
+.bm-table .bm-table-row { transition: background-color .15s; cursor: pointer; }
+.bm-table .bm-table-row:hover { background: var(--bs-gray-100, #f8f9fa); }
+.bm-table .bm-table-selected { background: var(--bs-primary, #0d6efd) !important; color: #fff; }
+.bm-table .bm-table-selected td { color: #fff; }
+
+/* Striped variant */
+.bm-table-striped tbody tr:nth-child(even) { background: var(--bs-gray-100, #f8f9fa); }
+.bm-table-striped .bm-table-row:hover { background: var(--bs-gray-200, #e9ecef); }
+
+/* Dark variant */
+.bm-table-dark { color: var(--bs-gray-200, #e9ecef); }
+.bm-table-dark thead { border-bottom-color: var(--bs-gray-600, #6c757d); }
+.bm-table-dark .bm-table-th { color: var(--bs-gray-300, #dee2e6); }
+.bm-table-dark tbody td { border-bottom-color: rgba(255,255,255,.1); }
+.bm-table-dark .bm-table-row:hover { background: rgba(255,255,255,.08); }
+
+/* ============================================================
+   TREEVIEW (m-tree)
+   ============================================================ */
+.bm-tree { font-family: var(--bs-font-sans-serif, system-ui, sans-serif); font-size: .875rem; user-select: none; }
+.bm-tree-node { }
+.bm-tree-row {
+  display: flex; align-items: center; gap: .35rem; padding: .25rem .5rem;
+  cursor: pointer; border-radius: var(--bs-border-radius, .25rem);
+  transition: background-color .15s;
+}
+.bm-tree-row:hover { background: var(--bs-gray-200, #e9ecef); }
+.bm-tree-selected { background: var(--bs-primary, #0d6efd) !important; color: #fff; }
+.bm-tree-selected .bm-tree-icon,
+.bm-tree-selected .bm-tree-toggle { color: #fff; }
+.bm-tree-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1rem; flex-shrink: 0; color: var(--bs-gray-600, #6c757d);
+  font-size: .75rem; cursor: pointer; transition: transform .15s;
+}
+.bm-tree-spacer { display: inline-block; width: 1rem; flex-shrink: 0; }
+.bm-tree-icon { flex-shrink: 0; font-size: 1rem; line-height: 1; }
+.bm-tree-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bm-tree-children { /* animated collapse could be added here */ }
+
+/* Dark variant */
+.bm-tree-dark .bm-tree-row:hover { background: rgba(255,255,255,.1); }
+.bm-tree-dark .bm-tree-selected { background: var(--bs-primary, #0d6efd) !important; }
+.bm-tree-dark .bm-tree-toggle { color: var(--bs-gray-400, #ced4da); }
+.bm-tree-dark { color: var(--bs-gray-200, #e9ecef); }
+
+/* ============================================================
+   USER CARD (hover popup)
+   ============================================================ */
 .user-card-trigger { position: relative; display: inline-block; cursor: pointer; }
 .user-card-trigger .user-avatar {
   width: 2rem; height: 2rem; border-radius: 50%; object-fit: cover; vertical-align: middle;

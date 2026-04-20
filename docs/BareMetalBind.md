@@ -1,6 +1,6 @@
 # BareMetalBind
 
-Reactive state + DOM directive binder with formatters, list rendering, transitions, computed expressions, toast notifications, and image binding — ~530 lines, no dependencies.
+Reactive state + DOM directive binder with formatters, list rendering, transitions, computed expressions, toast notifications, image binding, table rendering, and treeview — ~620 lines, no dependencies.
 
 ## API
 
@@ -45,6 +45,8 @@ Scans the subtree of `root` for directive attributes and wires them up:
 | `m-expression="target = expr"` | any element | Computed value — evaluates expression reactively. |
 | `m-toast="key"` | `.toast-container` | Creates toast popups when items are pushed to the array. |
 | `m-img="path"` | `<img>` or any element | Reactive image `src` (or `background-image`) with lazy loading and fallback. |
+| `m-tree="key"` | any container | Collapsible treeview from nested array with icons, selection, and expand/collapse. |
+| `m-table="key"` | `<table>` | Sortable data table from an array of objects, with column config and row selection. |
 
 ### `BareMetalBind.formatters`
 
@@ -312,6 +314,123 @@ Bind an element's image source to a reactive state property. On `<img>` elements
 | `m-img-lazy` | ❌ | Defer loading until the element enters the viewport (uses `IntersectionObserver` with 200px margin) |
 
 When the state value changes, the image updates reactively. On `<img>` elements, an `error` event listener automatically swaps to the fallback URL if provided.
+
+---
+
+## Table binding (`m-table`)
+
+Render an array of objects as a sortable, selectable data table. Columns are auto-inferred from the first item's keys or configured explicitly.
+
+```html
+<!-- Auto-detect columns from object keys -->
+<table m-table="users"></table>
+
+<!-- Explicit columns with display headers -->
+<table m-table="users" m-table-cols="Full Name:name,Email:email,Role:role"></table>
+
+<!-- With row selection callback -->
+<table m-table="users" m-table-cols="name,email,role" m-table-select="onRowClick"></table>
+
+<!-- Disable sorting -->
+<table m-table="users" m-table-nosort></table>
+```
+
+```js
+const { state, watch } = BareMetalBind.reactive({
+  users: [
+    { name: 'Alice', email: 'alice@co.dev', role: 'Admin' },
+    { name: 'Bob',   email: 'bob@co.dev',   role: 'Editor' },
+    { name: 'Carol', email: 'carol@co.dev',  role: 'Viewer' }
+  ],
+  onRowClick: (item, e) => console.log('Selected:', item.name)
+});
+BareMetalBind.bind(document.getElementById('app'), state, watch);
+
+// Reactive — push a new row and the table re-renders
+state.users.push({ name: 'Dave', email: 'dave@co.dev', role: 'Editor' });
+```
+
+### Attributes
+
+| Attribute | Required | Description |
+|---|---|---|
+| `m-table="key"` | ✅ | State path to the array of objects |
+| `m-table-cols="col,..."` | ❌ | Comma-separated column definitions. Format: `Header:key` or just `key` (header is auto-capitalised). If omitted, columns are inferred from the first item. |
+| `m-table-select="fn"` | ❌ | State function called with `(item, event)` when a row is clicked |
+| `m-table-nosort` | ❌ | Disables click-to-sort on column headers |
+
+### Sorting
+
+Click any column header to sort ascending; click again to toggle descending. The active sort column shows ▲ or ▼. Numbers sort numerically; everything else sorts case-insensitively as strings.
+
+### CSS classes
+
+The table gets `bm-table` automatically. Add `bm-table-striped` for alternating row shading, or `bm-table-dark` for dark mode. Selected rows get `bm-table-selected`.
+
+> **Requires:** BareMetalStyles.css for table styling.
+
+---
+
+## Tree binding (`m-tree`)
+
+Render a nested array as a collapsible file-explorer-style treeview with icons, expand/collapse toggles, and node selection.
+
+```html
+<!-- Basic tree -->
+<div m-tree="files"></div>
+
+<!-- With selection callback and custom field names -->
+<div m-tree="files" m-tree-select="onFileClick"
+     m-tree-label="name" m-tree-children="items" m-tree-icon="emoji"></div>
+```
+
+```js
+const { state, watch } = BareMetalBind.reactive({
+  files: [
+    { label: 'src', icon: '📁', open: true, children: [
+      { label: 'index.js', icon: '📄' },
+      { label: 'utils', icon: '📁', children: [
+        { label: 'helpers.js', icon: '📄' },
+        { label: 'math.js', icon: '📄' }
+      ]}
+    ]},
+    { label: 'README.md', icon: '📝' },
+    { label: 'package.json', icon: '📦' }
+  ],
+  onFileClick: (item, e) => console.log('Selected:', item.label)
+});
+BareMetalBind.bind(document.getElementById('app'), state, watch);
+```
+
+### Attributes
+
+| Attribute | Required | Description |
+|---|---|---|
+| `m-tree="key"` | ✅ | State path to the nested array |
+| `m-tree-select="fn"` | ❌ | State function called with `(item, event)` when a node is clicked |
+| `m-tree-label="field"` | ❌ | Property name for node text (default: `label`) |
+| `m-tree-children="field"` | ❌ | Property name for child array (default: `children`) |
+| `m-tree-icon="field"` | ❌ | Property name for icon (default: `icon`) |
+
+### Node object properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `label` | string | `''` | Display text (or custom field via `m-tree-label`) |
+| `icon` | string | *(none)* | Emoji or text icon shown before the label |
+| `children` | array | *(none)* | Nested child nodes (or custom field via `m-tree-children`) |
+| `open` | boolean | `false` | If `true`, the node starts expanded |
+
+### Behaviour
+
+- Click the ▸ toggle to expand/collapse a branch
+- Click anywhere on a row to select it (highlighted with `bm-tree-selected`)
+- Nodes indent 1.25rem per level
+- The tree re-renders reactively when the state array changes
+
+Add `bm-tree-dark` class for dark mode styling.
+
+> **Requires:** BareMetalStyles.css for treeview styling.
 
 ---
 
