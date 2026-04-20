@@ -29,6 +29,7 @@ Every module follows the same pattern: small, obvious, fast. You can read the so
 | [`BareMetal.Routing`](docs/BareMetalRouting.md) | History-API SPA router. Named segments (`:param`), catch-all (`*`), query parsing. | 7 KB | vue-router (≈18 KB), react-router (≈30 KB) |
 | [`BareMetal.Charts`](docs/BareMetalCharts.md) | SVG charts — bar, line, sparkline, donut, gauge. Animated, themeable via CSS custom properties. | 16 KB | Chart.js (≈200 KB), D3 (≈250 KB) |
 | [`BareMetal.Graph`](docs/BareMetalGraph.md) | Force-directed graph visualiser. Drag, zoom, hover, dynamic add/remove. | 18 KB | D3-force (≈30 KB) + D3-selection (≈20 KB), Cytoscape.js (≈600 KB) |
+| **Total** | **The whole toolkit** | **≈232 KB** | **≈1,577 KB** (picking the smaller option from each row) |
 
 ### Architecture
 
