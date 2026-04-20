@@ -14,51 +14,73 @@ No build step exists — source files are used directly.
 
 ## Architecture
 
-This is a collection of independent vanilla-JS IIFE modules designed to work without a bundler. Each `src/*.js` file is a self-contained `const ModuleName = (() => {...})()` that attaches to global scope when loaded via `<script>`. ESM wrappers in `esm/` re-export for Node/bundler use.
+This is a collection of independent vanilla-JS IIFE modules under the `BareMetal.*` namespace. Each `src/BareMetal.X.js` file is a self-contained IIFE that attaches to the shared `BareMetal` namespace object when loaded via `<script>`.
 
-**Module dependency graph (only these matter for load order):**
+**Modules:**
 
-- `BareMetalRendering` → depends on `BareMetalBind`, `BareMetalRest`, `BareMetalTemplate`
-- `BareMetalRest` → depends on `BareMetalBinary`; optionally uses `PicoCompress`
-- `BareMetalBind.chatEndpoint()` → depends on `BareMetalRest`
-- `BareMetalRouting`, `BareMetalCharts`, `BareMetalGraph`, `BareMetalStyles.css` → fully standalone
+| File | Namespace | Purpose |
+|------|-----------|---------|
+| `BareMetal.Bind.js` | `BareMetal.Bind` | Core reactive proxy binding, directives (m-value, m-text, m-each, m-if, etc.) |
+| `BareMetal.Components.js` | `BareMetal.Components` | Widget directives (m-chatbot, m-calendar, m-gantt, m-table, m-tree, m-toast, m-navbar, m-img) |
+| `BareMetal.ComponentFactories.js` | `BareMetal.ComponentFactories` | Object factories (`create`, `chatEndpoint`) |
+| `BareMetal.Rest.js` | `BareMetal.Rest` | REST/WebSocket transport, WAL, compression |
+| `BareMetal.Binary.js` | `BareMetal.Binary` | BSO1 binary serialisation |
+| `BareMetal.Template.js` | `BareMetal.Template` | Schema-driven DOM templating |
+| `BareMetal.Rendering.js` | `BareMetal.Rendering` | Entity rendering pipeline |
+| `BareMetal.Routing.js` | `BareMetal.Routing` | SPA hash router (also `window.BMRouter`) |
+| `BareMetal.Charts.js` | `BareMetal.Charts` | SVG chart rendering |
+| `BareMetal.Graph.js` | `BareMetal.Graph` | Graph/network visualisation |
+| `BareMetal.Compress.js` | `BareMetal.Compress` | Pico compression (also `globalThis.PicoCompress`) |
+| `BareMetal.Metadata.js` | `BareMetal.Metadata` | Schema metadata utilities |
+| `BareMetalStyles.css` | — | Bootstrap-5-compatible CSS subset |
+
+**Dependency graph (load order matters):**
+
+- `BareMetal.Components` → depends on `BareMetal.Bind`
+- `BareMetal.ComponentFactories` → soft deps on `BareMetal.Bind`, `BareMetal.Rest`
+- `BareMetal.Rendering` → depends on `BareMetal.Rest`, `BareMetal.Bind`, `BareMetal.Template`
+- `BareMetal.Rest` → depends on `BareMetal.Binary`; optionally uses `BareMetal.Compress`
+- All others → fully standalone
 
 ## Key Conventions
 
 ### Module pattern
 
-Every JS module follows the same IIFE structure:
+Every JS module follows this namespace IIFE structure:
 
 ```js
-const ModuleName = (() => {
+var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
+BareMetal.X = (() => {
   'use strict';
   // ... implementation ...
   return { publicApi };
 })();
 ```
 
-Do not convert to ES modules or classes. The ESM wrappers in `esm/` simply re-export the IIFE result.
+Do not convert to ES modules or classes.
 
 ### Test pattern
 
-Tests load source via `fs.readFileSync` + `new Function(...)` to execute the IIFE in a fresh jsdom context per suite. This avoids Node module caching and allows injecting mocks for `document`, `fetch`, `window`, etc. Follow this pattern for new tests:
+Tests load source via `fs.readFileSync` + `new Function(...)` to execute in a fresh jsdom context. The file is executed as-is and the result is read from `BareMetal.X`:
 
 ```js
 function loadModule() {
   const code = fs.readFileSync(SRC_PATH, 'utf8');
-  const iife = code.replace(/const ModuleName\s*=\s*/, '').replace(/;\s*$/, '');
-  return new Function('document', 'fetch', `return (${iife});`)(global.document, mockFetch);
+  const fn = new Function('document', 'requestAnimationFrame',
+    code + '\nreturn BareMetal.X;'
+  );
+  return fn(global.document, (cb) => setTimeout(cb, 0));
 }
 ```
 
 ### No dependencies
 
-The library has zero runtime dependencies. `jest` and `jest-environment-jsdom` are the only dev dependencies. Do not add frameworks, transpilers, or bundlers.
+Zero runtime dependencies. `jest` and `jest-environment-jsdom` are the only dev dependencies.
 
 ### Reactive binding directives
 
-`BareMetalBind` uses `m-*` HTML attributes (e.g., `m-value`, `m-text`, `m-each`, `m-if`). When adding or modifying directives, register them in the directive processing switch inside `BareMetalBind.js` and add corresponding tests.
+`BareMetal.Bind` uses `m-*` HTML attributes (e.g., `m-value`, `m-text`, `m-each`, `m-if`). Widget directives (m-chatbot, m-calendar, etc.) live in `BareMetal.Components`.
 
 ### CSS module
 
-`BareMetalStyles.css` is a standalone Bootstrap-5-compatible subset. It has no JS and no preprocessor — edit the CSS directly.
+`BareMetalStyles.css` is a standalone Bootstrap-5-compatible subset. No JS, no preprocessor.

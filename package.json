@@ -15,8 +15,7 @@
     "README.md",
     "LICENSE"
   ],
-  "main": "src/index.js",
-  "module": "esm/index.js",
+
   "exports": {
     "./binary":             "./src/BareMetal.Binary.js",
     "./bind":               "./src/BareMetal.Bind.js",
