@@ -1,7 +1,7 @@
 // BareMetalBind — reactive Proxy state and m-* directive binder
 // Directives: m-value, m-text, m-if, m-click, m-submit, m-class, m-attr,
 //             m-each (keyed), m-navbar, m-transition, m-expression,
-//             m-toast, m-img, m-table, m-tree
+//             m-toast, m-img, m-gantt, m-table, m-tree
 // API: reactive(initial) → { state, watch, data }
 //      bind(root, state, watch)
 //      formatters   – registry object for pipe transforms
@@ -453,6 +453,158 @@ const BareMetalBind = (() => {
           }
         });
       };
+      render(); watch(wk, render);
+    });
+
+    // ── m-gantt (array → timeline Gantt chart) ──
+    // Usage: <div m-gantt="tasks"></div>
+    // State: [{ label:'Design', start:'2025-01-01', end:'2025-01-15', group:'Phase 1', color:'#0d6efd', progress:0.6 }]
+    root.querySelectorAll('[m-gantt]').forEach(n => {
+      const arrKey = n.getAttribute('m-gantt'), wk = topKey(arrKey);
+      const labelField = n.getAttribute('m-gantt-label') || 'label';
+      const startField = n.getAttribute('m-gantt-start') || 'start';
+      const endField = n.getAttribute('m-gantt-end') || 'end';
+      const groupField = n.getAttribute('m-gantt-group') || 'group';
+      const rowH = 32, headerH = 40, padL = 180, padR = 20;
+
+      function toDay(s) { return Math.floor(new Date(s).getTime() / 864e5); }
+
+      function render() {
+        var arr = getPath(state, arrKey);
+        n.innerHTML = '';
+        n.classList.add('bm-gantt');
+        if (!Array.isArray(arr) || arr.length === 0) return;
+
+        // Compute date range
+        var minD = Infinity, maxD = -Infinity;
+        arr.forEach(function(t) {
+          var s = toDay(t[startField]), e = toDay(t[endField]);
+          if (s < minD) minD = s;
+          if (e > maxD) maxD = e;
+        });
+        var span = maxD - minD || 1;
+
+        // Group tasks
+        var groups = [], groupMap = {}, ordered = [];
+        arr.forEach(function(t) {
+          var g = t[groupField] || '';
+          if (g && !groupMap[g]) { groupMap[g] = true; groups.push(g); }
+        });
+        groups.forEach(function(g) {
+          ordered.push({ _groupHeader: g });
+          arr.forEach(function(t) { if ((t[groupField] || '') === g) ordered.push(t); });
+        });
+        arr.forEach(function(t) { if (!(t[groupField] || '')) ordered.push(t); });
+
+        var totalH = headerH + ordered.length * rowH + 4;
+        var chartW = Math.max(n.clientWidth || 600, 400);
+        var barArea = chartW - padL - padR;
+
+        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '100%');
+        svg.setAttribute('viewBox', '0 0 ' + chartW + ' ' + totalH);
+        svg.style.fontFamily = 'system-ui,sans-serif';
+        svg.style.fontSize = '12px';
+
+        // Header month markers
+        var d0 = new Date(minD * 864e5), dEnd = new Date(maxD * 864e5);
+        var cur = new Date(d0.getFullYear(), d0.getMonth(), 1);
+        while (cur <= dEnd) {
+          var dx = toDay(cur) - minD;
+          var x = padL + (dx / span) * barArea;
+          if (x >= padL) {
+            var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', x); line.setAttribute('x2', x);
+            line.setAttribute('y1', headerH); line.setAttribute('y2', totalH);
+            line.setAttribute('stroke', '#dee2e6'); line.setAttribute('stroke-dasharray', '3,3');
+            svg.appendChild(line);
+            var txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            txt.setAttribute('x', x + 4); txt.setAttribute('y', headerH - 8);
+            txt.setAttribute('fill', '#6c757d'); txt.setAttribute('font-size', '11');
+            var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            txt.textContent = months[cur.getMonth()] + ' ' + cur.getFullYear();
+            svg.appendChild(txt);
+          }
+          cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+        }
+
+        // Rows
+        ordered.forEach(function(item, i) {
+          var y = headerH + i * rowH;
+
+          // Zebra stripe
+          if (i % 2 === 0) {
+            var bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bg.setAttribute('x', 0); bg.setAttribute('y', y);
+            bg.setAttribute('width', chartW); bg.setAttribute('height', rowH);
+            bg.setAttribute('fill', '#f8f9fa');
+            svg.appendChild(bg);
+          }
+
+          if (item._groupHeader) {
+            var gt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            gt.setAttribute('x', 8); gt.setAttribute('y', y + rowH * 0.65);
+            gt.setAttribute('font-weight', '700'); gt.setAttribute('fill', '#212529');
+            gt.textContent = item._groupHeader;
+            svg.appendChild(gt);
+            return;
+          }
+
+          // Label
+          var lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          lbl.setAttribute('x', 12); lbl.setAttribute('y', y + rowH * 0.65);
+          lbl.setAttribute('fill', '#495057');
+          var labelText = item[labelField] || '';
+          if (labelText.length > 22) labelText = labelText.substring(0, 20) + '…';
+          lbl.textContent = labelText;
+          svg.appendChild(lbl);
+
+          // Bar
+          var s = toDay(item[startField]) - minD, e = toDay(item[endField]) - minD;
+          var bx = padL + (s / span) * barArea;
+          var bw = Math.max(((e - s) / span) * barArea, 4);
+          var by = y + 6, bh = rowH - 12;
+          var color = item.color || 'var(--bs-primary, #0d6efd)';
+
+          // Background bar
+          var bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          bar.setAttribute('x', bx); bar.setAttribute('y', by);
+          bar.setAttribute('width', bw); bar.setAttribute('height', bh);
+          bar.setAttribute('rx', 3); bar.setAttribute('fill', color);
+          bar.setAttribute('opacity', '0.25');
+          svg.appendChild(bar);
+
+          // Progress fill
+          var prog = item.progress != null ? item.progress : 1;
+          if (prog > 0) {
+            var pbar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            pbar.setAttribute('x', bx); pbar.setAttribute('y', by);
+            pbar.setAttribute('width', bw * Math.min(prog, 1)); pbar.setAttribute('height', bh);
+            pbar.setAttribute('rx', 3); pbar.setAttribute('fill', color);
+            svg.appendChild(pbar);
+          }
+
+          // Milestone diamond (if start === end)
+          if (s === e) {
+            bar.setAttribute('width', 0);
+            var dia = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            var cx = bx, cy = by + bh / 2, r = bh / 2;
+            dia.setAttribute('points', cx + ',' + (cy - r) + ' ' + (cx + r) + ',' + cy + ' ' + cx + ',' + (cy + r) + ' ' + (cx - r) + ',' + cy);
+            dia.setAttribute('fill', color);
+            svg.appendChild(dia);
+          }
+
+          // Tooltip title
+          var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+          title.textContent = (item[labelField] || '') + '\n' + item[startField] + ' → ' + item[endField] +
+            (prog != null && prog < 1 ? '\nProgress: ' + Math.round(prog * 100) + '%' : '');
+          bar.appendChild(title.cloneNode(true));
+          if (prog > 0 && pbar) pbar.appendChild(title);
+        });
+
+        n.appendChild(svg);
+      }
+
       render(); watch(wk, render);
     });
 

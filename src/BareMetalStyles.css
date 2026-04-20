@@ -578,6 +578,16 @@ small, .small { font-size: .875em; }
 /* ============================================================
    TABLE BINDING (m-table)
    ============================================================ */
+/* ============================================================
+   GANTT CHART (m-gantt)
+   ============================================================ */
+.bm-gantt { overflow-x: auto; border: 1px solid var(--bs-gray-200, #e9ecef); border-radius: var(--bs-border-radius, .25rem); background: #fff; }
+.bm-gantt svg { display: block; min-width: 100%; }
+.bm-gantt-dark { background: var(--bs-gray-900, #212529); border-color: var(--bs-gray-700, #495057); }
+
+/* ============================================================
+   TABLE BINDING (m-table)
+   ============================================================ */
 .bm-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
 .bm-table thead { border-bottom: 2px solid var(--bs-gray-300, #dee2e6); }
 .bm-table .bm-table-th {

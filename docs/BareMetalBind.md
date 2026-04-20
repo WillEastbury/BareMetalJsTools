@@ -1,6 +1,6 @@
 # BareMetalBind
 
-Reactive state + DOM directive binder with formatters, list rendering, transitions, computed expressions, toast notifications, image binding, table rendering, and treeview — ~620 lines, no dependencies.
+Reactive state + DOM directive binder with formatters, list rendering, transitions, computed expressions, toast notifications, image binding, Gantt charts, table rendering, and treeview — ~750 lines, no dependencies.
 
 ## API
 
@@ -47,6 +47,7 @@ Scans the subtree of `root` for directive attributes and wires them up:
 | `m-img="path"` | `<img>` or any element | Reactive image `src` (or `background-image`) with lazy loading and fallback. |
 | `m-tree="key"` | any container | Collapsible treeview from nested array with icons, selection, and expand/collapse. |
 | `m-table="key"` | `<table>` | Sortable data table from an array of objects, with column config and row selection. |
+| `m-gantt="key"` | any container | Read-only SVG Gantt chart with groups, progress bars, milestones, and month gridlines. |
 
 ### `BareMetalBind.formatters`
 
@@ -314,6 +315,61 @@ Bind an element's image source to a reactive state property. On `<img>` elements
 | `m-img-lazy` | ❌ | Defer loading until the element enters the viewport (uses `IntersectionObserver` with 200px margin) |
 
 When the state value changes, the image updates reactively. On `<img>` elements, an `error` event listener automatically swaps to the fallback URL if provided.
+
+---
+
+## Gantt chart (`m-gantt`)
+
+Render an array of tasks as a read-only SVG Gantt timeline with month gridlines, grouped rows, progress bars, and milestone diamonds.
+
+```html
+<div m-gantt="tasks"></div>
+```
+
+```js
+const { state, watch } = BareMetalBind.reactive({
+  tasks: [
+    { label: 'Research',  start: '2025-01-01', end: '2025-01-20', group: 'Phase 1', progress: 1.0 },
+    { label: 'Design',    start: '2025-01-10', end: '2025-02-05', group: 'Phase 1', progress: 0.8, color: '#6f42c1' },
+    { label: 'Prototype', start: '2025-02-01', end: '2025-03-01', group: 'Phase 2', progress: 0.4 },
+    { label: 'Review',    start: '2025-03-01', end: '2025-03-01', group: 'Phase 2' }  // milestone (same start/end)
+  ]
+});
+BareMetalBind.bind(document.getElementById('app'), state, watch);
+```
+
+### Attributes
+
+| Attribute | Required | Description |
+|---|---|---|
+| `m-gantt="key"` | ✅ | State path to the array of task objects |
+| `m-gantt-label="field"` | ❌ | Property name for row label (default: `label`) |
+| `m-gantt-start="field"` | ❌ | Property name for start date (default: `start`) |
+| `m-gantt-end="field"` | ❌ | Property name for end date (default: `end`) |
+| `m-gantt-group="field"` | ❌ | Property name for group header (default: `group`) |
+
+### Task object properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `label` | string | `''` | Task name shown on the left |
+| `start` | string | — | Start date (`YYYY-MM-DD`) |
+| `end` | string | — | End date (`YYYY-MM-DD`). Same as start = milestone diamond |
+| `group` | string | *(none)* | Group header — tasks with the same group are grouped together |
+| `progress` | number | `1` | 0–1 fill ratio of the bar (1 = fully filled) |
+| `color` | string | primary | Custom bar colour (CSS colour value) |
+
+### Features
+
+- **Month gridlines** — dashed vertical lines with month/year labels
+- **Progress bars** — light background with filled overlay based on `progress`
+- **Milestones** — when `start === end`, renders a diamond instead of a bar
+- **Groups** — bold header rows that group related tasks
+- **Zebra striping** — alternating row backgrounds
+- **Tooltips** — hover over a bar for label, dates, and progress percentage
+- **Reactive** — push/splice the array and the chart re-renders
+
+> **Requires:** BareMetalStyles.css for container styling.
 
 ---
 
