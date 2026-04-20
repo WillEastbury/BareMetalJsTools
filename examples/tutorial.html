@@ -78,14 +78,14 @@
       </aside>
 
       <!-- ===== MAIN CONTENT ===== -->
-      <main class="main-content p-4">
-        <div class="container">
+      <main class="main-content p4">
+        <div class="ctn">
 
           <!-- INTRO -->
           <section id="step-0" class="step mb-5">
-            <h1 class="fluid-type-xl fw-bold mb-2">Build a Dashboard</h1>
-            <p class="lead text-muted">A step-by-step tutorial showing how every BareMetalJsTools module works together to build a complete, interactive operations dashboard — with zero dependencies and no build step.</p>
-            <div class="alert alert-info">
+            <h1 class="fluid-type-xl fw-bold mb2">Build a Dashboard</h1>
+            <p class="lead txm">A step-by-step tutorial showing how every BareMetalJsTools module works together to build a complete, interactive operations dashboard — with zero dependencies and no build step.</p>
+            <div class="al al-in">
               <strong>What you'll use:</strong> BareMetalStyles.css (layout + components), BareMetalCharts.js (data viz), BareMetalGraph.js (architecture diagram), and BareMetalBind.js (reactivity). That's it — 4 files, ~90KB total.
             </div>
             <p>Every code snippet below is <strong>live</strong> — the rendered result appears right after it. Scroll down to follow the tutorial, or use the sidebar to jump to a step.</p>
@@ -93,7 +93,7 @@
 
           <!-- STEP 1: Page Shell -->
           <section id="step-1" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">1</span> Page Shell</h2>
+            <h2 class="fx aic mb3"><span class="step-number">1</span> Page Shell</h2>
             <p>Start with the letterbox layout — a fixed header and footer with scrollable content between them. Add a sidebar for navigation.</p>
             <div class="code-block"><span class="tag">&lt;link</span> <span class="keyword">rel=</span><span class="string">"stylesheet"</span> <span class="keyword">href=</span><span class="string">"BareMetalStyles.css"</span><span class="tag">&gt;</span>
 
@@ -112,7 +112,7 @@
 
           <!-- STEP 2: KPI Cards -->
           <section id="step-2" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">2</span> KPI Cards</h2>
+            <h2 class="fx aic mb3"><span class="step-number">2</span> KPI Cards</h2>
             <p>Use the grid system and cards to create a row of key metrics.</p>
             <div class="code-block"><span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"row g-3"</span><span class="tag">&gt;</span>
   <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"col-md-3"</span><span class="tag">&gt;</span>
@@ -128,52 +128,52 @@
 <span class="tag">&lt;/div&gt;</span></div>
 
             <div class="result-label">Result</div>
-            <div class="row g-3 mb-3">
-              <div class="col-md-3">
-                <div class="card">
-                  <div class="card-body">
-                    <div class="small text-muted mb-1">Users</div>
-                    <div class="d-flex align-items-end justify-content-between">
+            <div class="rw g3 mb3">
+              <div class="cm3">
+                <div class="cd">
+                  <div class="cd-b">
+                    <div class="small txm mb-1">Users</div>
+                    <div class="fx align-items-end jcb">
                       <h3 class="mb-0">12,847</h3>
-                      <span class="badge bg-success">+12%</span>
+                      <span class="bd bg-ok">+12%</span>
                     </div>
-                    <div id="kpi-spark-1" class="mt-2"></div>
+                    <div id="kpi-spark-1" class="mt2"></div>
                   </div>
                 </div>
               </div>
-              <div class="col-md-3">
-                <div class="card">
-                  <div class="card-body">
-                    <div class="small text-muted mb-1">Revenue</div>
-                    <div class="d-flex align-items-end justify-content-between">
+              <div class="cm3">
+                <div class="cd">
+                  <div class="cd-b">
+                    <div class="small txm mb-1">Revenue</div>
+                    <div class="fx align-items-end jcb">
                       <h3 class="mb-0">$84.2k</h3>
-                      <span class="badge bg-success">+8%</span>
+                      <span class="bd bg-ok">+8%</span>
                     </div>
-                    <div id="kpi-spark-2" class="mt-2"></div>
+                    <div id="kpi-spark-2" class="mt2"></div>
                   </div>
                 </div>
               </div>
-              <div class="col-md-3">
-                <div class="card">
-                  <div class="card-body">
-                    <div class="small text-muted mb-1">Latency</div>
-                    <div class="d-flex align-items-end justify-content-between">
+              <div class="cm3">
+                <div class="cd">
+                  <div class="cd-b">
+                    <div class="small txm mb-1">Latency</div>
+                    <div class="fx align-items-end jcb">
                       <h3 class="mb-0">42ms</h3>
-                      <span class="badge bg-warning">+3ms</span>
+                      <span class="bd bg-wn">+3ms</span>
                     </div>
-                    <div id="kpi-spark-3" class="mt-2"></div>
+                    <div id="kpi-spark-3" class="mt2"></div>
                   </div>
                 </div>
               </div>
-              <div class="col-md-3">
-                <div class="card">
-                  <div class="card-body">
-                    <div class="small text-muted mb-1">Errors</div>
-                    <div class="d-flex align-items-end justify-content-between">
+              <div class="cm3">
+                <div class="cd">
+                  <div class="cd-b">
+                    <div class="small txm mb-1">Errors</div>
+                    <div class="fx align-items-end jcb">
                       <h3 class="mb-0">0.02%</h3>
-                      <span class="badge bg-success">−0.01%</span>
+                      <span class="bd bg-ok">−0.01%</span>
                     </div>
-                    <div id="kpi-spark-4" class="mt-2"></div>
+                    <div id="kpi-spark-4" class="mt2"></div>
                   </div>
                 </div>
               </div>
@@ -182,7 +182,7 @@
 
           <!-- STEP 3: Sparklines -->
           <section id="step-3" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">3</span> Add Sparklines</h2>
+            <h2 class="fx aic mb3"><span class="step-number">3</span> Add Sparklines</h2>
             <p>Each KPI card gets a sparkline showing trend data — one line of JS per chart.</p>
             <div class="code-block"><span class="tag">&lt;script</span> <span class="keyword">src=</span><span class="string">"BareMetalCharts.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
 <span class="keyword">BareMetalCharts</span>.sparkline(<span class="string">'#kpi-spark-1'</span>, [8,10,9,12,11,13,12], {
@@ -193,7 +193,7 @@
 
           <!-- STEP 4: Data Table -->
           <section id="step-4" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">4</span> Data Table</h2>
+            <h2 class="fx aic mb3"><span class="step-number">4</span> Data Table</h2>
             <p>A responsive, striped, hoverable table with badges and action buttons.</p>
             <div class="code-block"><span class="tag">&lt;table</span> <span class="keyword">class=</span><span class="string">"table table-hover table-striped"</span><span class="tag">&gt;</span>
   <span class="tag">&lt;thead&gt;&lt;tr&gt;</span>
@@ -203,15 +203,15 @@
 <span class="tag">&lt;/table&gt;</span></div>
 
             <div class="result-label">Result</div>
-            <div class="table-responsive mb-3">
-              <table class="table table-hover table-striped table-sm">
-                <thead><tr><th>Service</th><th>Status</th><th>Uptime</th><th>Latency</th><th>Load</th><th class="text-end">Actions</th></tr></thead>
+            <div class="tb-r mb3">
+              <table class="tb tb-h tb-st tb-s">
+                <thead><tr><th>Service</th><th>Status</th><th>Uptime</th><th>Latency</th><th>Load</th><th class="te">Actions</th></tr></thead>
                 <tbody>
-                  <tr><td class="fw-semibold">API Gateway</td><td><span class="badge bg-success">Healthy</span></td><td>99.99%</td><td>12ms</td><td><div id="table-spark-1" class="d-inline-block"></div></td><td class="text-end"><button class="btn btn-sm btn-outline-primary">Details</button></td></tr>
-                  <tr><td class="fw-semibold">Auth Service</td><td><span class="badge bg-success">Healthy</span></td><td>99.95%</td><td>18ms</td><td><div id="table-spark-2" class="d-inline-block"></div></td><td class="text-end"><button class="btn btn-sm btn-outline-primary">Details</button></td></tr>
-                  <tr><td class="fw-semibold">User Service</td><td><span class="badge bg-warning">Degraded</span></td><td>99.80%</td><td>45ms</td><td><div id="table-spark-3" class="d-inline-block"></div></td><td class="text-end"><button class="btn btn-sm btn-outline-primary">Details</button></td></tr>
-                  <tr><td class="fw-semibold">Order Service</td><td><span class="badge bg-success">Healthy</span></td><td>99.97%</td><td>22ms</td><td><div id="table-spark-4" class="d-inline-block"></div></td><td class="text-end"><button class="btn btn-sm btn-outline-primary">Details</button></td></tr>
-                  <tr><td class="fw-semibold">Notification Svc</td><td><span class="badge bg-danger">Down</span></td><td>97.20%</td><td>—</td><td><div id="table-spark-5" class="d-inline-block"></div></td><td class="text-end"><button class="btn btn-sm btn-outline-danger">Investigate</button></td></tr>
+                  <tr><td class="fsb">API Gateway</td><td><span class="bd bg-ok">Healthy</span></td><td>99.99%</td><td>12ms</td><td><div id="table-spark-1" class="d-inline-block"></div></td><td class="te"><button class="bt bt-s bt-op">Details</button></td></tr>
+                  <tr><td class="fsb">Auth Service</td><td><span class="bd bg-ok">Healthy</span></td><td>99.95%</td><td>18ms</td><td><div id="table-spark-2" class="d-inline-block"></div></td><td class="te"><button class="bt bt-s bt-op">Details</button></td></tr>
+                  <tr><td class="fsb">User Service</td><td><span class="bd bg-wn">Degraded</span></td><td>99.80%</td><td>45ms</td><td><div id="table-spark-3" class="d-inline-block"></div></td><td class="te"><button class="bt bt-s bt-op">Details</button></td></tr>
+                  <tr><td class="fsb">Order Service</td><td><span class="bd bg-ok">Healthy</span></td><td>99.97%</td><td>22ms</td><td><div id="table-spark-4" class="d-inline-block"></div></td><td class="te"><button class="bt bt-s bt-op">Details</button></td></tr>
+                  <tr><td class="fsb">Notification Svc</td><td><span class="bd bg-er">Down</span></td><td>97.20%</td><td>—</td><td><div id="table-spark-5" class="d-inline-block"></div></td><td class="te"><button class="bt bt-s bt-oer">Investigate</button></td></tr>
                 </tbody>
               </table>
             </div>
@@ -219,38 +219,38 @@
 
           <!-- STEP 5: Charts -->
           <section id="step-5" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">5</span> Charts</h2>
+            <h2 class="fx aic mb3"><span class="step-number">5</span> Charts</h2>
             <p>Add full charts for deeper analysis — bar chart for traffic by endpoint, smooth line for throughput over time, donut for error breakdown.</p>
             <div class="code-block"><span class="keyword">BareMetalCharts</span>.bar(<span class="string">'#traffic-chart'</span>, data);
 <span class="keyword">BareMetalCharts</span>.line(<span class="string">'#throughput-chart'</span>, series, { <span class="keyword">smooth</span>: <span class="keyword">true</span> });
 <span class="keyword">BareMetalCharts</span>.donut(<span class="string">'#error-chart'</span>, errors, { <span class="keyword">centerText</span>: <span class="string">'142'</span> });</div>
 
             <div class="result-label">Result</div>
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <div class="card h-100">
-                  <div class="card-header fw-semibold">Traffic by Endpoint</div>
-                  <div class="card-body"><div id="traffic-chart"></div></div>
+            <div class="rw g3 mb3">
+              <div class="cm6">
+                <div class="cd h-100">
+                  <div class="cd-h fsb">Traffic by Endpoint</div>
+                  <div class="cd-b"><div id="traffic-chart"></div></div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="card h-100">
-                  <div class="card-header fw-semibold">Throughput (req/s)</div>
-                  <div class="card-body"><div id="throughput-chart"></div></div>
+              <div class="cm6">
+                <div class="cd h-100">
+                  <div class="cd-h fsb">Throughput (req/s)</div>
+                  <div class="cd-b"><div id="throughput-chart"></div></div>
                 </div>
               </div>
             </div>
-            <div class="row g-3 mb-3">
-              <div class="col-md-4">
-                <div class="card h-100">
-                  <div class="card-header fw-semibold">Error Breakdown</div>
-                  <div class="card-body text-center"><div id="error-chart"></div></div>
+            <div class="rw g3 mb3">
+              <div class="cm4">
+                <div class="cd h-100">
+                  <div class="cd-h fsb">Error Breakdown</div>
+                  <div class="cd-b tc"><div id="error-chart"></div></div>
                 </div>
               </div>
-              <div class="col-md-8">
-                <div class="card h-100">
-                  <div class="card-header fw-semibold">Response Time (ms)</div>
-                  <div class="card-body"><div id="response-chart"></div></div>
+              <div class="cm8">
+                <div class="cd h-100">
+                  <div class="cd-h fsb">Response Time (ms)</div>
+                  <div class="cd-b"><div id="response-chart"></div></div>
                 </div>
               </div>
             </div>
@@ -258,7 +258,7 @@
 
           <!-- STEP 6: Gauges -->
           <section id="step-6" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">6</span> System Gauges</h2>
+            <h2 class="fx aic mb3"><span class="step-number">6</span> System Gauges</h2>
             <p>Gauges with colour zones show at-a-glance health. The colour shifts automatically from green → yellow → red.</p>
             <div class="code-block"><span class="keyword">BareMetalCharts</span>.gauge(<span class="string">'#cpu-gauge'</span>, 72, {
   <span class="keyword">label</span>: <span class="string">'CPU %'</span>,
@@ -270,25 +270,25 @@
 });</div>
 
             <div class="result-label">Result</div>
-            <div class="row g-3 mb-3">
-              <div class="col-md-3 text-center">
-                <div class="card"><div class="card-body"><div id="gauge-cpu"></div></div></div>
+            <div class="rw g3 mb3">
+              <div class="cm3 tc">
+                <div class="cd"><div class="cd-b"><div id="gauge-cpu"></div></div></div>
               </div>
-              <div class="col-md-3 text-center">
-                <div class="card"><div class="card-body"><div id="gauge-mem"></div></div></div>
+              <div class="cm3 tc">
+                <div class="cd"><div class="cd-b"><div id="gauge-mem"></div></div></div>
               </div>
-              <div class="col-md-3 text-center">
-                <div class="card"><div class="card-body"><div id="gauge-disk"></div></div></div>
+              <div class="cm3 tc">
+                <div class="cd"><div class="cd-b"><div id="gauge-disk"></div></div></div>
               </div>
-              <div class="col-md-3 text-center">
-                <div class="card"><div class="card-body"><div id="gauge-net"></div></div></div>
+              <div class="cm3 tc">
+                <div class="cd"><div class="cd-b"><div id="gauge-net"></div></div></div>
               </div>
             </div>
           </section>
 
           <!-- STEP 7: Toasts -->
           <section id="step-7" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">7</span> Toast Notifications</h2>
+            <h2 class="fx aic mb3"><span class="step-number">7</span> Toast Notifications</h2>
             <p>Toasts are pure CSS — no JavaScript needed. They slide in, and auto-dismiss toasts fade themselves out after a set duration using CSS animations. Add a <code>.toast-progress</code> bar for a visual countdown.</p>
             <div class="code-block"><span class="comment">&lt;!-- Container positions toasts on screen --&gt;</span>
 <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"toast-container toast-container-top-right"</span><span class="tag">&gt;</span>
@@ -311,44 +311,44 @@
 <span class="tag">&lt;/div&gt;</span></div>
 
             <div class="result-label">Result — click the buttons to fire toasts</div>
-            <div class="d-flex flex-wrap gap-2 mb-3">
-              <button class="btn btn-sm btn-success" onclick="fireToast('success','Saved','Alert rule saved successfully.')">✅ Success Toast</button>
-              <button class="btn btn-sm btn-danger" onclick="fireToast('danger','Error','Connection to database failed.')">❌ Error Toast</button>
-              <button class="btn btn-sm btn-warning" onclick="fireToast('warning','Warning','CPU usage above 80%.')">⚠️ Warning Toast</button>
-              <button class="btn btn-sm btn-info" onclick="fireToast('info','Info','Deployment completed in 42s.')">ℹ️ Info Toast</button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="fireToast('dark','System','Background sync complete.', true)">🌙 Dark Toast</button>
+            <div class="fx flex-wrap gp2 mb3">
+              <button class="bt bt-s bt-ok" onclick="fireToast('success','Saved','Alert rule saved successfully.')">✅ Success Toast</button>
+              <button class="bt bt-s bt-er" onclick="fireToast('danger','Error','Connection to database failed.')">❌ Error Toast</button>
+              <button class="bt bt-s bt-wn" onclick="fireToast('warning','Warning','CPU usage above 80%.')">⚠️ Warning Toast</button>
+              <button class="bt bt-s bt-in" onclick="fireToast('info','Info','Deployment completed in 42s.')">ℹ️ Info Toast</button>
+              <button class="bt bt-s bt-os" onclick="fireToast('dark','System','Background sync complete.', true)">🌙 Dark Toast</button>
             </div>
 
             <!-- Inline static demo -->
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <div class="small text-muted mb-1">Static toast (stays visible)</div>
-                <div class="toast toast-success" style="position:relative; animation:none;">
-                  <div class="toast-header">
+            <div class="rw g3 mb3">
+              <div class="cm6">
+                <div class="small txm mb-1">Static toast (stays visible)</div>
+                <div class="to toast-success" style="position:relative; animation:none;">
+                  <div class="to-h">
                     <span class="toast-title">✅ Saved</span>
                     <span class="toast-time">just now</span>
                   </div>
-                  <div class="toast-body">Alert rule created successfully.</div>
+                  <div class="to-b">Alert rule created successfully.</div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="small text-muted mb-1">With progress countdown</div>
-                <div class="toast toast-danger" style="position:relative; animation:none;">
-                  <div class="toast-header">
+              <div class="cm6">
+                <div class="small txm mb-1">With progress countdown</div>
+                <div class="to toast-danger" style="position:relative; animation:none;">
+                  <div class="to-h">
                     <span class="toast-title">❌ Connection Failed</span>
                     <span class="toast-time">2s ago</span>
                   </div>
-                  <div class="toast-body">Retrying in 5 seconds...</div>
+                  <div class="to-b">Retrying in 5 seconds...</div>
                   <div class="toast-progress" style="animation:none; width:60%;"></div>
                 </div>
               </div>
             </div>
 
-            <div class="alert alert-info">
+            <div class="al al-in">
               <strong>Zero JS needed for styling!</strong> The <code>.toast-auto</code> class uses CSS <code>@keyframes</code> to auto-dismiss after 5s (customise with <code>.toast-3s</code>, <code>.toast-8s</code>, <code>.toast-10s</code>). The only JS here is creating the DOM element when you click the button — the animation and removal is pure CSS.
             </div>
 
-            <h4 class="mt-4 mb-2">Reactive Toast Binding</h4>
+            <h4 class="mt-4 mb2">Reactive Toast Binding</h4>
             <p>Even better — bind a toast container to an array with <code>m-toast</code>. Just push objects and toasts appear automatically:</p>
             <div class="code-block"><span class="comment">&lt;!-- Bind toast container to state array --&gt;</span>
 <span class="tag">&lt;div</span> <span class="keyword">class=</span><span class="string">"toast-container toast-container-top-right"</span>
@@ -366,16 +366,16 @@ state.notifications.push({
   <span class="keyword">duration</span>: <span class="string">'5s'</span>        <span class="comment">// 3s | 5s | 8s | 10s</span>
 });</div>
             <div class="result-label">Result — click to fire reactive toasts</div>
-            <div class="d-flex flex-wrap gap-2 mb-3">
-              <button class="btn btn-sm btn-success" onclick="toastState.notifications.push({type:'success',title:'Deployed',message:'v2.1.0 is live on production!'})">🚀 Deploy</button>
-              <button class="btn btn-sm btn-danger" onclick="toastState.notifications.push({type:'danger',title:'Alert',message:'CPU exceeded 90% on node-3.'})">🔥 Alert</button>
-              <button class="btn btn-sm btn-info" onclick="toastState.notifications.push({type:'info',title:'Sync',message:'Database replica is up to date.'})">🔄 Sync</button>
+            <div class="fx flex-wrap gp2 mb3">
+              <button class="bt bt-s bt-ok" onclick="toastState.notifications.push({type:'success',title:'Deployed',message:'v2.1.0 is live on production!'})">🚀 Deploy</button>
+              <button class="bt bt-s bt-er" onclick="toastState.notifications.push({type:'danger',title:'Alert',message:'CPU exceeded 90% on node-3.'})">🔥 Alert</button>
+              <button class="bt bt-s bt-in" onclick="toastState.notifications.push({type:'info',title:'Sync',message:'Database replica is up to date.'})">🔄 Sync</button>
             </div>
           </section>
 
           <!-- STEP 8: Architecture Graph -->
           <section id="step-8" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">8</span> Architecture Diagram</h2>
+            <h2 class="fx aic mb3"><span class="step-number">8</span> Architecture Diagram</h2>
             <p>Visualise service dependencies with a force-directed graph. Drag nodes, scroll to zoom, hover to highlight connections.</p>
             <div class="code-block"><span class="tag">&lt;script</span> <span class="keyword">src=</span><span class="string">"BareMetalGraph.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
 <span class="keyword">const</span> graph = <span class="keyword">BareMetalGraph</span>.create(<span class="string">'#arch-graph'</span>, {
@@ -390,89 +390,89 @@ state.notifications.push({
 }, { <span class="keyword">directed</span>: <span class="keyword">true</span>, <span class="keyword">groupField</span>: <span class="string">'group'</span> });</div>
 
             <div class="result-label">Result — drag nodes, scroll to zoom, hover for details</div>
-            <div class="card mb-3">
-              <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+            <div class="cd mb3">
+              <div class="cd-h fsb fx jcb aic">
                 System Architecture
-                <div class="d-flex gap-1">
-                  <button class="btn btn-sm btn-outline-primary" id="graph-add">+ Add Service</button>
-                  <button class="btn btn-sm btn-outline-danger" id="graph-remove">− Remove Last</button>
+                <div class="fx gap-1">
+                  <button class="bt bt-s bt-op" id="graph-add">+ Add Service</button>
+                  <button class="bt bt-s bt-oer" id="graph-remove">− Remove Last</button>
                 </div>
               </div>
-              <div class="card-body p-0"><div id="arch-graph"></div></div>
+              <div class="cd-b p-0"><div id="arch-graph"></div></div>
             </div>
           </section>
 
           <!-- STEP 9: Forms & Modal -->
           <section id="step-9" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">9</span> Forms & Modal</h2>
+            <h2 class="fx aic mb3"><span class="step-number">9</span> Forms & Modal</h2>
             <p>Use form components for input, and a modal for confirmation dialogs. The modal is pure CSS — just toggle the <code>.show</code> class.</p>
 
             <div class="result-label">Result</div>
-            <div class="card mb-3">
-              <div class="card-header fw-semibold">Add Alert Rule</div>
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <label class="form-label">Service</label>
-                    <select class="form-select" id="rule-service">
+            <div class="cd mb3">
+              <div class="cd-h fsb">Add Alert Rule</div>
+              <div class="cd-b">
+                <div class="rw g3">
+                  <div class="cm4">
+                    <label class="fl">Service</label>
+                    <select class="fsl" id="rule-service">
                       <option>API Gateway</option>
                       <option>Auth Service</option>
                       <option>User Service</option>
                       <option>Order Service</option>
                     </select>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Metric</label>
-                    <select class="form-select" id="rule-metric">
+                  <div class="cm4">
+                    <label class="fl">Metric</label>
+                    <select class="fsl" id="rule-metric">
                       <option>Latency &gt; threshold</option>
                       <option>Error rate &gt; threshold</option>
                       <option>CPU &gt; threshold</option>
                     </select>
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Threshold</label>
-                    <div class="input-group">
-                      <input type="number" class="form-control" id="rule-threshold" value="100">
+                  <div class="cm4">
+                    <label class="fl">Threshold</label>
+                    <div class="ig">
+                      <input type="number" class="fc" id="rule-threshold" value="100">
                       <span class="input-group-text">ms</span>
                     </div>
                   </div>
-                  <div class="col-12 d-flex gap-2">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="rule-enabled" checked>
-                      <label class="form-check-label" for="rule-enabled">Enabled</label>
+                  <div class="c12 fx gp2">
+                    <div class="fch form-switch">
+                      <input class="fch-i" type="checkbox" id="rule-enabled" checked>
+                      <label class="fch-l" for="rule-enabled">Enabled</label>
                     </div>
                   </div>
-                  <div class="col-12">
-                    <button class="btn btn-primary" onclick="document.getElementById('confirmModal').classList.add('show')">Save Rule</button>
+                  <div class="c12">
+                    <button class="bt bt-p" onclick="document.getElementById('confirmModal').classList.add('shw')">Save Rule</button>
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- Modal -->
-            <div class="modal" id="confirmModal" onclick="if(event.target===this)this.classList.remove('show')">
-              <div class="modal-dialog modal-dialog-centered modal-sm">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title">Confirm</h5>
-                    <button class="btn-close" onclick="document.getElementById('confirmModal').classList.remove('show')"></button>
+            <div class="mo" id="confirmModal" onclick="if(event.target===this)this.classList.remove('shw')">
+              <div class="mo-d modal-dialog-centered modal-sm">
+                <div class="mo-c">
+                  <div class="mo-h">
+                    <h5 class="mo-t">Confirm</h5>
+                    <button class="btn-close" onclick="document.getElementById('confirmModal').classList.remove('shw')"></button>
                   </div>
-                  <div class="modal-body">
+                  <div class="mo-b">
                     <p class="mb-0">Create this alert rule? You'll be notified when the threshold is exceeded.</p>
                   </div>
-                  <div class="modal-footer">
-                    <button class="btn btn-sm btn-secondary" onclick="document.getElementById('confirmModal').classList.remove('show')">Cancel</button>
-                    <button class="btn btn-sm btn-primary" onclick="document.getElementById('confirmModal').classList.remove('show');document.getElementById('rule-alert').style.display='block'">Confirm</button>
+                  <div class="mo-f">
+                    <button class="bt bt-s bt-s" onclick="document.getElementById('confirmModal').classList.remove('shw')">Cancel</button>
+                    <button class="bt bt-s bt-p" onclick="document.getElementById('confirmModal').classList.remove('shw');document.getElementById('rule-alert').style.display='block'">Confirm</button>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="alert alert-success" id="rule-alert" style="display:none;">✅ Alert rule created successfully!</div>
+            <div class="al al-ok" id="rule-alert" style="display:none;">✅ Alert rule created successfully!</div>
           </section>
 
           <!-- STEP 10: Reactive Binding -->
           <section id="step-10" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">10</span> Reactive Binding</h2>
+            <h2 class="fx aic mb3"><span class="step-number">10</span> Reactive Binding</h2>
             <p>Use <code>BareMetalBind</code> to create reactive state that auto-updates the DOM. Bind inputs with <code>m-value</code>, text with <code>m-text</code>, visibility with <code>m-if</code>.</p>
             <div class="code-block"><span class="tag">&lt;script</span> <span class="keyword">src=</span><span class="string">"BareMetalBind.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
 <span class="keyword">const</span> state = <span class="keyword">BareMetalBind</span>.create({ name: <span class="string">''</span>, count: 0 });
@@ -482,21 +482,21 @@ state.notifications.push({
 state.count++; <span class="comment">// UI updates instantly</span></div>
 
             <div class="result-label">Result — type your name, click the button</div>
-            <div class="card mb-3" id="bind-demo">
-              <div class="card-body">
-                <div class="row g-3 align-items-center">
-                  <div class="col-md-4">
-                    <label class="form-label">Your name</label>
-                    <input type="text" class="form-control" m-value="name" placeholder="Type here...">
+            <div class="cd mb3" id="bind-demo">
+              <div class="cd-b">
+                <div class="rw g3 aic">
+                  <div class="cm4">
+                    <label class="fl">Your name</label>
+                    <input type="text" class="fc" m-value="name" placeholder="Type here...">
                   </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Greeting</label>
-                    <div class="p-2 bg-primary-subtle rounded">Hello, <strong m-text="name"></strong>!</div>
+                  <div class="cm4">
+                    <label class="fl">Greeting</label>
+                    <div class="p2 bg-primary-subtle rounded">Hello, <strong m-text="name"></strong>!</div>
                   </div>
-                  <div class="col-md-4 text-center">
-                    <div class="small text-muted mb-1">Click count</div>
+                  <div class="cm4 tc">
+                    <div class="small txm mb-1">Click count</div>
                     <h2 m-text="count" class="mb-1">0</h2>
-                    <button class="btn btn-sm btn-primary" m-click="increment">Count Up</button>
+                    <button class="bt bt-s bt-p" m-click="increment">Count Up</button>
                   </div>
                 </div>
               </div>
@@ -505,29 +505,29 @@ state.count++; <span class="comment">// UI updates instantly</span></div>
 
           <!-- STEP 11: Complete -->
           <section id="step-11" class="step mb-5">
-            <h2 class="d-flex align-items-center mb-3"><span class="step-number">11</span> All Together</h2>
+            <h2 class="fx aic mb3"><span class="step-number">11</span> All Together</h2>
             <p>That's the complete dashboard! Let's recap what we used:</p>
 
-            <div class="row g-3 mb-4">
-              <div class="col-md-6">
-                <div class="card h-100">
-                  <div class="card-body">
-                    <h5 class="card-title">📦 Files Used</h5>
-                    <table class="table table-sm mb-0">
+            <div class="rw g3 mb-4">
+              <div class="cm6">
+                <div class="cd h-100">
+                  <div class="cd-b">
+                    <h5 class="cd-tt">📦 Files Used</h5>
+                    <table class="tb tb-s mb-0">
                       <tbody>
-                        <tr><td class="fw-semibold">BareMetalStyles.css</td><td>Layout, grid, buttons, forms, tables, cards, alerts, modals, user cards</td></tr>
-                        <tr><td class="fw-semibold">BareMetalCharts.js</td><td>Bar, line, sparkline, donut, gauge</td></tr>
-                        <tr><td class="fw-semibold">BareMetalGraph.js</td><td>Force-directed architecture diagram</td></tr>
-                        <tr><td class="fw-semibold">BareMetalBind.js</td><td>Reactive data binding</td></tr>
+                        <tr><td class="fsb">BareMetalStyles.css</td><td>Layout, grid, buttons, forms, tables, cards, alerts, modals, user cards</td></tr>
+                        <tr><td class="fsb">BareMetalCharts.js</td><td>Bar, line, sparkline, donut, gauge</td></tr>
+                        <tr><td class="fsb">BareMetalGraph.js</td><td>Force-directed architecture diagram</td></tr>
+                        <tr><td class="fsb">BareMetalBind.js</td><td>Reactive data binding</td></tr>
                       </tbody>
                     </table>
                   </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="card h-100">
-                  <div class="card-body">
-                    <h5 class="card-title">🚫 Not Used</h5>
+              <div class="cm6">
+                <div class="cd h-100">
+                  <div class="cd-b">
+                    <h5 class="cd-tt">🚫 Not Used</h5>
                     <ul class="list-unstyled mb-0">
                       <li class="mb-1">❌ No npm install</li>
                       <li class="mb-1">❌ No build step</li>
@@ -541,12 +541,12 @@ state.count++; <span class="comment">// UI updates instantly</span></div>
               </div>
             </div>
 
-            <div class="alert alert-info">
+            <div class="al al-in">
               <strong>Total payload:</strong> ~90KB across 4 files. Compare to Bootstrap (200KB CSS + JS), Chart.js (200KB), D3 (270KB), React (140KB) — that's <strong>~90KB vs ~810KB</strong> for equivalent functionality.
             </div>
 
-            <div class="text-center">
-              <a href="https://github.com/WillEastbury/BareMetalJsTools" class="btn btn-primary">⭐ View on GitHub</a>
+            <div class="tc">
+              <a href="https://github.com/WillEastbury/BareMetalJsTools" class="bt bt-p">⭐ View on GitHub</a>
             </div>
           </section>
 
@@ -555,15 +555,15 @@ state.count++; <span class="comment">// UI updates instantly</span></div>
     </div>
 
     <!-- ===== FOOTER ===== -->
-    <footer class="site-footer site-footer-dark text-center">
+    <footer class="site-footer site-footer-dark tc">
       © 2026 Will Eastbury · Built with <a href="https://github.com/WillEastbury/BareMetalJsTools">BareMetalJsTools</a> · Zero dependencies
     </footer>
   </div>
 
   <!-- Toast container for button demo -->
-  <div class="toast-container toast-container-top-right" id="toast-container"></div>
+  <div class="to-box toast-container-top-right" id="toast-container"></div>
   <!-- Toast container for reactive m-toast demo -->
-  <div class="toast-container toast-container-top-right" id="reactive-toasts" m-toast="notifications" style="top:0;right:0;"></div>
+  <div class="to-box toast-container-top-right" id="reactive-toasts" m-toast="notifications" style="top:0;right:0;"></div>
 
   <!-- ===== SCRIPTS ===== -->
   <script src="../src/BareMetalCharts.js"></script>
@@ -622,13 +622,13 @@ state.count++; <span class="comment">// UI updates instantly</span></div>
     function fireToast(type, title, message, dark) {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
-      toast.className = 'toast toast-auto toast-5s' + (dark ? ' toast-dark' : ' toast-' + type);
+      toast.className = 'to to-au toast-5s' + (dark ? ' toast-dark' : ' toast-' + type);
       toast.innerHTML =
-        '<div class="toast-header">' +
+        '<div class="to-h">' +
           '<span class="toast-title">' + title + '</span>' +
           '<span class="toast-time">just now</span>' +
         '</div>' +
-        '<div class="toast-body">' + message + '</div>' +
+        '<div class="to-b">' + message + '</div>' +
         '<div class="toast-progress"></div>';
       container.appendChild(toast);
       // Remove from DOM after animation completes
@@ -703,7 +703,7 @@ state.count++; <span class="comment">// UI updates instantly</span></div>
           if (s.getBoundingClientRect().top < 200) current = s.id;
         });
         navLinks.forEach(a => {
-          a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+          a.classList.toggle('act', a.getAttribute('href') === '#' + current);
         });
       });
     }

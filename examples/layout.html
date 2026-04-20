@@ -11,7 +11,7 @@
     <header class="site-header site-header-dark">
       <a class="brand" href="index.html">🔩 BareMetalJsTools</a>
       <nav>
-        <a href="layout.html" class="active">Layout</a>
+        <a href="layout.html" class="act">Layout</a>
         <a href="components.html">Components</a>
         <a href="charts.html">Charts</a>
         <a href="graph.html">Graph</a>
@@ -31,11 +31,11 @@
           <div class="user-card-body">
             <div class="user-detail"><span class="user-detail-label">Email</span> will@example.com</div>
             <div class="user-detail"><span class="user-detail-label">Team</span> Engineering</div>
-            <div class="user-detail"><span class="user-detail-label">Status</span> <span class="badge bg-success">Online</span></div>
+            <div class="user-detail"><span class="user-detail-label">Status</span> <span class="bd bg-ok">Online</span></div>
           </div>
           <div class="user-card-footer">
-            <a href="#" class="btn btn-sm btn-outline-light">Profile</a>
-            <a href="#" class="btn btn-sm btn-outline-light">Sign out</a>
+            <a href="#" class="bt bt-s btn-outline-light">Profile</a>
+            <a href="#" class="bt bt-s btn-outline-light">Sign out</a>
           </div>
         </div>
       </div>
@@ -45,25 +45,25 @@
       <aside class="site-sidebar sidebar-left site-sidebar-dark">
         <span class="sidebar-heading">Navigation</span>
         <nav>
-          <a href="#" class="active">Dashboard</a>
+          <a href="#" class="act">Dashboard</a>
           <a href="#">Users</a>
           <a href="#">Settings</a>
           <a href="#">Reports</a>
         </nav>
-        <span class="sidebar-heading mt-3">Favourites</span>
+        <span class="sidebar-heading mt3">Favourites</span>
         <nav>
           <a href="#">Project Alpha</a>
           <a href="#">Project Beta</a>
         </nav>
       </aside>
 
-      <main class="main-content p-4">
-        <h2 class="mb-3">Layout Demo</h2>
-        <p class="text-muted mb-4">This page demonstrates the full letterbox layout: fixed header with user card, dark sidebar, scrollable main content, and fixed footer.</p>
+      <main class="main-content p4">
+        <h2 class="mb3">Layout Demo</h2>
+        <p class="txm mb-4">This page demonstrates the full letterbox layout: fixed header with user card, dark sidebar, scrollable main content, and fixed footer.</p>
 
-        <div class="card mb-3">
-          <div class="card-header fw-semibold">Page Structure</div>
-          <div class="card-body">
+        <div class="cd mb3">
+          <div class="cd-h fsb">Page Structure</div>
+          <div class="cd-b">
 <pre class="mb-0"><code>&lt;div class="page-wrapper"&gt;
   &lt;header class="site-header site-header-dark"&gt;...&lt;/header&gt;
   &lt;div class="page-body"&gt;
@@ -75,9 +75,9 @@
           </div>
         </div>
 
-        <div class="card mb-3">
-          <div class="card-header fw-semibold">Features</div>
-          <div class="card-body">
+        <div class="cd mb3">
+          <div class="cd-h fsb">Features</div>
+          <div class="cd-b">
             <ul>
               <li><strong>Letterbox layout</strong> — header and footer are fixed, main content scrolls independently</li>
               <li><strong>Stacking sidebars</strong> — add multiple <code>.site-sidebar</code> elements inside <code>.page-body</code></li>
@@ -88,28 +88,28 @@
           </div>
         </div>
 
-        <h4 class="mt-4 mb-3">Grid System</h4>
-        <div class="row g-2 mb-4">
-          <div class="col-md-4"><div class="p-3 bg-primary-subtle rounded text-center">.col-md-4</div></div>
-          <div class="col-md-4"><div class="p-3 bg-primary-subtle rounded text-center">.col-md-4</div></div>
-          <div class="col-md-4"><div class="p-3 bg-primary-subtle rounded text-center">.col-md-4</div></div>
+        <h4 class="mt-4 mb3">Grid System</h4>
+        <div class="rw g-2 mb-4">
+          <div class="cm4"><div class="p3 bg-primary-subtle rounded tc">.col-md-4</div></div>
+          <div class="cm4"><div class="p3 bg-primary-subtle rounded tc">.col-md-4</div></div>
+          <div class="cm4"><div class="p3 bg-primary-subtle rounded tc">.col-md-4</div></div>
         </div>
-        <div class="row g-2 mb-4">
-          <div class="col-md-3"><div class="p-3 bg-primary-subtle rounded text-center">.col-md-3</div></div>
-          <div class="col-md-6"><div class="p-3 bg-primary-subtle rounded text-center">.col-md-6</div></div>
-          <div class="col-md-3"><div class="p-3 bg-primary-subtle rounded text-center">.col-md-3</div></div>
+        <div class="rw g-2 mb-4">
+          <div class="cm3"><div class="p3 bg-primary-subtle rounded tc">.col-md-3</div></div>
+          <div class="cm6"><div class="p3 bg-primary-subtle rounded tc">.col-md-6</div></div>
+          <div class="cm3"><div class="p3 bg-primary-subtle rounded tc">.col-md-3</div></div>
         </div>
 
-        <h4 class="mt-4 mb-3">Spacing & Typography</h4>
+        <h4 class="mt-4 mb3">Spacing & Typography</h4>
         <p class="fluid-type-xl fw-bold">Fluid XL heading</p>
         <p class="fluid-type-lg">Fluid large heading</p>
         <p class="fluid-type">Fluid body text — scales smoothly between viewports.</p>
         <p class="display-5">Display 5</p>
         <p class="lead">Lead paragraph text for introductions.</p>
-        <p><span class="badge bg-primary">Badge</span> <span class="badge bg-success">Success</span> <span class="badge bg-warning">Warning</span> <span class="badge bg-danger">Danger</span></p>
+        <p><span class="bd bg-p">Badge</span> <span class="bd bg-ok">Success</span> <span class="bd bg-wn">Warning</span> <span class="bd bg-er">Danger</span></p>
 
         <!-- Extra content to demonstrate scrolling -->
-        <div class="mt-4 p-4 bg-body-secondary rounded">
+        <div class="mt-4 p4 bg-body-secondary rounded">
           <h5>Scroll Test</h5>
           <p>This content is here to demonstrate that only the main panel scrolls, while the header, sidebar, and footer remain fixed.</p>
           <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
@@ -121,7 +121,7 @@
       </main>
     </div>
 
-    <footer class="site-footer site-footer-dark text-center">
+    <footer class="site-footer site-footer-dark tc">
       © 2026 Will Eastbury · <a href="https://github.com/WillEastbury/BareMetalJsTools">BareMetalJsTools</a>
     </footer>
   </div>

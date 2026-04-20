@@ -17,50 +17,50 @@
         <a href="layout.html">Layout</a>
         <a href="components.html">Components</a>
         <a href="charts.html">Charts</a>
-        <a href="graph.html" class="active">Graph</a>
+        <a href="graph.html" class="act">Graph</a>
       </nav>
     </header>
 
-    <main class="main-content p-4" style="overflow-y:auto;">
-      <div class="container">
-        <h2 class="mb-2">Force-Directed Graph</h2>
-        <p class="text-muted mb-3">Drag nodes, scroll to zoom, click background to pan. Hover nodes to highlight connections.</p>
+    <main class="main-content p4" style="overflow-y:auto;">
+      <div class="ctn">
+        <h2 class="mb2">Force-Directed Graph</h2>
+        <p class="txm mb3">Drag nodes, scroll to zoom, click background to pan. Hover nodes to highlight connections.</p>
 
         <!-- Controls -->
-        <div class="d-flex flex-wrap gap-2 mb-3">
-          <button class="btn btn-sm btn-outline-primary" id="add-node-btn">+ Add Node</button>
-          <button class="btn btn-sm btn-outline-success" id="add-edge-btn">+ Add Edge</button>
-          <button class="btn btn-sm btn-outline-danger" id="remove-btn">− Remove Last</button>
-          <button class="btn btn-sm btn-outline-secondary" id="reset-btn">↻ Reset</button>
+        <div class="fx flex-wrap gp2 mb3">
+          <button class="bt bt-s bt-op" id="add-node-btn">+ Add Node</button>
+          <button class="bt bt-s bt-ook" id="add-edge-btn">+ Add Edge</button>
+          <button class="bt bt-s bt-oer" id="remove-btn">− Remove Last</button>
+          <button class="bt bt-s bt-os" id="reset-btn">↻ Reset</button>
         </div>
 
         <!-- Graph 1: Architecture -->
-        <div class="card mb-4">
-          <div class="card-header fw-semibold">Microservice Architecture</div>
-          <div class="card-body p-0">
+        <div class="cd mb-4">
+          <div class="cd-h fsb">Microservice Architecture</div>
+          <div class="cd-b p-0">
             <div id="graph-arch"></div>
           </div>
         </div>
 
         <!-- Graph 2: Knowledge Graph -->
-        <div class="card mb-4">
-          <div class="card-header fw-semibold">Knowledge Graph (Grouped)</div>
-          <div class="card-body p-0">
+        <div class="cd mb-4">
+          <div class="cd-h fsb">Knowledge Graph (Grouped)</div>
+          <div class="cd-b p-0">
             <div id="graph-knowledge"></div>
           </div>
         </div>
 
         <!-- Graph 3: BareMetalJsTools module deps -->
-        <div class="card mb-4">
-          <div class="card-header fw-semibold">BareMetalJsTools — Module Dependencies</div>
-          <div class="card-body p-0">
+        <div class="cd mb-4">
+          <div class="cd-h fsb">BareMetalJsTools — Module Dependencies</div>
+          <div class="cd-b p-0">
             <div id="graph-modules"></div>
           </div>
         </div>
       </div>
     </main>
 
-    <footer class="site-footer site-footer-dark text-center">
+    <footer class="site-footer site-footer-dark tc">
       © 2026 Will Eastbury · <a href="https://github.com/WillEastbury/BareMetalJsTools">BareMetalJsTools</a>
     </footer>
   </div>
