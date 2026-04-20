@@ -516,6 +516,52 @@ small, .small { font-size: .875em; }
 .page-wrapper > main, .page-wrapper > .main-content { flex: 1 1 auto; }
 
 /* ============================================================
+   SITE HEADER
+   ============================================================ */
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+  background-color: var(--bs-body-bg);
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+.site-header .brand {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--bs-body-color);
+  margin-right: auto;
+}
+.site-header .brand:hover { color: var(--bs-primary); }
+.site-header nav { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.site-header nav a {
+  padding: var(--sp-1) var(--sp-2);
+  color: var(--bs-body-color);
+  text-decoration: none;
+  border-radius: var(--bs-border-radius-sm);
+  font-size: .875rem;
+  transition: var(--bs-transition);
+}
+.site-header nav a:hover { background-color: rgba(0,0,0,.05); color: var(--bs-primary); }
+.site-header nav a.active { font-weight: 600; color: var(--bs-primary); }
+.site-header nav a:focus-visible { outline: 0; box-shadow: var(--bs-focus-ring); }
+
+.site-header-dark {
+  background-color: var(--bs-dark);
+  border-color: rgba(255,255,255,.1);
+}
+.site-header-dark .brand { color: #fff; }
+.site-header-dark .brand:hover { color: var(--bs-info); }
+.site-header-dark nav a { color: rgba(255,255,255,.7); }
+.site-header-dark nav a:hover { background-color: rgba(255,255,255,.1); color: #fff; }
+.site-header-dark nav a.active { color: #fff; }
+
+/* ============================================================
    SITE FOOTER
    ============================================================ */
 .site-footer {
