@@ -12,6 +12,21 @@ Every module follows the same pattern: small, obvious, fast. You can read the so
 
 ---
 
+## The BareMetal family
+
+This toolkit doesn't exist in isolation. The same "strip away the nonsense" philosophy runs through the entire stack:
+
+| Project | What it is |
+|---|---|
+| [**BareMetalWeb**](https://github.com/WillEastbury/BareMetalWeb) | The web server and application framework this toolkit was extracted from. A minimal, metadata-driven .NET web host that serves these JS modules and renders server-driven UI. This is what happens when you apply the same philosophy to the *server*. |
+| [**PicoWAL**](https://github.com/WillEastbury/PicoWAL) | A write-ahead-log database engine built from scratch. Binary schema cards, Pack-0 wire format, embedded storage — no ORM, no query planner committee meetings. This is what happens when you apply it to the *database*. |
+| [**picocompress**](https://github.com/WillEastbury/picocompress) | Block-based LZ compression in pure C and JS (byte-identical output). Integrated into `BareMetal.Rest` for opt-in wire compression. This is what happens when you apply it to *data on the wire*. |
+| [**RP2350B_Bitnet**](https://github.com/WillEastbury/RP2350B_Bitnet) | A 1-bit quantised SLM that runs on a Raspberry Pi Pico 2 with 512 KB of RAM. This is what happens when you apply it to *machine learning* — and refuse to accept that "AI" requires a data centre. |
+
+The whole point is the same everywhere: understand what the machine actually needs to do, throw away everything that doesn't serve that goal, and keep the result small enough that one person can hold the entire system in their head.
+
+---
+
 ## What's in the box
 
 | Module | What it does | Size | Nearest equivalent for the not-quite-insane |
@@ -188,21 +203,6 @@ BareMetalJsTools exists because we think that's insane.
 * **Wire-efficient.** Short class names, binary transport, optional LZ compression. Every byte earns its place.
 
 The hard part isn't the JavaScript. The hard part is serving your files well — cache headers, compression, CDN placement, HTTP/2 push. Focus your energy there, not on configuring webpack.
-
----
-
-## The BareMetal family
-
-This toolkit doesn't exist in isolation. The same "strip away the nonsense" philosophy runs through the entire stack:
-
-| Project | What it is |
-|---|---|
-| [**BareMetalWeb**](https://github.com/WillEastbury/BareMetalWeb) | The web server and application framework this toolkit was extracted from. A minimal, metadata-driven .NET web host that serves these JS modules and renders server-driven UI. This is what happens when you apply the same philosophy to the *server*. |
-| [**PicoWAL**](https://github.com/WillEastbury/PicoWAL) | A write-ahead-log database engine built from scratch. Binary schema cards, Pack-0 wire format, embedded storage — no ORM, no query planner committee meetings. This is what happens when you apply it to the *database*. |
-| [**picocompress**](https://github.com/WillEastbury/picocompress) | Block-based LZ compression in pure C and JS (byte-identical output). Integrated into `BareMetal.Communications` for opt-in wire compression. This is what happens when you apply it to *data on the wire*. |
-| [**RP2350B_Bitnet**](https://github.com/WillEastbury/RP2350B_Bitnet) | A 1-bit quantised SLM that runs on a Raspberry Pi Pico 2 with 512 KB of RAM. This is what happens when you apply it to *machine learning* — and refuse to accept that "AI" requires a data centre. |
-
-The whole point is the same everywhere: understand what the machine actually needs to do, throw away everything that doesn't serve that goal, and keep the result small enough that one person can hold the entire system in their head.
 
 ---
 
