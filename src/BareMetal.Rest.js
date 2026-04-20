@@ -1,8 +1,9 @@
-// BareMetalRest — lean REST client for BareMetalWeb
+// BareMetal.Rest — lean REST client for BareMetalWeb
 // Handles CRUD, metadata fetch and 401 redirect.
 // Uses BMW WebSocket binary transport when connected, BSO1 when available, JSON as fallback.
 // API: setRoot(url), getRoot(), entity(slug), call(method, url, body), connectWs()
-const BareMetalRest = (() => {
+var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
+BareMetal.Rest = (() => {
   'use strict';
   let root = '/api/';
   let _binaryReady = false;
@@ -150,24 +151,24 @@ const BareMetalRest = (() => {
 
   // ── Binary bootstrap (BSO1) ──
   async function ensureBinary() {
-    if (_binaryReady || typeof BareMetalBinary === 'undefined') return;
+    if (_binaryReady || typeof BareMetal === 'undefined' || !BareMetal.Binary) return;
     try {
       const r = await fetch(root + '_binary/_key');
       if (r.ok) {
         const key = await r.text();
-        await BareMetalBinary.setSigningKey(key.trim());
+        await BareMetal.Binary.setSigningKey(key.trim());
         _binaryReady = true;
       }
     } catch { /* fall back to JSON */ }
   }
 
   function isBinaryAvailable() {
-    return _binaryReady && typeof BareMetalBinary !== 'undefined';
+    return _binaryReady && typeof BareMetal.Binary !== 'undefined';
   }
 
-  // ── Compression (picocompress) ──
-  // Opt-in. Requires PicoCompress global (load src/picocompress.js or vendor/picocompress.mjs).
-  // Server must also support Content-Encoding: picocompress (use the C# / Go / Rust port).
+  // ── Compression (BareMetal.Compress) ──
+  // Opt-in. Requires BareMetal.Compress global (load src/BareMetal.Compress.js or vendor/BareMetal.Compress.mjs).
+  // Server must also support Content-Encoding: BareMetal.Compress (use the C# / Go / Rust port).
   let _compression = { enabled: false, profile: 'balanced', minSize: 256 };
   function setCompression(opts) {
     _compression = Object.assign({}, _compression, opts || {});
@@ -175,7 +176,7 @@ const BareMetalRest = (() => {
   }
   function getCompression() { return Object.assign({}, _compression); }
   function _hasCompression() {
-    return _compression.enabled && typeof PicoCompress !== 'undefined' && typeof PicoCompress.compress === 'function';
+    return _compression.enabled && typeof BareMetal !== 'undefined' && BareMetal.Compress && typeof BareMetal.Compress.compress === 'function';
   }
   // Returns { body, headers } — possibly compressing the supplied bytes / string.
   // headers is the (mutated) input headers map.
@@ -189,25 +190,25 @@ const BareMetalRest = (() => {
     if (bytes.length < _compression.minSize) return body;
     // Ensure same-realm Uint8Array (cross-realm instanceof fails in sandboxed envs)
     if (!(bytes instanceof Uint8Array)) bytes = new Uint8Array(bytes);
-    const out = PicoCompress.compress(bytes, { profile: _compression.profile });
+    const out = BareMetal.Compress.compress(bytes, { profile: _compression.profile });
     if (!out || out.length >= bytes.length) return body; // no win — send uncompressed
-    headers['Content-Encoding'] = 'picocompress';
+    headers['Content-Encoding'] = 'BareMetal.Compress';
     return out;
   }
-  // Tells the server we accept picocompress-encoded responses.
+  // Tells the server we accept BareMetal.Compress-encoded responses.
   function _addAcceptEncoding(headers) {
-    if (_hasCompression()) headers['Accept-Encoding'] = 'picocompress';
+    if (_hasCompression()) headers['Accept-Encoding'] = 'BareMetal.Compress';
   }
-  // If the response was picocompress-encoded, decompress to a fresh ArrayBuffer.
+  // If the response was BareMetal.Compress-encoded, decompress to a fresh ArrayBuffer.
   async function _maybeDecompress(response) {
     const enc = (response.headers.get('content-encoding') || '').toLowerCase();
     const buf = await response.arrayBuffer();
-    if (enc !== 'picocompress') return buf;
-    if (typeof PicoCompress === 'undefined' || typeof PicoCompress.decompress !== 'function') {
-      throw new Error('Response was picocompress-encoded but PicoCompress is not loaded');
+    if (enc !== 'BareMetal.Compress') return buf;
+    if (typeof BareMetal === 'undefined' || !BareMetal.Compress || typeof BareMetal.Compress.decompress !== 'function') {
+      throw new Error('Response was BareMetal.Compress-encoded but BareMetal.Compress is not loaded');
     }
     const raw = new Uint8Array(buf);
-    const out = PicoCompress.decompress(raw instanceof Uint8Array ? raw : new Uint8Array(raw));
+    const out = BareMetal.Compress.decompress(raw instanceof Uint8Array ? raw : new Uint8Array(raw));
     return out.buffer.slice(out.byteOffset, out.byteOffset + out.byteLength);
   }
 
@@ -239,7 +240,7 @@ const BareMetalRest = (() => {
     const ct = r.headers.get('content-type') || '';
     if (!ct.includes('application/json')) return null;
     const enc = (r.headers.get('content-encoding') || '').toLowerCase();
-    if (enc === 'picocompress') {
+    if (enc === 'BareMetal.Compress') {
       const buf = await _maybeDecompress(r);
       const txt = new TextDecoder().decode(new Uint8Array(buf));
       return txt ? JSON.parse(txt) : null;
@@ -318,10 +319,10 @@ const BareMetalRest = (() => {
         await ensureBinary();
         if (isBinaryAvailable()) {
           try {
-            const schema = await BareMetalBinary.fetchSchema(slug, root);
+            const schema = await BareMetal.Binary.fetchSchema(slug, root);
             const url = binBase + (q ? '?' + new URLSearchParams(q) : '');
             const buf = await binaryCall('GET', url);
-            return { data: await BareMetalBinary.deserializeList(buf, schema), count: -1 };
+            return { data: await BareMetal.Binary.deserializeList(buf, schema), count: -1 };
           } catch { /* fall back */ }
         }
         const nurl = numUrl('GET', null);
@@ -334,9 +335,9 @@ const BareMetalRest = (() => {
         await ensureBinary();
         if (isBinaryAvailable()) {
           try {
-            const schema = await BareMetalBinary.fetchSchema(slug, root);
+            const schema = await BareMetal.Binary.fetchSchema(slug, root);
             const buf = await binaryCall('GET', `${binBase}/${id}`);
-            return BareMetalBinary.deserialize(buf, schema);
+            return BareMetal.Binary.deserialize(buf, schema);
           } catch { /* fall back */ }
         }
         return call('GET', numUrl('GET', id) || `${jsonBase}/${id}`);
@@ -347,10 +348,10 @@ const BareMetalRest = (() => {
         await ensureBinary();
         if (isBinaryAvailable()) {
           try {
-            const schema = await BareMetalBinary.fetchSchema(slug, root);
-            const payload = await BareMetalBinary.serialize(data, schema);
+            const schema = await BareMetal.Binary.fetchSchema(slug, root);
+            const payload = await BareMetal.Binary.serialize(data, schema);
             const buf = await binaryCall('POST', binBase, payload);
-            return BareMetalBinary.deserialize(buf, schema);
+            return BareMetal.Binary.deserialize(buf, schema);
           } catch { /* fall back */ }
         }
         return call('POST', numUrl('POST', null) || jsonBase, data);
@@ -361,10 +362,10 @@ const BareMetalRest = (() => {
         await ensureBinary();
         if (isBinaryAvailable()) {
           try {
-            const schema = await BareMetalBinary.fetchSchema(slug, root);
-            const payload = await BareMetalBinary.serialize(data, schema);
+            const schema = await BareMetal.Binary.fetchSchema(slug, root);
+            const payload = await BareMetal.Binary.serialize(data, schema);
             const buf = await binaryCall('PUT', `${binBase}/${id}`, payload);
-            return BareMetalBinary.deserialize(buf, schema);
+            return BareMetal.Binary.deserialize(buf, schema);
           } catch { /* fall back */ }
         }
         return call('PUT', numUrl('PUT', id) || `${jsonBase}/${id}`, data);
@@ -385,7 +386,7 @@ const BareMetalRest = (() => {
         await ensureBinary();
         if (isBinaryAvailable()) {
           try {
-            return await BareMetalBinary.applyDeltaJson(slug, id, changes, expectedVersion);
+            return await BareMetal.Binary.applyDeltaJson(slug, id, changes, expectedVersion);
           } catch { /* fall back to full update */ }
         }
         return call('PUT', numUrl('PUT', id) || `${jsonBase}/${id}`, changes);
@@ -393,11 +394,11 @@ const BareMetalRest = (() => {
       deltaFromTracker: async (tracker) => {
         await ensureBinary();
         if (!isBinaryAvailable()) throw new Error('Binary API not available');
-        const layout = await BareMetalBinary.fetchLayout(slug);
-        const buf = BareMetalBinary.buildDelta(tracker, layout);
+        const layout = await BareMetal.Binary.fetchLayout(slug);
+        const buf = BareMetal.Binary.buildDelta(tracker, layout);
         if (!buf) return tracker.entity;
         const id = tracker.entity.Key;
-        return BareMetalBinary.applyDelta(slug, id, buf);
+        return BareMetal.Binary.applyDelta(slug, id, buf);
       },
       metadata: () => call('GET', `${root}metadata/${slug}`)
     };

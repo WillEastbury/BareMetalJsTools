@@ -1,7 +1,8 @@
 // BareMetalTemplate — DOM builder from schema/layout metadata
 // Builds BareMetalStyles-compatible forms and list tbs from server-driven structure.
 // API: buildForm(layout, fields) → HTMLElement,  buildTable(fields, items, callbacks) → HTMLElement
-const BareMetalTemplate = (() => {
+var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
+BareMetal.Template = (() => {
   'use strict';
 
   const INPUT_TYPES = {

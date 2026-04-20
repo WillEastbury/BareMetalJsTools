@@ -1,7 +1,8 @@
 // BareMetalBinary — BSO1 binary wire serializer for BareMetalWeb
 // Mirrors MetadataWireSerializer.cs: metadata-driven, zero-copy DataView reads,
 // HMAC-SHA256 signing via Web Crypto API.
-const BareMetalBinary = (() => {
+var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
+BareMetal.Binary = (() => {
   'use strict';
 
   const MAGIC = 0x314F5342; // "BSO1" LE

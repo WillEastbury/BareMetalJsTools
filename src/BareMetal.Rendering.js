@@ -1,17 +1,18 @@
-// BareMetalRendering — entity lifecycle orchestrator
-// Depends on: BareMetalRest, BareMetalBind, BareMetalTemplate (load in order)
+// BareMetal.Rendering — entity lifecycle orchestrator
+// Depends on: BareMetal.Rest, BareMetal.Bind, BareMetal.Template (load in order)
 // API: createEntity(slug), listEntities()
 // Also exposes window.minibind for the declarative usage pattern:
 //   minibind.setRoot('/api/');
 //   const e = await minibind.createNewEntity('customer');
 //   e.renderUI('app');
-const BareMetalRendering = (() => {
+var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
+BareMetal.Rendering = (() => {
   'use strict';
 
   let _cache = null;  // entity list cache (populated by listEntities)
 
   async function createEntity(slug) {
-    const api  = BareMetalRest.entity(slug);
+    const api  = BareMetal.Rest.entity(slug);
     const meta = await api.metadata();
 
     // Hydrate lookup options for select fields before rendering
@@ -20,7 +21,7 @@ const BareMetalRendering = (() => {
       Object.entries(schemaFields).map(async ([, f]) => {
         if (f && f.lookupUrl) {
           try {
-            const items = await BareMetalRest.call('GET', f.lookupUrl);
+            const items = await BareMetal.Rest.call('GET', f.lookupUrl);
             const _lst = Array.isArray(items) ? items : (items?.data || []);
             f.options = _lst.map(i => ({
               value: String(i[f.lookupValueField] ?? i.Id ?? i.id ?? ''),
@@ -31,7 +32,7 @@ const BareMetalRendering = (() => {
       })
     );
 
-    const { state, watch, data } = BareMetalBind.reactive(meta.initialData || {});
+    const { state, watch, data } = BareMetal.Bind.reactive(meta.initialData || {});
 
     const save = async (formEl) => {
       const id = data.id || data.Id;
@@ -64,10 +65,10 @@ const BareMetalRendering = (() => {
       if (!c) return;
       c.replaceChildren();
       const layout = meta.layout || { fields: Object.keys(schemaFields) };
-      const form = BareMetalTemplate.buildForm(layout, schemaFields);
+      const form = BareMetal.Template.buildForm(layout, schemaFields);
       state.save = () => save(form);
       c.appendChild(form);
-      BareMetalBind.bind(c, state, watch);
+      BareMetal.Bind.bind(c, state, watch);
     };
 
     // Build a lookup resolver: fieldName → (rawValue → displayLabel)
@@ -86,16 +87,16 @@ const BareMetalRendering = (() => {
   }
 
   async function listEntities() {
-    if (!_cache) _cache = await BareMetalRest.call('GET', BareMetalRest.getRoot() + '_meta');
+    if (!_cache) _cache = await BareMetal.Rest.call('GET', BareMetal.Rest.getRoot() + '_meta');
     return _cache;
   }
 
   // Expose minibind-compatible surface as window.minibind
   window.minibind = {
-    setRoot:         r => BareMetalRest.setRoot(r),
+    setRoot:         r => BareMetal.Rest.setRoot(r),
     createNewEntity: n => createEntity(n),
     listEntities,
-    bind:            BareMetalBind.bind
+    bind:            BareMetal.Bind.bind
   };
 
   return { createEntity, listEntities };

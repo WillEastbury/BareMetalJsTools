@@ -4,7 +4,8 @@
  * Supports drag, zoom, labels, directional edges, grouping, and theming
  * via BareMetalStyles CSS custom properties. Zero dependencies.
  */
-const BareMetalGraph = (() => {
+var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
+BareMetal.Graph = (() => {
   'use strict';
 
   const SVG_NS = 'http://www.w3.org/2000/svg';

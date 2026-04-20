@@ -3,7 +3,8 @@
  * Renders bar, line, sparkline, donut, and gauge charts into SVG.
  * Themed via BareMetalStyles CSS custom properties. Zero dependencies.
  */
-const BareMetalCharts = (() => {
+var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
+BareMetal.Charts = (() => {
   'use strict';
 
   // --- Helpers ---

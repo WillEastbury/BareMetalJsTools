@@ -1,5 +1,6 @@
 // BareMetalMetadata — client-side entity schema registry
-const BareMetalMetadata = (() => {
+var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
+BareMetal.Metadata = (() => {
   'use strict';
 
   const registry = {};
@@ -126,8 +127,8 @@ const BareMetalMetadata = (() => {
 
   function fetchAndRegister(url) {
     var promise;
-    if (typeof BareMetalRest !== 'undefined') {
-      promise = BareMetalRest.call(url, 'GET');
+    if (typeof BareMetal !== 'undefined' && BareMetal.Rest) {
+      promise = BareMetal.Rest.call(url, 'GET');
     } else {
       promise = fetch(url).then(function (r) { return r.json(); });
     }
@@ -147,21 +148,21 @@ const BareMetalMetadata = (() => {
     if (!meta) throw new Error('Unknown entity: ' + slug);
 
     var form = null;
-    if (typeof BareMetalTemplate !== 'undefined') {
-      form = BareMetalTemplate.buildForm(meta.layout, meta.fields);
+    if (typeof BareMetal !== 'undefined' && BareMetal.Template) {
+      form = BareMetal.Template.buildForm(meta.layout, meta.fields);
       rootElement.appendChild(form);
     }
 
-    if (!state && typeof BareMetalBind !== 'undefined') {
-      var pair = BareMetalBind.create
-        ? BareMetalBind.create(Object.assign({}, meta.initialData))
+    if (!state && typeof BareMetal !== 'undefined' && BareMetal.Bind) {
+      var pair = BareMetal.Bind.create
+        ? BareMetal.Bind.create(Object.assign({}, meta.initialData))
         : { state: Object.assign({}, meta.initialData), watch: function () {} };
       state = pair.state;
       watch = pair.watch || watch;
     }
 
-    if (state && watch && typeof BareMetalBind !== 'undefined') {
-      BareMetalBind.bind(rootElement, state, watch);
+    if (state && watch && typeof BareMetal !== 'undefined' && BareMetal.Bind) {
+      BareMetal.Bind.bind(rootElement, state, watch);
     }
 
     return { form: form, state: state || null, watch: watch || null };
@@ -172,8 +173,8 @@ const BareMetalMetadata = (() => {
     if (!meta) throw new Error('Unknown entity: ' + slug);
 
     var table = null;
-    if (typeof BareMetalTemplate !== 'undefined') {
-      table = BareMetalTemplate.buildTable(meta.fields, items, callbacks);
+    if (typeof BareMetal !== 'undefined' && BareMetal.Template) {
+      table = BareMetal.Template.buildTable(meta.fields, items, callbacks);
       rootElement.appendChild(table);
     }
     return table;
@@ -191,8 +192,8 @@ const BareMetalMetadata = (() => {
   };
 
   function fromBinary(buffer) {
-    if (typeof BareMetalBinary === 'undefined') {
-      throw new Error('BareMetalBinary is required for fromBinary');
+    if (typeof BareMetal === 'undefined' || !BareMetal.Binary) {
+      throw new Error('BareMetal.Binary is required for fromBinary');
     }
 
     var view = new DataView(buffer);

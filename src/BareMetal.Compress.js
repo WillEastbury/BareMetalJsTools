@@ -1,7 +1,8 @@
 // PicoCompress — IIFE/global wrapper around picocompress JS port (vendored).
 // For ES module use, see: src/vendor/picocompress/picocompress.mjs
 // Upstream: https://github.com/WillEastbury/picocompress (MIT)
-var PicoCompress = (function () {
+var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
+BareMetal.Compress = (() => {
   'use strict';
 // picocompress — JavaScript port (ES module)
 // Byte-identical to the C reference implementation.
@@ -717,5 +718,5 @@ function compressBound(inputLen) {
 })();
 
 // ── Module exports (added by BareMetalJsTools packaging) ──
-if (typeof globalThis !== 'undefined') globalThis.PicoCompress = PicoCompress;
-if (typeof module !== 'undefined' && module.exports) module.exports = PicoCompress;
+if (typeof globalThis !== 'undefined') globalThis.PicoCompress = BareMetal.Compress;
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Compress;
