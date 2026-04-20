@@ -14,21 +14,21 @@ Every module follows the same pattern: small, obvious, fast. You can read the so
 
 ## What's in the box
 
-| Module | What it does |
-|---|---|
-| [`BareMetal.Styles`](docs/BareMetalStyles.md) | CSS framework. Grid, flex, buttons, forms, tables, cards, modals, alerts, toasts — all with short class names optimised for wire size. Zero JS. |
-| [`BareMetal.Bind`](docs/BareMetalBind.md) | Reactive `Proxy` state + `m-*` directives. Two-way forms, lists, toasts, chatbot, calendar, Gantt charts, sortable tables, tree views. |
-| [`BareMetal.Components`](docs/BareMetalBind.md) | Widget directives (m-img, m-toast, m-chatbot, m-calendar, m-gantt, m-table, m-tree, m-entity) that extend Bind. |
-| [`BareMetal.ComponentFactories`](docs/BareMetalBind.md) | `create.*` helpers and `chatEndpoint()` auto-wire for REST-backed chatbots. |
-| [`BareMetal.Template`](docs/BareMetalTemplate.md) | Schema-driven DOM builder. Hand it metadata, get a form or table back. |
-| [`BareMetal.Metadata`](docs/BareMetalMetadata.md) | Client-side entity schema registry. Inline JSON, server fetch, or PicoWAL binary — declare your entities and render them automatically. |
-| [`BareMetal.Rest`](docs/BareMetalRest.md) | REST + WebSocket transport. Negotiates WS binary frames → BSO1 → JSON fallback. CSRF, 401-redirect, request multiplexing. |
-| [`BareMetal.Binary`](docs/BareMetalBinary.md) | BSO1 binary wire serialiser. Zero-copy `DataView` reads, HMAC-SHA256 signing via Web Crypto. |
-| [`BareMetal.Compress`](docs/PicoCompress.md) | Block-based LZ compressor. Byte-identical to the [C reference](https://github.com/WillEastbury/picocompress). Opt-in wire compression for Rest. |
-| [`BareMetal.Rendering`](docs/BareMetalRendering.md) | Glue layer — wires Rest + Bind + Template into an entity lifecycle (`createEntity`, `listEntities`). |
-| [`BareMetal.Routing`](docs/BareMetalRouting.md) | History-API SPA router. Named segments (`:param`), catch-all (`*`), query parsing. |
-| [`BareMetal.Charts`](docs/BareMetalCharts.md) | SVG charts — bar, line, sparkline, donut, gauge. Animated, themeable via CSS custom properties. |
-| [`BareMetal.Graph`](docs/BareMetalGraph.md) | Force-directed graph visualiser. Drag, zoom, hover, dynamic add/remove. |
+| Module | What it does | Size | Nearest equivalent for the not-quite-insane |
+|---|---|---|---|
+| [`BareMetal.Styles`](docs/BareMetalStyles.md) | CSS framework. Grid, flex, buttons, forms, tables, cards, modals, alerts, toasts — all with short class names optimised for wire size. Zero JS. | 53 KB | Bootstrap (227 KB), Tailwind (≈300 KB+) |
+| [`BareMetal.Bind`](docs/BareMetalBind.md) | Reactive `Proxy` state + `m-*` directives. Two-way forms, lists, toasts, chatbot, calendar, Gantt charts, sortable tables, tree views. | 13 KB | Vue.js (≈40 KB min), Alpine.js (≈15 KB) |
+| [`BareMetal.Components`](docs/BareMetalBind.md) | Widget directives (m-img, m-toast, m-chatbot, m-calendar, m-gantt, m-table, m-tree, m-entity) that extend Bind. | 25 KB | PrimeVue, Vuetify, Material UI (hundreds of KB each) |
+| [`BareMetal.ComponentFactories`](docs/BareMetalBind.md) | `create.*` helpers and `chatEndpoint()` auto-wire for REST-backed chatbots. | 2 KB | Hand-rolled boilerplate |
+| [`BareMetal.Template`](docs/BareMetalTemplate.md) | Schema-driven DOM builder. Hand it metadata, get a form or table back. | 7 KB | Formly (≈80 KB), JSON Forms (≈200 KB) |
+| [`BareMetal.Metadata`](docs/BareMetalMetadata.md) | Client-side entity schema registry. Inline JSON, server fetch, or PicoWAL binary — declare your entities and render them automatically. | 8 KB | GraphQL schema + codegen toolchain |
+| [`BareMetal.Rest`](docs/BareMetalRest.md) | REST + WebSocket transport. Negotiates WS binary frames → BSO1 → JSON fallback. CSRF, 401-redirect, request multiplexing. | 19 KB | Axios (≈14 KB) + socket.io-client (≈45 KB) |
+| [`BareMetal.Binary`](docs/BareMetalBinary.md) | BSO1 binary wire serialiser. Zero-copy `DataView` reads, HMAC-SHA256 signing via Web Crypto. | 31 KB | Protocol Buffers JS (≈230 KB), MessagePack (≈25 KB) |
+| [`BareMetal.Compress`](docs/PicoCompress.md) | Block-based LZ compressor. Byte-identical to the [C reference](https://github.com/WillEastbury/picocompress). Opt-in wire compression for Rest. | 27 KB | pako/zlib.js (≈46 KB), lz4js (≈20 KB) |
+| [`BareMetal.Rendering`](docs/BareMetalRendering.md) | Glue layer — wires Rest + Bind + Template into an entity lifecycle (`createEntity`, `listEntities`). | 4 KB | Custom Redux middleware + React container layer |
+| [`BareMetal.Routing`](docs/BareMetalRouting.md) | History-API SPA router. Named segments (`:param`), catch-all (`*`), query parsing. | 7 KB | vue-router (≈18 KB), react-router (≈30 KB) |
+| [`BareMetal.Charts`](docs/BareMetalCharts.md) | SVG charts — bar, line, sparkline, donut, gauge. Animated, themeable via CSS custom properties. | 16 KB | Chart.js (≈200 KB), D3 (≈250 KB) |
+| [`BareMetal.Graph`](docs/BareMetalGraph.md) | Force-directed graph visualiser. Drag, zoom, hover, dynamic add/remove. | 18 KB | D3-force (≈30 KB) + D3-selection (≈20 KB), Cytoscape.js (≈600 KB) |
 
 ### Architecture
 
