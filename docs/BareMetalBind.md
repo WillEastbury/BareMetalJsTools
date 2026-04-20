@@ -1,6 +1,6 @@
 # BareMetalBind
 
-Reactive state + DOM directive binder with formatters, list rendering, transitions, computed expressions, and toast notifications — ~490 lines, no dependencies.
+Reactive state + DOM directive binder with formatters, list rendering, transitions, computed expressions, toast notifications, and image binding — ~530 lines, no dependencies.
 
 ## API
 
@@ -44,6 +44,7 @@ Scans the subtree of `root` for directive attributes and wires them up:
 | `m-transition="name"` | with `m-if` | CSS-class-driven enter/leave transitions. |
 | `m-expression="target = expr"` | any element | Computed value — evaluates expression reactively. |
 | `m-toast="key"` | `.toast-container` | Creates toast popups when items are pushed to the array. |
+| `m-img="path"` | `<img>` or any element | Reactive image `src` (or `background-image`) with lazy loading and fallback. |
 
 ### `BareMetalBind.formatters`
 
@@ -281,6 +282,36 @@ state.notifications.push('Quick notification!');
 Toasts are removed from the DOM automatically when the CSS `toast-auto-dismiss` animation ends. The close button (on toasts with a header) also removes the toast immediately.
 
 > **Requires:** BareMetalStyles.css for the toast container, animation, and colour classes.
+
+---
+
+## Image binding (`m-img`)
+
+Bind an element's image source to a reactive state property. On `<img>` elements it sets `src`; on any other element it sets `background-image`.
+
+```html
+<!-- Basic reactive image -->
+<img m-img="user.avatar">
+
+<!-- With fallback on error or empty value -->
+<img m-img="user.avatar" m-img-fallback="/img/placeholder.png">
+
+<!-- Lazy loading — defers src until element is near viewport -->
+<img m-img="product.photo" m-img-fallback="/img/loading.svg" m-img-lazy>
+
+<!-- Background image on a div -->
+<div class="hero-banner" m-img="page.heroUrl"></div>
+```
+
+### Attributes
+
+| Attribute | Required | Description |
+|---|---|---|
+| `m-img="path"` | ✅ | State path to the image URL string |
+| `m-img-fallback="url"` | ❌ | Static fallback URL used when the value is empty or the image fails to load |
+| `m-img-lazy` | ❌ | Defer loading until the element enters the viewport (uses `IntersectionObserver` with 200px margin) |
+
+When the state value changes, the image updates reactively. On `<img>` elements, an `error` event listener automatically swaps to the fallback URL if provided.
 
 ---
 

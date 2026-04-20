@@ -1,6 +1,6 @@
 // BareMetalBind — reactive Proxy state and m-* directive binder
 // Directives: m-value, m-text, m-if, m-click, m-submit, m-class, m-attr,
-//             m-each (keyed), m-navbar, m-transition, m-expression, m-toast
+//             m-each (keyed), m-navbar, m-transition, m-expression, m-toast, m-img
 // API: reactive(initial) → { state, watch, data }
 //      bind(root, state, watch)
 //      formatters   – registry object for pipe transforms
@@ -243,6 +243,47 @@ const BareMetalBind = (() => {
       n.addEventListener(chk ? 'change' : 'input', () => {
         setPath(state, path, chk ? n.checked : n.value);
       });
+    });
+
+    // ── m-img (reactive src + lazy loading + fallback) ──
+    // Usage: <img m-img="user.avatar" m-img-fallback="/placeholder.png" m-img-lazy>
+    root.querySelectorAll('[m-img]').forEach(n => {
+      const path = n.getAttribute('m-img'), wk = topKey(path);
+      const fallback = n.getAttribute('m-img-fallback') || '';
+      const lazy = n.hasAttribute('m-img-lazy');
+      const tag = n.tagName;
+
+      function applySrc(src) {
+        const url = src || fallback;
+        if (tag === 'IMG') {
+          n.src = url || '';
+          if (!url) n.removeAttribute('src');
+        } else {
+          n.style.backgroundImage = url ? 'url(' + url + ')' : '';
+        }
+      }
+
+      function onError() {
+        if (fallback && n.src !== fallback) n.src = fallback;
+      }
+
+      if (tag === 'IMG') {
+        if (fallback) n.addEventListener('error', onError);
+        if (lazy && typeof IntersectionObserver !== 'undefined') {
+          n.setAttribute('loading', 'lazy');
+          let revealed = false;
+          const obs = new IntersectionObserver(function(entries) {
+            if (entries[0].isIntersecting) { revealed = true; applySrc(getPath(state, path)); obs.disconnect(); }
+          }, { rootMargin: '200px' });
+          obs.observe(n);
+          const sync = () => { if (revealed) applySrc(getPath(state, path)); };
+          sync(); watch(wk, sync);
+          return;
+        }
+      }
+
+      const sync = () => applySrc(getPath(state, path));
+      sync(); watch(wk, sync);
     });
 
     // ── m-text ──
