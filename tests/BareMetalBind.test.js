@@ -16,10 +16,13 @@ function loadBind() {
   const code = fs.readFileSync(SRC, 'utf8');
   const iife = code.replace(/const BareMetalBind\s*=\s*/, '').replace(/;\s*$/, '');
   const factory = new Function(
-    'document',
+    'document', 'requestAnimationFrame',
     `return (${iife});`
   );
-  return factory(global.document);
+  const raf = typeof globalThis.requestAnimationFrame === 'function'
+    ? globalThis.requestAnimationFrame
+    : (cb) => setTimeout(cb, 0);
+  return factory(global.document, raf);
 }
 
 // ── reactive() ────────────────────────────────────────────────────────────

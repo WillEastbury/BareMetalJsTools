@@ -490,6 +490,71 @@ small, .small { font-size: .875em; }
 .disabled { pointer-events: none; opacity: .65; }
 
 /* ============================================================
+   USER CARD (hover popup)
+   ============================================================ */
+.user-card-trigger { position: relative; display: inline-block; cursor: pointer; }
+.user-card-trigger .user-avatar {
+  width: 2rem; height: 2rem; border-radius: 50%; object-fit: cover; vertical-align: middle;
+  border: 2px solid var(--bs-border-color); transition: var(--bs-transition);
+}
+.user-card-trigger:hover .user-avatar { border-color: var(--bs-primary); box-shadow: var(--bs-focus-ring); }
+
+.user-card {
+  position: absolute; z-index: 1060; top: calc(100% + .5rem); left: 50%; transform: translateX(-50%) translateY(4px);
+  width: 280px; padding: 0;
+  background-color: var(--bs-body-bg); border: var(--bs-border-width) solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius-lg); box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.15);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity .2s ease, visibility .2s ease, transform .2s ease;
+}
+.user-card-trigger:hover .user-card {
+  opacity: 1; visibility: visible; pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+/* arrow */
+.user-card::before {
+  content: ""; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  border: 8px solid transparent; border-bottom-color: var(--bs-border-color);
+}
+.user-card::after {
+  content: ""; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  border: 7px solid transparent; border-bottom-color: var(--bs-body-bg);
+}
+
+.user-card-header {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-3); border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+}
+.user-card-header .user-avatar-lg { width: 3rem; height: 3rem; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.user-card-header .user-name { font-weight: 600; font-size: 1rem; line-height: 1.2; }
+.user-card-header .user-role { font-size: .75rem; color: var(--bs-secondary); }
+
+.user-card-body { padding: var(--sp-2) var(--sp-3); font-size: .8125rem; }
+.user-card-body .user-detail { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-1) 0; color: var(--bs-body-color); }
+.user-card-body .user-detail-label { color: var(--bs-secondary); min-width: 4rem; }
+
+.user-card-footer {
+  display: flex; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3);
+  border-top: var(--bs-border-width) solid var(--bs-border-color);
+}
+
+/* placement variants */
+.user-card-right { left: auto; right: 0; transform: translateY(4px); }
+.user-card-trigger:hover .user-card-right { transform: translateY(0); }
+.user-card-right::before, .user-card-right::after { left: auto; right: 1rem; transform: none; }
+
+.user-card-left { left: 0; transform: translateX(0) translateY(4px); }
+.user-card-trigger:hover .user-card-left { transform: translateX(0) translateY(0); }
+.user-card-left::before, .user-card-left::after { left: 1rem; transform: none; }
+
+/* dark variant */
+.user-card-dark { background-color: var(--bs-dark); border-color: rgba(255,255,255,.15); color: rgba(255,255,255,.85); }
+.user-card-dark::after { border-bottom-color: var(--bs-dark); }
+.user-card-dark .user-card-header { border-color: rgba(255,255,255,.1); }
+.user-card-dark .user-card-footer { border-color: rgba(255,255,255,.1); }
+.user-card-dark .user-role, .user-card-dark .user-detail-label { color: rgba(255,255,255,.5); }
+
+/* ============================================================
    VIEWPORT / FLUID SCALING
    ============================================================ */
 .vh-100 { height: 100vh !important; }
