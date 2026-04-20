@@ -474,4 +474,53 @@ describe('BareMetalBind – bind() m-navbar directive', () => {
     expect(a.getAttribute('href')).toBe('#');
     expect(a.textContent).toBe('');
   });
+
+  test('renders dropdown from nested array', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<nav m-navbar="nav"></nav>';
+    const { state, watch } = bind.reactive({
+      nav: [
+        ['Products', { href: '/a', text: 'Alpha' }, { href: '/b', text: 'Beta' }]
+      ]
+    });
+    bind.bind(root, state, watch);
+    const dd = root.querySelector('.dropdown');
+    expect(dd).not.toBeNull();
+    expect(dd.querySelector('.dropdown-toggle').textContent).toBe('Products');
+    const links = dd.querySelectorAll('.dropdown-menu a');
+    expect(links.length).toBe(2);
+    expect(links[0].textContent).toBe('Alpha');
+    expect(links[1].getAttribute('href')).toBe('/b');
+  });
+
+  test('mixes plain links and dropdowns', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<nav m-navbar="nav"></nav>';
+    const { state, watch } = bind.reactive({
+      nav: [
+        { href: '/', text: 'Home' },
+        ['More', { href: '/x', text: 'X' }, { href: '/y', text: 'Y' }],
+        { href: '/about', text: 'About' }
+      ]
+    });
+    bind.bind(root, state, watch);
+    const nav = root.querySelector('nav');
+    // 3 direct children: <a>, <div.dropdown>, <a>
+    expect(nav.children.length).toBe(3);
+    expect(nav.children[0].tagName).toBe('A');
+    expect(nav.children[1].classList.contains('dropdown')).toBe(true);
+    expect(nav.children[2].tagName).toBe('A');
+  });
+
+  test('dropdown links support active class', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<nav m-navbar="nav"></nav>';
+    const { state, watch } = bind.reactive({
+      nav: [['Menu', { href: '/a', text: 'A', active: true }, { href: '/b', text: 'B' }]]
+    });
+    bind.bind(root, state, watch);
+    const links = root.querySelectorAll('.dropdown-menu a');
+    expect(links[0].classList.contains('active')).toBe(true);
+    expect(links[1].classList.contains('active')).toBe(false);
+  });
 });

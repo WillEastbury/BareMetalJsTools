@@ -135,18 +135,37 @@ const BareMetalBind = (() => {
     });
 
     // ── m-navbar ──
+    // Items can be {href,text,active?} for plain links,
+    // or [title, {href,text,active?}, ...] for dropdown groups.
     root.querySelectorAll('[m-navbar]').forEach(n => {
       const k = n.getAttribute('m-navbar');
+      const mkLink = link => {
+        const a = document.createElement('a');
+        a.href = link.href || '#';
+        a.textContent = link.text || '';
+        if (link.active) a.classList.add('active');
+        return a;
+      };
       const render = () => {
         n.innerHTML = '';
         const arr = state[k];
         if (!Array.isArray(arr)) return;
-        arr.forEach(link => {
-          const a = document.createElement('a');
-          a.href = link.href || '#';
-          a.textContent = link.text || '';
-          if (link.active) a.classList.add('active');
-          n.appendChild(a);
+        arr.forEach(item => {
+          if (Array.isArray(item)) {
+            const dd = document.createElement('div');
+            dd.classList.add('dropdown');
+            const btn = document.createElement('button');
+            btn.className = 'dropdown-toggle';
+            btn.textContent = item[0] || '';
+            dd.appendChild(btn);
+            const menu = document.createElement('div');
+            menu.className = 'dropdown-menu';
+            for (let i = 1; i < item.length; i++) menu.appendChild(mkLink(item[i]));
+            dd.appendChild(menu);
+            n.appendChild(dd);
+          } else {
+            n.appendChild(mkLink(item));
+          }
         });
       };
       render(); watch(k, render);

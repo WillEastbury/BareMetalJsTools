@@ -516,6 +516,62 @@ small, .small { font-size: .875em; }
 .page-wrapper > main, .page-wrapper > .main-content { flex: 1 1 auto; overflow-y: auto; }
 .page-wrapper > .site-header, .page-wrapper > .site-footer { flex-shrink: 0; }
 
+/* when main contains a sidebar, make it a horizontal flex row */
+.page-wrapper > .page-body { display: flex; flex: 1 1 auto; overflow: hidden; min-height: 0; }
+.page-wrapper > .page-body > main, .page-wrapper > .page-body > .main-content { flex: 1 1 auto; overflow-y: auto; }
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.site-sidebar {
+  flex: 0 0 auto;
+  width: 250px;
+  overflow-y: auto;
+  padding: var(--sp-3);
+  background-color: var(--bs-body-bg);
+  font-size: .875rem;
+}
+.site-sidebar-left { border-right: var(--bs-border-width) solid var(--bs-border-color); border-left: 0; }
+.site-sidebar-right { border-right: 0; border-left: var(--bs-border-width) solid var(--bs-border-color); order: 1; }
+
+.site-sidebar nav { display: flex; flex-direction: column; gap: var(--sp-1); }
+.site-sidebar nav a {
+  display: block;
+  padding: var(--sp-1) var(--sp-2);
+  color: var(--bs-body-color);
+  text-decoration: none;
+  border-radius: var(--bs-border-radius-sm);
+  transition: var(--bs-transition);
+}
+.site-sidebar nav a:hover { background-color: rgba(0,0,0,.05); color: var(--bs-primary); }
+.site-sidebar nav a.active { background-color: rgba(var(--bs-primary-rgb), .1); color: var(--bs-primary); font-weight: 600; }
+.site-sidebar nav a:focus-visible { outline: 0; box-shadow: var(--bs-focus-ring); }
+
+.site-sidebar .sidebar-heading {
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--bs-secondary);
+  padding: var(--sp-2) var(--sp-2) var(--sp-1);
+}
+
+.site-sidebar-dark {
+  background-color: var(--bs-dark);
+  border-color: rgba(255,255,255,.1);
+  color: rgba(255,255,255,.7);
+}
+.site-sidebar-dark nav a { color: rgba(255,255,255,.7); }
+.site-sidebar-dark nav a:hover { background-color: rgba(255,255,255,.1); color: #fff; }
+.site-sidebar-dark nav a.active { background-color: rgba(255,255,255,.15); color: #fff; }
+.site-sidebar-dark .sidebar-heading { color: rgba(255,255,255,.4); }
+
+/* collapse sidebar on small screens */
+@media (max-width: 767.98px) {
+  .site-sidebar { display: none; }
+  .site-sidebar.show { display: block; position: absolute; z-index: 1040; height: 100%; box-shadow: 0 .5rem 1rem rgba(0,0,0,.15); }
+}
+
 /* ============================================================
    SITE HEADER
    ============================================================ */
