@@ -70,9 +70,9 @@ describe('BareMetal.Crypto', () => {
   });
 
   test('exportKey/importKey round-trip (AES-GCM JWK)', async () => {
-    const key = await C.generateSymmetricKey();
+    const key = await C.generateSymmetricKey(true);
     const jwk = await C.exportKey(key, 'jwk');
-    const imported = await C.importKey(jwk, 'AES-GCM', ['encrypt', 'decrypt']);
+    const imported = await C.importKey(jwk, 'AES-GCM', ['encrypt', 'decrypt'], 'jwk', true);
     const { iv, ciphertext } = await C.encryptSymmetric(imported, 'roundtrip');
     const dec = await C.decryptSymmetric(imported, iv, ciphertext);
     expect(C.fromUtf8(dec)).toBe('roundtrip');

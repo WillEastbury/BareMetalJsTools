@@ -36,8 +36,8 @@ BareMetal.Crypto = (() => {
 
   // --- Symmetric (AES-256-GCM) ---
 
-  function generateSymmetricKey() {
-    return subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+  function generateSymmetricKey(extractable) {
+    return subtle.generateKey({ name: 'AES-GCM', length: 256 }, !!extractable, ['encrypt', 'decrypt']);
   }
 
   async function encryptSymmetric(key, data) {
@@ -52,17 +52,17 @@ BareMetal.Crypto = (() => {
 
   // --- Asymmetric — Hybrid Envelope (RSA-OAEP + AES-GCM) ---
 
-  function generateAsymmetricKey(bits) {
+  function generateAsymmetricKey(bits, extractable) {
     return subtle.generateKey({
       name: 'RSA-OAEP',
       modulusLength: bits || 2048,
       publicExponent: new Uint8Array([1, 0, 1]),
       hash: 'SHA-256'
-    }, true, ['wrapKey', 'unwrapKey']);
+    }, !!extractable, ['wrapKey', 'unwrapKey']);
   }
 
   async function encryptAsymmetric(publicKey, data) {
-    const ephemeral = await generateSymmetricKey();
+    const ephemeral = await generateSymmetricKey(true);
     const { iv, ciphertext } = await encryptSymmetric(ephemeral, data);
     const wrappedKey = await subtle.wrapKey('raw', ephemeral, publicKey, { name: 'RSA-OAEP' });
     return { wrappedKey, iv, ciphertext };
@@ -71,7 +71,7 @@ BareMetal.Crypto = (() => {
   async function decryptAsymmetric(privateKey, envelope) {
     const aesKey = await subtle.unwrapKey(
       'raw', envelope.wrappedKey, privateKey, { name: 'RSA-OAEP' },
-      { name: 'AES-GCM', length: 256 }, true, ['decrypt']
+      { name: 'AES-GCM', length: 256 }, false, ['decrypt']
     );
     return decryptSymmetric(aesKey, envelope.iv, envelope.ciphertext);
   }
@@ -94,19 +94,19 @@ BareMetal.Crypto = (() => {
 
   async function deriveKey(password, salt, iterations) {
     salt = salt || randomBytes(16);
-    iterations = iterations || 100000;
+    iterations = iterations || 600000;
     const baseKey = await subtle.importKey('raw', ensureBuffer(password), 'PBKDF2', false, ['deriveKey']);
     const key = await subtle.deriveKey(
       { name: 'PBKDF2', salt: new Uint8Array(salt), iterations, hash: 'SHA-256' },
-      baseKey, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']
+      baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
     );
     return { key, salt };
   }
 
   // --- Signing (ECDSA P-256 SHA-256) ---
 
-  function generateSigningKey() {
-    return subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+  function generateSigningKey(extractable) {
+    return subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, !!extractable, ['sign', 'verify']);
   }
 
   function sign(privateKey, data) {
@@ -123,7 +123,7 @@ BareMetal.Crypto = (() => {
     return subtle.exportKey(format || 'jwk', key);
   }
 
-  function importKey(keyData, algorithm, usages, format) {
+  function importKey(keyData, algorithm, usages, format, extractable) {
     format = format || 'jwk';
     let params;
     switch (algorithm) {
@@ -132,7 +132,7 @@ BareMetal.Crypto = (() => {
       case 'ECDSA':    params = { name: 'ECDSA', namedCurve: 'P-256' }; break;
       default: throw new Error('Unknown algorithm: ' + algorithm);
     }
-    return subtle.importKey(format, keyData, params, true, usages);
+    return subtle.importKey(format, keyData, params, !!extractable, usages);
   }
 
   return {

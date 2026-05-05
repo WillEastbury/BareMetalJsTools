@@ -1,6 +1,6 @@
 # BareMetalJsTools
 
-> *122 KB minified for a complete reactive UI framework, CSS toolkit, binary serialisation, compression, REST+WebSocket transport, routing, charting, and graph visualisation. Most people pull in more than that just for a toast notification library.*
+> *164 KB minified for a complete reactive UI framework, CSS toolkit, binary serialisation, compression, REST+WebSocket transport, OAuth/OIDC auth, crypto, offline-first PWA, routing, charting, and graph visualisation. Most people pull in more than that just for a toast notification library.*
 
 Modern web development has become absurdly complicated. You need a bundler, a transpiler, a framework, a meta-framework, a state manager, a CSS-in-JS solution, and forty-seven config files before you can render "Hello World". Then you wait for it to compile.
 
@@ -35,7 +35,7 @@ The whole point is the same everywhere: understand what the machine actually nee
 
 | Module | What it does | Source | Min | Nearest equivalent for the not-quite-insane |
 |---|---|---|---|---|
-| [`BareMetal.Styles`](docs/BareMetalStyles.md) | CSS framework. Grid, flex, buttons, forms, tables, cards, modals, alerts, toasts — all with short class names optimised for wire size. Zero JS. | [53 KB](src/BareMetalStyles.css) | [38 KB](src/BareMetalStyles.min.css) | *Bootstrap (227 KB)*, Tailwind (≈300 KB+), Fabric UI (≈350 KB), React (≈140 KB) |
+| [`BareMetal.Styles`](docs/BareMetalStyles.md) | CSS framework. Grid, flex, buttons, forms, tables, cards, modals, alerts, toasts — all with short class names optimised for wire size. Zero JS. | [58 KB](src/BareMetalStyles.css) | [42 KB](src/BareMetalStyles.min.css) | *Bootstrap (227 KB)*, Tailwind (≈300 KB+), Fabric UI (≈350 KB), React (≈140 KB) |
 | [`BareMetal.Bind`](docs/BareMetalBind.md) | Reactive `Proxy` state + `m-*` directives. Two-way forms, lists, toasts, chatbot, calendar, Gantt charts, sortable tables, tree views. | [13 KB](src/BareMetal.Bind.js) | [6 KB](src/BareMetal.Bind.min.js) | Vue.js (≈40 KB min), Alpine.js (≈15 KB), Rivets.js ❤️, *Knockout.js ❤️*, TinyBind 💕 |
 | [`BareMetal.Components`](docs/BareMetalBind.md) | Widget directives (m-img, m-toast, m-chatbot, m-calendar, m-gantt, m-table, m-tree, m-entity) that extend Bind. | [25 KB](src/BareMetal.Components.js) | [13 KB](src/BareMetal.Components.min.js) | PrimeVue, Vuetify, Material UI (hundreds of KB each) |
 | [`BareMetal.ComponentFactories`](docs/BareMetalBind.md) | `create.*` helpers and `chatEndpoint()` auto-wire for REST-backed chatbots. | [2 KB](src/BareMetal.ComponentFactories.js) | [1 KB](src/BareMetal.ComponentFactories.min.js) | *Hand-rolled boilerplate* |
@@ -48,7 +48,13 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.Routing`](docs/BareMetalRouting.md) | History-API SPA router. Named segments (`:param`), catch-all (`*`), query parsing. | [7 KB](src/BareMetal.Routing.js) | [2 KB](src/BareMetal.Routing.min.js) | *vue-router (≈18 KB)*, react-router (≈30 KB) |
 | [`BareMetal.Charts`](docs/BareMetalCharts.md) | SVG charts — bar, line, sparkline, donut, gauge. Animated, themeable via CSS custom properties. | [16 KB](src/BareMetal.Charts.js) | [8 KB](src/BareMetal.Charts.min.js) | *Chart.js (≈200 KB)*, D3 (≈250 KB) |
 | [`BareMetal.Graph`](docs/BareMetalGraph.md) | Force-directed graph visualiser. Drag, zoom, hover, dynamic add/remove. | [18 KB](src/BareMetal.Graph.js) | [9 KB](src/BareMetal.Graph.min.js) | D3-force (≈30 KB) + D3-selection (≈20 KB), *Cytoscape.js* (≈600 KB) |
-| **Total** | **The whole toolkit** | **≈216 KB** | **≈122 KB** | **≈1,565 KB** (picking the smaller option from each row) |
+| [`BareMetal.Auth`](src/BareMetal.Auth.js) | OIDC/OAuth2 PKCE client. Silent refresh, provider presets (Google, Microsoft, GitHub, Apple, Facebook), login/whoami UI components. | [28 KB](src/BareMetal.Auth.js) | [16 KB](src/BareMetal.Auth.min.js) | *oidc-client-ts (≈80 KB)*, Auth0 SPA SDK (≈60 KB) |
+| [`BareMetal.Crypto`](src/BareMetal.Crypto.js) | Web Crypto wrapper. AES-256-GCM symmetric, RSA-OAEP hybrid envelope, ECDSA P-256 signing, PBKDF2 key derivation. | [5 KB](src/BareMetal.Crypto.js) | [3 KB](src/BareMetal.Crypto.min.js) | *Stanford JS Crypto (≈45 KB)*, tweetnacl (≈7 KB) |
+| [`BareMetal.LocalKVStore`](src/BareMetal.LocalKVStore.js) | Key-value store abstraction. localStorage, sessionStorage, IndexedDB backends with TTL, namespacing, cross-tab sync. | [14 KB](src/BareMetal.LocalKVStore.js) | [7 KB](src/BareMetal.LocalKVStore.min.js) | *localForage (≈29 KB)*, idb-keyval (≈1 KB) |
+| [`BareMetal.Progressive`](src/BareMetal.Progressive.js) | PWA helper. Service worker registration, install prompts, offline request queue, push notifications, manifest generation. | [10 KB](src/BareMetal.Progressive.js) | [5 KB](src/BareMetal.Progressive.min.js) | *Workbox (≈60 KB)*, PWA Builder |
+| [`BareMetal.ServiceWorker`](src/BareMetal.ServiceWorker.js) | Configurable service worker. CacheFirst, NetworkFirst, StaleWhileRevalidate strategies, precache, background sync. | [7 KB](src/BareMetal.ServiceWorker.js) | [4 KB](src/BareMetal.ServiceWorker.min.js) | *Workbox SW (≈15 KB)* |
+| [`BareMetal.Time`](src/BareMetal.Time.js) | Date/time library. Format, parse, add/subtract, diff, durations, relative time, timezone support, Temporal API bridge. | [12 KB](src/BareMetal.Time.js) | [7 KB](src/BareMetal.Time.min.js) | *Day.js (≈7 KB)*, date-fns (≈75 KB), Moment.js (≈290 KB) |
+| **Total** | **The whole toolkit** | **≈292 KB** | **≈164 KB** | **≈1,862 KB** (picking the smaller option from each row) |
 
 ### Architecture
 
@@ -67,7 +73,7 @@ graph TB
   end
 
   subgraph "Transport"
-    Rest["🌐 Rest<br/><i>REST + WebSocket<br/>CSRF · Multiplexing</i>"]
+    Rest["🌐 Communications<br/><i>REST + WebSocket<br/>CSRF · Multiplexing</i>"]
     Binary["📦 Binary<br/><i>BSO1 codec · HMAC</i>"]
     Compress["🗜️ Compress<br/><i>LZ compression</i>"]
   end
@@ -76,6 +82,18 @@ graph TB
     Rendering["🔧 Rendering<br/><i>Entity lifecycle</i>"]
     Template["📝 Template<br/><i>buildForm · buildTable</i>"]
     Routing["🧭 Routing<br/><i>SPA router</i>"]
+  end
+
+  subgraph "Security & Auth"
+    Auth["🔐 Auth<br/><i>OIDC · PKCE · Providers</i>"]
+    Crypto["🔑 Crypto<br/><i>AES · RSA · ECDSA</i>"]
+  end
+
+  subgraph "Offline & PWA"
+    Progressive["📱 Progressive<br/><i>SW reg · Install · Push</i>"]
+    ServiceWorker["⚙️ ServiceWorker<br/><i>Cache strategies · Sync</i>"]
+    KVStore["💾 LocalKVStore<br/><i>KV · TTL · IndexedDB</i>"]
+    Time["🕐 Time<br/><i>Format · Relative · TZ</i>"]
   end
 
   Rendering --> Bind
@@ -88,6 +106,10 @@ graph TB
   Rest -.->|opt-in| Compress
   Factories -.-> Rest
   Bind --> Styles
+  Auth -.-> Rest
+  Progressive -.-> Rest
+  Progressive -.-> KVStore
+  Progressive --> ServiceWorker
 
   style Bind fill:#0d6efd,color:#fff
   style Styles fill:#198754,color:#fff
@@ -96,6 +118,12 @@ graph TB
   style Graph fill:#d63384,color:#fff
   style Rendering fill:#495057,color:#fff
   style Metadata fill:#20c997,color:#fff
+  style Auth fill:#dc3545,color:#fff
+  style Crypto fill:#6610f2,color:#fff
+  style Progressive fill:#0dcaf0,color:#000
+  style ServiceWorker fill:#adb5bd,color:#000
+  style KVStore fill:#ffc107,color:#000
+  style Time fill:#198754,color:#fff
 ```
 
 ---

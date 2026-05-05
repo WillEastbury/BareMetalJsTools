@@ -91,7 +91,9 @@ BareMetal.Time = (() => {
     var weeks = Math.round(abs / 604800000);
 
     if (typeof Intl !== 'undefined' && Intl.RelativeTimeFormat) {
-      var rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+      var rtfKey = 'en:auto';
+      formatRelative._rtfCache = formatRelative._rtfCache || {};
+      var rtf = formatRelative._rtfCache[rtfKey] || (formatRelative._rtfCache[rtfKey] = new Intl.RelativeTimeFormat('en', { numeric: 'auto' }));
       var sign = future ? 1 : -1;
       if (seconds < 60) return rtf.format(sign * seconds, 'second');
       if (minutes < 60) return rtf.format(sign * minutes, 'minute');
@@ -224,11 +226,13 @@ BareMetal.Time = (() => {
 
   function toTimezone(dt, tz) {
     var d = _toDate(dt);
-    var fmt = new Intl.DateTimeFormat('en-US', {
+    toTimezone._cache = toTimezone._cache || {};
+    var cacheKey = tz;
+    var fmt = toTimezone._cache[cacheKey] || (toTimezone._cache[cacheKey] = new Intl.DateTimeFormat('en-US', {
       timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
       fractionalSecondDigits: 3
-    });
+    }));
     var parts = {};
     fmt.formatToParts(d).forEach(function(p) { parts[p.type] = p.value; });
     var hour = parseInt(parts.hour, 10);

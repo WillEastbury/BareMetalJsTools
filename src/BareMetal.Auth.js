@@ -107,6 +107,28 @@ BareMetal.Auth = (() => {
   }
 
   // ── DOM helper ──
+  var SVG_ALLOWLIST = { svg:1, path:1, rect:1, circle:1, line:1, polyline:1, polygon:1, g:1, defs:1, use:1, text:1, tspan:1 };
+  var SVG_ATTR_ALLOWLIST = /^(d|fill|stroke|viewBox|width|height|x|y|cx|cy|r|rx|ry|points|transform|xmlns|class|opacity|stroke-width)$/;
+
+  function _safeSvg(html) {
+    var tpl = document.createElement('template');
+    tpl.innerHTML = html.trim();
+    var frag = tpl.content;
+    function walk(node) {
+      var children = Array.from(node.childNodes);
+      children.forEach(function(child) {
+        if (child.nodeType === 3) return;
+        if (child.nodeType !== 1 || !SVG_ALLOWLIST[child.localName]) { child.remove(); return; }
+        Array.from(child.attributes).forEach(function(a) {
+          if (!SVG_ATTR_ALLOWLIST.test(a.name)) child.removeAttribute(a.name);
+        });
+        walk(child);
+      });
+    }
+    walk(frag);
+    return frag;
+  }
+
   function h(tag, attrs, children) {
     var el = document.createElement(tag);
     if (attrs) {
@@ -117,8 +139,8 @@ BareMetal.Auth = (() => {
           el.addEventListener(k.slice(2).toLowerCase(), attrs[k]);
         } else if (k === 'className') {
           el.className = attrs[k];
-        } else if (k === 'innerHTML') {
-          el.innerHTML = attrs[k];
+        } else if (k === 'safeHtml') {
+          el.appendChild(_safeSvg(attrs[k]));
         } else {
           el.setAttribute(k, attrs[k]);
         }
@@ -176,11 +198,13 @@ BareMetal.Auth = (() => {
   }
 
   // ── UI Render Methods ──
-  var _uiSubscriptions = [];
+  var _uiSubscriptions = new Map();
 
-  function _autoUpdate(renderFn) {
+  function _autoUpdate(container, renderFn) {
+    var prev = _uiSubscriptions.get(container);
+    if (prev) prev();
     var unsub = onAuthChange(function () { renderFn(); });
-    _uiSubscriptions.push(unsub);
+    _uiSubscriptions.set(container, unsub);
     return unsub;
   }
 
@@ -204,7 +228,7 @@ BareMetal.Auth = (() => {
 
       var iconEl = null;
       if (iconHtml) {
-        iconEl = h('span', { innerHTML: iconHtml, style: { display: 'inline-flex', alignItems: 'center' } });
+        iconEl = h('span', { safeHtml: iconHtml, style: { display: 'inline-flex', alignItems: 'center' } });
       }
 
       var btn = h('button', {
@@ -246,7 +270,7 @@ BareMetal.Auth = (() => {
       var children = [];
       if (opts.logo) {
         var logoEl = opts.logo.indexOf('<') === 0
-          ? h('div', { innerHTML: opts.logo, className: 'tx-c m2' })
+          ? h('div', { safeHtml: opts.logo, className: 'tx-c m2' })
           : h('div', { className: 'tx-c m2' }, [h('img', { src: opts.logo, style: { maxHeight: '48px' } })]);
         children.push(logoEl);
       }
@@ -355,7 +379,7 @@ BareMetal.Auth = (() => {
     }
 
     var root = render();
-    _autoUpdate(render);
+    _autoUpdate(el, render);
     return root;
   }
 
@@ -458,7 +482,7 @@ BareMetal.Auth = (() => {
     }
 
     var root = render();
-    _autoUpdate(render);
+    _autoUpdate(el, render);
     return root;
   }
 
@@ -506,7 +530,8 @@ BareMetal.Auth = (() => {
       code_challenge_method: 'S256'
     });
     if (extraParams) {
-      Object.keys(extraParams).forEach(function (k) { params.set(k, extraParams[k]); });
+      var SAFE_PARAMS = { prompt:1, login_hint:1, acr_values:1, ui_locales:1, display:1, max_age:1, id_token_hint:1 };
+      Object.keys(extraParams).forEach(function (k) { if (SAFE_PARAMS[k]) params.set(k, extraParams[k]); });
     }
 
     _redirect(_discovery.authorization_endpoint + '?' + params.toString());
@@ -685,11 +710,12 @@ BareMetal.Auth = (() => {
   function handleSilentCallback() {
     if (window.parent && window.parent !== window) {
       var params = new URLSearchParams(window.location.search);
+      var origin = (_cfg && _cfg.authority) ? new URL(_cfg.authority).origin : window.location.origin;
       window.parent.postMessage({
         code: params.get('code'),
         state: params.get('state'),
         error: params.get('error')
-      }, '*');
+      }, origin);
     }
   }
 

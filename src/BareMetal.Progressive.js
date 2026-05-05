@@ -12,6 +12,24 @@ BareMetal.Progressive = (() => {
   const SW_DEFAULT = '/BareMetal.ServiceWorker.js';
 
   // --- Offline queue persistence helpers ---
+  var SENSITIVE_HEADERS = /^(authorization|cookie|x-csrf|x-xsrf)/i;
+
+  function _stripSensitive(options) {
+    if (!options) return options;
+    var clean = Object.assign({}, options);
+    if (clean.headers) {
+      var hdr = {};
+      Object.keys(clean.headers).forEach(function(k) {
+        if (!SENSITIVE_HEADERS.test(k)) hdr[k] = clean.headers[k];
+      });
+      clean.headers = hdr;
+    }
+    if (clean.body && typeof clean.body === 'string' && clean.body.length > 4096) {
+      delete clean.body;
+    }
+    return clean;
+  }
+
   function _getStore() {
     if (typeof BareMetal !== 'undefined' && BareMetal.LocalKVStore) return BareMetal.LocalKVStore;
     return null;
@@ -38,11 +56,17 @@ BareMetal.Progressive = (() => {
     if (!_offlineQueue.length) return;
     var queue = _offlineQueue.splice(0);
     _saveQueue();
-    if (typeof BareMetal !== 'undefined' && BareMetal.Rest) {
-      queue.forEach(function(entry) {
-        BareMetal.Rest.fetch ? BareMetal.Rest.fetch(entry.url, entry.options) : fetch(entry.url, entry.options);
+    var doFetch = (typeof BareMetal !== 'undefined' && BareMetal.Rest && BareMetal.Rest.fetch)
+      ? BareMetal.Rest.fetch.bind(BareMetal.Rest) : fetch;
+    var i = 0;
+    function next() {
+      if (i >= queue.length) return;
+      var entry = queue[i++];
+      doFetch(entry.url, entry.options).catch(function() {}).then(function() {
+        setTimeout(next, Math.min(i * 200, 2000));
       });
     }
+    next();
   }
 
   // --- Install prompt capture ---
@@ -67,7 +91,7 @@ BareMetal.Progressive = (() => {
     BareMetal.Rest._bmProgPatched = true;
     BareMetal.Rest.fetch = function(url, options) {
       if (navigator.onLine) return origFetch.call(BareMetal.Rest, url, options);
-      _offlineQueue.push({ url: url, options: options });
+      _offlineQueue.push({ url: url, options: _stripSensitive(options) });
       _saveQueue();
       return Promise.reject(new Error('Offline — request queued'));
     };
@@ -119,7 +143,8 @@ BareMetal.Progressive = (() => {
           });
         });
 
-        if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+        if (!register._listenerInstalled && typeof navigator !== 'undefined' && navigator.serviceWorker) {
+          register._listenerInstalled = true;
           navigator.serviceWorker.addEventListener('message', function(e) {
             _messageCallbacks.forEach(function(cb) { cb(e.data); });
           });

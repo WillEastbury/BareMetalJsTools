@@ -75,17 +75,21 @@ BareMetal.LocalKVStore = (() => {
   }
 
   // --- IndexedDB backend ---
+  var _idbCache = {};
+
   function _idbBackend(ns) {
     var DB_NAME = 'bm_kvstore';
 
-    function _idb(mode, fn) {
-      return new Promise(function(resolve, reject) {
+    function _getDb() {
+      var cacheKey = DB_NAME + ':' + ns;
+      if (_idbCache[cacheKey]) return _idbCache[cacheKey];
+      _idbCache[cacheKey] = new Promise(function(resolve, reject) {
         var req = indexedDB.open(DB_NAME, 1);
         req.onupgradeneeded = function(e) {
           var db = e.target.result;
           if (!db.objectStoreNames.contains(ns)) db.createObjectStore(ns, { keyPath: 'key' });
         };
-        req.onerror = function() { reject(req.error); };
+        req.onerror = function() { _idbCache[cacheKey] = null; reject(req.error); };
         req.onsuccess = function() {
           var db = req.result;
           if (!db.objectStoreNames.contains(ns)) {
@@ -95,23 +99,21 @@ BareMetal.LocalKVStore = (() => {
             req2.onupgradeneeded = function(e2) {
               e2.target.result.createObjectStore(ns, { keyPath: 'key' });
             };
-            req2.onerror = function() { reject(req2.error); };
-            req2.onsuccess = function() {
-              var db2 = req2.result;
-              try {
-                var tx = db2.transaction(ns, mode);
-                var st = tx.objectStore(ns);
-                resolve(fn(st, tx, db2));
-              } catch (err) { reject(err); }
-            };
+            req2.onerror = function() { _idbCache[cacheKey] = null; reject(req2.error); };
+            req2.onsuccess = function() { resolve(req2.result); };
             return;
           }
-          try {
-            var tx = db.transaction(ns, mode);
-            var st = tx.objectStore(ns);
-            resolve(fn(st, tx, db));
-          } catch (err) { reject(err); }
+          resolve(db);
         };
+      });
+      return _idbCache[cacheKey];
+    }
+
+    function _idb(mode, fn) {
+      return _getDb().then(function(db) {
+        var tx = db.transaction(ns, mode);
+        var st = tx.objectStore(ns);
+        return fn(st, tx, db);
       });
     }
 

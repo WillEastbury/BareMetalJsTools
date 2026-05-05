@@ -28,6 +28,12 @@
     "./compress": "./src/BareMetal.Compress.js",
     "./charts": "./src/BareMetal.Charts.js",
     "./graph": "./src/BareMetal.Graph.js",
+    "./auth": "./src/BareMetal.Auth.js",
+    "./crypto": "./src/BareMetal.Crypto.js",
+    "./local-kv-store": "./src/BareMetal.LocalKVStore.js",
+    "./progressive": "./src/BareMetal.Progressive.js",
+    "./service-worker": "./src/BareMetal.ServiceWorker.js",
+    "./time": "./src/BareMetal.Time.js",
     "./styles": "./src/BareMetalStyles.css"
   },
   "scripts": {

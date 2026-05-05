@@ -32,6 +32,12 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 | `BareMetal.Graph.js` | `BareMetal.Graph` | Graph/network visualisation |
 | `BareMetal.Compress.js` | `BareMetal.Compress` | Pico compression (also `globalThis.PicoCompress`) |
 | `BareMetal.Metadata.js` | `BareMetal.Metadata` | Schema metadata utilities |
+| `BareMetal.Auth.js` | `BareMetal.Auth` | OIDC/OAuth2 PKCE client with silent refresh, provider presets, UI |
+| `BareMetal.Crypto.js` | `BareMetal.Crypto` | Web Crypto wrapper (AES-GCM, RSA-OAEP, ECDSA, PBKDF2) |
+| `BareMetal.LocalKVStore.js` | `BareMetal.LocalKVStore` | Key-value store (localStorage, sessionStorage, IndexedDB) |
+| `BareMetal.Progressive.js` | `BareMetal.Progressive` | PWA helper (SW registration, install prompts, offline queue, push) |
+| `BareMetal.ServiceWorker.js` | — (SW context) | Configurable service worker (cache strategies, precache, background sync) |
+| `BareMetal.Time.js` | `BareMetal.Time` | Date/time library (format, relative, durations, timezone, Temporal) |
 | `BareMetalStyles.css` | — | Bootstrap-5-compatible CSS subset |
 
 **Dependency graph (load order matters):**
@@ -40,6 +46,8 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 - `BareMetal.ComponentFactories` → soft deps on `BareMetal.Bind`, `BareMetal.Communications`
 - `BareMetal.Rendering` → depends on `BareMetal.Communications`, `BareMetal.Bind`, `BareMetal.Template`
 - `BareMetal.Communications` → depends on `BareMetal.Binary`; optionally uses `BareMetal.Compress`
+- `BareMetal.Auth` → soft dep on `BareMetal.Communications` (attachToRest auto-injects tokens)
+- `BareMetal.Progressive` → soft deps on `BareMetal.Communications`, `BareMetal.LocalKVStore`
 - All others → fully standalone
 
 ## Key Conventions

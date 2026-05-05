@@ -3,9 +3,10 @@
   'use strict';
 
   var CACHE_PREFIX = 'bm-';
+  var MAX_CACHE_ENTRIES = 100;
   var routes = [
     { match: /\.(css|js|woff2?)$/, strategy: 'cacheFirst', cacheName: 'bm-static' },
-    { match: /\/api\//, strategy: 'networkFirst', cacheName: 'bm-api' },
+    { match: /\/api\//, strategy: 'networkOnly', cacheName: 'bm-api' },
     { match: /\.(png|jpg|svg|gif|webp)$/, strategy: 'cacheFirst', cacheName: 'bm-images' },
     { match: /./, strategy: 'networkFirst', cacheName: 'bm-pages' }
   ];
@@ -22,7 +23,7 @@
       return cache.match(request).then(function(cached) {
         if (cached) return cached;
         return fetch(request).then(function(response) {
-          if (response && response.ok) cache.put(request, response.clone());
+          if (response && response.ok) { cache.put(request, response.clone()); _evict(cacheName); }
           return response;
         });
       });
@@ -32,7 +33,7 @@
   function networkFirst(request, cacheName) {
     return fetch(request).then(function(response) {
       if (response && response.ok) {
-        sw.caches.open(cacheName).then(function(cache) { cache.put(request, response.clone()); });
+        sw.caches.open(cacheName).then(function(cache) { cache.put(request, response.clone()); _evict(cacheName); });
       }
       return response;
     }).catch(function() {
@@ -56,6 +57,17 @@
 
   function cacheOnly(request, cacheName) {
     return sw.caches.open(cacheName).then(function(cache) { return cache.match(request); });
+  }
+
+  function _evict(cacheName) {
+    sw.caches.open(cacheName).then(function(cache) {
+      cache.keys().then(function(keys) {
+        if (keys.length > MAX_CACHE_ENTRIES) {
+          var toRemove = keys.length - MAX_CACHE_ENTRIES;
+          for (var i = 0; i < toRemove; i++) cache.delete(keys[i]);
+        }
+      });
+    });
   }
 
   var strategies = {
