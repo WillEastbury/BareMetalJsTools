@@ -38,6 +38,14 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 | `BareMetal.Progressive.js` | `BareMetal.Progressive` | PWA helper (SW registration, install prompts, offline queue, push) |
 | `BareMetal.ServiceWorker.js` | — (SW context) | Configurable service worker (cache strategies, precache, background sync) |
 | `BareMetal.Time.js` | `BareMetal.Time` | Date/time library (format, relative, durations, timezone, Temporal) |
+| `BareMetal.Validate.js` | `BareMetal.Validate` | Schema validation (required, type, min/max, pattern, nested, custom rules) |
+| `BareMetal.I18n.js` | `BareMetal.I18n` | Internationalisation (locale fallback, plurals, interpolation, number/date format) |
+| `BareMetal.StateMachine.js` | `BareMetal.StateMachine` | Finite state machine (states, transitions, guards, actions, context) |
+| `BareMetal.Logger.js` | `BareMetal.Logger` | Structured logging (levels, transports, batching, safe stringify, child loggers) |
+| `BareMetal.Animate.js` | `BareMetal.Animate` | CSS transition/animation helper (enter/leave, stagger, spring, reduced-motion) |
+| `BareMetal.TestRunner.js` | `BareMetal.TestRunner` | In-browser test runner (describe/it/expect, mocks, DOM helpers, TAP output) |
+| `BareMetal.DragDrop.js` | `BareMetal.DragDrop` | Pointer-event drag & drop (sortable, drop zones, constraints, touch) |
+| `BareMetal.A11y.js` | `BareMetal.A11y` | Accessibility (focus traps, live regions, skip links, roving tabindex, keyboard nav) |
 | `BareMetalStyles.css` | — | CSS framework with short class names (`.bt`, `.cd`, `.rw`) |
 | `BareMetal.Styles.BootstrapCompatibilityShim.css` | — | Optional Bootstrap 5 long-name aliases (`.btn`, `.card`, `.row`) |
 

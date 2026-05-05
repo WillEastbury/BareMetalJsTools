@@ -1,6 +1,6 @@
 # BareMetalJsTools
 
-> *164 KB minified for a complete reactive UI framework, CSS toolkit, binary serialisation, compression, REST+WebSocket transport, OAuth/OIDC auth, crypto, offline-first PWA, routing, charting, and graph visualisation. Most people pull in more than that just for a toast notification library.*
+> *194 KB minified for a complete reactive UI framework, CSS toolkit, binary serialisation, compression, REST+WebSocket transport, OAuth/OIDC auth, crypto, offline-first PWA, routing, charting, graph visualisation, validation, i18n, state machines, animation, drag-and-drop, accessibility, and structured logging. Most people pull in more than that just for a toast notification library.*
 
 Modern web development has become absurdly complicated. You need a bundler, a transpiler, a framework, a meta-framework, a state manager, a CSS-in-JS solution, and forty-seven config files before you can render "Hello World". Then you wait for it to compile.
 
@@ -91,7 +91,15 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.Progressive`](src/BareMetal.Progressive.js) | PWA helper. Service worker registration, install prompts, offline request queue, push notifications, manifest generation. | [10 KB](src/BareMetal.Progressive.js) | [5 KB](src/BareMetal.Progressive.min.js) | *Workbox (≈60 KB)*, PWA Builder |
 | [`BareMetal.ServiceWorker`](src/BareMetal.ServiceWorker.js) | Configurable service worker. CacheFirst, NetworkFirst, StaleWhileRevalidate strategies, precache, background sync. | [7 KB](src/BareMetal.ServiceWorker.js) | [4 KB](src/BareMetal.ServiceWorker.min.js) | *Workbox SW (≈15 KB)* |
 | [`BareMetal.Time`](src/BareMetal.Time.js) | Date/time library. Format, parse, add/subtract, diff, durations, relative time, timezone support, Temporal API bridge. | [12 KB](src/BareMetal.Time.js) | [7 KB](src/BareMetal.Time.min.js) | *Day.js (≈7 KB)*, date-fns (≈75 KB), Moment.js (≈290 KB) |
-| **Total** | **The whole toolkit** | **≈292 KB** | **≈164 KB** | **≈1,862 KB** (picking the smaller option from each row) |
+| [`BareMetal.Validate`](src/BareMetal.Validate.js) | Schema validation. Required, type, min/max, pattern, nested objects, arrays, custom rules, error objects with path+code+message. | [4 KB](src/BareMetal.Validate.js) | [3 KB](src/BareMetal.Validate.min.js) | *Yup (≈40 KB)*, Joi (≈150 KB), Zod (≈14 KB) |
+| [`BareMetal.I18n`](src/BareMetal.I18n.js) | Internationalisation. Locale fallback chains, ICU plural rules via `Intl.PluralRules`, interpolation, number/date formatting. | [5 KB](src/BareMetal.I18n.js) | [3 KB](src/BareMetal.I18n.min.js) | *i18next (≈40 KB)*, FormatJS (≈30 KB) |
+| [`BareMetal.StateMachine`](src/BareMetal.StateMachine.js) | Finite state machine. States, transitions, guards, actions, context, subscribe/unsubscribe. | [3 KB](src/BareMetal.StateMachine.js) | [1 KB](src/BareMetal.StateMachine.min.js) | *XState (≈50 KB)*, Robot (≈4 KB) |
+| [`BareMetal.Logger`](src/BareMetal.Logger.js) | Structured logging. Levels, transports (console, beacon, custom), batching, safe circular-ref stringify, child loggers. | [5 KB](src/BareMetal.Logger.js) | [3 KB](src/BareMetal.Logger.min.js) | *Winston (≈80 KB)*, Pino (≈30 KB), loglevel (≈3 KB) |
+| [`BareMetal.Animate`](src/BareMetal.Animate.js) | CSS transition/animation helper. Enter/leave, stagger, spring, respects `prefers-reduced-motion`, timeout fallback. | [8 KB](src/BareMetal.Animate.js) | [4 KB](src/BareMetal.Animate.min.js) | *Framer Motion (≈120 KB)*, GSAP (≈60 KB), animate.css (≈80 KB) |
+| [`BareMetal.TestRunner`](src/BareMetal.TestRunner.js) | In-browser test runner. describe/it/expect, async, beforeEach/afterEach, mocks, DOM helpers, TAP output. | [13 KB](src/BareMetal.TestRunner.js) | [6 KB](src/BareMetal.TestRunner.min.js) | *Jest (≈1 MB)*, Mocha (≈100 KB), uvu (≈6 KB) |
+| [`BareMetal.DragDrop`](src/BareMetal.DragDrop.js) | Pointer-event drag & drop. Sortable lists, drop zones, constraints, touch support, `setPointerCapture`. | [11 KB](src/BareMetal.DragDrop.js) | [6 KB](src/BareMetal.DragDrop.min.js) | *SortableJS (≈40 KB)*, dnd-kit (≈45 KB), Draggable (≈80 KB) |
+| [`BareMetal.A11y`](src/BareMetal.A11y.js) | Accessibility helpers. Focus traps, live regions, skip links, roving tabindex, keyboard navigation, ARIA attribute management. | [9 KB](src/BareMetal.A11y.js) | [5 KB](src/BareMetal.A11y.min.js) | *focus-trap (≈10 KB)*, ally.js (≈130 KB) |
+| **Total** | **The whole toolkit** | **≈350 KB** | **≈194 KB** | **≈2,455 KB** (picking the smaller option from each row) |
 
 ### Architecture
 
@@ -133,6 +141,20 @@ graph TB
     Time["🕐 Time<br/><i>Format · Relative · TZ</i>"]
   end
 
+  subgraph "Dev & Testing"
+    Validate["✅ Validate<br/><i>Schema · Rules · Errors</i>"]
+    TestRunner["🧪 TestRunner<br/><i>describe · it · expect</i>"]
+    Logger["📝 Logger<br/><i>Levels · Transports · Batch</i>"]
+  end
+
+  subgraph "Interaction & UX"
+    Animate["🎬 Animate<br/><i>Enter/Leave · Spring</i>"]
+    DragDrop["🖱️ DragDrop<br/><i>Pointer · Sortable · Zones</i>"]
+    A11y["♿ A11y<br/><i>Focus trap · ARIA · Kbd</i>"]
+    I18n["🌍 I18n<br/><i>Locale · Plural · Format</i>"]
+    StateMachine["🔄 StateMachine<br/><i>States · Guards · Context</i>"]
+  end
+
   Rendering --> Bind
   Rendering --> Template
   Rendering --> Rest
@@ -161,6 +183,14 @@ graph TB
   style ServiceWorker fill:#adb5bd,color:#000
   style KVStore fill:#ffc107,color:#000
   style Time fill:#198754,color:#fff
+  style Validate fill:#20c997,color:#000
+  style TestRunner fill:#6c757d,color:#fff
+  style Logger fill:#adb5bd,color:#000
+  style Animate fill:#fd7e14,color:#fff
+  style DragDrop fill:#e83e8c,color:#fff
+  style A11y fill:#6610f2,color:#fff
+  style I18n fill:#17a2b8,color:#fff
+  style StateMachine fill:#495057,color:#fff
 ```
 
 ---
