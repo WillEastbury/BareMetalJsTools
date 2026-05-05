@@ -46,6 +46,8 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 | `BareMetal.TestRunner.js` | `BareMetal.TestRunner` | In-browser test runner (describe/it/expect, mocks, DOM helpers, TAP output) |
 | `BareMetal.DragDrop.js` | `BareMetal.DragDrop` | Pointer-event drag & drop (sortable, drop zones, constraints, touch) |
 | `BareMetal.A11y.js` | `BareMetal.A11y` | Accessibility (focus traps, live regions, skip links, roving tabindex, keyboard nav) |
+| `BareMetal.Expressions.js` | `BareMetal.Expressions` | 50+ pre-built regex patterns (email, phone, URL, postal, credit card, UUID, etc.) |
+| `BareMetal.Tokens.js` | `BareMetal.Tokens` | JWT create/sign/verify/decode (HS256/384/512, RS256, ES256, Web Crypto) |
 | `BareMetalStyles.css` | — | CSS framework with short class names (`.bt`, `.cd`, `.rw`) |
 | `BareMetal.Styles.BootstrapCompatibilityShim.css` | — | Optional Bootstrap 5 long-name aliases (`.btn`, `.card`, `.row`) |
 

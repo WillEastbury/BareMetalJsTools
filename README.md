@@ -1,6 +1,6 @@
 # BareMetalJsTools
 
-> *194 KB minified for a complete reactive UI framework, CSS toolkit, binary serialisation, compression, REST+WebSocket transport, OAuth/OIDC auth, crypto, offline-first PWA, routing, charting, graph visualisation, validation, i18n, state machines, animation, drag-and-drop, accessibility, and structured logging. Most people pull in more than that just for a toast notification library.*
+> *221 KB minified for a complete reactive UI framework, CSS toolkit, binary serialisation, compression, REST+WebSocket transport, OAuth/OIDC auth, crypto, offline-first PWA, routing, charting, graph visualisation, validation, i18n, state machines, animation, drag-and-drop, accessibility, structured logging, JWT handling, and 50+ regex patterns. Most people pull in more than that just for a toast notification library.*
 
 Modern web development has become absurdly complicated. You need a bundler, a transpiler, a framework, a meta-framework, a state manager, a CSS-in-JS solution, and forty-seven config files before you can render "Hello World". Then you wait for it to compile.
 
@@ -99,7 +99,9 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.TestRunner`](src/BareMetal.TestRunner.js) | In-browser test runner. describe/it/expect, async, beforeEach/afterEach, mocks, DOM helpers, TAP output. | [13 KB](src/BareMetal.TestRunner.js) | [6 KB](src/BareMetal.TestRunner.min.js) | *Jest (≈1 MB)*, Mocha (≈100 KB), uvu (≈6 KB) |
 | [`BareMetal.DragDrop`](src/BareMetal.DragDrop.js) | Pointer-event drag & drop. Sortable lists, drop zones, constraints, touch support, `setPointerCapture`. | [11 KB](src/BareMetal.DragDrop.js) | [6 KB](src/BareMetal.DragDrop.min.js) | *SortableJS (≈40 KB)*, dnd-kit (≈45 KB), Draggable (≈80 KB) |
 | [`BareMetal.A11y`](src/BareMetal.A11y.js) | Accessibility helpers. Focus traps, live regions, skip links, roving tabindex, keyboard navigation, ARIA attribute management. | [9 KB](src/BareMetal.A11y.js) | [5 KB](src/BareMetal.A11y.min.js) | *focus-trap (≈10 KB)*, ally.js (≈130 KB) |
-| **Total** | **The whole toolkit** | **≈350 KB** | **≈194 KB** | **≈2,455 KB** (picking the smaller option from each row) |
+| [`BareMetal.Expressions`](src/BareMetal.Expressions.js) | 50+ pre-built regex patterns. Email, phone, URL, postal codes, credit card, UUID, semver, JWT, dates, and more. `test()`, `extract()`, `detect()`, `register()`. | [25 KB](src/BareMetal.Expressions.js) | [17 KB](src/BareMetal.Expressions.min.js) | *validator.js (≈60 KB)*, regex collections scattered across Stack Overflow |
+| [`BareMetal.Tokens`](src/BareMetal.Tokens.js) | JWT library. Create, sign (HS256/384/512, RS256, ES256), verify, decode, inspect. Fluent builder, PEM/JWK import, key generation via Web Crypto. | [20 KB](src/BareMetal.Tokens.js) | [10 KB](src/BareMetal.Tokens.min.js) | *jsonwebtoken (≈30 KB + deps)*, jose (≈100 KB) |
+| **Total** | **The whole toolkit** | **≈395 KB** | **≈221 KB** | **≈2,645 KB** (picking the smaller option from each row) |
 
 ### Architecture
 
