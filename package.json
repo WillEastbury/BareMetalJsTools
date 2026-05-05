@@ -35,7 +35,13 @@
     "./service-worker": "./src/BareMetal.ServiceWorker.js",
     "./time": "./src/BareMetal.Time.js",
     "./styles": "./src/BareMetalStyles.css",
-    "./styles/bootstrap-shim": "./src/BareMetal.Styles.BootstrapCompatibilityShim.css"
+    "./styles/bootstrap-shim": "./src/BareMetal.Styles.BootstrapCompatibilityShim.css",
+    "./themes/base": "./src/themes/base.css",
+    "./themes/bedlam": "./src/themes/bedlam.css",
+    "./themes/wavefunction": "./src/themes/wavefunction.css",
+    "./themes/lava": "./src/themes/lava.css",
+    "./themes/candy": "./src/themes/candy.css",
+    "./fonts": "./src/fonts/fonts.css"
   },
   "scripts": {
     "test": "jest",

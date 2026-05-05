@@ -37,6 +37,39 @@ The whole point is the same everywhere: understand what the machine actually nee
 |---|---|---|---|---|
 | [`BareMetal.Styles`](docs/BareMetalStyles.md) | CSS framework. Grid, flex, buttons, forms, tables, cards, modals, alerts, toasts — all with short class names optimised for wire size. Zero JS. | [58 KB](src/BareMetalStyles.css) | [42 KB](src/BareMetalStyles.min.css) | *Bootstrap (227 KB)*, Tailwind (≈300 KB+), Fabric UI (≈350 KB), React (≈140 KB) |
 | [`BareMetal.Styles.BootstrapCompatibilityShim`](src/BareMetal.Styles.BootstrapCompatibilityShim.css) | Drop-in Bootstrap 5 class-name compatibility. Use standard Bootstrap classes (`.btn`, `.card`, `.row`, `.col-md-6`, etc.) without loading Bootstrap itself. Optional — only needed if migrating from Bootstrap. | [29 KB](src/BareMetal.Styles.BootstrapCompatibilityShim.css) | [24 KB](src/BareMetal.Styles.BootstrapCompatibilityShim.min.css) | *Bootstrap 5 (227 KB)* — this replaces it at 1/9th the size |
+| Themes | Swap the colour palette with a single `<link>`. ~800 bytes source, ~600 bytes min each. | | | *Bootswatch (≈8 KB per theme)* |
+
+**Available themes** (`src/themes/`):
+
+| Theme | Vibe | File |
+|-------|------|------|
+| `base` | Clean white, soft greys, gentle blue | [base.css](src/themes/base.css) |
+| `bedlam` | Dark cyberpunk — neon purples & teals | [bedlam.css](src/themes/bedlam.css) |
+| `wavefunction` | Dark scientific — deep slate & electric indigo | [wavefunction.css](src/themes/wavefunction.css) |
+| `lava` | Fiery dark — molten oranges on volcanic black | [lava.css](src/themes/lava.css) |
+| `candy` | Soft candy pink — pastels & lilacs on warm white | [candy.css](src/themes/candy.css) |
+
+```html
+<!-- Load core + optional theme (after core, overrides :root vars) -->
+<link href="BareMetalStyles.min.css" rel="stylesheet">
+<link href="themes/bedlam.min.css" rel="stylesheet">
+```
+
+**Bundled fonts** (`src/fonts/`) — load [`fonts.css`](src/fonts/fonts.css) for `@font-face` declarations:
+
+| Font | Type | Size | Use case |
+|------|------|------|----------|
+| `BareMetalMono` | JetBrains Mono subset | 17 KB | Code, data, terminals |
+| `BareMetalSans` | Inter subset | 14 KB | Clean body text, UI |
+| `BareMetalPixel` | Silkscreen subset | 2.7 KB | Retro, IoT, tiny displays |
+
+```html
+<!-- Load fonts (optional — themes reference them via --bs-font-sans) -->
+<link href="fonts/fonts.min.css" rel="stylesheet">
+<link href="BareMetalStyles.min.css" rel="stylesheet">
+<link href="themes/wavefunction.min.css" rel="stylesheet">
+```
+
 | [`BareMetal.Bind`](docs/BareMetalBind.md) | Reactive `Proxy` state + `m-*` directives. Two-way forms, lists, toasts, chatbot, calendar, Gantt charts, sortable tables, tree views. | [13 KB](src/BareMetal.Bind.js) | [6 KB](src/BareMetal.Bind.min.js) | Vue.js (≈40 KB min), Alpine.js (≈15 KB), Rivets.js ❤️, *Knockout.js ❤️*, TinyBind 💕 |
 | [`BareMetal.Components`](docs/BareMetalBind.md) | Widget directives (m-img, m-toast, m-chatbot, m-calendar, m-gantt, m-table, m-tree, m-entity) that extend Bind. | [25 KB](src/BareMetal.Components.js) | [13 KB](src/BareMetal.Components.min.js) | PrimeVue, Vuetify, Material UI (hundreds of KB each) |
 | [`BareMetal.ComponentFactories`](docs/BareMetalBind.md) | `create.*` helpers and `chatEndpoint()` auto-wire for REST-backed chatbots. | [2 KB](src/BareMetal.ComponentFactories.js) | [1 KB](src/BareMetal.ComponentFactories.min.js) | *Hand-rolled boilerplate* |

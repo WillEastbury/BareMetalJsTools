@@ -1,0 +1,19 @@
+/* BareMetalStyles Theme: Base (Clean & Minimal)
+   Plain white, soft greys, gentle blue accent.
+   This is the default — no need to load separately unless overriding another theme. */
+:root {
+  --bs-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --bs-body-bg: #fff;
+  --bs-body-color: #212529;
+  --bs-secondary-color: #6c757d;
+  --bs-primary: #0d6efd; --bs-primary-rgb: 13,110,253;
+  --bs-secondary: #6c757d; --bs-secondary-rgb: 108,117,125;
+  --bs-success: #198754; --bs-success-rgb: 25,135,84;
+  --bs-danger: #dc3545; --bs-danger-rgb: 220,53,69;
+  --bs-warning: #ffc107; --bs-warning-rgb: 255,193,7;
+  --bs-info: #0dcaf0; --bs-info-rgb: 13,202,240;
+  --bs-light: #f8f9fa; --bs-light-rgb: 248,249,250;
+  --bs-dark: #212529; --bs-dark-rgb: 33,37,41;
+  --bs-border-color: #dee2e6;
+  --bs-focus-ring: 0 0 0 .25rem rgba(13,110,253,.25);
+}

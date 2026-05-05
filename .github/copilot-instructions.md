@@ -100,3 +100,18 @@ Zero runtime dependencies. `jest` and `jest-environment-jsdom` are the only dev 
 <link href="BareMetalStyles.min.css" rel="stylesheet">
 <link href="BareMetal.Styles.BootstrapCompatibilityShim.min.css" rel="stylesheet">
 ```
+
+**Themes** (`src/themes/`): Tiny `:root` variable overrides (~600 bytes min each). Load after the core stylesheet:
+
+| Theme | Vibe |
+|-------|------|
+| `base` | Clean white, soft greys (default — already built into core) |
+| `bedlam` | Dark cyberpunk — neon purples & teals |
+| `wavefunction` | Dark scientific — deep slate & electric indigo |
+| `lava` | Fiery dark — molten oranges on volcanic black |
+| `candy` | Soft candy pink — pastels & lilacs |
+
+```html
+<link href="BareMetalStyles.min.css" rel="stylesheet">
+<link href="themes/wavefunction.min.css" rel="stylesheet">
+```

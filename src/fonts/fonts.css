@@ -1,0 +1,41 @@
+/* BareMetalStyles — Bundled Fonts
+   Three subsetted WOFF2 fonts (Latin + Latin-1 Supplement).
+   Load this file to make the font families available, then
+   reference them via theme or custom CSS.
+
+   Fonts:
+     BareMetalMono   — JetBrains Mono subset (17 KB) — code, data, terminals
+     BareMetalSans   — Inter subset (14 KB) — clean body text, UI
+     BareMetalPixel  — Silkscreen subset (2.7 KB) — retro, IoT dashboards, tiny displays
+
+   All fonts are OFL-licensed (SIL Open Font License).
+*/
+
+@font-face {
+  font-family: 'BareMetalMono';
+  src: url('BareMetalMono.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BareMetalSans';
+  src: url('BareMetalSans.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'BareMetalPixel';
+  src: url('BareMetalPixel.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Utility classes — use directly or let themes set --bs-font-sans / --bs-font-mono */
+.font-mono { font-family: 'BareMetalMono', SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; }
+.font-sans { font-family: 'BareMetalSans', system-ui, -apple-system, sans-serif !important; }
+.font-pixel { font-family: 'BareMetalPixel', 'Courier New', monospace !important; }

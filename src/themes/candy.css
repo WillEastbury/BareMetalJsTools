@@ -1,0 +1,19 @@
+/* BareMetalStyles Theme: Candy (Klaire)
+   Soft candy pink — pastel pinks and lilacs on warm white. */
+:root {
+  --bs-font-sans: 'BareMetalSans', 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  --bs-font-mono: 'BareMetalMono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --bs-body-bg: #fff5f9;
+  --bs-body-color: #4a2040;
+  --bs-secondary-color: #a06080;
+  --bs-primary: #e91e8c; --bs-primary-rgb: 233,30,140;
+  --bs-secondary: #b054a0; --bs-secondary-rgb: 176,84,160;
+  --bs-success: #4caf80; --bs-success-rgb: 76,175,128;
+  --bs-danger: #e53935; --bs-danger-rgb: 229,57,53;
+  --bs-warning: #ffb74d; --bs-warning-rgb: 255,183,77;
+  --bs-info: #ce93d8; --bs-info-rgb: 206,147,216;
+  --bs-light: #fce4ec; --bs-light-rgb: 252,228,236;
+  --bs-dark: #4a1942; --bs-dark-rgb: 74,25,66;
+  --bs-border-color: #f8bbd0;
+  --bs-focus-ring: 0 0 0 .25rem rgba(233,30,140,.25);
+}
