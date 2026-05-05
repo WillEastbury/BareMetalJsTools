@@ -45,6 +45,7 @@
     "./state-machine": "./src/BareMetal.StateMachine.js",
     "./logger": "./src/BareMetal.Logger.js",
     "./tokens": "./src/BareMetal.Tokens.js",
+    "./rbac": "./src/BareMetal.RBAC.js",
     "./styles": "./src/BareMetalStyles.css",
     "./styles/bootstrap-shim": "./src/BareMetal.Styles.BootstrapCompatibilityShim.css",
     "./themes/base": "./src/themes/base.css",
