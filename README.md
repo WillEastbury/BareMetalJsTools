@@ -62,6 +62,9 @@ The whole point is the same everywhere: understand what the machine actually nee
 | `BareMetalMono` | JetBrains Mono subset | 17 KB | Code, data, terminals |
 | `BareMetalSans` | Inter subset | 14 KB | Clean body text, UI |
 | `BareMetalPixel` | Silkscreen subset | 2.7 KB | Retro, IoT, tiny displays |
+| `Wavefunction-Sans` | Source Sans 3 subset | 27 KB | Versatile modern sans-serif |
+| `Wavefunction-Curly` | Dancing Script subset | 28 KB | Flowing handwriting/calligraphy |
+| `Wavefunction-Serif` | Source Serif 4 subset | 28 KB | Professional typeset (Times-like) |
 
 ```html
 <!-- Load fonts (optional — themes reference them via --bs-font-sans) -->
