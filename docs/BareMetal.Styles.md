@@ -20,7 +20,7 @@ import 'baremetal-js-tools/styles';
 |---|---|---:|
 | Grid / Layout | `container-fluid`, `row`, `col-md-*` (sm/md/xl breakpoints) | ~50 |
 | Flexbox | `d-flex`, `align-items-center`, `justify-content-between`, `gap-*` | 18 |
-| Spacing | `m-*`, `p-*`, `gap-*` (0–5 scale + auto) | 42 |
+| Spacing | `m-*`, `p-*`, `gap-*` (0ÔÇô5 scale + auto) | 42 |
 | Typography | `small`, `display-4/5`, `fs-*`, `fw-bold`, `text-truncate` | 18 |
 | Text / BG colors | `text-primary`, `bg-success`, `bg-primary-subtle` | 24 |
 | Borders / Rounding | `border`, `rounded-pill`, `shadow-sm` | 15 |
@@ -52,11 +52,11 @@ All colors, spacing, borders, and radii use CSS custom properties on `:root`. Ov
 
 ## Design principles
 
-- **Usage-driven** — only classes proven in use across 3 codebases, no speculative additions
-- **Bootstrap-compatible** — same class names, same semantics, drop-in replacement
-- **CSS-only interactivity** — modals/dropdowns/collapses toggled via `.show` class (use `BareMetalBind` `m-if` for state)
-- **Focus-visible** — all interactive elements have `:focus-visible` ring styles for accessibility
-- **Flexbox grid** — 12-column system using flexbox, matching Bootstrap's wrapping/gutter behavior
+- **Usage-driven** ÔÇö only classes proven in use across 3 codebases, no speculative additions
+- **Bootstrap-compatible** ÔÇö same class names, same semantics, drop-in replacement
+- **CSS-only interactivity** ÔÇö modals/dropdowns/collapses toggled via `.show` class (use `BareMetalBind` `m-if` for state)
+- **Focus-visible** ÔÇö all interactive elements have `:focus-visible` ring styles for accessibility
+- **Flexbox grid** ÔÇö 12-column system using flexbox, matching Bootstrap's wrapping/gutter behavior
 
 ## What's NOT included
 
