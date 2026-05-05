@@ -6,100 +6,102 @@
 const fs = require('fs');
 const path = require('path');
 
-const SRC = path.resolve(__dirname, '../src/BareMetal.PicoScript.Editor.js');
+const CORE_SRC = path.resolve(__dirname, '../src/BareMetal.PicoScript.js');
+const EDITOR_SRC = path.resolve(__dirname, '../src/BareMetal.PicoScript.Editor.js');
 
-function loadEditor(coreFactory) {
-  const code = fs.readFileSync(SRC, 'utf8');
-  const core = coreFactory ? coreFactory() : {};
-  const fn = new Function('document', 'window', 'BareMetal', code + '\nreturn BareMetal.PicoScript.Editor;');
-  return fn(global.document, global.window, { PicoScript: core });
+function loadSuite(withCore) {
+  const bare = {};
+  if (withCore !== false) {
+    const coreCode = fs.readFileSync(CORE_SRC, 'utf8');
+    new Function('BareMetal', coreCode + '\nreturn BareMetal;')(bare);
+  }
+  const editorCode = fs.readFileSync(EDITOR_SRC, 'utf8');
+  const Editor = new Function('document', 'window', 'BareMetal', editorCode + '\nreturn BareMetal.PicoScript.Editor;')(global.document, global.window, bare);
+  return { Editor, BareMetal: bare };
 }
 
-function makeCore() {
-  return {
-    validate(source) {
-      if (source.indexOf('BAD') > -1) return { valid: false, errors: [{ line: 2, message: 'Syntax error' }] };
-      return { valid: true, errors: [] };
-    },
-    compile(source) {
-      return { instructions: source.split(/\r?\n/).filter(Boolean).map((line, i) => ({ op: line, line: i + 1 })) };
-    },
-    disassemble(bytecode) {
-      return bytecode.instructions.map((inst, i) => i + ': ' + inst.op).join('\n');
-    },
-    createVM(opts) {
-      let pc = 0;
-      let halted = false;
-      let cycles = 0;
-      const vars = {};
-      const lines = opts.bytecode.instructions.slice();
-      return {
-        step() {
-          if (halted || pc >= lines.length) {
-            halted = true;
-            return { pc, cycles, line: lines.length ? lines[lines.length - 1].line : 1, halted, variables: vars, stack: [] };
-          }
-          const inst = lines[pc];
-          cycles++;
-          if (/LET\s+(\w+)\s*=\s*(\d+)/i.test(inst.op)) {
-            const m = inst.op.match(/LET\s+(\w+)\s*=\s*(\d+)/i);
-            vars[m[1]] = Number(m[2]);
-          }
-          if (/PRINT\s+/i.test(inst.op)) opts.output(inst.op.replace(/^PRINT\s+/i, ''));
-          pc++;
-          if (pc >= lines.length) halted = true;
-          return { pc, cycles, line: halted ? inst.line : lines[Math.min(pc, lines.length - 1)].line, halted, variables: vars, stack: [pc], dataPointer: 0 };
-        },
-        reset() { pc = 0; cycles = 0; halted = false; },
-        getState() { return { pc, cycles, line: lines[Math.min(pc, Math.max(lines.length - 1, 0))] ? lines[Math.min(pc, Math.max(lines.length - 1, 0))].line : 1, halted, variables: vars, stack: [pc], dataPointer: 0 }; }
-      };
-    },
-    run() { return {}; }
-  };
+function makeHost() {
+  const host = document.createElement('div');
+  host.style.width = '1200px';
+  host.style.height = '800px';
+  document.body.appendChild(host);
+  return host;
 }
+
+const SAMPLE = [
+  'ON DATA:',
+  '  LET x = PEEK(DATA$, 0)',
+  '  IF x = 71 THEN',
+  '    EMIT_STR("200 OK")',
+  '  ELSE',
+  '    EMIT_STR("404")',
+  '  END IF',
+  'END ON'
+].join('\n');
 
 describe('BareMetal.PicoScript.Editor', () => {
-  test('creates editor, highlights code and supports breakpoints', () => {
-    const Editor = loadEditor(makeCore);
-    const host = document.createElement('div');
-    document.body.appendChild(host);
-    const editor = Editor.create(host, { source: 'start:\nLET X = 10\nPRINT "hi"', showDebug: true });
+  test('creates 4-pane compiler IDE, compiles source, and supports breakpoints', () => {
+    const { Editor } = loadSuite(true);
+    const host = makeHost();
+    const editor = Editor.create(host, { source: SAMPLE, height: '640px' });
 
+    const compiled = editor.compile();
+
+    expect(compiled.entries.data).toBeGreaterThanOrEqual(0);
+    expect(editor.getCompiled()).toBe(compiled);
+    expect(editor.getCfg().blocks.length).toBeGreaterThan(0);
     expect(host.querySelector('textarea')).toBeTruthy();
-    expect(host.querySelector('code').textContent).toContain('LET X = 10');
-    expect(host.textContent).toContain('Variables');
+    expect(host.querySelector('svg')).toBeTruthy();
+    expect(host.textContent).toContain('① SOURCE');
+    expect(host.textContent).toContain('② BYTECODE (IR)');
+    expect(host.textContent).toContain('③ JUMP GRAPH (CFG)');
+    expect(host.textContent).toContain('④ TRACE + OUTPUT');
+    expect(host.textContent).toContain('=== ON DATA');
 
-    editor.setBreakpoint(2);
-    expect(editor.getState().breakpoints).toContain(2);
+    editor.setBreakpoint(3);
+    expect(editor.getState().breakpoints).toContain(3);
+
+    const textarea = host.querySelector('textarea');
+    textarea.selectionStart = SAMPLE.indexOf('IF x = 71 THEN');
+    textarea.selectionEnd = textarea.selectionStart;
+    textarea.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    expect(editor.getState().selectedLine).toBe(3);
   });
 
-  test('runs program and updates output/status', async () => {
-    const Editor = loadEditor(makeCore);
-    const host = document.createElement('div');
-    document.body.appendChild(host);
-    const editor = Editor.create(host, { source: 'LET X = 10\nPRINT 20', showDebug: true });
+  test('dispatches, traces blocks, emits output, and steps VM', async () => {
+    const { Editor } = loadSuite(true);
+    const host = makeHost();
+    const editor = Editor.create(host, { source: SAMPLE });
 
-    await editor.run();
+    editor.compile();
+    const result = await editor.dispatch('data', '47');
 
-    const output = editor.getOutput().map(x => x.text);
-    expect(output).toContain('20');
-    expect(output.some(x => x.indexOf('Program halted after') === 0)).toBe(true);
-    expect(editor.getState().variables.X).toBe(10);
+    expect(Array.from(result.emitBuffer)).not.toHaveLength(0);
+    expect(editor.getTrace().trace.length).toBeGreaterThan(0);
+    expect(host.textContent).toContain('Emit');
+    expect(host.textContent).toContain('200 OK');
+
+    editor.reset();
+    const stepState = await editor.step();
+    expect(stepState.pc).not.toBeNull();
+    expect(editor.getState().currentLine).toBeGreaterThan(0);
+    expect(editor.getState().trace.length).toBeGreaterThan(0);
+
+    editor.setTheme('light');
+    expect(host.firstChild.style.background).toBe('rgb(255, 255, 255)');
   });
 
-  test('surfaces compile and missing-core errors', async () => {
-    const Editor = loadEditor(makeCore);
-    const host = document.createElement('div');
-    document.body.appendChild(host);
-    const editor = Editor.create(host, { source: 'LET X = 1\nBAD TOKEN' });
+  test('surfaces compile failures and missing core errors', async () => {
+    const { Editor } = loadSuite(true);
+    const host = makeHost();
+    const editor = Editor.create(host, { source: 'ON DATA:\n  LET x =\nEND ON' });
 
-    await expect(editor.run()).rejects.toThrow('Syntax error');
-    expect(editor.getOutput().some(x => x.text === 'Syntax error')).toBe(true);
+    expect(() => editor.compile()).toThrow('Expected expression');
+    expect(host.textContent).toContain('Error');
 
-    const Missing = loadEditor();
-    const host2 = document.createElement('div');
-    document.body.appendChild(host2);
-    const editor2 = Missing.create(host2, { source: 'PRINT 1' });
-    await expect(editor2.run()).rejects.toThrow('core module not loaded');
+    const missing = loadSuite(false).Editor;
+    const host2 = makeHost();
+    const editor2 = missing.create(host2, { source: 'ON DATA:\n  EMIT_U8(65)\nEND ON' });
+    await expect(editor2.dispatch('data', '')).rejects.toThrow('core module not loaded');
   });
 });
