@@ -48,6 +48,7 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 | `BareMetal.A11y.js` | `BareMetal.A11y` | Accessibility (focus traps, live regions, skip links, roving tabindex, keyboard nav) |
 | `BareMetal.Expressions.js` | `BareMetal.Expressions` | 50+ pre-built regex patterns (email, phone, URL, postal, credit card, UUID, etc.) |
 | `BareMetal.Tokens.js` | `BareMetal.Tokens` | JWT create/sign/verify/decode (HS256/384/512, RS256, ES256, Web Crypto) |
+| `BareMetal.Codes.js` | `BareMetal.Codes` | Reference data (countries, currencies, languages, timezones, HTTP, MIME, colours, cards, units) |
 | `BareMetalStyles.css` | — | CSS framework with short class names (`.bt`, `.cd`, `.rw`) |
 | `BareMetal.Styles.BootstrapCompatibilityShim.css` | — | Optional Bootstrap 5 long-name aliases (`.btn`, `.card`, `.row`) |
 
