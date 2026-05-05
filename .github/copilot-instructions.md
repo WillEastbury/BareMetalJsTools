@@ -52,6 +52,8 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 | `BareMetal.RBAC.js` | `BareMetal.RBAC` | Client-side RBAC (reads JWT, checks roles/groups/permissions, DOM attrs) |
 | `BareMetal.Workflow.js` | `BareMetal.Workflow` | Workflow engine (SET/IF/FOR/FOREACH/FOREACHP/WEB/LOAD/SAVE + designer) |
 | `BareMetal.Markdown.js` | `BareMetal.Markdown` | GFM Markdown-to-HTML renderer (render, toc, frontMatter, sanitize) |
+| `BareMetal.PicoScript.js` | `BareMetal.PicoScript` | Protocol compiler: BASIC DSL → bytecode → CFG. Event dispatch, EMIT/PEEK, safety rails, trace |
+| `BareMetal.PicoScript.Editor.js` | `BareMetal.PicoScript.Editor` | IDE control for PicoScript (syntax highlight, debug, breakpoints) |
 | `BareMetalStyles.css` | — | CSS framework with short class names (`.bt`, `.cd`, `.rw`) |
 | `BareMetal.Styles.BootstrapCompatibilityShim.css` | — | Optional Bootstrap 5 long-name aliases (`.btn`, `.card`, `.row`) |
 

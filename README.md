@@ -1,6 +1,6 @@
 # BareMetalJsTools
 
-> *282 KB minified for a complete reactive UI framework, CSS toolkit, binary serialisation, compression, REST+WebSocket transport, OAuth/OIDC auth, crypto, offline-first PWA, routing, charting, graph visualisation, validation, i18n, state machines, animation, drag-and-drop, accessibility, structured logging, JWT handling, 50+ regex patterns, ISO reference data, client-side RBAC, a workflow engine, and a Markdown renderer. Most people pull in more than that just for a toast notification library.*
+> *347 KB minified for a complete reactive UI framework, CSS toolkit, binary serialisation, compression, REST+WebSocket transport, OAuth/OIDC auth, crypto, offline-first PWA, routing, charting, graph visualisation, validation, i18n, state machines, animation, drag-and-drop, accessibility, structured logging, JWT handling, 50+ regex patterns, ISO reference data, client-side RBAC, a workflow engine, a Markdown renderer, and a protocol compiler with IDE. Most people pull in more than that just for a toast notification library.*
 
 Modern web development has become absurdly complicated. You need a bundler, a transpiler, a framework, a meta-framework, a state manager, a CSS-in-JS solution, and forty-seven config files before you can render "Hello World". Then you wait for it to compile.
 
@@ -110,7 +110,9 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.RBAC`](docs/BareMetal.RBAC.md) | Client-side role/permission UI hints. Reads JWT from storage/cookie, checks roles, groups, permissions, scopes. DOM attribute processing. **UI hints only — enforce server-side.** | [19 KB](src/BareMetal.RBAC.js) | [9 KB](src/BareMetal.RBAC.min.js) | *CASL (≈30 KB)*, casbin.js (≈50 KB), custom middleware |
 | [`BareMetal.Workflow`](docs/BareMetal.Workflow.md) | Minimal workflow engine. SET/IF/ELSE/FOR/FOREACH/FOREACHP/WEB/LOAD/SAVE/LOG/WAIT/CALL. Registry, JSON serialization, visual designer component. | [23 KB](src/BareMetal.Workflow.js) | [12 KB](src/BareMetal.Workflow.min.js) | *n8n (massive)*, Camunda (enterprise), custom state machines |
 | [`BareMetal.Markdown`](docs/BareMetal.Markdown.md) | GFM Markdown-to-HTML renderer. Headings, lists, tables, code blocks, inline formatting, TOC, front matter, custom renderers, sanitize mode. | [18 KB](src/BareMetal.Markdown.js) | [11 KB](src/BareMetal.Markdown.min.js) | *marked.js (≈39 KB)*, markdown-it (≈100 KB), showdown (≈70 KB) |
-| **Total** | **The whole toolkit** | **≈483 KB** | **≈282 KB** | **≈3,234 KB** (picking the smaller option from each row) |
+| [`BareMetal.PicoScript`](docs/BareMetal.PicoScript.md) | Protocol compiler. BASIC-style DSL → bytecode → jump graph. Event-driven dispatch (ON DATA/TICK/CONNECT/CLOSE), EMIT/PEEK wire primitives, CFG extraction, safety rails, trace. | [94 KB](src/BareMetal.PicoScript.js) | [43 KB](src/BareMetal.PicoScript.min.js) | *No real equivalent* — custom protocol compilers are bespoke |
+| [`BareMetal.PicoScript.Editor`](docs/BareMetal.PicoScript.Editor.md) | IDE control for PicoScript. Syntax highlighting, line numbers, toolbar (run/step/stop), output panel, debug panel (vars/stack/bytecode), breakpoints, dark/light themes. | [24 KB](src/BareMetal.PicoScript.Editor.js) | [22 KB](src/BareMetal.PicoScript.Editor.min.js) | *CodeMirror (≈500 KB)*, Monaco (≈5 MB) |
+| **Total** | **The whole toolkit** | **≈601 KB** | **≈347 KB** | **≈3,234 KB** (picking the smaller option from each row) |
 
 ### Architecture
 

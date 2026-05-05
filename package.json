@@ -48,6 +48,7 @@
     "./markdown": "./src/BareMetal.Markdown.js",
     "./tokens": "./src/BareMetal.Tokens.js",
     "./rbac": "./src/BareMetal.RBAC.js",
+    "./picoscript": "./src/BareMetal.PicoScript.js",
     "./styles": "./src/BareMetalStyles.css",
     "./styles/bootstrap-shim": "./src/BareMetal.Styles.BootstrapCompatibilityShim.css",
     "./themes/base": "./src/themes/base.css",
@@ -55,7 +56,8 @@
     "./themes/wavefunction": "./src/themes/wavefunction.css",
     "./themes/lava": "./src/themes/lava.css",
     "./themes/candy": "./src/themes/candy.css",
-    "./fonts": "./src/fonts/fonts.css"
+    "./fonts": "./src/fonts/fonts.css",
+    "./picoscript-editor": "./src/BareMetal.PicoScript.Editor.js"
   },
   "scripts": {
     "test": "jest",
