@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PicoScript Protocol Compiler — Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; }
+    h1 { font-size: 1.4em; margin-bottom: 4px; color: #58a6ff; }
+    p { font-size: 0.85em; color: #8b949e; margin-bottom: 16px; }
+    #editor-container { width: 100%; height: calc(100vh - 80px); border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <h1>🔧 PicoScript Protocol Compiler</h1>
+  <p>A BASIC-style DSL that compiles to bytecode jump graphs for event-driven protocol handling. Try: Compile → set event to "data" → paste buffer hex → Dispatch.</p>
+  <div id="editor-container"></div>
+
+  <script src="../src/BareMetal.PicoScript.js"></script>
+  <script src="../src/BareMetal.PicoScript.Editor.js"></script>
+  <script>
+    var editor = BareMetal.PicoScript.Editor.create(
+      document.getElementById('editor-container'),
+      {
+        theme: 'dark',
+        fontSize: 13,
+        height: '100%',
+        source: [
+          'REM === HTTP GET Fast-Path Protocol Handler ===',
+          'REM Compiled to bytecode jump graph, dispatched per TCP event',
+          '',
+          'ON CONNECT:',
+          '  LET state = 0',
+          '  LET requests = 0',
+          'END ON',
+          '',
+          'ON DATA:',
+          '  REM Peek first byte to detect HTTP method',
+          '  LET method = PEEK(DATA$, 0)',
+          '',
+          '  IF method = 71 THEN',
+          '    REM 71 = "G" (GET request)',
+          '    LET requests = requests + 1',
+          '    EMIT_STR("HTTP/1.1 200 OK")',
+          '    EMIT_U8(13)',
+          '    EMIT_U8(10)',
+          '    EMIT_STR("Content-Length: 2")',
+          '    EMIT_U8(13)',
+          '    EMIT_U8(10)',
+          '    EMIT_U8(13)',
+          '    EMIT_U8(10)',
+          '    EMIT_STR("OK")',
+          '  ELSE',
+          '    REM Unknown method - 405',
+          '    EMIT_STR("HTTP/1.1 405 Method Not Allowed")',
+          '    EMIT_U8(13)',
+          '    EMIT_U8(10)',
+          '    EMIT_U8(13)',
+          '    EMIT_U8(10)',
+          '  END IF',
+          'END ON',
+          '',
+          'ON TICK:',
+          '  REM Idle timeout check',
+          '  IF requests = 0 THEN',
+          '    LET state = 99',
+          '  END IF',
+          'END ON',
+          '',
+          'ON CLOSE:',
+          '  LET state = -1',
+          'END ON'
+        ].join('\n'),
+        maxCycles: 100000,
+        maxBlocksPerEvent: 256,
+        maxEmitBytes: 4096
+      }
+    );
+  </script>
+</body>
+</html>
