@@ -57,7 +57,7 @@ BareMetal.PicoScript = (function(){
     'ABS', 'INT', 'FIX', 'SGN', 'SQR', 'RND', 'SIN', 'COS', 'TAN', 'ATN', 'LOG', 'EXP',
     'MIN', 'MAX', 'LEN', 'MID$', 'LEFT$', 'RIGHT$', 'CHR$', 'ASC', 'STR$', 'VAL',
     'UPPER$', 'LOWER$', 'INSTR', 'TRIM$', 'PUSH', 'POP', 'SHIFT',
-    'EMIT', 'EMIT_U8', 'EMIT_U16', 'EMIT_U32', 'EMIT_STR', 'PEEK', 'PEEK_U16', 'PEEK_U32', 'SLICE', 'BUF_LEN'
+    'EMIT', 'EMIT_U8', 'EMIT_U16', 'EMIT_U32', 'EMIT_STR', 'EMIT_CRLF', 'PEEK', 'PEEK_U16', 'PEEK_U32', 'SLICE', 'BUF_LEN'
   ];
   var BUILTIN_IDS = {};
   var DEFAULT_BUILTINS = [];
@@ -861,6 +861,7 @@ BareMetal.PicoScript = (function(){
     add('EMIT_U16', function(args, api) { return api.emitU16(args[0]); });
     add('EMIT_U32', function(args, api) { return api.emitU32(args[0]); });
     add('EMIT_STR', function(args, api) { return api.emitString(args[0]); });
+    add('EMIT_CRLF', function(args, api) { api.emitU8(13); return api.emitU8(10); });
     add('PEEK', function(args) {
       var value = readBufferByte(args[0], args[1]);
       if (value == null) throw new Error('Buffer read out of bounds');
@@ -2142,6 +2143,290 @@ BareMetal.PicoScript = (function(){
     return { blocks: blocks, entry: blocks.length ? blocks[0].id : null, leaders: sortedLeaders.slice(), blockLeaders: sortedLeaders.slice() };
   }
 
+  // === Cross-transpilation: PicoScript AST -> C# / C ===
+
+  function toCSharp(source) {
+    var ast = parse(source);
+    var out = [];
+    var indent = 0;
+    function ln(s) { out.push('    '.repeat(indent) + s); }
+    function escStr(s) { return '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r/g, '\\r').replace(/\n/g, '\\n') + '"'; }
+
+    ln('using System;');
+    ln('using System.Collections.Generic;');
+    ln('using System.Text;');
+    ln('');
+    ln('public class ProtocolHandler');
+    ln('{');
+    indent++;
+    ln('private List<byte> _emit = new();');
+    ln('private ReadOnlyMemory<byte> _buffer;');
+    ln('');
+
+    var events = {};
+    var mainBody = [];
+    var declaredVars = {};
+    collectVars(ast.body, declaredVars);
+    for (var i = 0; i < ast.body.length; i++) {
+      var node = ast.body[i];
+      if (node.type === 'OnEvent') { events[node.event] = node.body; }
+      else { mainBody.push(node); }
+    }
+    var varKeys = Object.keys(declaredVars);
+    for (var vi = 0; vi < varKeys.length; vi++) ln('private double ' + csVar(varKeys[vi]) + ' = 0;');
+    if (varKeys.length) ln('');
+
+    if (mainBody.length) { ln('public void Init()'); ln('{'); indent++; emitBody(mainBody); indent--; ln('}'); ln(''); }
+
+    var evNames = Object.keys(events);
+    for (var e = 0; e < evNames.length; e++) {
+      var evName = evNames[e];
+      var paramStr = evName === 'data' ? 'ReadOnlyMemory<byte> buffer' : '';
+      ln('public byte[] On' + evName.charAt(0).toUpperCase() + evName.slice(1) + '(' + paramStr + ')');
+      ln('{'); indent++;
+      if (evName === 'data') ln('_buffer = buffer;');
+      ln('_emit.Clear();');
+      emitBody(events[evName]);
+      ln('return _emit.ToArray();');
+      indent--; ln('}');
+      if (e < evNames.length - 1) ln('');
+    }
+    indent--; ln('}');
+
+    function collectVars(body, map) {
+      if (!body) return;
+      for (var j = 0; j < body.length; j++) {
+        var n = body[j];
+        if (n.type === 'Assign' && n.target && n.target.name) map[n.target.name] = true;
+        if (n.type === 'For') { if (n.name) map[n.name] = true; collectVars(n.body, map); }
+        if (n.type === 'If') { collectVars(n.thenBody, map); collectVars(n.elseBody, map); }
+        if (n.type === 'While') collectVars(n.body, map);
+        if (n.type === 'OnEvent') collectVars(n.body, map);
+      }
+    }
+    function csVar(n) { return '_' + n.toLowerCase().replace(/\$/g, ''); }
+    function emitBody(body) { if (!body) return; for (var j = 0; j < body.length; j++) emitNode(body[j]); }
+
+    function expr(node) {
+      if (!node) return '0';
+      switch (node.type) {
+        case 'Number': return node.value.toString();
+        case 'String': return escStr(node.value);
+        case 'Boolean': return node.value ? 'true' : 'false';
+        case 'Var': return csVar(node.name);
+        case 'Binary':
+          var opMap = {'=':'==','<>':'!=','AND':'&&','OR':'||','MOD':'%'};
+          var op = opMap[node.op] || node.op;
+          if (node.op === '^') return 'Math.Pow(' + expr(node.left) + ', ' + expr(node.right) + ')';
+          return '(' + expr(node.left) + ' ' + op + ' ' + expr(node.right) + ')';
+        case 'Unary':
+          if (node.op === 'NOT') return '!(' + expr(node.expr || node.operand) + ')';
+          return '(-' + expr(node.expr || node.operand) + ')';
+        case 'Access': return callExpr(node);
+        case 'ArrayAccess': return csVar(node.name) + '[(int)' + expr(node.index) + ']';
+        default: return '0';
+      }
+    }
+
+    function callExpr(node) {
+      var args = (node.args || []).map(expr);
+      switch (node.name) {
+        case 'PEEK': return '_buffer.Span[(int)' + args[1] + ']';
+        case 'PEEK_U16': return 'BitConverter.ToUInt16(_buffer.Span.Slice((int)' + args[1] + ', 2))';
+        case 'PEEK_U32': return 'BitConverter.ToUInt32(_buffer.Span.Slice((int)' + args[1] + ', 4))';
+        case 'BUF_LEN': return '_buffer.Length';
+        case 'SLICE': return 'Encoding.UTF8.GetString(_buffer.Span.Slice((int)' + args[1] + ', (int)' + args[2] + '))';
+        case 'LEN': return args[0] + '.Length';
+        case 'ABS': return 'Math.Abs(' + args[0] + ')';
+        case 'INT': case 'FIX': return '(int)(' + args[0] + ')';
+        default: return node.name + '(' + args.join(', ') + ')';
+      }
+    }
+
+    function emitCall(name, args) {
+      var ca = args.map(expr);
+      switch (name) {
+        case 'EMIT_STR': ln('_emit.AddRange(Encoding.UTF8.GetBytes(' + ca[0] + '));'); break;
+        case 'EMIT_U8': ln('_emit.Add((byte)(' + ca[0] + '));'); break;
+        case 'EMIT_U16': ln('_emit.AddRange(BitConverter.GetBytes((ushort)(' + ca[0] + ')));'); break;
+        case 'EMIT_U32': ln('_emit.AddRange(BitConverter.GetBytes((uint)(' + ca[0] + ')));'); break;
+        case 'EMIT_CRLF': ln('_emit.Add(13); _emit.Add(10);'); break;
+        case 'EMIT': ln('_emit.AddRange(Encoding.UTF8.GetBytes((' + ca[0] + ').ToString()));'); break;
+        default: ln(name + '(' + ca.join(', ') + ');'); break;
+      }
+    }
+
+    function emitNode(node) {
+      if (!node) return;
+      switch (node.type) {
+        case 'Comment': ln('// ' + (node.text || node.value || '')); break;
+        case 'Assign':
+          var tgt = node.target.type === 'ArrayAccess' ? csVar(node.target.name) + '[(int)' + expr(node.target.index) + ']' : csVar(node.target.name);
+          ln(tgt + ' = ' + expr(node.value) + ';'); break;
+        case 'Print':
+          var parts = (node.items || []).map(function(it) { return expr(it.expr); });
+          ln('Console.WriteLine(' + (parts.length ? parts.join(' + " " + ') : '""') + ');'); break;
+        case 'If':
+          ln('if (' + expr(node.test) + ')'); ln('{'); indent++;
+          emitBody(node.thenBody); indent--;
+          if (node.elseBody && node.elseBody.length) { ln('}'); ln('else'); ln('{'); indent++; emitBody(node.elseBody); indent--; }
+          ln('}'); break;
+        case 'For':
+          var v = csVar(node.name); var step = node.step ? expr(node.step) : '1';
+          ln('for (var ' + v + ' = ' + expr(node.start) + '; ' + v + ' <= ' + expr(node.end) + '; ' + v + ' += ' + step + ')');
+          ln('{'); indent++; emitBody(node.body); indent--; ln('}'); break;
+        case 'While':
+          ln('while (' + expr(node.test) + ')'); ln('{'); indent++; emitBody(node.body); indent--; ln('}'); break;
+        case 'Expr':
+          if (node.expr && node.expr.type === 'Access') emitCall(node.expr.name, node.expr.args || []);
+          break;
+        case 'Label': ln('// label: ' + node.name); break;
+        default: ln('// [' + node.type + ']'); break;
+      }
+    }
+    return out.join('\n');
+  }
+
+  function toC(source) {
+    var ast = parse(source);
+    var out = [];
+    var indent = 0;
+    function ln(s) { out.push('    '.repeat(indent) + s); }
+    function escStr(s) { return '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r/g, '\\r').replace(/\n/g, '\\n') + '"'; }
+
+    ln('#include <stdint.h>');
+    ln('#include <string.h>');
+    ln('#include <stdio.h>');
+    ln('#include <math.h>');
+    ln('');
+    ln('#define MAX_EMIT 65536');
+    ln('');
+    ln('typedef struct {');
+    indent++; ln('uint8_t emit_buf[MAX_EMIT];'); ln('size_t emit_len;'); ln('const uint8_t *buffer;'); ln('size_t buf_len;');
+    indent--; ln('} proto_ctx_t;');
+    ln('');
+    ln('static inline void emit_u8(proto_ctx_t *ctx, uint8_t v) { if (ctx->emit_len < MAX_EMIT) ctx->emit_buf[ctx->emit_len++] = v; }');
+    ln('static inline void emit_u16(proto_ctx_t *ctx, uint16_t v) { emit_u8(ctx, v & 0xFF); emit_u8(ctx, (v >> 8) & 0xFF); }');
+    ln('static inline void emit_u32(proto_ctx_t *ctx, uint32_t v) { emit_u16(ctx, v & 0xFFFF); emit_u16(ctx, (v >> 16) & 0xFFFF); }');
+    ln('static inline void emit_str(proto_ctx_t *ctx, const char *s) { while (*s && ctx->emit_len < MAX_EMIT) ctx->emit_buf[ctx->emit_len++] = (uint8_t)*s++; }');
+    ln('static inline void emit_crlf(proto_ctx_t *ctx) { emit_u8(ctx, 13); emit_u8(ctx, 10); }');
+    ln('');
+
+    var events = {};
+    var mainBody = [];
+    var declaredVars = {};
+    collectVars(ast.body, declaredVars);
+    for (var i = 0; i < ast.body.length; i++) {
+      var node = ast.body[i];
+      if (node.type === 'OnEvent') { events[node.event] = node.body; }
+      else { mainBody.push(node); }
+    }
+    var varKeys = Object.keys(declaredVars);
+    if (varKeys.length) { ln('/* Protocol state */'); for (var vi = 0; vi < varKeys.length; vi++) ln('static double ' + cVar(varKeys[vi]) + ' = 0;'); ln(''); }
+
+    var evNames = Object.keys(events);
+    for (var e = 0; e < evNames.length; e++) {
+      var evName = evNames[e];
+      var sig = evName === 'data' ? 'size_t on_' + evName + '(proto_ctx_t *ctx, const uint8_t *buf, size_t len)' : 'size_t on_' + evName + '(proto_ctx_t *ctx)';
+      ln(sig); ln('{'); indent++;
+      if (evName === 'data') ln('ctx->buffer = buf; ctx->buf_len = len;');
+      ln('ctx->emit_len = 0;');
+      emitBody(events[evName]);
+      ln('return ctx->emit_len;');
+      indent--; ln('}');
+      if (e < evNames.length - 1) ln('');
+    }
+
+    function collectVars(body, map) {
+      if (!body) return;
+      for (var j = 0; j < body.length; j++) {
+        var n = body[j];
+        if (n.type === 'Assign' && n.target && n.target.name) map[n.target.name] = true;
+        if (n.type === 'For') { if (n.name) map[n.name] = true; collectVars(n.body, map); }
+        if (n.type === 'If') { collectVars(n.thenBody, map); collectVars(n.elseBody, map); }
+        if (n.type === 'While') collectVars(n.body, map);
+        if (n.type === 'OnEvent') collectVars(n.body, map);
+      }
+    }
+    function cVar(n) { return 'v_' + n.toLowerCase().replace(/\$/g, ''); }
+    function emitBody(body) { if (!body) return; for (var j = 0; j < body.length; j++) emitNode(body[j]); }
+
+    function expr(node) {
+      if (!node) return '0';
+      switch (node.type) {
+        case 'Number': return node.value.toString();
+        case 'String': return escStr(node.value);
+        case 'Boolean': return node.value ? '1' : '0';
+        case 'Var': return cVar(node.name);
+        case 'Binary':
+          var opMap = {'=':'==','<>':'!=','AND':'&&','OR':'||','MOD':'%'};
+          var op = opMap[node.op] || node.op;
+          if (node.op === '^') return 'pow(' + expr(node.left) + ', ' + expr(node.right) + ')';
+          return '(' + expr(node.left) + ' ' + op + ' ' + expr(node.right) + ')';
+        case 'Unary':
+          if (node.op === 'NOT') return '!(' + expr(node.expr || node.operand) + ')';
+          return '(-' + expr(node.expr || node.operand) + ')';
+        case 'Access': return callExpr(node);
+        case 'ArrayAccess': return cVar(node.name) + '[(int)' + expr(node.index) + ']';
+        default: return '0';
+      }
+    }
+
+    function callExpr(node) {
+      var args = (node.args || []).map(expr);
+      switch (node.name) {
+        case 'PEEK': return 'ctx->buffer[(size_t)' + args[1] + ']';
+        case 'PEEK_U16': return '(*(uint16_t*)(ctx->buffer + (size_t)' + args[1] + '))';
+        case 'PEEK_U32': return '(*(uint32_t*)(ctx->buffer + (size_t)' + args[1] + '))';
+        case 'BUF_LEN': return 'ctx->buf_len';
+        case 'LEN': return 'strlen(' + args[0] + ')';
+        case 'ABS': return 'fabs(' + args[0] + ')';
+        case 'INT': case 'FIX': return '(int)(' + args[0] + ')';
+        default: return node.name.toLowerCase() + '(' + args.join(', ') + ')';
+      }
+    }
+
+    function emitCall(name, args) {
+      var ca = args.map(expr);
+      switch (name) {
+        case 'EMIT_STR': ln('emit_str(ctx, ' + ca[0] + ');'); break;
+        case 'EMIT_U8': ln('emit_u8(ctx, (uint8_t)(' + ca[0] + '));'); break;
+        case 'EMIT_U16': ln('emit_u16(ctx, (uint16_t)(' + ca[0] + '));'); break;
+        case 'EMIT_U32': ln('emit_u32(ctx, (uint32_t)(' + ca[0] + '));'); break;
+        case 'EMIT_CRLF': ln('emit_crlf(ctx);'); break;
+        case 'EMIT': ln('emit_str(ctx, ' + ca[0] + ');'); break;
+        default: ln(name.toLowerCase() + '(' + ca.join(', ') + ');'); break;
+      }
+    }
+
+    function emitNode(node) {
+      if (!node) return;
+      switch (node.type) {
+        case 'Comment': ln('/* ' + (node.text || node.value || '') + ' */'); break;
+        case 'Assign':
+          var tgt = node.target.type === 'ArrayAccess' ? cVar(node.target.name) + '[(int)' + expr(node.target.index) + ']' : cVar(node.target.name);
+          ln(tgt + ' = ' + expr(node.value) + ';'); break;
+        case 'If':
+          ln('if (' + expr(node.test) + ') {'); indent++;
+          emitBody(node.thenBody); indent--;
+          if (node.elseBody && node.elseBody.length) { ln('} else {'); indent++; emitBody(node.elseBody); indent--; }
+          ln('}'); break;
+        case 'For':
+          var v = cVar(node.name); var step = node.step ? expr(node.step) : '1';
+          ln('for (' + v + ' = ' + expr(node.start) + '; ' + v + ' <= ' + expr(node.end) + '; ' + v + ' += ' + step + ') {');
+          indent++; emitBody(node.body); indent--; ln('}'); break;
+        case 'While':
+          ln('while (' + expr(node.test) + ') {'); indent++; emitBody(node.body); indent--; ln('}'); break;
+        case 'Expr':
+          if (node.expr && node.expr.type === 'Access') emitCall(node.expr.name, node.expr.args || []);
+          break;
+        case 'Label': ln(node.name + ':;'); break;
+        default: ln('/* [' + node.type + '] */'); break;
+      }
+    }
+    return out.join('\n');
+  }
+
   return {
     tokenize: function(source) { return tokenize(source); },
     parse: function(source) { return parse(source); },
@@ -2153,6 +2438,8 @@ BareMetal.PicoScript = (function(){
     assemble: function(asmSource) { return assemble(asmSource); },
     createVM: function(opts) { return createVM(opts); },
     cfg: function(bytecodeObj) { return cfg(bytecodeObj); },
+    toCSharp: function(source) { return toCSharp(source); },
+    toC: function(source) { return toC(source); },
     format: function(source) { return format(source); },
     validate: function(source) { return validate(source); },
     OPCODES: OPCODES,
