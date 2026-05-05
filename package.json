@@ -45,6 +45,7 @@
     "./state-machine": "./src/BareMetal.StateMachine.js",
     "./workflow": "./src/BareMetal.Workflow.js",
     "./logger": "./src/BareMetal.Logger.js",
+    "./markdown": "./src/BareMetal.Markdown.js",
     "./tokens": "./src/BareMetal.Tokens.js",
     "./rbac": "./src/BareMetal.RBAC.js",
     "./styles": "./src/BareMetalStyles.css",
