@@ -43,6 +43,7 @@
     "./expressions": "./src/BareMetal.Expressions.js",
     "./i18n": "./src/BareMetal.I18n.js",
     "./state-machine": "./src/BareMetal.StateMachine.js",
+    "./workflow": "./src/BareMetal.Workflow.js",
     "./logger": "./src/BareMetal.Logger.js",
     "./tokens": "./src/BareMetal.Tokens.js",
     "./rbac": "./src/BareMetal.RBAC.js",
