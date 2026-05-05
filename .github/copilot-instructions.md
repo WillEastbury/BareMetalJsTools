@@ -115,3 +115,22 @@ Zero runtime dependencies. `jest` and `jest-environment-jsdom` are the only dev 
 <link href="BareMetalStyles.min.css" rel="stylesheet">
 <link href="themes/wavefunction.min.css" rel="stylesheet">
 ```
+
+**Bundled fonts** (`src/fonts/`): Six subsetted WOFF2 fonts (Latin + Latin Extended + symbols + arrows + currency). Load `fonts.css` to register all `@font-face` declarations — themes then reference them via `--bs-font-sans` / `--bs-font-mono`.
+
+| Font | Source | Size | Class | Use case |
+|------|--------|------|-------|----------|
+| `BareMetalMono` | JetBrains Mono | 17 KB | `.font-mono` | Code, data, terminals |
+| `BareMetalSans` | Inter | 14 KB | `.font-sans` | Clean body text, UI |
+| `BareMetalPixel` | Silkscreen | 2.7 KB | `.font-pixel` | Retro, IoT, tiny displays |
+| `Wavefunction-Sans` | Source Sans 3 | 27 KB | `.font-wf-sans` | Modern sans-serif (general) |
+| `Wavefunction-Curly` | Dancing Script | 28 KB | `.font-wf-curly` | Handwriting/calligraphy |
+| `Wavefunction-Serif` | Source Serif 4 | 28 KB | `.font-wf-serif` | Professional typeset (Times-like) |
+
+Total font bundle: **117 KB** (all OFL-licensed). Only load the fonts you use — each `@font-face` uses `font-display: swap` and only fetches on first reference.
+
+```html
+<link href="fonts/fonts.min.css" rel="stylesheet">
+<link href="BareMetalStyles.min.css" rel="stylesheet">
+<link href="themes/bedlam.min.css" rel="stylesheet">
+```
