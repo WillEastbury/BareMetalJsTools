@@ -104,6 +104,83 @@ BareMetal.TestRunner = (function () {
       },
       toBeInstanceOf: function (C) {
         done(typeof C === 'function' && v instanceof C, 'Expected value to' + (neg ? ' not' : '') + ' be instance of ' + (C && C.name || 'unknown'));
+      },
+      toBeGreaterThan: function (x) {
+        done(v > x, 'Expected ' + printable(v) + ' to' + (neg ? ' not' : '') + ' be greater than ' + printable(x));
+      },
+      toBeGreaterThanOrEqual: function (x) {
+        done(v >= x, 'Expected ' + printable(v) + ' to' + (neg ? ' not' : '') + ' be >= ' + printable(x));
+      },
+      toBeLessThan: function (x) {
+        done(v < x, 'Expected ' + printable(v) + ' to' + (neg ? ' not' : '') + ' be less than ' + printable(x));
+      },
+      toBeLessThanOrEqual: function (x) {
+        done(v <= x, 'Expected ' + printable(v) + ' to' + (neg ? ' not' : '') + ' be <= ' + printable(x));
+      },
+      toBeNull: function () {
+        done(v === null, 'Expected value to' + (neg ? ' not' : '') + ' be null');
+      },
+      toBeUndefined: function () {
+        done(v === undefined, 'Expected value to' + (neg ? ' not' : '') + ' be undefined');
+      },
+      toBeDefined: function () {
+        done(v !== undefined, 'Expected value to' + (neg ? ' not' : '') + ' be defined');
+      },
+      toBeNaN: function () {
+        done(Number.isNaN(v), 'Expected value to' + (neg ? ' not' : '') + ' be NaN');
+      },
+      toMatch: function (x) {
+        var ok = x instanceof RegExp ? x.test(v) : String(v).indexOf(x) > -1;
+        done(ok, 'Expected ' + printable(v) + ' to' + (neg ? ' not' : '') + ' match ' + printable(x));
+      },
+      toHaveLength: function (x) {
+        var len = v && v.length !== undefined ? v.length : -1;
+        done(len === x, 'Expected length ' + len + ' to' + (neg ? ' not' : '') + ' be ' + x);
+      },
+      toHaveProperty: function (path, expected) {
+        var parts = typeof path === 'string' ? path.split('.') : [path];
+        var cur = v;
+        var has = true;
+        for (var i = 0; i < parts.length; i++) {
+          if (cur == null || !Object.prototype.hasOwnProperty.call(cur, parts[i])) { has = false; break; }
+          cur = cur[parts[i]];
+        }
+        var ok = has && (arguments.length < 2 || eq(cur, expected));
+        done(ok, 'Expected object to' + (neg ? ' not' : '') + ' have property ' + printable(path) + (arguments.length >= 2 ? ' with value ' + printable(expected) : ''));
+      },
+      toBeCloseTo: function (x, digits) {
+        var d = digits === undefined ? 2 : digits;
+        var ok = Math.abs(v - x) < Math.pow(10, -d) / 2;
+        done(ok, 'Expected ' + printable(v) + ' to' + (neg ? ' not' : '') + ' be close to ' + printable(x));
+      },
+      toHaveBeenCalled: function () {
+        var c = v && v.calls;
+        done(Array.isArray(c) && c.length > 0, 'Expected spy to' + (neg ? ' not' : '') + ' have been called');
+      },
+      toHaveBeenCalledTimes: function (n) {
+        var c = v && v.calls ? v.calls.length : 0;
+        done(c === n, 'Expected spy to' + (neg ? ' not' : '') + ' have been called ' + n + ' times, got ' + c);
+      },
+      toHaveBeenCalledWith: function () {
+        var args = Array.prototype.slice.call(arguments);
+        var c = v && v.calls || [];
+        var ok = c.some(function (call) { return eq(call, args); });
+        done(ok, 'Expected spy to' + (neg ? ' not' : '') + ' have been called with ' + printable(args));
+      },
+      get resolves() {
+        return {
+          toBe: async function (x) { var r = await v; done(Object.is(r, x), 'Expected resolved ' + printable(r) + ' to' + (neg ? ' not' : '') + ' be ' + printable(x)); },
+          toEqual: async function (x) { var r = await v; done(eq(r, x), 'Expected resolved ' + printable(r) + ' to' + (neg ? ' not' : '') + ' equal ' + printable(x)); }
+        };
+      },
+      get rejects() {
+        return {
+          toThrow: async function (m) {
+            var ok = false;
+            try { await v; } catch (e) { ok = !m || String(e && e.message || e).indexOf(m) > -1; }
+            done(ok, 'Expected promise to' + (neg ? ' not' : '') + ' reject' + (m ? ' with ' + printable(m) : ''));
+          }
+        };
       }
     };
     function done(ok, msg) {
@@ -115,15 +192,16 @@ BareMetal.TestRunner = (function () {
     return api;
   }
 
-  function addTest(name, fn, mode) {
-    cur.tests.push({ name: name || 'test', fn: typeof fn === 'function' ? fn : noop, skip: mode === 'skip', only: mode === 'only' });
+  function addTest(name, fn, mode, timeout) {
+    cur.tests.push({ name: name || 'test', fn: typeof fn === 'function' ? fn : noop, skip: mode === 'skip', only: mode === 'only', timeout: timeout || 5000 });
   }
 
   function hasOnly(s) {
-    return s.tests.some(function (t) { return t.only; }) || s.suites.some(hasOnly);
+    return s.only || s.tests.some(function (t) { return t.only; }) || s.suites.some(hasOnly);
   }
 
   function hasSelected(s, onlyMode) {
+    if (s.only) return true;
     return s.tests.some(function (t) { return onlyMode ? t.only : true; }) || s.suites.some(function (x) { return hasSelected(x, onlyMode); });
   }
 
@@ -140,7 +218,7 @@ BareMetal.TestRunner = (function () {
     var i;
     var ok = true;
     var err = null;
-    if (onlyMode && !t.only) {
+    if (onlyMode && !t.only && !chainSuites.some(function (s) { return s.only; })) {
       res.skipped++;
       res.results.push({ name: full, status: 'skipped' });
       if (g.console && console.log) console.log('- ' + full + ' (only mode)');
@@ -156,7 +234,10 @@ BareMetal.TestRunner = (function () {
     for (i = chainSuites.length - 1; i >= 0; i--) ae = ae.concat(chainSuites[i].ae);
     try {
       await runHooks(be, ctx);
-      await call(t.fn, ctx);
+      await Promise.race([
+        call(t.fn, ctx),
+        new Promise(function (_, rej) { setTimeout(function () { rej(new Error('Test timed out after ' + t.timeout + 'ms')); }, t.timeout); })
+      ]);
     } catch (e) {
       ok = false;
       err = e;
@@ -181,6 +262,11 @@ BareMetal.TestRunner = (function () {
   async function runSuite(s, chainSuites, res, onlyMode) {
     var next = chainSuites.concat(s);
     var i;
+    if (s.skipped) {
+      for (i = 0; i < s.tests.length; i++) { res.skipped++; res.results.push({ name: s.tests[i].name, status: 'skipped' }); }
+      for (i = 0; i < s.suites.length; i++) await runSuite(s.suites[i], next, res, onlyMode);
+      return;
+    }
     if (!hasSelected(s, onlyMode)) return;
     try {
       await runHooks(s.ba, { suite: s.name });
@@ -257,13 +343,33 @@ BareMetal.TestRunner = (function () {
     cur = p;
   }
 
+  describe.skip = function (name, fn) {
+    var p = cur;
+    var s = makeSuite(name, p);
+    s.skipped = true;
+    p.suites.push(s);
+    cur = s;
+    try { if (typeof fn === 'function') fn(); } catch (_) {}
+    cur = p;
+  };
+
+  describe.only = function (name, fn) {
+    var p = cur;
+    var s = makeSuite(name, p);
+    s.only = true;
+    p.suites.push(s);
+    cur = s;
+    try { if (typeof fn === 'function') fn(); } catch (_) {}
+    cur = p;
+  };
+
   /**
    * Defines a test case.
    * @param {string} name
    * @param {Function} fn
    */
-  function it(name, fn) {
-    addTest(name, fn);
+  function it(name, fn, timeout) {
+    addTest(name, fn, null, timeout);
   }
 
   /**
@@ -280,8 +386,8 @@ BareMetal.TestRunner = (function () {
    * @param {string} name
    * @param {Function} fn
    */
-  it.only = function (name, fn) {
-    addTest(name, fn, 'only');
+  it.only = function (name, fn, timeout) {
+    addTest(name, fn, 'only', timeout);
   };
 
   /**
@@ -289,8 +395,8 @@ BareMetal.TestRunner = (function () {
    * @param {string} name
    * @param {Function} fn
    */
-  function test(name, fn) {
-    it(name, fn);
+  function test(name, fn, timeout) {
+    it(name, fn, timeout);
   }
   test.skip = it.skip;
   test.only = it.only;
