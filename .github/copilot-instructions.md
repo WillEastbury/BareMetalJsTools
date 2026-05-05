@@ -61,6 +61,25 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 | `BareMetal.UndoRedo.js` | `BareMetal.UndoRedo` | Command-pattern undo/redo, grouping, snapshots, key binding |
 | `BareMetal.IDB.js` | `BareMetal.IDB` | Promise-based IndexedDB (CRUD, ranges, cursors, KV mode) |
 | `BareMetal.Workers.js` | `BareMetal.Workers` | Inline worker pool + scheduler (debounce/throttle/RAF/idle/priority) |
+| `BareMetal.Geo.js` | `BareMetal.Geo` | Geolocation, Haversine, geohash, point-in-polygon, tracking, geocoding |
+| `BareMetal.Media.js` | `BareMetal.Media` | Camera/mic/screen capture, MediaRecorder, snapshot, PiP, audio analyser |
+| `BareMetal.Pay.js` | `BareMetal.Pay` | Payment Request API, cart, Luhn validation, currency formatting |
+| `BareMetal.Observe.js` | `BareMetal.Observe` | Resize/Intersection/Mutation observers, lazy-load, infinite scroll, breakpoints |
+| `BareMetal.Speech.js` | `BareMetal.Speech` | Web Speech API: synthesis, recognition, commands, dictation |
+| `BareMetal.Gamepad.js` | `BareMetal.Gamepad` | Gamepad API: polling, deadzone, haptics, combos, Xbox/PS profiles |
+| `BareMetal.Forms.js` | `BareMetal.Forms` | Declarative forms: validation, masks, wizards, repeaters, autosave, conditional |
+| `BareMetal.Transport.js` | `BareMetal.Transport` | Retry/backoff, dedup, coalesce, AbortSignal, circuit breaker, rate limit, queue |
+| `BareMetal.Errors.js` | `BareMetal.Errors` | Typed errors: classify, chain, match routing, serialisation, boundaries |
+| `BareMetal.Schema.js` | `BareMetal.Schema` | Schema validation/transform, coercion, versioning, Binary wireType alignment |
+| `BareMetal.Sync.js` | `BareMetal.Sync` | Diff/patch, merge strategies, conflict resolution, CRDTs, offline queue |
+| `BareMetal.URL.js` | `BareMetal.URL` | URL parse/build, query encode/decode, route params, normalize, slugify |
+| `BareMetal.Capabilities.js` | `BareMetal.Capabilities` | Feature detection, env profiling, permissions, degradation, scoring |
+| `BareMetal.Session.js` | `BareMetal.Session` | Session lifecycle, token rotation, multi-tab sync, activity tracking |
+| `BareMetal.Cache.js` | `BareMetal.Cache` | TTL, SWR, LRU, tag invalidation, tiered cache, memoize, stats |
+| `BareMetal.Pipeline.js` | `BareMetal.Pipeline` | Async pipelines, stream transforms, backpressure, cancellation |
+| `BareMetal.Diagnostics.js` | `BareMetal.Diagnostics` | Trace spans, timeline, perf marks, counters, gauges, auto-hook |
+| `BareMetal.Config.js` | `BareMetal.Config` | Layered config, schema validation, scopes, overrides, env import/export |
+| `BareMetal.Types.js` | `BareMetal.Types` | Runtime types: registry, contracts, guards, unions, reflection, serialize |
 | `BareMetalStyles.css` | — | CSS framework with short class names (`.bt`, `.cd`, `.rw`) |
 | `BareMetal.Styles.BootstrapCompatibilityShim.css` | — | Optional Bootstrap 5 long-name aliases (`.btn`, `.card`, `.row`) |
 
