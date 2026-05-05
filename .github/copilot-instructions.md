@@ -53,7 +53,14 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 | `BareMetal.Workflow.js` | `BareMetal.Workflow` | Workflow engine (SET/IF/FOR/FOREACH/FOREACHP/WEB/LOAD/SAVE + designer) |
 | `BareMetal.Markdown.js` | `BareMetal.Markdown` | GFM Markdown-to-HTML renderer (render, toc, frontMatter, sanitize) |
 | `BareMetal.PicoScript.js` | `BareMetal.PicoScript` | Protocol compiler: BASIC DSL → bytecode → CFG. Event dispatch, EMIT/PEEK, safety rails, trace |
-| `BareMetal.PicoScript.Editor.js` | `BareMetal.PicoScript.Editor` | IDE control for PicoScript (syntax highlight, debug, breakpoints) |
+| `BareMetal.PicoScript.Editor.js` | `BareMetal.PicoScript.Editor` | 4-pane protocol compiler IDE (source/IR/CFG/trace) |
+| `BareMetal.Clipboard.js` | `BareMetal.Clipboard` | Clipboard API: read/write/paste intercept/legacy fallback |
+| `BareMetal.FileIO.js` | `BareMetal.FileIO` | File System Access, pick/save/drop/chunk/download |
+| `BareMetal.Notify.js` | `BareMetal.Notify` | Toast/banner queue + Notification API + progress |
+| `BareMetal.PubSub.js` | `BareMetal.PubSub` | Event bus: wildcards, namespaces, replay, request/response |
+| `BareMetal.UndoRedo.js` | `BareMetal.UndoRedo` | Command-pattern undo/redo, grouping, snapshots, key binding |
+| `BareMetal.IDB.js` | `BareMetal.IDB` | Promise-based IndexedDB (CRUD, ranges, cursors, KV mode) |
+| `BareMetal.Workers.js` | `BareMetal.Workers` | Inline worker pool + scheduler (debounce/throttle/RAF/idle/priority) |
 | `BareMetalStyles.css` | — | CSS framework with short class names (`.bt`, `.cd`, `.rw`) |
 | `BareMetal.Styles.BootstrapCompatibilityShim.css` | — | Optional Bootstrap 5 long-name aliases (`.btn`, `.card`, `.row`) |
 
