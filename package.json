@@ -34,7 +34,8 @@
     "./progressive": "./src/BareMetal.Progressive.js",
     "./service-worker": "./src/BareMetal.ServiceWorker.js",
     "./time": "./src/BareMetal.Time.js",
-    "./styles": "./src/BareMetalStyles.css"
+    "./styles": "./src/BareMetalStyles.css",
+    "./styles/bootstrap-shim": "./src/BareMetal.Styles.BootstrapCompatibilityShim.css"
   },
   "scripts": {
     "test": "jest",

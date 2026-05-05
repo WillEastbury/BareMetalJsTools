@@ -38,7 +38,8 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 | `BareMetal.Progressive.js` | `BareMetal.Progressive` | PWA helper (SW registration, install prompts, offline queue, push) |
 | `BareMetal.ServiceWorker.js` | — (SW context) | Configurable service worker (cache strategies, precache, background sync) |
 | `BareMetal.Time.js` | `BareMetal.Time` | Date/time library (format, relative, durations, timezone, Temporal) |
-| `BareMetalStyles.css` | — | Bootstrap-5-compatible CSS subset |
+| `BareMetalStyles.css` | — | CSS framework with short class names (`.bt`, `.cd`, `.rw`) |
+| `BareMetal.Styles.BootstrapCompatibilityShim.css` | — | Optional Bootstrap 5 long-name aliases (`.btn`, `.card`, `.row`) |
 
 **Dependency graph (load order matters):**
 
@@ -91,4 +92,11 @@ Zero runtime dependencies. `jest` and `jest-environment-jsdom` are the only dev 
 
 ### CSS module
 
-`BareMetalStyles.css` is a standalone Bootstrap-5-compatible subset. No JS, no preprocessor.
+`BareMetalStyles.css` is a standalone CSS framework with short class names optimised for wire size. No JS, no preprocessor.
+
+`BareMetal.Styles.BootstrapCompatibilityShim.css` is an optional add-on that provides standard Bootstrap 5 class names (`.btn`, `.card`, `.row`, `.col-md-6`, `.d-flex`, etc.) for sites migrating from Bootstrap without rewriting HTML. Load it after BareMetalStyles:
+
+```html
+<link href="BareMetalStyles.min.css" rel="stylesheet">
+<link href="BareMetal.Styles.BootstrapCompatibilityShim.min.css" rel="stylesheet">
+```
