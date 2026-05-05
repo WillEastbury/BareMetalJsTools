@@ -210,6 +210,22 @@ BareMetal.TestRunner = (function () {
     for (i = 0; i < list.length; i++) await call(list[i], ctx);
   }
 
+  var _opts = { grep: null, bail: false, slow: 75, retries: 0, reporter: null };
+
+  function configure(opts) {
+    if (opts) {
+      if (opts.grep) _opts.grep = opts.grep instanceof RegExp ? opts.grep : new RegExp(opts.grep, 'i');
+      if (opts.bail !== undefined) _opts.bail = !!opts.bail;
+      if (opts.slow !== undefined) _opts.slow = opts.slow;
+      if (opts.retries !== undefined) _opts.retries = opts.retries;
+      if (opts.reporter !== undefined) _opts.reporter = opts.reporter;
+    }
+  }
+
+  function matchGrep(name) {
+    return !_opts.grep || _opts.grep.test(name);
+  }
+
   async function runTest(chainSuites, t, res, onlyMode) {
     var full = chainSuites.map(function (s) { return s.name; }).filter(Boolean).concat(t.name).join(' > ');
     var ctx = { name: t.name, path: full };
@@ -218,52 +234,89 @@ BareMetal.TestRunner = (function () {
     var i;
     var ok = true;
     var err = null;
+    var start;
+    var duration;
+    var attempts = 0;
+    var maxRetries = t.retries !== undefined ? t.retries : _opts.retries;
+    if (res.bail) return;
     if (onlyMode && !t.only && !chainSuites.some(function (s) { return s.only; })) {
       res.skipped++;
-      res.results.push({ name: full, status: 'skipped' });
-      if (g.console && console.log) console.log('- ' + full + ' (only mode)');
+      res.results.push({ name: full, status: 'skipped', duration: 0 });
+      emit(res, 'skip', { name: full });
       return;
     }
     if (t.skip) {
       res.skipped++;
-      res.results.push({ name: full, status: 'skipped' });
-      if (g.console && console.log) console.log('- ' + full + ' (skipped)');
+      res.results.push({ name: full, status: 'skipped', duration: 0 });
+      emit(res, 'skip', { name: full });
+      return;
+    }
+    if (!t.fn || t.fn === noop) {
+      res.pending++;
+      res.results.push({ name: full, status: 'pending', duration: 0 });
+      emit(res, 'pending', { name: full });
+      return;
+    }
+    if (!matchGrep(full)) {
+      res.skipped++;
+      res.results.push({ name: full, status: 'skipped', duration: 0 });
       return;
     }
     for (i = 0; i < chainSuites.length; i++) be = be.concat(chainSuites[i].be);
     for (i = chainSuites.length - 1; i >= 0; i--) ae = ae.concat(chainSuites[i].ae);
-    try {
-      await runHooks(be, ctx);
-      await Promise.race([
-        call(t.fn, ctx),
-        new Promise(function (_, rej) { setTimeout(function () { rej(new Error('Test timed out after ' + t.timeout + 'ms')); }, t.timeout); })
-      ]);
-    } catch (e) {
-      ok = false;
-      err = e;
+    while (attempts <= maxRetries) {
+      ok = true;
+      err = null;
+      start = Date.now();
+      try {
+        await runHooks(be, ctx);
+        await Promise.race([
+          call(t.fn, ctx),
+          new Promise(function (_, rej) { setTimeout(function () { rej(new Error('Test timed out after ' + t.timeout + 'ms')); }, t.timeout); })
+        ]);
+      } catch (e) {
+        ok = false;
+        err = e;
+      }
+      try {
+        await runHooks(ae, ctx);
+      } catch (e2) {
+        ok = false;
+        err = err || e2;
+      }
+      duration = Date.now() - start;
+      if (ok || attempts >= maxRetries) break;
+      attempts++;
     }
-    try {
-      await runHooks(ae, ctx);
-    } catch (e2) {
-      ok = false;
-      err = err || e2;
-    }
+    var entry = { name: full, status: ok ? 'passed' : 'failed', duration: duration, attempts: attempts + 1 };
+    if (duration > _opts.slow) entry.slow = true;
+    if (!ok) entry.error = err;
     if (ok) {
       res.passed++;
-      res.results.push({ name: full, status: 'passed' });
-      if (g.console && console.log) console.log('✓ ' + full);
+      res.results.push(entry);
+      emit(res, 'pass', entry);
     } else {
       res.failed++;
-      res.results.push({ name: full, status: 'failed', error: err });
-      if (g.console && console.error) console.error('✗ ' + full + '\n  ' + String(err && err.stack || err));
+      res.results.push(entry);
+      emit(res, 'fail', entry);
+      if (_opts.bail) res.bail = true;
     }
+  }
+
+  function emit(res, event, data) {
+    if (_opts.reporter && typeof _opts.reporter[event] === 'function') _opts.reporter[event](data);
+    else if (event === 'pass' && g.console && console.log) console.log('✓ ' + data.name + (data.slow ? ' (' + data.duration + 'ms)' : ''));
+    else if (event === 'fail' && g.console && console.error) console.error('✗ ' + data.name + '\n  ' + String(data.error && data.error.stack || data.error));
+    else if (event === 'skip' && g.console && console.log) console.log('- ' + data.name + ' (skipped)');
+    else if (event === 'pending' && g.console && console.log) console.log('○ ' + data.name + ' (pending)');
   }
 
   async function runSuite(s, chainSuites, res, onlyMode) {
     var next = chainSuites.concat(s);
     var i;
+    if (res.bail) return;
     if (s.skipped) {
-      for (i = 0; i < s.tests.length; i++) { res.skipped++; res.results.push({ name: s.tests[i].name, status: 'skipped' }); }
+      for (i = 0; i < s.tests.length; i++) { res.skipped++; res.results.push({ name: s.tests[i].name, status: 'skipped', duration: 0 }); }
       for (i = 0; i < s.suites.length; i++) await runSuite(s.suites[i], next, res, onlyMode);
       return;
     }
@@ -504,14 +557,124 @@ BareMetal.TestRunner = (function () {
 
   /**
    * Runs the queued test suites.
-   * @returns {Promise<{passed:number,failed:number,skipped:number,results:Array}>}
+   * @param {Object} [opts] - {grep, bail, slow, retries, reporter}
+   * @returns {Promise<{passed:number,failed:number,skipped:number,pending:number,results:Array,duration:number}>}
    */
-  async function run() {
-    var res = { passed: 0, failed: 0, skipped: 0, results: [] };
+  async function run(opts) {
+    configure(opts);
+    var res = { passed: 0, failed: 0, skipped: 0, pending: 0, results: [], bail: false };
     var onlyMode = hasOnly(root);
+    var start = Date.now();
     await runSuite(root, [], res, onlyMode);
-    if (g.console && console.log) console.log('Done: ' + res.passed + ' passed, ' + res.failed + ' failed, ' + res.skipped + ' skipped');
+    res.duration = Date.now() - start;
+    delete res.bail;
+    if (g.console && console.log) console.log('\nDone: ' + res.passed + ' passed, ' + res.failed + ' failed, ' + res.skipped + ' skipped, ' + res.pending + ' pending (' + res.duration + 'ms)');
     return res;
+  }
+
+  /**
+   * Formats results as TAP (Test Anything Protocol).
+   * @param {Object} res - Result from run()
+   * @returns {string}
+   */
+  function toTAP(res) {
+    var lines = ['TAP version 13', '1..' + res.results.length];
+    for (var i = 0; i < res.results.length; i++) {
+      var r = res.results[i];
+      var num = i + 1;
+      if (r.status === 'passed') lines.push('ok ' + num + ' - ' + r.name);
+      else if (r.status === 'failed') lines.push('not ok ' + num + ' - ' + r.name + '\n  ---\n  message: ' + String(r.error && r.error.message || r.error) + '\n  ...');
+      else if (r.status === 'pending') lines.push('ok ' + num + ' - ' + r.name + ' # TODO pending');
+      else lines.push('ok ' + num + ' - ' + r.name + ' # SKIP');
+    }
+    lines.push('# passed: ' + res.passed, '# failed: ' + res.failed, '# skipped: ' + res.skipped, '# pending: ' + res.pending, '# duration: ' + res.duration + 'ms');
+    return lines.join('\n');
+  }
+
+  /**
+   * Formats results as Markdown report.
+   * @param {Object} res - Result from run()
+   * @param {Object} [opts] - {title, timestamp}
+   * @returns {string}
+   */
+  function toMarkdown(res, opts) {
+    opts = opts || {};
+    var title = opts.title || 'Test Results';
+    var ts = opts.timestamp !== false ? new Date().toISOString() : '';
+    var lines = [];
+    var failures = [];
+    var slow = [];
+    var suites = {};
+    lines.push('# ' + title);
+    lines.push('');
+    if (ts) lines.push('> Generated: ' + ts);
+    lines.push('');
+    lines.push('## Summary');
+    lines.push('');
+    lines.push('| Metric | Count |');
+    lines.push('|--------|-------|');
+    lines.push('| ✅ Passed | ' + res.passed + ' |');
+    lines.push('| ❌ Failed | ' + res.failed + ' |');
+    lines.push('| ⏭️ Skipped | ' + res.skipped + ' |');
+    lines.push('| ○ Pending | ' + res.pending + ' |');
+    lines.push('| **Total** | **' + res.results.length + '** |');
+    lines.push('| ⏱️ Duration | ' + res.duration + 'ms |');
+    lines.push('');
+    if (res.failed === 0) lines.push('🎉 **All tests passed!**');
+    else lines.push('⚠️ **' + res.failed + ' test(s) failed.**');
+    lines.push('');
+    // Group by suite
+    for (var i = 0; i < res.results.length; i++) {
+      var r = res.results[i];
+      var parts = r.name.split(' > ');
+      var suite = parts.length > 1 ? parts.slice(0, -1).join(' > ') : '(root)';
+      var testName = parts[parts.length - 1];
+      if (!suites[suite]) suites[suite] = [];
+      suites[suite].push({ name: testName, status: r.status, duration: r.duration, error: r.error, slow: r.slow, attempts: r.attempts });
+      if (r.status === 'failed') failures.push(r);
+      if (r.slow) slow.push(r);
+    }
+    lines.push('## Results');
+    lines.push('');
+    var suiteNames = Object.keys(suites);
+    for (var s = 0; s < suiteNames.length; s++) {
+      lines.push('### ' + suiteNames[s]);
+      lines.push('');
+      lines.push('| Status | Test | Duration |');
+      lines.push('|--------|------|----------|');
+      var tests = suites[suiteNames[s]];
+      for (var t = 0; t < tests.length; t++) {
+        var icon = tests[t].status === 'passed' ? '✅' : tests[t].status === 'failed' ? '❌' : tests[t].status === 'pending' ? '○' : '⏭️';
+        var dur = tests[t].duration !== undefined ? tests[t].duration + 'ms' : '-';
+        if (tests[t].slow) dur = '⚠️ ' + dur;
+        var retry = tests[t].attempts > 1 ? ' (retry ×' + (tests[t].attempts - 1) + ')' : '';
+        lines.push('| ' + icon + ' | ' + tests[t].name + retry + ' | ' + dur + ' |');
+      }
+      lines.push('');
+    }
+    if (failures.length) {
+      lines.push('## Failures');
+      lines.push('');
+      for (var f = 0; f < failures.length; f++) {
+        lines.push('### ❌ ' + failures[f].name);
+        lines.push('');
+        lines.push('```');
+        lines.push(String(failures[f].error && failures[f].error.stack || failures[f].error));
+        lines.push('```');
+        lines.push('');
+      }
+    }
+    if (slow.length) {
+      lines.push('## Slow Tests (>' + _opts.slow + 'ms)');
+      lines.push('');
+      lines.push('| Test | Duration |');
+      lines.push('|------|----------|');
+      for (var sl = 0; sl < slow.length; sl++) {
+        lines.push('| ' + slow[sl].name + ' | ' + slow[sl].duration + 'ms |');
+      }
+      lines.push('');
+    }
+    return lines.join('\n');
   }
 
   /**
@@ -545,6 +708,9 @@ BareMetal.TestRunner = (function () {
     afterAll: afterAll,
     mock: mock,
     run: run,
+    configure: configure,
+    toTAP: toTAP,
+    toMarkdown: toMarkdown,
     installGlobals: installGlobals
   };
 
