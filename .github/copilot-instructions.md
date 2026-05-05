@@ -49,6 +49,9 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 | `BareMetal.Expressions.js` | `BareMetal.Expressions` | 50+ pre-built regex patterns (email, phone, URL, postal, credit card, UUID, etc.) |
 | `BareMetal.Tokens.js` | `BareMetal.Tokens` | JWT create/sign/verify/decode (HS256/384/512, RS256, ES256, Web Crypto) |
 | `BareMetal.Codes.js` | `BareMetal.Codes` | Reference data (countries, currencies, languages, timezones, HTTP, MIME, colours, cards, units) |
+| `BareMetal.RBAC.js` | `BareMetal.RBAC` | Client-side RBAC (reads JWT, checks roles/groups/permissions, DOM attrs) |
+| `BareMetal.Workflow.js` | `BareMetal.Workflow` | Workflow engine (SET/IF/FOR/FOREACH/FOREACHP/WEB/LOAD/SAVE + designer) |
+| `BareMetal.Markdown.js` | `BareMetal.Markdown` | GFM Markdown-to-HTML renderer (render, toc, frontMatter, sanitize) |
 | `BareMetalStyles.css` | — | CSS framework with short class names (`.bt`, `.cd`, `.rw`) |
 | `BareMetal.Styles.BootstrapCompatibilityShim.css` | — | Optional Bootstrap 5 long-name aliases (`.btn`, `.card`, `.row`) |
 
