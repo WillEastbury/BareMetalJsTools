@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BareMetal Launcher Example</title>
+  <link href="../src/BareMetalStyles.css" rel="stylesheet">
+  <style>
+    body { max-width: 980px; margin: 2rem auto; padding: 0 1rem; }
+    #sessions { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+    .bm-session-status { display: inline-block; margin: .25rem 0; padding: .15rem .45rem; border-radius: 999px; background: #eef; }
+    .bm-session-status.idle { background: #fff3cd; }
+    .bm-session-actions { display: flex; gap: .5rem; margin-top: .75rem; }
+    .bm-terminal { min-height: 16rem; padding: 1rem; overflow: auto; background: #101318; color: #d8f3dc; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Hosted terminal launcher</h1>
+    <p>Framework-free session cards, REST calls, idle display, and WebSocket terminal attach.</p>
+  </header>
+
+  <p>
+    <button id="refresh" class="bt">Refresh</button>
+    <button id="start" class="bt">Start session</button>
+  </p>
+
+  <section id="sessions" aria-live="polite"></section>
+  <h2>Terminal</h2>
+  <section id="terminal"></section>
+
+  <script src="../src/BareMetal.Launcher.js"></script>
+  <script>
+    const api = BareMetal.Launcher.createApi({
+      root: '/api',
+      sessionsPath: '/sessions'
+    });
+
+    const app = BareMetal.Launcher.createLauncher('sessions', {
+      api,
+      terminalUrl: id => `/sessions/${encodeURIComponent(id)}/terminal`,
+      onAttach(session, id, launcher) {
+        launcher.attachSocket(id, 'terminal', {
+          reconnectDelay: 300,
+          maxReconnectDelay: 4000
+        });
+      }
+    });
+
+    document.getElementById('refresh').addEventListener('click', () => app.refresh());
+    document.getElementById('start').addEventListener('click', () => app.start({ kind: 'shell' }));
+  </script>
+</body>
+</html>
