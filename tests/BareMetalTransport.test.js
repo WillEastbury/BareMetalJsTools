@@ -112,6 +112,43 @@ describe('BareMetal.Transport', () => {
     expect(grandChild.signal.aborted).toBe(true);
   });
 
+  test('fetchWithTimeout aborts slow fetches', async () => {
+    jest.useFakeTimers();
+    global.fetch = jest.fn((url, opts) => new Promise((resolve, reject) => {
+      opts.signal.addEventListener('abort', () => reject(opts.signal.reason));
+    }));
+
+    const promise = Transport.fetchWithTimeout('/api/slow', {}, 50);
+    const expectation = expect(promise).rejects.toThrow('Timed out after 50ms');
+    await flush();
+    await jest.advanceTimersByTimeAsync(50);
+
+    await expectation;
+    expect(global.fetch).toHaveBeenCalledWith('/api/slow', expect.objectContaining({ signal: expect.any(Object) }));
+    delete global.fetch;
+  });
+
+  test('fetchWithRetry retries transient responses', async () => {
+    jest.useFakeTimers();
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce({ ok: false, status: 503 })
+      .mockResolvedValueOnce({ ok: true, status: 200 });
+
+    const promise = Transport.fetchWithRetry('/api/scores', {}, {
+      maxAttempts: 2,
+      baseDelay: 100,
+      timeoutMs: 1000
+    });
+
+    await flush();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    await jest.advanceTimersByTimeAsync(100);
+
+    await expect(promise).resolves.toMatchObject({ status: 200 });
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    delete global.fetch;
+  });
+
   test('cache honours ttl and stale-while-revalidate', async () => {
     jest.useFakeTimers();
     const fn = jest.fn()

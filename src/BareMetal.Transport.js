@@ -278,6 +278,77 @@ BareMetal.Transport = (function(){
     if (scoped.signal && scoped.signal.addEventListener) scoped.signal.addEventListener('abort', clear, { once: true });
     return { signal: scoped.signal, clear: clear };
   }
+  function copyOptions(options) {
+    var out = {}, k;
+    options = options || {};
+    for (k in options) if (own(options, k) && k !== 'signal') out[k] = options[k];
+    return out;
+  }
+  function fetchWithTimeout(url, options, timeoutMs) {
+    if (!isFn(__bmRoot && __bmRoot.fetch)) return Promise.reject(new Error('fetch is not available'));
+    var parentSignal = options && options.signal;
+    var scoped = timeout(timeoutMs == null ? 6000 : timeoutMs);
+    var opts = copyOptions(options);
+    var done = false;
+    function cleanup() {
+      if (done) return;
+      done = true;
+      scoped.clear();
+      if (parentSignal && parentSignal.removeEventListener) parentSignal.removeEventListener('abort', onAbort);
+    }
+    function onAbort() {
+      scoped.clear();
+      scoped.abort(parentSignal && parentSignal.reason);
+    }
+    if (parentSignal) {
+      if (parentSignal.aborted) {
+        cleanup();
+        return Promise.reject(makeAbortError(parentSignal.reason));
+      }
+      if (parentSignal.addEventListener) parentSignal.addEventListener('abort', onAbort, { once: true });
+    }
+    opts.signal = scoped.signal;
+    return __bmRoot.fetch(url, opts).then(function(res) {
+      cleanup();
+      return res;
+    }, function(err) {
+      cleanup();
+      throw err;
+    });
+  }
+  function defaultRetryResponse(res) {
+    return !!res && (res.status === 429 || res.status === 503 || res.status === 504);
+  }
+  function fetchWithRetry(url, options, policy) {
+    var cfg = policy || {};
+    var retryResponse = isFn(cfg.retryResponse) ? cfg.retryResponse : defaultRetryResponse;
+    var retryError = isFn(cfg.retryError) ? cfg.retryError : function(err) {
+      return err && (err.name === 'AbortError' || /network|failed to fetch|timeout|timed out/i.test(String(err.message || '')));
+    };
+    return retry(function(attempt) {
+      return fetchWithTimeout(url, options, cfg.timeoutMs).then(function(res) {
+        if (retryResponse(res, attempt)) {
+          var err = new Error('HTTP ' + res.status);
+          err.name = 'FetchRetryError';
+          err.status = res.status;
+          err.response = res;
+          throw err;
+        }
+        return res;
+      });
+    }, {
+      maxAttempts: cfg.maxAttempts || 2,
+      baseDelay: cfg.baseDelay == null ? 500 : cfg.baseDelay,
+      maxDelay: cfg.maxDelay,
+      backoff: cfg.backoff || 'fixed',
+      jitter: cfg.jitter,
+      signal: cfg.signal,
+      retryOn: function(err, attempt) {
+        if (err && err.response) return true;
+        return retryError(err, attempt);
+      }
+    });
+  }
   function race(promises, signal) {
     var entries = [];
     var i;
@@ -727,6 +798,8 @@ BareMetal.Transport = (function(){
     coalesce: coalesce,
     cancel: cancel,
     timeout: timeout,
+    fetchWithTimeout: fetchWithTimeout,
+    fetchWithRetry: fetchWithRetry,
     race: race,
     cache: cache,
     priority: priority,
