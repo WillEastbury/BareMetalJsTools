@@ -35,13 +35,13 @@ describe('BareMetal.PicoScript', () => {
     expect(typeof ps.VM).toBe('function');
   });
 
-  test('has hook table with 456 entries', () => {
-    expect(Object.keys(ps.hooks.BY_CODE).length).toBe(456);
+  test('has hook table with 465 entries', () => {
+    expect(Object.keys(ps.hooks.BY_CODE).length).toBe(465);
   });
 
-  test('namespaces() returns 63 namespaces', () => {
+  test('namespaces() returns 64 namespaces', () => {
     const ns = ps.namespaces();
-    expect(ns.length).toBe(63);
+    expect(ns.length).toBe(64);
     expect(ns).toContain('Process');
     expect(ns).toContain('Timer');
     expect(ns).toContain('Error');
