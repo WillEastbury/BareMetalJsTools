@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Realtime Dashboard — BareMetalJsTools</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --dash-bg: #07111d;
+      --dash-panel: rgba(10, 19, 35, .88);
+      --dash-border: rgba(143, 178, 255, .18);
+      --dash-text: #edf4ff;
+      --dash-muted: #93a5c8;
+      --dash-ok: #60e7aa;
+      --dash-warn: #ffd166;
+      --dash-danger: #ff7b91;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(85, 120, 255, .26), transparent 25%),
+        radial-gradient(circle at 80% 20%, rgba(0, 201, 167, .14), transparent 20%),
+        radial-gradient(circle at 70% 90%, rgba(255, 193, 7, .1), transparent 25%),
+        var(--dash-bg);
+      color: var(--dash-text);
+    }
+    .page-wrapper, .main-content { background: transparent; }
+    .glass {
+      border: 1px solid var(--dash-border);
+      border-radius: 1rem;
+      background: linear-gradient(180deg, rgba(13, 24, 43, .92), rgba(8, 17, 31, .88));
+      box-shadow: 0 18px 42px rgba(0, 0, 0, .24);
+    }
+    .hero {
+      padding: 1.4rem;
+      margin-bottom: 1rem;
+    }
+    .hero p { color: var(--dash-muted); }
+    .hero .bd { font-size: .82rem; }
+    .demo-card {
+      background: var(--dash-panel);
+      border: 1px solid var(--dash-border);
+      border-radius: 1rem;
+      box-shadow: 0 18px 30px rgba(0, 0, 0, .2);
+    }
+    .demo-card .cd-h { background: rgba(255, 255, 255, .03); }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: .9rem;
+      margin-bottom: 1rem;
+    }
+    .stat-card {
+      padding: 1rem;
+      border-radius: .95rem;
+      border: 1px solid var(--dash-border);
+      background: rgba(255, 255, 255, .03);
+      min-height: 112px;
+    }
+    .stat-card span {
+      display: block;
+      font-size: .78rem;
+      color: var(--dash-muted);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .stat-card strong {
+      display: block;
+      margin-top: .55rem;
+      font-size: 1.75rem;
+      line-height: 1.1;
+    }
+    .stat-card small {
+      display: block;
+      margin-top: .5rem;
+      color: var(--dash-muted);
+    }
+    .chart-slot {
+      min-height: 280px;
+      border-radius: .95rem;
+      border: 1px solid rgba(255, 255, 255, .05);
+      background: rgba(2, 10, 21, .85);
+      padding: .75rem;
+    }
+    .control-row {
+      display: flex;
+      gap: .75rem;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .signal {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .4rem .8rem;
+      border-radius: 999px;
+      border: 1px solid var(--dash-border);
+      background: rgba(255, 255, 255, .03);
+      color: var(--dash-muted);
+      font-size: .84rem;
+    }
+    .signal-dot {
+      width: .65rem;
+      height: .65rem;
+      border-radius: 50%;
+      background: var(--dash-muted);
+      box-shadow: 0 0 0 0 rgba(255, 255, 255, .2);
+    }
+    .signal.closed .signal-dot { background: var(--dash-ok); box-shadow: 0 0 14px rgba(96, 231, 170, .45); }
+    .signal.half-open .signal-dot { background: var(--dash-warn); box-shadow: 0 0 14px rgba(255, 209, 102, .35); }
+    .signal.open .signal-dot { background: var(--dash-danger); box-shadow: 0 0 14px rgba(255, 123, 145, .35); }
+    .mini-code {
+      margin: 0;
+      padding: 1rem;
+      border-radius: .95rem;
+      border: 1px solid var(--dash-border);
+      background: rgba(2, 10, 21, .9);
+      color: #dce8ff;
+      font-family: var(--bs-font-mono, ui-monospace, monospace);
+      font-size: .81rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+    .timeline-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: .65rem;
+    }
+    .timeline-list li {
+      padding: .85rem .95rem;
+      border-radius: .95rem;
+      border: 1px solid var(--dash-border);
+      background: rgba(255, 255, 255, .03);
+      display: grid;
+      grid-template-columns: 95px 1fr auto;
+      gap: .9rem;
+      align-items: start;
+      font-size: .84rem;
+    }
+    .timeline-list time { color: var(--dash-muted); font-family: var(--bs-font-mono, ui-monospace, monospace); }
+    .timeline-list code { color: #c7dbff; font-size: .78rem; }
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: .75rem;
+      margin-top: .9rem;
+    }
+    .legend-item {
+      padding: .75rem .9rem;
+      border-radius: .9rem;
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid var(--dash-border);
+      font-size: .84rem;
+      color: var(--dash-muted);
+    }
+    .legend-item strong { display: block; color: var(--dash-text); margin-bottom: .25rem; }
+    @media (max-width: 1080px) {
+      .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      .stat-grid, .legend-grid { grid-template-columns: 1fr; }
+      .timeline-list li { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="site-header site-header-dark">
+      <a class="brand" href="index.html">🔩 BareMetalJsTools</a>
+      <nav>
+        <a href="forms-demo.html">Forms</a>
+        <a href="realtime-demo.html" class="act">Realtime</a>
+        <a href="media-demo.html">Media</a>
+        <a href="gamepad-demo.html">Gamepad</a>
+      </nav>
+    </header>
+
+    <main class="main-content p4" style="overflow-y:auto;">
+      <div class="ctn">
+        <section class="hero glass">
+          <div class="control-row">
+            <div>
+              <h1 class="mb1">Realtime Dashboard</h1>
+              <p class="lead mb0">A live operations board driven by <strong>BareMetal.PubSub</strong>, reactive <strong>Bind</strong> state, <strong>Charts</strong>, TTL/SWR <strong>Cache</strong>, <strong>Transport</strong> retry + circuit control, and a rolling <strong>Diagnostics</strong> timeline.</p>
+            </div>
+            <div class="fx gp2 flex-wrap aic">
+              <span class="bd bg-p">Live event bus</span>
+              <span class="bd bg-ok">Cache + SWR</span>
+              <span class="bd bg-in">Diagnostics on</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="bind-root" class="stat-grid">
+          <div class="stat-card">
+            <span>Users online</span>
+            <strong m-text="usersOnline"></strong>
+            <small>Reactive Bind card driven by the event stream.</small>
+          </div>
+          <div class="stat-card">
+            <span>Events / sec</span>
+            <strong m-text="eventsPerSecond"></strong>
+            <small>Updated every second from PubSub traffic.</small>
+          </div>
+          <div class="stat-card">
+            <span>Uptime</span>
+            <strong m-text="uptime"></strong>
+            <small>Driven from a simple reactive clock.</small>
+          </div>
+          <div class="stat-card">
+            <span>Cache hit rate</span>
+            <strong m-text="cacheHitRate"></strong>
+            <small m-text="cacheSummary"></small>
+          </div>
+          <div class="stat-card">
+            <span>Transport circuit</span>
+            <strong m-text="circuitState"></strong>
+            <small m-text="transportMessage"></small>
+          </div>
+        </section>
+
+        <div class="rw g3">
+          <div class="cm8">
+            <div class="rw g3">
+              <div class="cm12">
+                <div class="cd demo-card">
+                  <div class="cd-h control-row">
+                    <span>Latency trend (line)</span>
+                    <span class="signal" id="circuit-pill"><span class="signal-dot"></span><span id="circuit-pill-label">closed</span></span>
+                  </div>
+                  <div class="cd-b">
+                    <div id="latency-chart" class="chart-slot"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="cm6">
+                <div class="cd demo-card">
+                  <div class="cd-h">Event categories (bar)</div>
+                  <div class="cd-b">
+                    <div id="event-chart" class="chart-slot"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="cm6">
+                <div class="cd demo-card">
+                  <div class="cd-h">Platform health (gauge)</div>
+                  <div class="cd-b">
+                    <div id="health-chart" class="chart-slot"></div>
+                    <div class="legend-grid">
+                      <div class="legend-item"><strong m-text="lastUpdated"></strong>Last API refresh</div>
+                      <div class="legend-item"><strong m-text="requestsOk"></strong>Successful summary pulls</div>
+                      <div class="legend-item"><strong m-text="requestsFailed"></strong>Transport failures</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cm4">
+            <div class="cd demo-card mb3">
+              <div class="cd-h control-row">
+                <span>Cache + transport snapshot</span>
+                <button class="bt bt-op bt-s" id="refresh-summary-btn">Manual refresh</button>
+              </div>
+              <div class="cd-b">
+                <pre class="mini-code" id="summary-preview">Waiting for first summary fetch…</pre>
+              </div>
+            </div>
+
+            <div class="cd demo-card">
+              <div class="cd-h">Diagnostics timeline</div>
+              <div class="cd-b">
+                <ul class="timeline-list" id="timeline-list"></ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer site-footer-dark tc">
+      Realtime metrics generated locally for demo purposes
+    </footer>
+  </div>
+
+  <script src="../src/BareMetal.Bind.js"></script>
+  <script src="../src/BareMetal.PubSub.js"></script>
+  <script src="../src/BareMetal.Charts.js"></script>
+  <script src="../src/BareMetal.Cache.js"></script>
+  <script src="../src/BareMetal.Transport.js"></script>
+  <script src="../src/BareMetal.Diagnostics.js"></script>
+  <script>
+    (function () {
+      var root = document.getElementById('bind-root');
+      var timelineList = document.getElementById('timeline-list');
+      var summaryPreview = document.getElementById('summary-preview');
+      var manualRefreshBtn = document.getElementById('refresh-summary-btn');
+      var pill = document.getElementById('circuit-pill');
+      var pillLabel = document.getElementById('circuit-pill-label');
+      var startedAt = Date.now();
+      var latencyHistory = [162, 158, 171, 166, 149, 182, 174, 169];
+      var categoryCounts = { Checkout: 31, Search: 46, Auth: 19, Webhook: 27 };
+      var healthScore = 78;
+      var samplesThisSecond = 0;
+      var diagnosticsEvents = BareMetal.Diagnostics.counter('dashboard.events');
+      BareMetal.Diagnostics.gauge('dashboard.health', function () { return healthScore; });
+      var binding = BareMetal.Bind.reactive({
+        usersOnline: 812,
+        eventsPerSecond: 0,
+        uptime: '00:00:00',
+        cacheHitRate: '0%',
+        cacheSummary: 'No cache traffic yet',
+        circuitState: 'closed',
+        transportMessage: 'Healthy and serving fresh data',
+        lastUpdated: 'Awaiting response',
+        requestsOk: 0,
+        requestsFailed: 0
+      });
+      BareMetal.Bind.bind(root, binding.state, binding.watch);
+
+      var cache = BareMetal.Cache.create({ ttl: 2200, swr: 6500, staleIfError: true });
+      var metricsChannel = BareMetal.PubSub.channel('dashboard.metrics', { replay: 24 });
+      var timeline = BareMetal.Diagnostics.timeline();
+      var requestId = 0;
+
+      function pad(value) {
+        return String(value).padStart(2, '0');
+      }
+
+      function setCircuitState(state, note) {
+        binding.state.circuitState = state;
+        binding.state.transportMessage = note;
+        pill.className = 'signal ' + state;
+        pillLabel.textContent = state;
+      }
+
+      var apiCall = BareMetal.Diagnostics.trace('dashboard.summary.fetch', function () {
+        var latency = 180 + Math.round(Math.random() * 440);
+        return new Promise(function (resolve, reject) {
+          setTimeout(function () {
+            var failed = Math.random() < 0.28;
+            if (failed) {
+              reject(new Error('temporary network jitter'));
+              return;
+            }
+            requestId += 1;
+            resolve({
+              requestId: requestId,
+              cachedAt: new Date().toISOString(),
+              activeUsers: 700 + Math.round(Math.random() * 260),
+              throughput: 34 + Math.round(Math.random() * 28),
+              errorBudget: +(99.7 + Math.random() * 0.25).toFixed(2),
+              latency: latency,
+              regions: {
+                eu: 20 + Math.round(Math.random() * 15),
+                us: 18 + Math.round(Math.random() * 18),
+                apac: 8 + Math.round(Math.random() * 12),
+                edge: 5 + Math.round(Math.random() * 10)
+              }
+            });
+          }, latency);
+        });
+      });
+
+      var guardedApi = BareMetal.Transport.circuit(apiCall, {
+        threshold: 3,
+        resetTimeout: 4500,
+        halfOpenMax: 1,
+        onOpen: function () {
+          timeline.record('transport.open', { message: 'Circuit breaker opened' });
+          setCircuitState('open', 'Circuit open — serving cached data when possible');
+        },
+        onHalfOpen: function () {
+          timeline.record('transport.half-open', { message: 'Testing recovery path' });
+          setCircuitState('half-open', 'Half-open — probing for recovery');
+        },
+        onClose: function () {
+          timeline.record('transport.close', { message: 'Circuit closed again' });
+          setCircuitState('closed', 'Healthy and serving fresh data');
+        }
+      });
+
+      cache.on('hit', function () {
+        var stats = cache.stats();
+        binding.state.cacheHitRate = Math.round(stats.hitRate * 100) + '%';
+        binding.state.cacheSummary = stats.hits + ' hits / ' + stats.misses + ' misses';
+      });
+      cache.on('miss', function () {
+        var stats = cache.stats();
+        binding.state.cacheHitRate = Math.round(stats.hitRate * 100) + '%';
+        binding.state.cacheSummary = stats.hits + ' hits / ' + stats.misses + ' misses';
+      });
+      cache.on('revalidate', function (payload) {
+        timeline.record('cache.' + payload.state, { key: payload.key, background: payload.background });
+      });
+
+      function makeLatencyData() {
+        return latencyHistory.map(function (value, index) {
+          return { label: 'T+' + index, value: value };
+        });
+      }
+
+      function makeCategoryData() {
+        return Object.keys(categoryCounts).map(function (label) {
+          return { label: label, value: categoryCounts[label] };
+        });
+      }
+
+      function renderCharts() {
+        BareMetal.Charts.line('#latency-chart', makeLatencyData(), {
+          width: 700,
+          height: 260,
+          smooth: true,
+          fill: true,
+          labels: latencyHistory.map(function (_, index) { return 'S' + (index + 1); }),
+          colors: ['--bs-primary']
+        });
+        BareMetal.Charts.bar('#event-chart', makeCategoryData(), {
+          width: 420,
+          height: 250,
+          showValues: true,
+          colors: ['--bs-success', '--bs-info', '--bs-warning', '--bs-primary']
+        });
+        BareMetal.Charts.gauge('#health-chart', healthScore, {
+          size: 260,
+          min: 0,
+          max: 100,
+          label: 'Health',
+          zones: [
+            { from: 0, to: 45, color: '--bs-danger' },
+            { from: 45, to: 75, color: '--bs-warning' },
+            { from: 75, to: 100, color: '--bs-success' }
+          ]
+        });
+      }
+
+      function renderTimeline() {
+        var events = timeline.getEvents().slice(-9).reverse();
+        timelineList.innerHTML = events.map(function (event) {
+          var stamp = typeof event.timestamp === 'number' ? event.timestamp.toFixed(1) + ' ms' : '—';
+          return '<li>' +
+            '<time>' + stamp + '</time>' +
+            '<div><strong>' + event.name + '</strong><br><code>' + JSON.stringify(event.data || {}) + '</code></div>' +
+            '<span>' + event.type + '</span>' +
+          '</li>';
+        }).join('');
+      }
+
+      function renderSummary(summary) {
+        summaryPreview.textContent = JSON.stringify(summary, null, 2);
+      }
+
+      function randomMetricSample() {
+        return {
+          usersOnline: 720 + Math.round(Math.random() * 220),
+          latency: 120 + Math.round(Math.random() * 120),
+          health: 60 + Math.round(Math.random() * 35),
+          categories: {
+            Checkout: 18 + Math.round(Math.random() * 26),
+            Search: 30 + Math.round(Math.random() * 24),
+            Auth: 10 + Math.round(Math.random() * 16),
+            Webhook: 10 + Math.round(Math.random() * 20)
+          }
+        };
+      }
+
+      metricsChannel.subscribe(function (sample) {
+        samplesThisSecond += 1;
+        diagnosticsEvents.increment();
+        binding.state.usersOnline = sample.usersOnline;
+        healthScore = sample.health;
+        latencyHistory.push(sample.latency);
+        if (latencyHistory.length > 12) latencyHistory.shift();
+        categoryCounts = sample.categories;
+        timeline.record('metrics.sample', { latency: sample.latency, usersOnline: sample.usersOnline });
+        renderCharts();
+        renderTimeline();
+      });
+
+      function tickUptime() {
+        var elapsed = Math.floor((Date.now() - startedAt) / 1000);
+        var hours = Math.floor(elapsed / 3600);
+        var minutes = Math.floor((elapsed % 3600) / 60);
+        var seconds = elapsed % 60;
+        binding.state.uptime = pad(hours) + ':' + pad(minutes) + ':' + pad(seconds);
+      }
+
+      function fetchSummary(forceFresh) {
+        if (forceFresh) cache.invalidate('summary');
+        return BareMetal.Transport.retry(function () {
+          return cache.wrap('summary', function () {
+            return guardedApi();
+          }, { ttl: 2200, swr: 6500, staleIfError: true });
+        }, {
+          maxAttempts: 2,
+          baseDelay: 120,
+          backoff: 'fixed'
+        }).then(function (summary) {
+          binding.state.requestsOk = Number(binding.state.requestsOk) + 1;
+          binding.state.lastUpdated = new Date().toLocaleTimeString([], { hour12: false });
+          binding.state.usersOnline = summary.activeUsers;
+          binding.state.eventsPerSecond = summary.throughput;
+          categoryCounts = {
+            Checkout: summary.regions.eu,
+            Search: summary.regions.us,
+            Auth: summary.regions.apac,
+            Webhook: summary.regions.edge
+          };
+          healthScore = Math.max(52, Math.min(98, Math.round((summary.errorBudget - 99.4) * 120 + (700 - summary.latency) / 8)));
+          latencyHistory.push(summary.latency);
+          if (latencyHistory.length > 12) latencyHistory.shift();
+          renderSummary({
+            summary: summary,
+            cache: cache.stats(),
+            transport: guardedApi.stats(),
+            diagnostics: BareMetal.Diagnostics.report().counters
+          });
+          renderCharts();
+          renderTimeline();
+          return summary;
+        }).catch(function (error) {
+          binding.state.requestsFailed = Number(binding.state.requestsFailed) + 1;
+          timeline.record('summary.error', { message: error.message, circuit: guardedApi.state() });
+          renderSummary({
+            error: error.message,
+            transport: guardedApi.stats(),
+            cache: cache.stats()
+          });
+          renderTimeline();
+        });
+      }
+
+      setCircuitState('closed', 'Healthy and serving fresh data');
+      renderCharts();
+      renderTimeline();
+      tickUptime();
+      fetchSummary(false);
+
+      setInterval(function () {
+        metricsChannel.emit(randomMetricSample());
+      }, 1000);
+
+      setInterval(function () {
+        binding.state.eventsPerSecond = samplesThisSecond;
+        samplesThisSecond = 0;
+        tickUptime();
+      }, 1000);
+
+      setInterval(function () {
+        fetchSummary(false);
+      }, 3000);
+
+      setInterval(function () {
+        renderTimeline();
+      }, 1200);
+
+      manualRefreshBtn.addEventListener('click', function () {
+        timeline.record('summary.manual-refresh', { requested: true });
+        fetchSummary(true);
+      });
+    })();
+  </script>
+</body>
+</html>

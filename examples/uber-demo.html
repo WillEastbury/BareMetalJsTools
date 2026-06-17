@@ -1,0 +1,3550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BareMetalJsTools — Uber Demo</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <style>
+    :root {
+      --demo-bg: #050816;
+      --demo-panel: rgba(12, 18, 42, 0.88);
+      --demo-panel-soft: rgba(20, 27, 56, 0.78);
+      --demo-line: rgba(108, 126, 255, 0.24);
+      --demo-glow: rgba(82, 211, 255, 0.28);
+      --demo-accent: #68f0ff;
+      --demo-accent-2: #8d7dff;
+      --demo-accent-3: #6dffb8;
+      --demo-danger: #ff6f91;
+      --demo-warning: #ffcf5a;
+      --demo-text: #edf4ff;
+      --demo-muted: #96a5d7;
+      --demo-shadow: 0 24px 80px rgba(3, 6, 20, 0.55);
+      --demo-radius: 22px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body.dark {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--demo-text);
+      background:
+        radial-gradient(circle at top left, rgba(104, 240, 255, 0.12), transparent 22%),
+        radial-gradient(circle at top right, rgba(141, 125, 255, 0.18), transparent 26%),
+        linear-gradient(180deg, #09102a 0%, #050816 34%, #03050f 100%);
+    }
+
+    body.dark,
+    body.dark input,
+    body.dark select,
+    body.dark textarea,
+    body.dark button {
+      color: var(--demo-text);
+    }
+
+    body.dark .cd,
+    body.dark .demo-card,
+    body.dark .widget-shell,
+    body.dark .mini-stat,
+    body.dark .callout,
+    body.dark .code-box,
+    body.dark .metric-grid .metric,
+    body.dark .render-shell,
+    body.dark .token-box,
+    body.dark .chart-surface,
+    body.dark .drop-zone,
+    body.dark .sortable-item,
+    body.dark .graph-shell,
+    body.dark .speech-log,
+    body.dark .tab-link,
+    body.dark .timeline-item,
+    body.dark .pico-shell {
+      background: var(--demo-panel);
+      border-color: var(--demo-line);
+    }
+
+    .app-shell {
+      width: min(1600px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 20px 0 60px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--demo-line);
+      border-radius: calc(var(--demo-radius) + 8px);
+      background:
+        linear-gradient(135deg, rgba(104, 240, 255, 0.12), rgba(141, 125, 255, 0.16)),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+      box-shadow: var(--demo-shadow);
+      padding: 28px;
+      margin-bottom: 18px;
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+      border-radius: 999px;
+      filter: blur(22px);
+      opacity: 0.75;
+    }
+
+    .hero::before {
+      width: 240px;
+      height: 240px;
+      right: -70px;
+      top: -90px;
+      background: rgba(104, 240, 255, 0.18);
+    }
+
+    .hero::after {
+      width: 180px;
+      height: 180px;
+      left: -40px;
+      bottom: -70px;
+      background: rgba(141, 125, 255, 0.22);
+    }
+
+    .hero-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-title {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.4rem);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-subtitle {
+      max-width: 880px;
+      color: var(--demo-muted);
+      margin: 12px 0 0;
+      font-size: 1.05rem;
+    }
+
+    .headline-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .headline-pill,
+    .status-pill,
+    .tiny-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--demo-text);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--demo-accent-3);
+      box-shadow: 0 0 0 6px rgba(109, 255, 184, 0.12);
+      animation: pulse 1.8s infinite;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-stat {
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(255, 255, 255, 0.05);
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .hero-stat .value {
+      font-size: clamp(1.3rem, 2vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-stat .label {
+      color: var(--demo-muted);
+      font-size: 0.84rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .tab-strip {
+      display: grid;
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      gap: 10px;
+      margin: 18px 0 22px;
+    }
+
+    .tab-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 54px;
+      text-decoration: none;
+      color: var(--demo-muted);
+      border: 1px solid var(--demo-line);
+      border-radius: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+      transition: transform .18s ease, border-color .18s ease, color .18s ease, background .18s ease;
+      padding: 8px 10px;
+      font-size: 0.92rem;
+      text-align: center;
+    }
+
+    .tab-link:hover,
+    .tab-link:focus-visible {
+      transform: translateY(-2px);
+      color: var(--demo-text);
+      border-color: rgba(104, 240, 255, 0.45);
+      outline: none;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+    }
+
+    .tab-link.active {
+      color: #07121f;
+      background: linear-gradient(135deg, var(--demo-accent), #9af6ff);
+      border-color: transparent;
+      font-weight: 700;
+    }
+
+    .spa-section {
+      display: none;
+      animation: fadeUp .22s ease;
+    }
+
+    .spa-section.active {
+      display: block;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2vw, 2rem);
+      letter-spacing: -0.03em;
+    }
+
+    .section-head p {
+      margin: 8px 0 0;
+      color: var(--demo-muted);
+      max-width: 920px;
+    }
+
+    .section-tools {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .panel-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .demo-card {
+      grid-column: span 6;
+      border: 1px solid var(--demo-line);
+      border-radius: var(--demo-radius);
+      box-shadow: var(--demo-shadow);
+      overflow: hidden;
+      backdrop-filter: blur(18px);
+    }
+
+    .demo-card.wide {
+      grid-column: span 12;
+    }
+
+    .demo-card.third {
+      grid-column: span 4;
+    }
+
+    .demo-card.quarter {
+      grid-column: span 3;
+    }
+
+    .demo-card .cd-h,
+    .demo-card .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--demo-line);
+      background: rgba(255,255,255,0.03);
+      padding: 14px 16px;
+    }
+
+    .demo-card .card-head h3,
+    .demo-card .cd-h h3,
+    .demo-card .cd-h strong {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .demo-card .cd-b,
+    .demo-card .card-body {
+      padding: 16px;
+    }
+
+    .demo-card .lead-copy,
+    .hint,
+    .small-copy {
+      color: var(--demo-muted);
+      font-size: 0.92rem;
+      margin: 0 0 14px;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .row-wrap {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .metric-grid .metric,
+    .mini-stat,
+    .callout,
+    .widget-shell,
+    .render-shell,
+    .token-box,
+    .chart-surface,
+    .drop-zone,
+    .graph-shell,
+    .speech-log,
+    .timeline-item,
+    .pico-shell {
+      border: 1px solid var(--demo-line);
+      border-radius: 18px;
+      padding: 14px;
+      background: var(--demo-panel-soft);
+    }
+
+    .metric .kicker,
+    .mini-stat .kicker {
+      font-size: 0.75rem;
+      color: var(--demo-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .metric .big,
+    .mini-stat .big {
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      margin-top: 4px;
+    }
+
+    .code-box,
+    pre,
+    code,
+    textarea.code-input,
+    .log-view,
+    .json-view {
+      font-family: var(--bs-font-mono);
+    }
+
+    .code-box,
+    .log-view,
+    .json-view {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.82rem;
+      line-height: 1.55;
+      border: 1px solid var(--demo-line);
+      border-radius: 18px;
+      background: rgba(4, 8, 22, 0.86);
+      color: #cfe4ff;
+      padding: 14px;
+      max-height: 280px;
+      overflow: auto;
+    }
+
+    .terminal {
+      background: rgba(2, 6, 18, 0.88);
+      border-radius: 18px;
+      border: 1px solid rgba(104, 240, 255, 0.18);
+      padding: 14px;
+      color: #b7fff0;
+      font-family: var(--bs-font-mono);
+      font-size: 0.82rem;
+      min-height: 120px;
+      white-space: pre-wrap;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: rgba(104, 240, 255, 0.55);
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 0 0 3px rgba(104, 240, 255, 0.16);
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    label.field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--demo-muted);
+      margin-bottom: 10px;
+    }
+
+    label.field span {
+      color: var(--demo-text);
+      font-weight: 600;
+      font-size: 0.87rem;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+    }
+
+    .bt {
+      border-radius: 14px;
+    }
+
+    .split-view {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .three-up {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .two-up {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .caps-grid,
+    .permission-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .cap-tile,
+    .permission-tile,
+    .subscriber-pill,
+    .timeline-item,
+    .sortable-item {
+      border: 1px solid var(--demo-line);
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .cap-tile.ok {
+      border-color: rgba(109,255,184,0.42);
+      box-shadow: inset 0 0 0 1px rgba(109,255,184,0.08);
+    }
+
+    .cap-tile.no {
+      border-color: rgba(255,111,145,0.32);
+      opacity: 0.82;
+    }
+
+    .cap-tile strong,
+    .permission-tile strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .timeline-list {
+      display: grid;
+      gap: 10px;
+      max-height: 320px;
+      overflow: auto;
+    }
+
+    .timeline-item {
+      font-size: 0.85rem;
+      line-height: 1.45;
+    }
+
+    .timeline-item .time {
+      color: var(--demo-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+      display: inline-block;
+    }
+
+    .widget-shell > * + * {
+      margin-top: 12px;
+    }
+
+    .widget-shell img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 16px;
+      border: 1px solid var(--demo-line);
+    }
+
+    .session-pulse {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: var(--demo-accent-3);
+      box-shadow: 0 0 0 8px rgba(109,255,184,0.10);
+      animation: pulse 1.8s infinite;
+    }
+
+    .cache-badge,
+    .severity-badge,
+    .mode-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .severity-badge.good {
+      color: #9affdf;
+      border-color: rgba(109,255,184,0.28);
+    }
+
+    .severity-badge.warn {
+      color: #ffe391;
+      border-color: rgba(255,207,90,0.30);
+    }
+
+    .severity-badge.bad {
+      color: #ffb1c3;
+      border-color: rgba(255,111,145,0.34);
+    }
+
+    .sortable-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sortable-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: grab;
+    }
+
+    .sortable-item .grab {
+      font-size: 1.2rem;
+      opacity: 0.6;
+    }
+
+    .drag-ghost {
+      opacity: 0.88;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.32);
+    }
+
+    .dragging {
+      opacity: 0.45;
+    }
+
+    .drop-over {
+      border-style: dashed;
+      border-color: rgba(104,240,255,0.58) !important;
+    }
+
+    .animate-chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      min-height: 90px;
+    }
+
+    .animate-chip {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(104,240,255,0.12);
+      border: 1px solid rgba(104,240,255,0.18);
+      color: var(--demo-text);
+    }
+
+    .fade {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+
+    .fade-active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      transition: opacity .24s ease, transform .24s ease;
+    }
+
+    .fade-out {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .fade-out-active {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .graph-shell,
+    .chart-surface,
+    .pico-shell,
+    .render-shell {
+      min-height: 320px;
+    }
+
+    .chart-surface {
+      min-height: 280px;
+    }
+
+    .graph-shell {
+      min-height: 440px;
+    }
+
+    .pico-shell {
+      padding: 0;
+      overflow: hidden;
+      min-height: 780px;
+    }
+
+    .pico-shell > div {
+      min-height: 780px;
+    }
+
+    .preview-box {
+      min-height: 180px;
+      border-radius: 18px;
+      border: 1px solid var(--demo-line);
+      background: rgba(255,255,255,0.04);
+      padding: 16px;
+      overflow: auto;
+    }
+
+    .preview-box img,
+    .media-preview video,
+    .media-preview canvas {
+      max-width: 100%;
+      border-radius: 16px;
+    }
+
+    .media-preview {
+      min-height: 220px;
+      display: grid;
+      place-items: center;
+      border: 1px dashed rgba(255,255,255,0.16);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.03);
+      padding: 14px;
+    }
+
+    .drop-zone {
+      min-height: 140px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border-style: dashed;
+    }
+
+    .lazy-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .lazy-grid img {
+      width: 100%;
+      height: 170px;
+      object-fit: cover;
+      border-radius: 16px;
+      border: 1px solid var(--demo-line);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .markdown-preview h1,
+    .markdown-preview h2,
+    .markdown-preview h3,
+    .markdown-preview h4,
+    .markdown-preview p,
+    .markdown-preview ul,
+    .markdown-preview ol,
+    .markdown-preview table,
+    .markdown-preview blockquote,
+    .markdown-preview pre {
+      margin-top: 0;
+      margin-bottom: 14px;
+    }
+
+    .markdown-preview table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .markdown-preview th,
+    .markdown-preview td {
+      border: 1px solid var(--demo-line);
+      padding: 8px;
+    }
+
+    .auth-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .overlay-note {
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10);
+      color: var(--demo-muted);
+      font-size: 0.85rem;
+    }
+
+    .footer-note {
+      margin-top: 28px;
+      text-align: center;
+      color: var(--demo-muted);
+      font-size: 0.84rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .in-view {
+      outline: 1px solid rgba(104,240,255,0.24);
+      box-shadow: 0 0 0 1px rgba(104,240,255,0.12), 0 20px 48px rgba(4,8,20,0.36);
+      transform: translateY(-2px);
+    }
+
+    .muted {
+      color: var(--demo-muted);
+    }
+
+    .success-text { color: #9affdf; }
+    .warning-text { color: #ffe391; }
+    .danger-text { color: #ffb1c3; }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.08); opacity: 0.75; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 1280px) {
+      .tab-strip {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+      }
+
+      .hero-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .demo-card.third,
+      .demo-card.quarter,
+      .demo-card,
+      .demo-card.wide {
+        grid-column: span 12;
+      }
+
+      .split-view,
+      .two-up,
+      .three-up,
+      .auth-grid,
+      .lazy-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .app-shell {
+        width: min(100vw - 18px, 1600px);
+      }
+
+      .hero,
+      .demo-card .cd-b,
+      .demo-card .card-body {
+        padding: 14px;
+      }
+
+      .tab-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="dark">
+  <div class="app-shell" id="app-root">
+    <header class="hero">
+      <div class="hero-head">
+        <div>
+          <div class="headline-pill">
+            <span class="status-dot"></span>
+            Kitchen Sink Showcase
+          </div>
+          <h1 class="hero-title">BareMetalJsTools — 61 modules, 586KB, zero dependencies</h1>
+          <p class="hero-subtitle">
+            A single-page showcase where routing, reactivity, graphics, storage, auth, media, validation,
+            pipelines, workers, markdown, IndexedDB, JWTs, geolocation, notifications, PicoScript and more
+            all collide in one gloriously over-the-top BareMetal demo.
+          </p>
+          <div class="headline-row">
+            <span class="headline-pill">Active tab: <strong m-text="activeTabLabel"></strong></span>
+            <span class="headline-pill">Locale: <strong m-text="localeLabel"></strong></span>
+            <span class="headline-pill">Clock: <strong m-text="liveClock"></strong></span>
+            <span class="headline-pill">Session: <strong m-text="sessionBadge"></strong></span>
+          </div>
+        </div>
+        <div class="stack" style="min-width: 260px; max-width: 360px; width: 100%;">
+          <label class="field">
+            <span>Change locale (I18n + Codes + Time)</span>
+            <select id="locale-select">
+              <option value="en">English</option>
+              <option value="fr">Français</option>
+              <option value="ar">العربية</option>
+            </select>
+          </label>
+          <div class="overlay-note" m-text="heroNote"></div>
+        </div>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="label">Capability score</div>
+          <div class="value" m-text="capabilityScore"></div>
+          <div class="muted">Dynamic profile by BareMetal.Capabilities</div>
+        </div>
+        <div class="hero-stat">
+          <div class="label">Diagnostics events</div>
+          <div class="value" m-text="diagnosticCount"></div>
+          <div class="muted">Timeline + counters + gauges</div>
+        </div>
+        <div class="hero-stat">
+          <div class="label">PubSub messages</div>
+          <div class="value" m-text="busCount"></div>
+          <div class="muted">Live bus traffic across tabs</div>
+        </div>
+        <div class="hero-stat">
+          <div class="label">Workers result</div>
+          <div class="value" m-text="workerScore"></div>
+          <div class="muted">Offloaded compute result</div>
+        </div>
+      </div>
+    </header>
+
+    <nav class="tab-strip" id="tab-strip">
+      <a class="tab-link" data-tab="dashboard" href="?tab=dashboard">🏠 Dashboard</a>
+      <a class="tab-link" data-tab="data" href="?tab=data">🧬 Data</a>
+      <a class="tab-link" data-tab="forms" href="?tab=forms">📝 Forms</a>
+      <a class="tab-link" data-tab="communication" href="?tab=communication">📡 Communication</a>
+      <a class="tab-link" data-tab="media" href="?tab=media">🎙️ Media & Input</a>
+      <a class="tab-link" data-tab="visualisation" href="?tab=visualisation">📈 Visualisation</a>
+      <a class="tab-link" data-tab="geo" href="?tab=geo">🗺️ Geo & Maps</a>
+      <a class="tab-link" data-tab="infrastructure" href="?tab=infrastructure">⚙️ Infrastructure</a>
+      <a class="tab-link" data-tab="picoscript" href="?tab=picoscript">💾 PicoScript</a>
+      <a class="tab-link" data-tab="security" href="?tab=security">🔐 Auth & Security</a>
+    </nav>
+
+    <main id="demo-main">
+      <section class="spa-section active" data-tab="dashboard">
+        <div class="section-head">
+          <div>
+            <h2>Dashboard</h2>
+            <p>Config layers, diagnostics, capabilities, session lifecycle and a dense widget wall showing extra BareMetal modules quietly working together.</p>
+          </div>
+          <div class="section-tools">
+            <button class="bt bt-op bt-s" id="refresh-capabilities-btn">Refresh capabilities</button>
+            <button class="bt bt-oin bt-s" id="emit-dashboard-toast-btn">Emit toast</button>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <article class="demo-card">
+            <div class="card-head">
+              <h3>Layered Config + LocalKVStore</h3>
+              <span class="cache-badge" m-text="configStatus"></span>
+            </div>
+            <div class="card-body">
+              <p class="lead-copy">Defaults, environment imports and runtime overrides stay visible and editable in real time.</p>
+              <div class="control-grid">
+                <label class="field">
+                  <span>API base</span>
+                  <input type="text" m-value="configDraft.apiBase">
+                </label>
+                <label class="field">
+                  <span>Retry count</span>
+                  <input type="number" min="0" max="10" m-value="configDraft.retryCount">
+                </label>
+                <label class="field">
+                  <span>Theme</span>
+                  <select m-value="configDraft.theme">
+                    <option value="wavefunction">wavefunction</option>
+                    <option value="bedlam">bedlam</option>
+                    <option value="lava">lava</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Feature flag</span>
+                  <select m-value="configDraft.experimental">
+                    <option value="true">true</option>
+                    <option value="false">false</option>
+                  </select>
+                </label>
+              </div>
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="apply-config-btn">Apply runtime layer</button>
+                <button class="bt bt-op bt-s" id="temp-override-btn">Apply 8s override</button>
+                <button class="bt bt-os bt-s" id="reset-config-btn">Reset runtime layer</button>
+              </div>
+              <div class="split-view" style="margin-top: 14px;">
+                <div>
+                  <div class="tiny-pill">Merged config</div>
+                  <pre class="json-view" id="config-view"></pre>
+                </div>
+                <div>
+                  <div class="tiny-pill">Environment export</div>
+                  <pre class="json-view" id="config-env-view"></pre>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head">
+              <h3>Diagnostics + Logger + Time</h3>
+              <span class="severity-badge good">Tracing live</span>
+            </div>
+            <div class="card-body stack">
+              <p class="lead-copy">Every demo interaction pushes into BareMetal.Diagnostics, while BareMetal.Logger mirrors structured logs into the UI.</p>
+              <div class="metric-grid">
+                <div class="metric">
+                  <div class="kicker">Actions</div>
+                  <div class="big" m-text="diagnosticCount"></div>
+                </div>
+                <div class="metric">
+                  <div class="kicker">Cache hits</div>
+                  <div class="big" m-text="cacheHitCount"></div>
+                </div>
+                <div class="metric">
+                  <div class="kicker">Current locale</div>
+                  <div class="big" m-text="localeLabel"></div>
+                </div>
+                <div class="metric">
+                  <div class="kicker">Clock</div>
+                  <div class="big" m-text="liveClock"></div>
+                </div>
+              </div>
+              <div class="two-up">
+                <div>
+                  <div class="tiny-pill">Timeline</div>
+                  <div class="timeline-list" id="diagnostics-timeline"></div>
+                </div>
+                <div>
+                  <div class="tiny-pill">Structured logs</div>
+                  <div class="log-view" id="logger-view"></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="demo-card wide">
+            <div class="card-head">
+              <h3>Capabilities + Session + Progressive + A11y + Codes + I18n</h3>
+              <span class="tiny-pill" m-text="heroNote"></span>
+            </div>
+            <div class="card-body">
+              <div class="panel-grid" style="margin-bottom: 0;">
+                <div class="demo-card third" style="box-shadow: none; margin: 0;">
+                  <div class="card-head"><h3>Capabilities</h3></div>
+                  <div class="card-body">
+                    <div class="caps-grid" id="capabilities-grid"></div>
+                    <div class="permission-grid" id="permission-grid" style="margin-top: 12px;"></div>
+                  </div>
+                </div>
+                <div class="demo-card third" style="box-shadow: none; margin: 0;">
+                  <div class="card-head"><h3>Session</h3></div>
+                  <div class="card-body stack">
+                    <div class="row-wrap">
+                      <span class="session-pulse"></span>
+                      <strong m-text="sessionBadge"></strong>
+                    </div>
+                    <div class="mini-stat">
+                      <div class="kicker">Fingerprint</div>
+                      <div class="big" style="font-size: 0.95rem;" m-text="sessionFingerprint"></div>
+                    </div>
+                    <div class="mini-stat">
+                      <div class="kicker">Expiry</div>
+                      <div class="big" style="font-size: 0.95rem;" m-text="sessionExpiry"></div>
+                    </div>
+                    <div class="mini-stat">
+                      <div class="kicker">Idle for</div>
+                      <div class="big" style="font-size: 0.95rem;" m-text="sessionIdle"></div>
+                    </div>
+                    <div class="row-wrap">
+                      <button class="bt bt-op bt-s" id="extend-session-btn">Extend 5 min</button>
+                      <button class="bt bt-oin bt-s" id="refresh-session-btn">Refresh</button>
+                      <button class="bt bt-oer bt-s" id="destroy-session-btn">Expire</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="demo-card third" style="box-shadow: none; margin: 0;">
+                  <div class="card-head"><h3>Progressive extras</h3></div>
+                  <div class="card-body stack">
+                    <div class="overlay-note" id="progressive-status"></div>
+                    <div class="mini-stat">
+                      <div class="kicker">Country reference</div>
+                      <div class="big" style="font-size: 1rem;" id="codes-country"></div>
+                    </div>
+                    <div class="mini-stat">
+                      <div class="kicker">Currency reference</div>
+                      <div class="big" style="font-size: 1rem;" id="codes-currency"></div>
+                    </div>
+                    <div class="overlay-note">BareMetal.ServiceWorker.js is intentionally not loaded as a page script; it is referenced by BareMetal.Progressive only when registration is possible.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="demo-card wide">
+            <div class="card-head">
+              <h3>Components + ComponentFactories widget wall</h3>
+              <span class="tiny-pill">Navbar, calendar, table, tree, gantt, chatbot, image and toast directives</span>
+            </div>
+            <div class="card-body">
+              <div class="widget-shell" id="component-root">
+                <div m-navbar="widgetNav"></div>
+                <div class="panel-grid" style="margin-top: 12px; margin-bottom: 0;">
+                  <div class="demo-card third" style="box-shadow: none; margin: 0;">
+                    <div class="card-head"><h3>Calendar</h3></div>
+                    <div class="card-body">
+                      <div m-calendar="widgetEvents" m-calendar-select="selectWidgetDay"></div>
+                    </div>
+                  </div>
+                  <div class="demo-card third" style="box-shadow: none; margin: 0;">
+                    <div class="card-head"><h3>Data table</h3></div>
+                    <div class="card-body">
+                      <table m-table="widgetRows" m-table-cols="Module:name,State:state,Impact:impact" m-table-select="selectWidgetRow"></table>
+                    </div>
+                  </div>
+                  <div class="demo-card third" style="box-shadow: none; margin: 0;">
+                    <div class="card-head"><h3>Tree explorer</h3></div>
+                    <div class="card-body">
+                      <div m-tree="widgetTree" m-tree-select="selectWidgetTree"></div>
+                    </div>
+                  </div>
+                  <div class="demo-card third" style="box-shadow: none; margin: 0;">
+                    <div class="card-head"><h3>Gantt</h3></div>
+                    <div class="card-body">
+                      <div m-gantt="widgetTasks"></div>
+                    </div>
+                  </div>
+                  <div class="demo-card third" style="box-shadow: none; margin: 0;">
+                    <div class="card-head"><h3>Chatbot</h3></div>
+                    <div class="card-body">
+                      <div m-chatbot="widgetMessages" m-chatbot-send="sendWidgetMessage"></div>
+                    </div>
+                  </div>
+                  <div class="demo-card third" style="box-shadow: none; margin: 0;">
+                    <div class="card-head"><h3>Image + toast stack</h3></div>
+                    <div class="card-body stack">
+                      <img alt="component demo" m-img="widgetImage" m-img-fallback="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='460' viewBox='0 0 800 460'%3E%3Crect fill='%23101830' width='800' height='460'/%3E%3Ctext x='50%25' y='50%25' fill='%2396a5d7' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='32'%3EBareMetal image fallback%3C/text%3E%3C/svg%3E" m-img-lazy>
+                      <div m-toast="widgetToasts"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="spa-section" data-tab="data">
+        <div class="section-head">
+          <div>
+            <h2>Data</h2>
+            <p>Schema parsing, runtime types, signed binary payloads, compression, TTL caches, IndexedDB CRUD and metadata-driven UI rendering via template and communications mocks.</p>
+          </div>
+          <div class="section-tools">
+            <button class="bt bt-op bt-s" id="run-data-suite-btn">Run data demos</button>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <article class="demo-card">
+            <div class="card-head"><h3>Schema</h3><span class="tiny-pill">coerce + validate + binary schema bridge</span></div>
+            <div class="card-body stack">
+              <textarea class="code-input" id="schema-input">{
+  "id": "42",
+  "name": "Orbit",
+  "enabled": "true",
+  "tags": ["demo", "schema"],
+  "budget": "1299.95"
+}</textarea>
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="run-schema-btn">Validate JSON</button>
+                <button class="bt bt-op bt-s" id="schema-binary-btn">Show binary schema</button>
+              </div>
+              <div class="split-view">
+                <pre class="json-view" id="schema-result"></pre>
+                <pre class="json-view" id="schema-binary-view"></pre>
+              </div>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head"><h3>Types</h3><span class="tiny-pill">define, check, cast, guard</span></div>
+            <div class="card-body stack">
+              <textarea class="code-input" id="types-input">{
+  "id": "7",
+  "name": "Ada",
+  "email": "ada@example.com",
+  "roles": ["admin", "ops"]
+}</textarea>
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="run-types-btn">Check runtime type</button>
+              </div>
+              <pre class="json-view" id="types-result"></pre>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head"><h3>Binary + Compress</h3><span class="tiny-pill">serialize + hex + roundtrip</span></div>
+            <div class="card-body stack">
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="run-binary-btn">Serialize</button>
+                <button class="bt bt-op bt-s" id="run-compress-btn">Compress JSON</button>
+              </div>
+              <div class="split-view">
+                <pre class="json-view" id="binary-view"></pre>
+                <pre class="json-view" id="compress-view"></pre>
+              </div>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head"><h3>Cache</h3><span class="tiny-pill">TTL + SWR + hit/miss stats</span></div>
+            <div class="card-body stack">
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="cache-fetch-btn">Fetch cached payload</button>
+                <button class="bt bt-op bt-s" id="cache-invalidate-btn">Invalidate</button>
+              </div>
+              <div class="terminal" id="cache-terminal"></div>
+            </div>
+          </article>
+
+          <article class="demo-card wide">
+            <div class="card-head"><h3>IndexedDB + Metadata + Template + Rendering + Communications</h3><span class="tiny-pill">crud table + metadata-driven UI + mocked API</span></div>
+            <div class="card-body stack">
+              <div class="row-wrap">
+                <label class="field" style="max-width: 220px; margin-bottom: 0;">
+                  <span>New record title</span>
+                  <input id="idb-title-input" type="text" value="Indexed row">
+                </label>
+                <button class="bt bt-p bt-s" id="idb-add-btn">Add row</button>
+                <button class="bt bt-op bt-s" id="idb-reload-btn">Reload table</button>
+                <button class="bt bt-oer bt-s" id="idb-clear-btn">Clear database</button>
+                <button class="bt bt-oin bt-s" id="render-entity-btn">Render remote entity</button>
+                <button class="bt bt-os bt-s" id="comms-ping-btn">Mock REST ping</button>
+              </div>
+              <div class="split-view">
+                <div>
+                  <div class="tiny-pill">IndexedDB table</div>
+                  <div class="render-shell" id="idb-table-shell"></div>
+                </div>
+                <div>
+                  <div class="tiny-pill">Metadata / rendering shell</div>
+                  <div class="render-shell" id="rendering-shell"></div>
+                </div>
+              </div>
+              <pre class="json-view" id="comms-view"></pre>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="spa-section" data-tab="forms">
+        <div class="section-head">
+          <div>
+            <h2>Forms &amp; Validation</h2>
+            <p>A multi-step form with masking, repeaters, conditional fields, autosave, validation, regex inspection and undo / redo snapshots.</p>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <article class="demo-card wide">
+            <div class="card-head"><h3>BareMetal.Forms wizard</h3><span class="tiny-pill">masks + repeaters + conditionals + autosave</span></div>
+            <div class="card-body">
+              <form id="wizard-form" class="stack">
+                <div data-step="0" class="wizard-step">
+                  <div class="control-grid">
+                    <label class="field"><span>Name</span><input name="name" type="text" value="Ada Lovelace"></label>
+                    <label class="field"><span>Email</span><input name="email" type="email" value="ada@baremetal.dev"></label>
+                    <label class="field"><span>Phone</span><input id="phone-mask" name="phone" type="text" value="5551234567"></label>
+                    <label class="field"><span>Plan</span>
+                      <select name="plan">
+                        <option value="starter">starter</option>
+                        <option value="business" selected>business</option>
+                        <option value="enterprise">enterprise</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <div data-step="1" class="wizard-step hidden">
+                  <div class="control-grid">
+                    <label class="field"><span>Enable advanced billing?</span>
+                      <select name="advancedBilling">
+                        <option value="true" selected>true</option>
+                        <option value="false">false</option>
+                      </select>
+                    </label>
+                    <label class="field"><span>VAT number</span><input name="vatNumber" type="text" value="GB123456789"></label>
+                    <label class="field"><span>Country</span><input name="country" type="text" value="GB"></label>
+                    <label class="field"><span>Website</span><input name="website" type="url" value="https://baremetal.dev"></label>
+                  </div>
+                </div>
+                <div data-step="2" class="wizard-step hidden">
+                  <div class="stack">
+                    <div class="row-wrap" style="justify-content: space-between;">
+                      <strong>Team members repeater</strong>
+                      <button type="button" class="bt bt-op bt-s" id="add-team-member-btn">Add member</button>
+                    </div>
+                    <div id="team-repeater"></div>
+                    <label class="field"><span>Notes</span><textarea name="notes">Zero dependencies. Maximum metal.</textarea></label>
+                  </div>
+                </div>
+                <div class="row-wrap">
+                  <button type="button" class="bt bt-os bt-s" id="wizard-prev-btn">Previous</button>
+                  <button type="button" class="bt bt-p bt-s" id="wizard-next-btn">Next</button>
+                  <button type="button" class="bt bt-oin bt-s" id="wizard-submit-btn">Submit wizard</button>
+                  <button type="button" class="bt bt-op bt-s" id="wizard-restore-btn">Restore autosave</button>
+                  <button type="button" class="bt bt-oer bt-s" id="wizard-clear-autosave-btn">Clear autosave</button>
+                </div>
+              </form>
+              <div class="split-view" style="margin-top: 14px;">
+                <pre class="json-view" id="forms-state-view"></pre>
+                <pre class="json-view" id="forms-submit-view"></pre>
+              </div>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head"><h3>Validate + Expressions</h3><span class="tiny-pill">live regex lab</span></div>
+            <div class="card-body stack">
+              <label class="field"><span>Pattern</span>
+                <select id="expression-select"></select>
+              </label>
+              <label class="field"><span>Value</span><input id="expression-value" type="text" value="ada@example.com"></label>
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="test-expression-btn">Test pattern</button>
+                <button class="bt bt-op bt-s" id="run-validate-btn">Validate payload</button>
+              </div>
+              <pre class="json-view" id="expression-view"></pre>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head"><h3>Undo / Redo snapshots</h3><span class="tiny-pill">BareMetal.UndoRedo</span></div>
+            <div class="card-body stack">
+              <div class="row-wrap">
+                <button class="bt bt-op bt-s" id="snapshot-btn">Take snapshot</button>
+                <button class="bt bt-os bt-s" id="undo-btn">Undo</button>
+                <button class="bt bt-oin bt-s" id="redo-btn">Redo</button>
+              </div>
+              <pre class="json-view" id="undo-view"></pre>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="spa-section" data-tab="communication">
+        <div class="section-head">
+          <div>
+            <h2>Communication</h2>
+            <p>Retries, circuit breakers, message buses, diff/patch workflows, URL dissection and typed error chains.</p>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <article class="demo-card">
+            <div class="card-head"><h3>Transport</h3><span class="tiny-pill">retry + circuit breaker + queue</span></div>
+            <div class="card-body stack">
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="transport-run-btn">Run flaky request</button>
+                <button class="bt bt-op bt-s" id="transport-reset-btn">Reset circuit</button>
+              </div>
+              <div class="terminal" id="transport-view"></div>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head"><h3>PubSub</h3><span class="tiny-pill">wildcards + sticky + request/response</span></div>
+            <div class="card-body stack">
+              <div class="row-wrap">
+                <input id="pubsub-topic" type="text" value="demo.message">
+                <input id="pubsub-payload" type="text" value="hello bare metal">
+              </div>
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="pubsub-publish-btn">Publish</button>
+                <button class="bt bt-op bt-s" id="pubsub-sticky-btn">Sticky publish</button>
+                <button class="bt bt-oin bt-s" id="pubsub-request-btn">Request reply</button>
+              </div>
+              <div class="log-view" id="pubsub-view"></div>
+            </div>
+          </article>
+
+          <article class="demo-card wide">
+            <div class="card-head"><h3>Sync + URL + Errors</h3><span class="tiny-pill">object diffs, patch previews, parser breakdowns and rich error metadata</span></div>
+            <div class="card-body stack">
+              <div class="split-view">
+                <div>
+                  <div class="tiny-pill">Sync local object</div>
+                  <textarea class="code-input" id="sync-left">{
+  "title": "Draft",
+  "count": 1,
+  "tags": ["docs"]
+}</textarea>
+                </div>
+                <div>
+                  <div class="tiny-pill">Sync remote object</div>
+                  <textarea class="code-input" id="sync-right">{
+  "title": "Published",
+  "count": 2,
+  "tags": ["docs", "site"]
+}</textarea>
+                </div>
+              </div>
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="sync-run-btn">Diff &amp; patch</button>
+                <input id="url-input" type="text" value="https://example.com/shop/items/42?tab=details&debug=true#specs" style="flex:1 1 340px;">
+                <button class="bt bt-op bt-s" id="url-parse-btn">Parse URL</button>
+                <button class="bt bt-oer bt-s" id="errors-run-btn">Trigger error chain</button>
+              </div>
+              <div class="three-up">
+                <pre class="json-view" id="sync-view"></pre>
+                <pre class="json-view" id="url-view"></pre>
+                <pre class="json-view" id="errors-view"></pre>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="spa-section" data-tab="media">
+        <div class="section-head">
+          <div>
+            <h2>Media &amp; Input</h2>
+            <p>Camera, speech, gamepads, clipboard, files and drag/drop — all with graceful fallback messages when browser APIs or permissions are unavailable.</p>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <article class="demo-card third">
+            <div class="card-head"><h3>Media</h3></div>
+            <div class="card-body stack">
+              <div class="media-preview" id="media-preview">Camera preview appears here.</div>
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="start-camera-btn">Start camera</button>
+                <button class="bt bt-op bt-s" id="snapshot-btn-media">Snapshot</button>
+                <button class="bt bt-oer bt-s" id="stop-camera-btn">Stop</button>
+              </div>
+              <div class="overlay-note" id="media-status"></div>
+            </div>
+          </article>
+
+          <article class="demo-card third">
+            <div class="card-head"><h3>Speech</h3></div>
+            <div class="card-body stack">
+              <label class="field"><span>Speak text</span><textarea id="speech-text">BareMetal makes zero dependency browser tooling feel delightfully overpowered.</textarea></label>
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="speech-speak-btn">Speak</button>
+                <button class="bt bt-op bt-s" id="speech-listen-btn">Listen</button>
+                <button class="bt bt-os bt-s" id="speech-stop-btn">Stop</button>
+              </div>
+              <div class="speech-log" id="speech-view"></div>
+            </div>
+          </article>
+
+          <article class="demo-card third">
+            <div class="card-head"><h3>Gamepad</h3></div>
+            <div class="card-body stack">
+              <div class="overlay-note" id="gamepad-status"></div>
+              <div class="terminal" id="gamepad-view"></div>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head"><h3>Clipboard</h3></div>
+            <div class="card-body stack">
+              <label class="field"><span>Clipboard text</span><textarea id="clipboard-input">Copy me into the system clipboard.</textarea></label>
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="clipboard-copy-btn">Copy</button>
+                <button class="bt bt-op bt-s" id="clipboard-read-btn">Read clipboard</button>
+              </div>
+              <pre class="json-view" id="clipboard-view"></pre>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head"><h3>FileIO</h3></div>
+            <div class="card-body stack">
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="file-open-btn">Open text file</button>
+                <button class="bt bt-op bt-s" id="file-save-btn">Save generated file</button>
+              </div>
+              <div class="drop-zone" id="file-drop-zone">Drop files here to inspect them.</div>
+              <pre class="json-view" id="file-view"></pre>
+            </div>
+          </article>
+
+          <article class="demo-card wide">
+            <div class="card-head"><h3>DragDrop sortable list</h3><span class="tiny-pill">BareMetal.DragDrop.sortable</span></div>
+            <div class="card-body stack">
+              <div class="row-wrap">
+                <button class="bt bt-op bt-s" id="shuffle-sortable-btn">Shuffle</button>
+                <span class="tiny-pill" id="drag-order-pill">Order updates live</span>
+              </div>
+              <div class="sortable-list" id="sortable-list">
+                <div class="sortable-item" data-id="routing"><span><span class="grab">⋮⋮</span> Routing hooks</span><strong>01</strong></div>
+                <div class="sortable-item" data-id="bind"><span><span class="grab">⋮⋮</span> Reactive state</span><strong>02</strong></div>
+                <div class="sortable-item" data-id="charts"><span><span class="grab">⋮⋮</span> SVG charts</span><strong>03</strong></div>
+                <div class="sortable-item" data-id="workers"><span><span class="grab">⋮⋮</span> Worker pool</span><strong>04</strong></div>
+                <div class="sortable-item" data-id="tokens"><span><span class="grab">⋮⋮</span> JWT builder</span><strong>05</strong></div>
+              </div>
+              <pre class="json-view" id="dragdrop-view"></pre>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="spa-section" data-tab="visualisation">
+        <div class="section-head">
+          <div>
+            <h2>Visualisation</h2>
+            <p>Live charts, force-directed graphs, animated chip swarms and a markdown workbench rendered on the fly.</p>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <article class="demo-card wide">
+            <div class="card-head"><h3>Charts</h3><span class="tiny-pill">BareMetal.Charts + live diagnostics</span></div>
+            <div class="card-body">
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="chart-refresh-btn">Refresh chart data</button>
+              </div>
+              <div class="three-up" style="margin-top: 12px;">
+                <div class="chart-surface" id="line-chart-shell"></div>
+                <div class="chart-surface" id="donut-chart-shell"></div>
+                <div class="chart-surface" id="gauge-chart-shell"></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="demo-card wide">
+            <div class="card-head"><h3>Graph</h3><span class="tiny-pill">network graph of BareMetal modules</span></div>
+            <div class="card-body">
+              <div class="graph-shell" id="graph-shell"></div>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head"><h3>Animate</h3><span class="tiny-pill">enter / leave / list</span></div>
+            <div class="card-body stack">
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="animate-add-btn">Add chip</button>
+                <button class="bt bt-op bt-s" id="animate-shuffle-btn">Shuffle</button>
+                <button class="bt bt-oer bt-s" id="animate-clear-btn">Clear</button>
+              </div>
+              <div class="animate-chip-list" id="animate-chip-list"></div>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head"><h3>Markdown</h3><span class="tiny-pill">editor → toc → preview</span></div>
+            <div class="card-body stack">
+              <textarea class="code-input" id="markdown-input">---
+title: Uber Demo
+tags:
+- baremetal
+- markdown
+---
+# BareMetalJsTools
+
+- Zero runtime dependencies
+- **61 modules** on one page
+- [GitHub](https://github.com/WillEastbury/BareMetalJsTools)
+
+## Why it feels fast
+
+Because the demo wires charts, forms, auth, workers and diagnostics together without a framework.
+
+| Module | Purpose |
+| --- | --- |
+| Bind | Reactivity |
+| Routing | SPA tabs |
+| Workers | Off-thread compute |
+</textarea>
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="markdown-render-btn">Render markdown</button>
+              </div>
+              <div class="split-view">
+                <pre class="json-view" id="markdown-toc-view"></pre>
+                <div class="preview-box markdown-preview" id="markdown-preview"></div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="spa-section" data-tab="geo">
+        <div class="section-head">
+          <div>
+            <h2>Geo &amp; Maps</h2>
+            <p>Geolocation, distance math, geohashes, lazy image loading and notification hooks bound to observer events.</p>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <article class="demo-card">
+            <div class="card-head"><h3>Geo</h3><span class="tiny-pill">position + distance + geohash</span></div>
+            <div class="card-body stack">
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="geo-locate-btn">Locate me</button>
+                <button class="bt bt-op bt-s" id="geo-distance-btn">Distance to London</button>
+              </div>
+              <pre class="json-view" id="geo-view"></pre>
+            </div>
+          </article>
+
+          <article class="demo-card wide">
+            <div class="card-head"><h3>Observe + Notify</h3><span class="tiny-pill">intersection observer lazy loads assets and triggers toasts</span></div>
+            <div class="card-body stack">
+              <div class="overlay-note" id="observe-status"></div>
+              <div class="lazy-grid" id="lazy-grid">
+                <img class="lazy-load reveal-card" alt="lazy 1" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='260'%3E%3Crect width='420' height='260' fill='%23131a38'/%3E%3Ctext x='50%25' y='50%25' fill='%2396a5d7' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='28'%3ELazy image 1%3C/text%3E%3C/svg%3E" data-src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='260'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%230fd0ff'/%3E%3Cstop offset='100%25' stop-color='%236a78ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='420' height='260' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' fill='white' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='32'%3EObserve 1%3C/text%3E%3C/svg%3E">
+                <img class="lazy-load reveal-card" alt="lazy 2" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='260'%3E%3Crect width='420' height='260' fill='%23131a38'/%3E%3Ctext x='50%25' y='50%25' fill='%2396a5d7' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='28'%3ELazy image 2%3C/text%3E%3C/svg%3E" data-src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='260'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%230adf8f'/%3E%3Cstop offset='100%25' stop-color='%23077d57'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='420' height='260' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' fill='white' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='32'%3EObserve 2%3C/text%3E%3C/svg%3E">
+                <img class="lazy-load reveal-card" alt="lazy 3" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='260'%3E%3Crect width='420' height='260' fill='%23131a38'/%3E%3Ctext x='50%25' y='50%25' fill='%2396a5d7' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='28'%3ELazy image 3%3C/text%3E%3C/svg%3E" data-src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='260'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23ff9e43'/%3E%3Cstop offset='100%25' stop-color='%23ff5f6d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='420' height='260' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' fill='white' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='32'%3EObserve 3%3C/text%3E%3C/svg%3E">
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="spa-section" data-tab="infrastructure">
+        <div class="section-head">
+          <div>
+            <h2>Infrastructure</h2>
+            <p>Pipelines, state machines, workflows, worker pools, in-browser tests and progressive-web-app helpers all operating in the same surface.</p>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <article class="demo-card third">
+            <div class="card-head"><h3>Pipeline</h3></div>
+            <div class="card-body stack">
+              <label class="field"><span>Input</span><input id="pipeline-input" type="text" value="  hello bare metal  "></label>
+              <button class="bt bt-p bt-s" id="pipeline-run-btn">Execute pipeline</button>
+              <pre class="json-view" id="pipeline-view"></pre>
+            </div>
+          </article>
+
+          <article class="demo-card third">
+            <div class="card-head"><h3>StateMachine</h3></div>
+            <div class="card-body stack">
+              <div class="mini-stat"><div class="kicker">Current state</div><div class="big" id="machine-state-view">idle</div></div>
+              <div class="row-wrap">
+                <button class="bt bt-op bt-s" data-machine-event="START">START</button>
+                <button class="bt bt-own bt-s" data-machine-event="FAIL">FAIL</button>
+                <button class="bt bt-oin bt-s" data-machine-event="DONE">DONE</button>
+                <button class="bt bt-oer bt-s" data-machine-event="RESET">RESET</button>
+              </div>
+              <pre class="json-view" id="machine-view"></pre>
+            </div>
+          </article>
+
+          <article class="demo-card third">
+            <div class="card-head"><h3>Workflow</h3></div>
+            <div class="card-body stack">
+              <button class="bt bt-p bt-s" id="workflow-run-btn">Run workflow</button>
+              <pre class="json-view" id="workflow-view"></pre>
+            </div>
+          </article>
+
+          <article class="demo-card third">
+            <div class="card-head"><h3>Workers</h3></div>
+            <div class="card-body stack">
+              <label class="field"><span>Prime limit</span><input id="worker-input" type="number" value="3000"></label>
+              <button class="bt bt-p bt-s" id="worker-run-btn">Compute in pool</button>
+              <pre class="json-view" id="worker-view"></pre>
+            </div>
+          </article>
+
+          <article class="demo-card third">
+            <div class="card-head"><h3>TestRunner</h3></div>
+            <div class="card-body stack">
+              <button class="bt bt-op bt-s" id="testrunner-run-btn">Run browser tests</button>
+              <pre class="json-view" id="testrunner-view"></pre>
+            </div>
+          </article>
+
+          <article class="demo-card third">
+            <div class="card-head"><h3>Progressive</h3></div>
+            <div class="card-body stack">
+              <div class="overlay-note" id="progressive-panel-view"></div>
+              <div class="row-wrap">
+                <button class="bt bt-op bt-s" id="progressive-check-btn">Check status</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="spa-section" data-tab="picoscript">
+        <div class="section-head">
+          <div>
+            <h2>PicoScript</h2>
+            <p>The built-in four-pane PicoScript IDE, preloaded with an event-driven HTTP GET handler that can compile, inspect bytecode and trace dispatches.</p>
+          </div>
+        </div>
+        <div class="pico-shell">
+          <div id="picoscript-editor"></div>
+        </div>
+      </section>
+
+      <section class="spa-section" data-tab="security">
+        <div class="section-head">
+          <div>
+            <h2>Auth &amp; Security</h2>
+            <p>Mock OIDC, RBAC checks, Web Crypto roundtrips, JWT creation / decoding and payment primitives for a fully-loaded client-side security sandbox.</p>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <article class="demo-card wide">
+            <div class="card-head"><h3>Auth + RBAC</h3><span class="tiny-pill">mock discovery, redirect interception and JWT-backed UI checks</span></div>
+            <div class="card-body">
+              <div class="auth-grid">
+                <div class="stack">
+                  <div id="auth-shell"></div>
+                  <div class="row-wrap">
+                    <button class="bt bt-p bt-s" id="auth-login-btn">Mock login</button>
+                    <button class="bt bt-oer bt-s" id="auth-logout-btn">Logout</button>
+                  </div>
+                </div>
+                <div class="stack">
+                  <div id="token-inspector-shell"></div>
+                  <label class="field"><span>Role selector</span>
+                    <select id="rbac-role-select">
+                      <option value="viewer">viewer</option>
+                      <option value="editor" selected>editor</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  </label>
+                  <button class="bt bt-op bt-s" id="rbac-check-btn">Check permission</button>
+                  <pre class="json-view" id="rbac-view"></pre>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head"><h3>Crypto</h3><span class="tiny-pill">AES-GCM via Web Crypto</span></div>
+            <div class="card-body stack">
+              <label class="field"><span>Secret message</span><textarea id="crypto-input">The metal remembers nothing, but the ciphertext does.</textarea></label>
+              <label class="field"><span>Password</span><input id="crypto-password" type="text" value="correct horse battery staple"></label>
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="crypto-run-btn">Encrypt &amp; decrypt</button>
+              </div>
+              <pre class="json-view" id="crypto-view"></pre>
+            </div>
+          </article>
+
+          <article class="demo-card">
+            <div class="card-head"><h3>Tokens</h3><span class="tiny-pill">builder + sign + decode</span></div>
+            <div class="card-body stack">
+              <div class="row-wrap">
+                <button class="bt bt-p bt-s" id="tokens-build-btn">Build JWT</button>
+                <button class="bt bt-op bt-s" id="tokens-verify-btn">Verify</button>
+              </div>
+              <pre class="json-view" id="tokens-view"></pre>
+            </div>
+          </article>
+
+          <article class="demo-card wide">
+            <div class="card-head"><h3>Pay</h3><span class="tiny-pill">Payment Request API sandbox + card validation</span></div>
+            <div class="card-body stack">
+              <div class="row-wrap">
+                <label class="field" style="margin-bottom: 0; max-width: 280px;"><span>Card number for validation</span><input id="pay-card-input" type="text" value="4111 1111 1111 1111"></label>
+                <button class="bt bt-op bt-s" id="pay-validate-btn">Validate card</button>
+                <button class="bt bt-p bt-s" id="pay-request-btn">Attempt PaymentRequest</button>
+              </div>
+              <pre class="json-view" id="pay-view"></pre>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <div class="footer-note">
+      Built as a one-file SPA powered by BareMetal.Routing, BareMetal.Bind and the unminified source modules in <code>../src</code>.
+    </div>
+  </div>
+
+  <script src="../src/BareMetal.Binary.js"></script>
+  <script src="../src/BareMetal.Bind.js"></script>
+  <script src="../src/BareMetal.Components.js"></script>
+  <script src="../src/BareMetal.ComponentFactories.js"></script>
+  <script src="../src/BareMetal.Template.js"></script>
+  <script src="../src/BareMetal.Metadata.js"></script>
+  <script src="../src/BareMetal.Compress.js"></script>
+  <script src="../src/BareMetal.Communications.js"></script>
+  <script src="../src/BareMetal.Rendering.js"></script>
+  <script src="../src/BareMetal.Routing.js"></script>
+  <script src="../src/BareMetal.Charts.js"></script>
+  <script src="../src/BareMetal.Graph.js"></script>
+  <script src="../src/BareMetal.Geo.js"></script>
+  <script src="../src/BareMetal.Auth.js"></script>
+  <script src="../src/BareMetal.Animate.js"></script>
+  <script src="../src/BareMetal.A11y.js"></script>
+  <script src="../src/BareMetal.Crypto.js"></script>
+  <script src="../src/BareMetal.DragDrop.js"></script>
+  <script src="../src/BareMetal.FileIO.js"></script>
+  <script src="../src/BareMetal.LocalKVStore.js"></script>
+  <script src="../src/BareMetal.IDB.js"></script>
+  <script src="../src/BareMetal.Progressive.js"></script>
+  <script src="../src/BareMetal.Capabilities.js"></script>
+  <script src="../src/BareMetal.Time.js"></script>
+  <script src="../src/BareMetal.Codes.js"></script>
+  <script src="../src/BareMetal.Clipboard.js"></script>
+  <script src="../src/BareMetal.Gamepad.js"></script>
+  <script src="../src/BareMetal.Observe.js"></script>
+  <script src="../src/BareMetal.Media.js"></script>
+  <script src="../src/BareMetal.Pay.js"></script>
+  <script src="../src/BareMetal.Speech.js"></script>
+  <script src="../src/BareMetal.Validate.js"></script>
+  <script src="../src/BareMetal.Expressions.js"></script>
+  <script src="../src/BareMetal.I18n.js"></script>
+  <script src="../src/BareMetal.StateMachine.js"></script>
+  <script src="../src/BareMetal.UndoRedo.js"></script>
+  <script src="../src/BareMetal.Workflow.js"></script>
+  <script src="../src/BareMetal.Workers.js"></script>
+  <script src="../src/BareMetal.Logger.js"></script>
+  <script src="../src/BareMetal.Markdown.js"></script>
+  <script src="../src/BareMetal.Tokens.js"></script>
+  <script src="../src/BareMetal.RBAC.js"></script>
+  <script src="../src/BareMetal.Types.js"></script>
+  <script src="../src/BareMetal.PicoScript.js"></script>
+  <script src="../src/BareMetal.Notify.js"></script>
+  <script src="../src/BareMetal.PubSub.js"></script>
+  <script src="../src/BareMetal.Schema.js"></script>
+  <script src="../src/BareMetal.Config.js"></script>
+  <script src="../src/BareMetal.Pipeline.js"></script>
+  <script src="../src/BareMetal.URL.js"></script>
+  <script src="../src/BareMetal.Cache.js"></script>
+  <script src="../src/BareMetal.Errors.js"></script>
+  <script src="../src/BareMetal.Sync.js"></script>
+  <script src="../src/BareMetal.Transport.js"></script>
+  <script src="../src/BareMetal.Diagnostics.js"></script>
+  <script src="../src/BareMetal.Session.js"></script>
+  <script src="../src/BareMetal.Forms.js"></script>
+  <script src="../src/BareMetal.TestRunner.js"></script>
+  <script src="../src/BareMetal.PicoScript.Editor.js"></script>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var BM = window.BareMetal || {};
+      var modules = Object.keys(BM || {}).sort();
+      var tabs = ['dashboard', 'data', 'forms', 'communication', 'media', 'visualisation', 'geo', 'infrastructure', 'picoscript', 'security'];
+      var moduleCount = 61;
+      var basePath = (window.location && window.location.pathname) ? window.location.pathname : '/examples/uber-demo.html';
+      var localeNames = { en: 'English', fr: 'Français', ar: 'العربية' };
+      var pretty = function (value) {
+        try {
+          return JSON.stringify(value, null, 2);
+        } catch (err) {
+          return String(value);
+        }
+      };
+      var clone = function (value) {
+        return JSON.parse(JSON.stringify(value));
+      };
+      var textEncoder = new TextEncoder();
+      var textDecoder = new TextDecoder();
+      var dynamicChartSeries = [18, 24, 22, 31, 27, 35, 33, 41];
+      var mediaHandle = null;
+      var speechSession = null;
+      var geoWatchId = null;
+      var graphHandle = null;
+      var chartTicker = null;
+      var undoSnap = null;
+      var repeaterApi = null;
+      var formsApi = null;
+      var wizardApi = null;
+      var autosaveApi = null;
+      var conditionalApi = null;
+      var sortableApi = null;
+      var lazyApi = null;
+      var revealApi = null;
+      var pipelineRunner = null;
+      var stateMachine = null;
+      var workerPool = null;
+      var picoEditor = null;
+      var cache = null;
+      var cacheSourceCounter = 0;
+      var idb = null;
+      var activityTracker = null;
+      var session = null;
+      var authInitialised = false;
+      var authNonce = null;
+      var authGateRoot = null;
+      var widgetBound = false;
+      var routeReady = false;
+
+      BM.Bind.formatters.upper = function (value) { return String(value == null ? '' : value).toUpperCase(); };
+      BM.Bind.formatters.json = function (value) { return pretty(value); };
+      BM.Bind.formatters.int = function (value) { return String(Math.round(Number(value || 0))); };
+
+      BM.I18n.configure({ defaultLocale: 'en', fallbackLocale: 'en' });
+      BM.I18n.addMessages('en', {
+        hero: {
+          note: 'Zero dependencies, maximum surface area. BareMetal is stitched together live with nothing hidden behind a build step.'
+        },
+        actions_zero: 'No actions yet',
+        actions_one: '{count} action recorded',
+        actions_other: '{count} actions recorded'
+      });
+      BM.I18n.addMessages('fr', {
+        hero: { note: 'Zéro dépendance, surface maximale. Cette page assemble BareMetal en direct, sans build.' },
+        actions_zero: 'Aucune action',
+        actions_one: '{count} action enregistrée',
+        actions_other: '{count} actions enregistrées'
+      });
+      BM.I18n.addMessages('ar', {
+        hero: { note: 'بدون اعتماديات، وبكل الوحدات تقريباً على صفحة واحدة.' },
+        actions_zero: 'لا توجد إجراءات',
+        actions_one: 'تم تسجيل إجراء واحد',
+        actions_other: 'تم تسجيل {count} إجراءات'
+      });
+
+      var persistedStore = BM.LocalKVStore.create({ backend: 'local', namespace: 'uber-demo', ttl: 3600 });
+      var logBuffer = [];
+      var logger = BM.Logger.create({
+        level: 'debug',
+        context: { app: 'uber-demo' },
+        transports: [function (record) {
+          logBuffer.unshift(record);
+          if (logBuffer.length > 60) logBuffer.pop();
+          renderLogs();
+        }]
+      });
+
+      var diagnostics = BM.Diagnostics;
+      var diagTimeline = diagnostics.timeline();
+      var tabCounter = diagnostics.counter('tab-switches');
+      var actionCounter = diagnostics.counter('actions');
+      var cacheHitCounter = diagnostics.counter('cache-hits');
+      diagnostics.gauge('log-size', function () { return logBuffer.length; });
+      diagnostics.gauge('tab-index', function () { return app && app.activeTab ? tabs.indexOf(app.activeTab) + 1 : 0; });
+
+      var bus = BM.PubSub.create();
+      BM.Diagnostics.hook('bus', bus);
+      bus.handle('demo.echo', function (payload) {
+        return { echoed: payload.text, at: new Date().toISOString() };
+      });
+
+      var componentFactories = BM.ComponentFactories.create;
+      var widgetMessages = [
+        componentFactories.botMessage('Welcome to the BareMetal command deck. Ask me to light up another subsystem.', { avatar: '🤖', name: 'Control' })
+      ];
+      var widgetEvents = [
+        componentFactories.calendarEvent('2026-05-12', 'Auth sync', { color: '#68f0ff' }),
+        componentFactories.calendarEvent('2026-05-14', 'Worker benchmark', { color: '#8d7dff' }),
+        componentFactories.calendarEvent('2026-05-16', 'Geo + notify sweep', { color: '#6dffb8' })
+      ];
+      var widgetRows = [
+        componentFactories.tableRow({ name: 'Bind', state: 'active', impact: 'reactive' }),
+        componentFactories.tableRow({ name: 'Workers', state: 'queued', impact: 'parallel' }),
+        componentFactories.tableRow({ name: 'Tokens', state: 'ready', impact: 'secure' })
+      ];
+      var widgetTree = [
+        componentFactories.treeNode('Dashboard', { icon: '📁', open: true, children: [
+          componentFactories.treeNode('Config', { icon: '⚙️' }),
+          componentFactories.treeNode('Diagnostics', { icon: '📟' })
+        ] }),
+        componentFactories.treeNode('Security', { icon: '🔐', children: [
+          componentFactories.treeNode('Auth', { icon: '🪪' }),
+          componentFactories.treeNode('RBAC', { icon: '🧩' }),
+          componentFactories.treeNode('Tokens', { icon: '🪙' })
+        ] })
+      ];
+      var widgetTasks = [
+        componentFactories.ganttTask('Initialise modules', '2026-05-01', '2026-05-03', { progress: 1 }),
+        componentFactories.ganttTask('Render pico editor', '2026-05-03', '2026-05-06', { progress: 0.85 }),
+        componentFactories.ganttTask('Stress every subsystem', '2026-05-06', '2026-05-12', { progress: 0.72 })
+      ];
+      var widgetNav = [
+        componentFactories.navLink('Overview', '#dashboard', { active: true }),
+        componentFactories.navDropdown('Groups',
+          componentFactories.navLink('Data', '#data'),
+          componentFactories.navLink('Media', '#media'),
+          componentFactories.navLink('Security', '#security')
+        )
+      ];
+
+      var initialState = {
+        activeTab: 'dashboard',
+        activeTabLabel: 'Dashboard',
+        locale: 'en',
+        localeLabel: 'English',
+        liveClock: '',
+        sessionBadge: 'initialising',
+        heroNote: BM.I18n.t('hero.note'),
+        capabilityScore: 0,
+        diagnosticCount: 0,
+        busCount: 0,
+        workerScore: '—',
+        configStatus: 'defaults loaded',
+        cacheHitCount: 0,
+        sessionExpiry: 'n/a',
+        sessionIdle: '0s',
+        sessionFingerprint: BM.Session.fingerprint(),
+        configDraft: {
+          apiBase: '/demo/api',
+          retryCount: 3,
+          theme: 'wavefunction',
+          experimental: 'true'
+        },
+        widgetNav: widgetNav,
+        widgetMessages: widgetMessages,
+        widgetEvents: widgetEvents,
+        widgetRows: widgetRows,
+        widgetTree: widgetTree,
+        widgetTasks: widgetTasks,
+        widgetToasts: [componentFactories.toast('Everything is wired.', { type: 'success', title: 'Components' })],
+        widgetImage: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="460" viewBox="0 0 800 460"%3E%3Cdefs%3E%3ClinearGradient id="g" x1="0" y1="0" x2="1" y2="1"%3E%3Cstop offset="0%25" stop-color="%2368f0ff"/%3E%3Cstop offset="100%25" stop-color="%238d7dff"/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width="800" height="460" fill="url(%23g)"/%3E%3Ccircle cx="640" cy="115" r="70" fill="rgba(255,255,255,.18)"/%3E%3Ctext x="50%25" y="50%25" fill="white" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="34"%3EComponents on the wire%3C/text%3E%3C/svg%3E'
+      };
+
+      var reactive = BM.Bind.reactive(initialState);
+      var app = reactive.state;
+      var watch = reactive.watch;
+      BM.Bind.bind(document.getElementById('app-root'), app, watch);
+
+      function setDirFromLocale(locale) {
+        document.documentElement.lang = locale;
+        document.documentElement.dir = BM.I18n.isRTL(locale) ? 'rtl' : 'ltr';
+      }
+
+      function nowStamp() {
+        try {
+          var now = BM.Time.now();
+          return BM.Time.format(now, 'YYYY-MM-DD HH:mm:ss');
+        } catch (err) {
+          return new Date().toLocaleString();
+        }
+      }
+
+      function safeString(value) {
+        return value == null ? '' : String(value);
+      }
+
+      function hex(buffer) {
+        return Array.from(new Uint8Array(buffer)).map(function (b) {
+          return b.toString(16).padStart(2, '0');
+        }).join(' ');
+      }
+
+      function escapeHtml(value) {
+        return safeString(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      function recordAction(name, data) {
+        actionCounter.increment();
+        diagTimeline.record(name, data || {});
+        logger.info(name, data || {});
+        app.diagnosticCount = actionCounter.value();
+        app.heroNote = BM.I18n.t('actions', { count: actionCounter.value() });
+        renderDiagnostics();
+      }
+
+      function pushWidgetToast(message, type) {
+        app.widgetToasts.push(componentFactories.toast(message, { title: 'Widget', type: type || 'info' }));
+        if (app.widgetToasts.length > 5) app.widgetToasts.splice(0, app.widgetToasts.length - 5);
+      }
+
+      function notify(type, message, title) {
+        var fn = BM.Notify[type] || BM.Notify.info;
+        fn(message, { title: title || 'BareMetal demo' });
+        pushWidgetToast(message, type === 'error' ? 'error' : type === 'success' ? 'success' : 'info');
+      }
+
+      function renderLogs() {
+        document.getElementById('logger-view').textContent = logBuffer.map(function (entry) {
+          return '[' + entry.level.toUpperCase() + '] ' + entry.msg + '\n' + pretty(entry.data || entry.context || {});
+        }).join('\n\n');
+      }
+
+      function renderDiagnostics() {
+        var events = diagnostics.report().timeline.events.slice(-10).reverse();
+        var timelineRoot = document.getElementById('diagnostics-timeline');
+        timelineRoot.innerHTML = events.map(function (entry) {
+          return [
+            '<div class="timeline-item">',
+            '<span class="time">' + escapeHtml(nowStamp()) + '</span>',
+            '<strong>' + escapeHtml(entry.name || entry.type) + '</strong>',
+            '<div class="muted">' + escapeHtml(pretty(entry.data || entry)) + '</div>',
+            '</div>'
+          ].join('');
+        }).join('');
+        app.diagnosticCount = actionCounter.value();
+        app.cacheHitCount = cacheHitCounter.value();
+      }
+
+      function createJsonResponse(payload, status) {
+        var code = status || 200;
+        return {
+          ok: code >= 200 && code < 300,
+          status: code,
+          json: function () { return Promise.resolve(clone(payload)); },
+          text: function () { return Promise.resolve(typeof payload === 'string' ? payload : JSON.stringify(payload)); },
+          blob: function () { return Promise.resolve(new Blob([typeof payload === 'string' ? payload : JSON.stringify(payload)], { type: 'application/json' })); },
+          headers: { get: function () { return 'application/json'; } }
+        };
+      }
+
+      function withMockFetch(handler, work) {
+        var original = window.fetch;
+        window.fetch = handler;
+        return Promise.resolve()
+          .then(work)
+          .finally(function () {
+            window.fetch = original;
+          });
+      }
+
+      function updateHeader() {
+        app.liveClock = nowStamp();
+        app.localeLabel = localeNames[app.locale] || app.locale;
+        app.activeTabLabel = app.activeTab.charAt(0).toUpperCase() + app.activeTab.slice(1).replace(/-/g, ' ');
+      }
+
+      function activateTab(tab) {
+        if (tabs.indexOf(tab) === -1) tab = 'dashboard';
+        app.activeTab = tab;
+        updateHeader();
+        Array.prototype.forEach.call(document.querySelectorAll('.spa-section'), function (section) {
+          section.classList.toggle('active', section.getAttribute('data-tab') === tab);
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('.tab-link'), function (link) {
+          link.classList.toggle('active', link.getAttribute('data-tab') === tab);
+        });
+        tabCounter.increment();
+        recordAction('tab.change', { tab: tab });
+        BM.A11y.announce('Showing ' + app.activeTabLabel, 'polite');
+        if (tab === 'picoscript' && !picoEditor) initPicoScript();
+      }
+
+      function setupRouting() {
+        if (routeReady) return;
+        routeReady = true;
+        BM.A11y.skipNav('demo-main');
+        BM.A11y.roving(document.getElementById('tab-strip'), '.tab-link');
+        window.BMRouter
+          .on(basePath, function (params, query) {
+            activateTab(query.tab || 'dashboard');
+          })
+          .notFound(function () {
+            window.BMRouter.navigate(basePath + '?tab=dashboard', null, true);
+          })
+          .start();
+      }
+
+      function refreshCapabilityGrid() {
+        var features = ['fetch', 'worker', 'indexedDB', 'localStorage', 'clipboard', 'speechSynthesis', 'geolocation', 'mediaDevices', 'serviceWorker', 'websocket'];
+        var results = BM.Capabilities.detectAll(features);
+        var grid = document.getElementById('capabilities-grid');
+        var permissionGrid = document.getElementById('permission-grid');
+        var score = BM.Capabilities.score();
+        app.capabilityScore = score;
+        grid.innerHTML = features.map(function (key) {
+          var ok = !!results[key];
+          return '<div class="cap-tile ' + (ok ? 'ok' : 'no') + '"><strong>' + key + '</strong><span>' + (ok ? 'available' : 'missing') + '</span></div>';
+        }).join('');
+        Promise.all(['camera', 'mic', 'geo', 'clipboard', 'notification'].map(function (name) {
+          return BM.Capabilities.permission(name).catch(function () { return 'unknown'; }).then(function (value) {
+            return { name: name, value: value };
+          });
+        })).then(function (states) {
+          permissionGrid.innerHTML = states.map(function (entry) {
+            return '<div class="permission-tile"><strong>' + escapeHtml(entry.name) + '</strong><span>' + escapeHtml(entry.value) + '</span></div>';
+          }).join('');
+        });
+        recordAction('capabilities.refresh', { score: score, profile: BM.Capabilities.profile() });
+      }
+
+      var config = BM.Config.create({
+        strict: true,
+        schema: {
+          apiBase: { type: 'string', required: true },
+          retryCount: { type: 'number', default: 3 },
+          theme: { type: 'string', default: 'wavefunction' },
+          experimental: { type: 'boolean', default: false }
+        }
+      });
+      config.layer('defaults', { apiBase: '/demo/api', retryCount: 3, theme: 'wavefunction', experimental: false }, BM.Config.priorities.defaults);
+
+      function renderConfigViews() {
+        document.getElementById('config-view').textContent = pretty(config.getAll());
+        document.getElementById('config-env-view').textContent = pretty(config.toEnv());
+      }
+
+      function applyRuntimeConfig() {
+        config.layer('runtime', {
+          apiBase: app.configDraft.apiBase,
+          retryCount: Number(app.configDraft.retryCount),
+          theme: app.configDraft.theme,
+          experimental: String(app.configDraft.experimental) === 'true'
+        }, BM.Config.priorities.runtime);
+        persistedStore.set('config-runtime', config.getLayer('runtime'));
+        app.configStatus = 'runtime layer applied';
+        renderConfigViews();
+        recordAction('config.apply', config.getAll());
+      }
+
+      function bootConfig() {
+        persistedStore.get('config-runtime').then(function (saved) {
+          if (saved) {
+            config.layer('runtime', saved, BM.Config.priorities.runtime);
+            app.configDraft.apiBase = saved.apiBase;
+            app.configDraft.retryCount = saved.retryCount;
+            app.configDraft.theme = saved.theme;
+            app.configDraft.experimental = String(saved.experimental);
+            app.configStatus = 'restored from LocalKVStore';
+          }
+          renderConfigViews();
+        });
+
+        document.getElementById('apply-config-btn').addEventListener('click', applyRuntimeConfig);
+        document.getElementById('temp-override-btn').addEventListener('click', function () {
+          var cancel = config.override({ retryCount: 9, theme: 'lava' }, 8000);
+          app.configStatus = 'temporary override active';
+          renderConfigViews();
+          notify('warning', 'Temporary config override engaged for 8 seconds.', 'Config');
+          recordAction('config.override', config.getAll());
+          setTimeout(function () {
+            cancel();
+            app.configStatus = 'override expired';
+            renderConfigViews();
+          }, 8100);
+        });
+        document.getElementById('reset-config-btn').addEventListener('click', function () {
+          config.reset('runtime');
+          persistedStore.remove('config-runtime');
+          app.configStatus = 'runtime layer cleared';
+          renderConfigViews();
+          recordAction('config.reset');
+        });
+      }
+
+      function bootSession() {
+        session = BM.Session.create({
+          ttl: 10 * 60 * 1000,
+          refreshBefore: 60 * 1000,
+          storage: 'sessionStorage',
+          syncTabs: true,
+          refreshFn: async function (data) {
+            return Object.assign({}, data, { token: 'refreshed-' + Date.now(), refreshCount: (data.refreshCount || 0) + 1 });
+          }
+        });
+        session.init({ userId: 'demo-user', token: 'boot', refreshCount: 0 });
+        activityTracker = BM.Session.activity({ idleTimeout: 30 * 1000 });
+        activityTracker.onIdle(function () {
+          app.sessionBadge = 'idle';
+        });
+
+        function updateSessionView() {
+          app.sessionBadge = session.isActive() ? (activityTracker.isIdle() ? 'idle' : 'active') : 'expired';
+          app.sessionExpiry = session.getExpiry() ? session.getExpiry().toLocaleTimeString() : 'expired';
+          app.sessionIdle = activityTracker.isIdle() ? 'idle' : 'active';
+        }
+
+        session.onChange(updateSessionView);
+        session.onRefresh(function () {
+          notify('info', 'Session refreshed.', 'Session');
+          updateSessionView();
+        });
+        session.onExpire(function () {
+          notify('error', 'Session expired.', 'Session');
+          updateSessionView();
+        });
+        updateSessionView();
+        setInterval(updateSessionView, 1000);
+
+        document.getElementById('extend-session-btn').addEventListener('click', function () {
+          session.extend(5 * 60 * 1000);
+          updateSessionView();
+          recordAction('session.extend');
+        });
+        document.getElementById('refresh-session-btn').addEventListener('click', function () {
+          session.refresh();
+          recordAction('session.refresh');
+        });
+        document.getElementById('destroy-session-btn').addEventListener('click', function () {
+          session.destroy();
+          updateSessionView();
+          recordAction('session.destroy');
+        });
+      }
+
+      function bootComponents() {
+        if (widgetBound) return;
+        widgetBound = true;
+        app.selectWidgetDay = function (date, events) {
+          notify('info', 'Calendar day selected: ' + date + ' (' + events.length + ' items)', 'Components');
+          recordAction('components.calendar.select', { date: date, count: events.length });
+        };
+        app.selectWidgetRow = function (row) {
+          notify('success', 'Table row selected: ' + row.name, 'Components');
+          recordAction('components.table.select', row);
+        };
+        app.selectWidgetTree = function (node) {
+          notify('info', 'Tree node: ' + node.label, 'Components');
+          recordAction('components.tree.select', node);
+        };
+        app.sendWidgetMessage = function (text) {
+          app.widgetMessages.push(componentFactories.message(text, { avatar: '🧑' }));
+          setTimeout(function () {
+            app.widgetMessages.push(componentFactories.botMessage('Acknowledged. ' + text + ' routed through Components + Factories.', { avatar: '🤖' }));
+          }, 220);
+          recordAction('components.chat.send', { text: text });
+        };
+        BM.Components.bindComponents(document.getElementById('component-root'), app, watch);
+      }
+
+      function bootUtilities() {
+        document.getElementById('locale-select').addEventListener('change', function (event) {
+          app.locale = event.target.value;
+          BM.I18n.setLocale(app.locale);
+          app.heroNote = BM.I18n.t('hero.note');
+          setDirFromLocale(app.locale);
+          updateHeader();
+          recordAction('locale.change', { locale: app.locale });
+        });
+
+        document.getElementById('refresh-capabilities-btn').addEventListener('click', refreshCapabilityGrid);
+        document.getElementById('emit-dashboard-toast-btn').addEventListener('click', function () {
+          notify('success', 'Dashboard toast triggered.', 'Notify');
+          recordAction('notify.dashboard');
+        });
+
+        var country = BM.Codes.countries.get('GB');
+        var currency = BM.Codes.currencies.get('GBP');
+        document.getElementById('codes-country').textContent = country ? country.name + ' • +' + country.phone : 'n/a';
+        document.getElementById('codes-currency').textContent = currency ? currency.name + ' • ' + currency.symbol : 'n/a';
+
+        function updateProgressive() {
+          var status = [
+            'Online: ' + BM.Progressive.isOnline(),
+            'Installed: ' + BM.Progressive.isInstalled(),
+            'Installable: ' + BM.Progressive.isInstallable(),
+            'Color scheme: ' + BM.A11y.prefersColorScheme(),
+            'Reduced motion: ' + BM.A11y.prefersReducedMotion()
+          ].join(' | ');
+          document.getElementById('progressive-status').textContent = status;
+          document.getElementById('progressive-panel-view').textContent = status;
+        }
+
+        updateProgressive();
+        BM.Progressive.onConnectivityChange(function (online) {
+          notify(online ? 'success' : 'warning', online ? 'Connection restored.' : 'Offline mode detected.', 'Progressive');
+          updateProgressive();
+        });
+        document.getElementById('progressive-check-btn').addEventListener('click', function () {
+          updateProgressive();
+          recordAction('progressive.check');
+        });
+      }
+
+      function initCache() {
+        cache = BM.Cache.create({ ttl: 6000, swr: 1000, maxSize: 20, staleIfError: true });
+        cache.on('hit', function () { cacheHitCounter.increment(); renderDiagnostics(); });
+        cache.on('miss', function () { recordAction('cache.miss'); });
+        BM.Diagnostics.hook('cache', cache);
+      }
+
+      function runCacheFetch() {
+        return cache.wrap('demo:data', async function () {
+          cacheSourceCounter += 1;
+          await new Promise(function (resolve) { setTimeout(resolve, 180); });
+          return {
+            sourceCounter: cacheSourceCounter,
+            generatedAt: new Date().toISOString(),
+            root: config.get('apiBase')
+          };
+        }).then(function (payload) {
+          document.getElementById('cache-terminal').textContent = [
+            'Payload:',
+            pretty(payload),
+            '',
+            'Stats:',
+            pretty(cache.stats())
+          ].join('\n');
+          recordAction('cache.fetch', payload);
+        });
+      }
+
+      function bootData() {
+        initCache();
+        document.getElementById('run-data-suite-btn').addEventListener('click', function () {
+          runSchema();
+          runTypes();
+          runBinary();
+          runCompression();
+          runCacheFetch();
+          recordAction('data.run-suite');
+        });
+
+        document.getElementById('run-schema-btn').addEventListener('click', runSchema);
+        document.getElementById('schema-binary-btn').addEventListener('click', showSchemaBinary);
+        document.getElementById('run-types-btn').addEventListener('click', runTypes);
+        document.getElementById('run-binary-btn').addEventListener('click', runBinary);
+        document.getElementById('run-compress-btn').addEventListener('click', runCompression);
+        document.getElementById('cache-fetch-btn').addEventListener('click', runCacheFetch);
+        document.getElementById('cache-invalidate-btn').addEventListener('click', function () {
+          cache.invalidate('demo:data');
+          document.getElementById('cache-terminal').textContent = 'Cache invalidated.\n\n' + pretty(cache.stats());
+          recordAction('cache.invalidate');
+        });
+
+        BM.Types.define('DemoUser', {
+          fields: {
+            id: 'number',
+            name: 'string',
+            email: BM.Types.optional('string'),
+            roles: BM.Types.arrayOf ? BM.Types.arrayOf('string') : 'array'
+          }
+        });
+
+        openIdb();
+        document.getElementById('idb-add-btn').addEventListener('click', addIdbRow);
+        document.getElementById('idb-reload-btn').addEventListener('click', renderIdbTable);
+        document.getElementById('idb-clear-btn').addEventListener('click', clearIdbRows);
+        document.getElementById('render-entity-btn').addEventListener('click', renderEntityDemo);
+        document.getElementById('comms-ping-btn').addEventListener('click', runCommunicationsDemo);
+      }
+
+      function runSchema() {
+        try {
+          var input = JSON.parse(document.getElementById('schema-input').value);
+          var schema = BM.Schema.object({
+            id: BM.Schema.number({ min: 1 }),
+            name: BM.Schema.string({ minLength: 3 }),
+            enabled: BM.Schema.boolean(),
+            tags: BM.Schema.optional(BM.Schema.array(BM.Schema.string())),
+            budget: BM.Schema.optional(BM.Schema.number())
+          });
+          var coerced = BM.Schema.coerce(schema, input);
+          document.getElementById('schema-result').textContent = pretty(coerced);
+          recordAction('schema.run', coerced);
+        } catch (err) {
+          document.getElementById('schema-result').textContent = pretty({ error: err.message });
+        }
+      }
+
+      function showSchemaBinary() {
+        var schema = BM.Schema.object({
+          id: BM.Schema.number({ ordinal: 1 }),
+          name: BM.Schema.string({ ordinal: 2 }),
+          enabled: BM.Schema.boolean({ ordinal: 3 }),
+          budget: BM.Schema.optional(BM.Schema.number({ ordinal: 4 }))
+        });
+        var binarySchema = BM.Schema.toBinary(schema, { version: 2, schemaHash: 4242 });
+        document.getElementById('schema-binary-view').textContent = pretty(binarySchema);
+        recordAction('schema.binary', binarySchema);
+      }
+
+      function runTypes() {
+        try {
+          var parsed = JSON.parse(document.getElementById('types-input').value);
+          var result = BM.Types.check({
+            id: Number(parsed.id),
+            name: parsed.name,
+            email: parsed.email,
+            roles: parsed.roles
+          }, 'DemoUser');
+          document.getElementById('types-result').textContent = pretty({
+            result: result,
+            castNumber: BM.Types.cast(parsed.id, 'number'),
+            guard: BM.Types.guard('DemoUser')({ id: Number(parsed.id), name: parsed.name, email: parsed.email, roles: parsed.roles }),
+            registry: BM.Types.registry.list()
+          });
+          recordAction('types.run', result);
+        } catch (err) {
+          document.getElementById('types-result').textContent = pretty({ error: err.message });
+        }
+      }
+
+      function runBinary() {
+        var schema = {
+          version: 1,
+          members: [
+            { name: 'Id', wireType: 'Int32' },
+            { name: 'Name', wireType: 'String', isNullable: false },
+            { name: 'Active', wireType: 'Bool' }
+          ]
+        };
+        BM.Binary.setSigningKeyBytes(new Uint8Array(32).fill(7)).then(function () {
+          return BM.Binary.serialize({ Id: 7, Name: 'BareMetal', Active: true }, schema)
+            .then(function (payload) {
+              return BM.Binary.deserialize(payload, schema).then(function (decoded) {
+                document.getElementById('binary-view').textContent = pretty({
+                  byteLength: payload.byteLength,
+                  hex: hex(payload),
+                  decoded: decoded
+                });
+                recordAction('binary.run', decoded);
+              });
+            });
+        }).catch(function (err) {
+          document.getElementById('binary-view').textContent = pretty({ error: err.message });
+        });
+      }
+
+      function runCompression() {
+        try {
+          var input = textEncoder.encode(JSON.stringify({ modules: modules.slice(0, 12), when: Date.now(), note: 'compress all the tiny things' }));
+          var packed = BM.Compress.compress(input, { profile: 'balanced' });
+          var unpacked = BM.Compress.decompress(packed);
+          document.getElementById('compress-view').textContent = pretty({
+            inputBytes: input.byteLength,
+            packedBytes: packed.byteLength,
+            ratio: ((1 - (packed.byteLength / input.byteLength)) * 100).toFixed(1) + '%',
+            restored: textDecoder.decode(unpacked)
+          });
+          recordAction('compress.run', { input: input.byteLength, packed: packed.byteLength });
+        } catch (err) {
+          document.getElementById('compress-view').textContent = pretty({ error: err.message });
+        }
+      }
+
+      function openIdb() {
+        if (!BM.IDB.isSupported()) {
+          document.getElementById('idb-table-shell').textContent = 'IndexedDB is unavailable in this browser.';
+          return;
+        }
+        BM.IDB.open('bm-uber-demo-db', {
+          version: 1,
+          stores: {
+            records: { keyPath: 'id' }
+          }
+        }).then(function (db) {
+          idb = db;
+          renderIdbTable();
+        });
+      }
+
+      function renderIdbTable() {
+        if (!idb) return;
+        idb.getAll('records', { direction: 'next' }).then(function (rows) {
+          var shell = document.getElementById('idb-table-shell');
+          if (!rows.length) {
+            shell.innerHTML = '<div class="overlay-note">No IndexedDB rows yet. Add one above.</div>';
+            return;
+          }
+          shell.innerHTML = '';
+          var fields = {
+            id: { label: 'ID' },
+            title: { label: 'Title' },
+            createdAt: { label: 'Created' }
+          };
+          shell.appendChild(BM.Template.buildTable(fields, rows, {
+            onDelete: function (id) {
+              idb.delete('records', id).then(renderIdbTable);
+            }
+          }));
+          recordAction('idb.render', { count: rows.length });
+        });
+      }
+
+      function addIdbRow() {
+        if (!idb) return;
+        var title = document.getElementById('idb-title-input').value || 'Indexed row';
+        idb.put('records', {
+          id: 'row-' + Date.now(),
+          title: title,
+          createdAt: nowStamp()
+        }).then(function () {
+          renderIdbTable();
+          notify('success', 'IndexedDB row added.', 'IDB');
+        });
+      }
+
+      function clearIdbRows() {
+        if (!idb) return;
+        idb.getAll('records').then(function (rows) {
+          return Promise.all(rows.map(function (row) { return idb.delete('records', row.id); }));
+        }).then(function () {
+          renderIdbTable();
+          recordAction('idb.clear');
+        });
+      }
+
+      function communicationsMock(url, options) {
+        var href = typeof url === 'string' ? url : (url && url.url) || '';
+        if (href.indexOf('/api/metadata/customer') > -1) {
+          return Promise.resolve(createJsonResponse({
+            name: 'Customer',
+            slug: 'customer',
+            schema: {
+              fields: {
+                id: { type: 'hidden', readonly: true },
+                name: { label: 'Customer name', required: true },
+                tier: { type: 'select', label: 'Tier', options: ['Bronze', 'Silver', 'Gold'] },
+                email: { type: 'Email', label: 'Email' },
+                isActive: { type: 'boolean', label: 'Active' }
+              }
+            },
+            layout: { columns: 2, fields: ['id', 'name', 'email', 'tier', 'isActive'] },
+            initialData: { id: '', name: 'Demo Customer', email: 'customer@example.com', tier: 'Gold', isActive: true }
+          }));
+        }
+        if (href.indexOf('/api/ping') > -1) {
+          return Promise.resolve(createJsonResponse({ pong: true, at: new Date().toISOString(), root: BM.Communications.getRoot() }));
+        }
+        if (href.indexOf('/api/customer') > -1 && (!options || !options.method || options.method === 'GET')) {
+          return Promise.resolve(createJsonResponse({ id: 'cust-42', name: 'Rendered Customer', email: 'render@baremetal.dev', tier: 'Silver', isActive: true }));
+        }
+        return Promise.resolve(createJsonResponse({ ok: true, echo: href, method: options && options.method || 'GET' }));
+      }
+
+      function runCommunicationsDemo() {
+        BM.Communications.setRoot('/api/');
+        withMockFetch(communicationsMock, function () {
+          return BM.Communications.call('GET', '/api/ping');
+        }).then(function (result) {
+          document.getElementById('comms-view').textContent = pretty({ root: BM.Communications.getRoot(), result: result });
+          recordAction('communications.ping', result);
+        });
+      }
+
+      function renderEntityDemo() {
+        BM.Communications.setRoot('/api/');
+        withMockFetch(communicationsMock, function () {
+          return BM.Rendering.createEntity('customer').then(function (entity) {
+            var shell = document.getElementById('rendering-shell');
+            shell.innerHTML = '';
+            entity.renderUI(shell);
+            return entity;
+          });
+        }).then(function () {
+          document.getElementById('comms-view').textContent = pretty({ rendered: true, modules: ['Metadata', 'Template', 'Rendering', 'Communications'] });
+          recordAction('rendering.entity');
+        }).catch(function (err) {
+          document.getElementById('rendering-shell').textContent = err.message;
+        });
+      }
+
+      function bootForms() {
+        var expressionSelect = document.getElementById('expression-select');
+        BM.Expressions.list().slice(0, 18).forEach(function (name) {
+          var option = document.createElement('option');
+          option.value = name;
+          option.textContent = name;
+          expressionSelect.appendChild(option);
+        });
+        expressionSelect.value = 'email';
+
+        formsApi = BM.Forms.create(document.getElementById('wizard-form'), {
+          fields: {
+            name: { required: true, minLength: 2 },
+            email: { required: true, email: true },
+            phone: { required: true, minLength: 10 },
+            website: { url: true },
+            vatNumber: { minLength: 5 }
+          }
+        });
+        undoSnap = BM.UndoRedo.createSnap({ maxSize: 25 });
+        wizardApi = BM.Forms.wizard(document.getElementById('wizard-form'), [
+          { id: 'identity', fields: ['name', 'email', 'phone', 'plan'] },
+          { id: 'billing', fields: ['advancedBilling', 'vatNumber', 'country', 'website'] },
+          { id: 'team', fields: ['notes'] }
+        ]);
+        repeaterApi = BM.Forms.repeater(document.getElementById('team-repeater'), {
+          template: '<div data-bm-repeat-item class="callout"><div class="control-grid"><label class="field"><span>Member</span><input name="member"></label><label class="field"><span>Role</span><input name="role"></label></div><button type="button" class="bt bt-oer bt-s" data-remove>Remove</button></div>'
+        });
+        repeaterApi.add({ member: 'Ada', role: 'Architect' });
+        repeaterApi.add({ member: 'Grace', role: 'Reviewer' });
+        BM.Forms.mask(document.getElementById('phone-mask'), '(###) ###-####');
+        autosaveApi = BM.Forms.autosave(document.getElementById('wizard-form'), { key: 'uber-demo-form', debounce: 200 });
+        conditionalApi = BM.Forms.conditional(document.getElementById('wizard-form'), [{
+          when: { field: 'plan', equals: 'business' },
+          show: ['vatNumber']
+        }]);
+
+        function updateFormsState() {
+          var values = formsApi.getValues();
+          values.team = repeaterApi.getAll();
+          document.getElementById('forms-state-view').textContent = pretty(formsApi.getState());
+          document.getElementById('undo-view').textContent = pretty({
+            current: undoSnap.current && undoSnap.current(),
+            note: 'Use the buttons below to move through snapshots.'
+          });
+          return values;
+        }
+
+        formsApi.onChange(function () {
+          undoSnap.snapshot(Object.assign({}, formsApi.getValues(), { team: repeaterApi.getAll() }));
+          updateFormsState();
+        });
+        undoSnap.snapshot(Object.assign({}, formsApi.getValues(), { team: repeaterApi.getAll() }));
+        updateFormsState();
+
+        document.getElementById('wizard-prev-btn').addEventListener('click', function () {
+          wizardApi.prev();
+          recordAction('forms.wizard.prev');
+        });
+        document.getElementById('wizard-next-btn').addEventListener('click', function () {
+          wizardApi.next();
+          recordAction('forms.wizard.next');
+        });
+        document.getElementById('wizard-submit-btn').addEventListener('click', function () {
+          var values = updateFormsState();
+          var result = formsApi.validate();
+          document.getElementById('forms-submit-view').textContent = pretty({ values: values, validation: result, team: repeaterApi.getAll() });
+          notify(result.valid ? 'success' : 'warning', result.valid ? 'Wizard valid.' : 'Wizard has validation issues.', 'Forms');
+          recordAction('forms.submit', result);
+        });
+        document.getElementById('add-team-member-btn').addEventListener('click', function () {
+          repeaterApi.add({ member: 'New member', role: 'Contributor' });
+          updateFormsState();
+          recordAction('forms.repeater.add');
+        });
+        document.getElementById('wizard-restore-btn').addEventListener('click', function () {
+          var restored = autosaveApi.restore();
+          document.getElementById('forms-submit-view').textContent = pretty({ restored: restored });
+          recordAction('forms.autosave.restore', restored || {});
+        });
+        document.getElementById('wizard-clear-autosave-btn').addEventListener('click', function () {
+          autosaveApi.clear();
+          recordAction('forms.autosave.clear');
+        });
+        document.getElementById('snapshot-btn').addEventListener('click', function () {
+          undoSnap.snapshot(Object.assign({}, formsApi.getValues(), { team: repeaterApi.getAll() }));
+          document.getElementById('undo-view').textContent = pretty({ current: undoSnap.current() });
+          recordAction('undo.snapshot');
+        });
+        document.getElementById('undo-btn').addEventListener('click', function () {
+          var snapshot = undoSnap.undo();
+          if (snapshot) {
+            formsApi.setValues(snapshot);
+            document.getElementById('undo-view').textContent = pretty(snapshot);
+          }
+          recordAction('undo.undo');
+        });
+        document.getElementById('redo-btn').addEventListener('click', function () {
+          var snapshot = undoSnap.redo();
+          if (snapshot) {
+            formsApi.setValues(snapshot);
+            document.getElementById('undo-view').textContent = pretty(snapshot);
+          }
+          recordAction('undo.redo');
+        });
+
+        document.getElementById('test-expression-btn').addEventListener('click', function () {
+          var name = expressionSelect.value;
+          var value = document.getElementById('expression-value').value;
+          var entry = BM.Expressions[name];
+          document.getElementById('expression-view').textContent = pretty({
+            pattern: entry && entry.pattern ? String(entry.pattern) : null,
+            matches: entry ? entry.test(value) : false,
+            extract: entry ? entry.extract(value) : null,
+            detect: BM.Expressions.detect(value)
+          });
+          recordAction('expressions.test', { name: name, value: value });
+        });
+        document.getElementById('run-validate-btn').addEventListener('click', function () {
+          var payload = formsApi.getValues();
+          document.getElementById('expression-view').textContent = pretty(BM.Validate.validate({
+            email: { required: true, email: true },
+            website: { url: true },
+            vatNumber: { minLength: 5 }
+          }, payload));
+          recordAction('validate.run', payload);
+        });
+      }
+
+      function bootCommunication() {
+        var attempts = 0;
+        var flaky = BM.Transport.circuit(function () {
+          attempts += 1;
+          return BM.Transport.retry(function (attempt) {
+            if (attempts < 3) return Promise.reject(new Error('Simulated failure #' + attempts));
+            return Promise.resolve({ ok: true, attempt: attempt, attempts: attempts, key: BM.Transport.idempotencyKey() });
+          }, { maxAttempts: 3, baseDelay: 90, jitter: false });
+        }, { threshold: 2, resetTimeout: 2500 });
+        var queue = BM.Transport.queue({ concurrency: 1 });
+
+        bus.on('demo.**', function (payload, meta) {
+          app.busCount += 1;
+          var view = document.getElementById('pubsub-view');
+          view.textContent = [
+            '[' + meta.topic + ']',
+            pretty(payload),
+            '',
+            view.textContent
+          ].join('\n');
+        });
+
+        document.getElementById('transport-run-btn').addEventListener('click', function () {
+          queue.add(function () { return flaky(); }, 'high').then(function (result) {
+            document.getElementById('transport-view').textContent = pretty({ result: result, circuit: flaky.stats(), queueDepth: queue.size() });
+            recordAction('transport.run', result);
+          }).catch(function (err) {
+            document.getElementById('transport-view').textContent = pretty({ error: err.message, circuit: flaky.stats(), queueDepth: queue.size() });
+            recordAction('transport.error', { message: err.message, circuit: flaky.stats() });
+          });
+        });
+        document.getElementById('transport-reset-btn').addEventListener('click', function () {
+          attempts = 0;
+          flaky.reset();
+          document.getElementById('transport-view').textContent = pretty({ circuit: flaky.stats(), reset: true });
+          recordAction('transport.reset');
+        });
+
+        document.getElementById('pubsub-publish-btn').addEventListener('click', function () {
+          var topic = document.getElementById('pubsub-topic').value;
+          var text = document.getElementById('pubsub-payload').value;
+          bus.emit(topic, { text: text, at: new Date().toISOString() });
+          recordAction('pubsub.emit', { topic: topic });
+        });
+        document.getElementById('pubsub-sticky-btn').addEventListener('click', function () {
+          var topic = document.getElementById('pubsub-topic').value;
+          var text = document.getElementById('pubsub-payload').value;
+          bus.sticky(topic, { text: text, sticky: true });
+          recordAction('pubsub.sticky', { topic: topic });
+        });
+        document.getElementById('pubsub-request-btn').addEventListener('click', function () {
+          bus.request('demo.echo', { text: document.getElementById('pubsub-payload').value }).then(function (result) {
+            document.getElementById('pubsub-view').textContent = pretty(result) + '\n\n' + document.getElementById('pubsub-view').textContent;
+            recordAction('pubsub.request', result);
+          });
+        });
+
+        document.getElementById('sync-run-btn').addEventListener('click', function () {
+          var left = JSON.parse(document.getElementById('sync-left').value);
+          var right = JSON.parse(document.getElementById('sync-right').value);
+          var ops = BM.Sync.diff(left, right);
+          var patched = BM.Sync.patch(left, ops);
+          var merged = BM.Sync.merge(right, left, { title: 'Draft', count: 1, tags: ['docs'] }, 'last-write');
+          document.getElementById('sync-view').textContent = pretty({ ops: ops, patched: patched, merged: merged });
+          recordAction('sync.run', { opCount: ops.length });
+        });
+
+        document.getElementById('url-parse-btn').addEventListener('click', function () {
+          var value = document.getElementById('url-input').value;
+          var parsed = BM.URL.parse(value);
+          document.getElementById('url-view').textContent = pretty({
+            parsed: parsed,
+            rebuilt: BM.URL.build(parsed),
+            slug: BM.URL.slug('Bare Metal: zero dependency rocket')
+          });
+          recordAction('url.parse', parsed);
+        });
+
+        document.getElementById('errors-run-btn').addEventListener('click', function () {
+          var base = BM.Errors.create('HTTP_504', 'Gateway timeout from upstream', { statusCode: 504 });
+          var chained = BM.Errors.chain(base, new Error('socket hang up'));
+          var aggregate = BM.Errors.aggregate([base, chained]);
+          document.getElementById('errors-view').textContent = pretty({
+            classify: BM.Errors.classify(chained),
+            chain: BM.Errors.getChain(chained).map(BM.Errors.toJSON),
+            safe: BM.Errors.toUserSafe(chained),
+            aggregate: BM.Errors.toJSON(aggregate)
+          });
+          recordAction('errors.run', BM.Errors.classify(chained));
+        });
+      }
+
+      function bootMedia() {
+        BM.Gamepad.start({ pollRate: 50, deadzone: 0.15 });
+        setInterval(function () {
+          var pads = BM.Gamepad.poll();
+          document.getElementById('gamepad-status').textContent = pads.length ? 'Detected ' + pads.length + ' controller(s).' : 'No controller detected. Connect one and press a button.';
+          document.getElementById('gamepad-view').textContent = pretty(pads[0] || { connected: false });
+        }, 500);
+
+        document.getElementById('start-camera-btn').addEventListener('click', function () {
+          BM.Media.camera({ width: 1280, height: 720, facingMode: 'user' }).then(function (camera) {
+            mediaHandle = camera;
+            document.getElementById('media-preview').innerHTML = '';
+            BM.Media.preview(camera.stream, document.getElementById('media-preview'), { mirror: true, width: 360, height: 220 });
+            document.getElementById('media-status').textContent = 'Camera stream live.';
+            recordAction('media.camera.start');
+          }).catch(function (err) {
+            document.getElementById('media-status').textContent = 'Media unavailable: ' + err.message;
+          });
+        });
+        document.getElementById('snapshot-btn-media').addEventListener('click', function () {
+          if (!mediaHandle || !mediaHandle.video) return;
+          var dataUrl = BM.Media.snapshot(mediaHandle.video, { as: 'dataURL', format: 'image/jpeg', quality: 0.86 });
+          document.getElementById('media-preview').innerHTML = '<img alt="snapshot" src="' + dataUrl + '">';
+          recordAction('media.snapshot');
+        });
+        document.getElementById('stop-camera-btn').addEventListener('click', function () {
+          if (mediaHandle && mediaHandle.stop) mediaHandle.stop();
+          mediaHandle = null;
+          document.getElementById('media-status').textContent = 'Camera stopped.';
+          document.getElementById('media-preview').textContent = 'Camera preview appears here.';
+          recordAction('media.camera.stop');
+        });
+
+        document.getElementById('speech-speak-btn').addEventListener('click', function () {
+          BM.Speech.speak(document.getElementById('speech-text').value, { lang: 'en-GB', rate: 1 }).then(function () {
+            document.getElementById('speech-view').textContent = 'Speech synthesis finished.';
+          }).catch(function (err) {
+            document.getElementById('speech-view').textContent = err.message;
+          });
+          recordAction('speech.speak');
+        });
+        document.getElementById('speech-listen-btn').addEventListener('click', function () {
+          try {
+            speechSession = BM.Speech.listen({ lang: 'en-US', interimResults: true });
+            speechSession.onInterim(function (result) {
+              document.getElementById('speech-view').textContent = 'Interim: ' + result.transcript;
+            }).onResult(function (result) {
+              document.getElementById('speech-view').textContent = 'Final: ' + result.transcript;
+            }).onError(function (error) {
+              document.getElementById('speech-view').textContent = 'Recognition error: ' + (error && error.message || error);
+            });
+            recordAction('speech.listen');
+          } catch (err) {
+            document.getElementById('speech-view').textContent = 'Speech recognition unavailable: ' + err.message;
+          }
+        });
+        document.getElementById('speech-stop-btn').addEventListener('click', function () {
+          if (speechSession && speechSession.stop) speechSession.stop();
+          BM.Speech.cancel();
+          document.getElementById('speech-view').textContent = 'Speech stopped.';
+        });
+
+        BM.Clipboard.onPaste(document.getElementById('clipboard-input'), function (data) {
+          document.getElementById('clipboard-view').textContent = pretty(data);
+        });
+        document.getElementById('clipboard-copy-btn').addEventListener('click', function () {
+          BM.Clipboard.copy(document.getElementById('clipboard-input').value, { notifyText: 'Copied from uber demo' }).then(function (ok) {
+            document.getElementById('clipboard-view').textContent = pretty({ copied: ok });
+          }).catch(function (err) {
+            document.getElementById('clipboard-view').textContent = pretty({ error: err.message });
+          });
+          recordAction('clipboard.copy');
+        });
+        document.getElementById('clipboard-read-btn').addEventListener('click', function () {
+          BM.Clipboard.readText().then(function (text) {
+            document.getElementById('clipboard-view').textContent = pretty({ read: text });
+            recordAction('clipboard.read');
+          }).catch(function (err) {
+            document.getElementById('clipboard-view').textContent = pretty({ error: err.message });
+          });
+        });
+
+        BM.FileIO.dropZone(document.getElementById('file-drop-zone'), {
+          multiple: true,
+          readAs: 'text',
+          onDrop: function (files) {
+            document.getElementById('file-view').textContent = pretty(files);
+            recordAction('file.drop', { count: files.length });
+          }
+        });
+        document.getElementById('file-open-btn').addEventListener('click', function () {
+          BM.FileIO.openText({ accept: ['text/plain', '.md'], description: 'Text files' }).then(function (file) {
+            document.getElementById('file-view').textContent = pretty(file);
+            recordAction('file.open');
+          }).catch(function (err) {
+            document.getElementById('file-view').textContent = pretty({ error: err.message });
+          });
+        });
+        document.getElementById('file-save-btn').addEventListener('click', function () {
+          BM.FileIO.save({
+            title: 'BareMetal export',
+            generatedAt: new Date().toISOString(),
+            modules: moduleCount
+          }, { filename: 'baremetal-uber-demo.json', type: 'application/json', accept: ['application/json'] }).then(function (ok) {
+            document.getElementById('file-view').textContent = pretty({ saved: ok });
+            recordAction('file.save');
+          });
+        });
+
+        sortableApi = BM.DragDrop.sortable(document.getElementById('sortable-list'), {
+          items: '.sortable-item',
+          ghostClass: 'drag-ghost',
+          dragClass: 'dragging',
+          handle: '.grab',
+          onReorder: function (order) {
+            document.getElementById('dragdrop-view').textContent = pretty(order);
+            recordAction('dragdrop.reorder', { order: order });
+          }
+        });
+        document.getElementById('shuffle-sortable-btn').addEventListener('click', function () {
+          var container = document.getElementById('sortable-list');
+          Array.from(container.children).sort(function () { return Math.random() - 0.5; }).forEach(function (item) {
+            container.appendChild(item);
+          });
+          document.getElementById('dragdrop-view').textContent = pretty(sortableApi.getOrder());
+          recordAction('dragdrop.shuffle', { order: sortableApi.getOrder() });
+        });
+        document.getElementById('dragdrop-view').textContent = pretty(sortableApi.getOrder());
+      }
+
+      function renderCharts() {
+        BM.Charts.line(document.getElementById('line-chart-shell'), [
+          { name: 'Requests', values: dynamicChartSeries },
+          { name: 'Latency', values: dynamicChartSeries.map(function (v) { return Math.max(4, 50 - v); }) }
+        ], {
+          labels: ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'],
+          smooth: true,
+          fill: false,
+          dots: true,
+          colors: ['--bs-info', '--bs-warning']
+        });
+        BM.Charts.donut(document.getElementById('donut-chart-shell'), [
+          { label: 'Storage', value: 22 },
+          { label: 'Compute', value: 44 },
+          { label: 'Transport', value: 18 },
+          { label: 'Auth', value: 16 }
+        ], { centerText: dynamicChartSeries[dynamicChartSeries.length - 1], centerLabel: 'active' });
+        BM.Charts.gauge(document.getElementById('gauge-chart-shell'), dynamicChartSeries[dynamicChartSeries.length - 1], {
+          label: 'Live score',
+          zones: [
+            { from: 0, to: 30, color: '--bs-danger' },
+            { from: 30, to: 65, color: '--bs-warning' },
+            { from: 65, to: 100, color: '--bs-success' }
+          ]
+        });
+      }
+
+      function renderGraph() {
+        if (graphHandle && graphHandle.destroy) graphHandle.destroy();
+        graphHandle = BM.Graph.create(document.getElementById('graph-shell'), {
+          nodes: [
+            { id: 'bind', label: 'Bind', team: 'ui' },
+            { id: 'routing', label: 'Routing', team: 'ui' },
+            { id: 'forms', label: 'Forms', team: 'ux' },
+            { id: 'transport', label: 'Transport', team: 'io' },
+            { id: 'cache', label: 'Cache', team: 'io' },
+            { id: 'workers', label: 'Workers', team: 'runtime' },
+            { id: 'tokens', label: 'Tokens', team: 'security' },
+            { id: 'crypto', label: 'Crypto', team: 'security' },
+            { id: 'pico', label: 'PicoScript', team: 'runtime' },
+            { id: 'geo', label: 'Geo', team: 'api' },
+            { id: 'notify', label: 'Notify', team: 'ux' }
+          ],
+          edges: [
+            ['bind', 'forms'],
+            ['routing', 'bind'],
+            ['transport', 'cache'],
+            ['workers', 'pico'],
+            ['tokens', 'crypto'],
+            ['notify', 'geo'],
+            ['forms', 'notify'],
+            ['cache', 'transport'],
+            ['pico', 'workers'],
+            ['bind', 'notify']
+          ]
+        }, {
+          directed: true,
+          groupField: 'team',
+          width: 980,
+          height: 430,
+          repulsion: 1250,
+          springLen: 130,
+          groupColors: ['--bs-primary', '--bs-success', '--bs-warning', '--bs-info', '--bs-danger']
+        });
+      }
+
+      function bootVisualisation() {
+        renderCharts();
+        renderGraph();
+        document.getElementById('chart-refresh-btn').addEventListener('click', function () {
+          dynamicChartSeries.push(Math.max(10, Math.min(92, dynamicChartSeries[dynamicChartSeries.length - 1] + Math.round((Math.random() - 0.5) * 16))));
+          if (dynamicChartSeries.length > 8) dynamicChartSeries.shift();
+          renderCharts();
+          recordAction('charts.refresh', { values: dynamicChartSeries.slice() });
+        });
+
+        var chipList = document.getElementById('animate-chip-list');
+        ['Bind', 'Routing', 'Workers', 'Tokens'].forEach(function (label) {
+          var chip = document.createElement('div');
+          chip.className = 'animate-chip';
+          chip.textContent = label;
+          chipList.appendChild(chip);
+        });
+        var listAnimator = BM.Animate.list(chipList, 'fade');
+        document.getElementById('animate-add-btn').addEventListener('click', function () {
+          var chip = document.createElement('div');
+          chip.className = 'animate-chip';
+          chip.textContent = 'Module ' + (chipList.children.length + 1);
+          chipList.prepend(chip);
+          listAnimator.update();
+          recordAction('animate.add');
+        });
+        document.getElementById('animate-shuffle-btn').addEventListener('click', function () {
+          Array.from(chipList.children).sort(function () { return Math.random() - 0.5; }).forEach(function (node) {
+            chipList.appendChild(node);
+          });
+          listAnimator.update();
+          recordAction('animate.shuffle');
+        });
+        document.getElementById('animate-clear-btn').addEventListener('click', function () {
+          while (chipList.firstChild) chipList.removeChild(chipList.firstChild);
+          listAnimator.update();
+          recordAction('animate.clear');
+        });
+
+        document.getElementById('markdown-render-btn').addEventListener('click', function () {
+          var source = document.getElementById('markdown-input').value;
+          document.getElementById('markdown-toc-view').textContent = pretty(BM.Markdown.toc(source));
+          BM.Markdown.renderSafe(document.getElementById('markdown-preview'), source, { linkTarget: '_blank', smartypants: true });
+          recordAction('markdown.render');
+        });
+        document.getElementById('markdown-render-btn').click();
+      }
+
+      function bootGeo() {
+        document.getElementById('geo-locate-btn').addEventListener('click', function () {
+          BM.Geo.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 }).then(function (pos) {
+            document.getElementById('geo-view').textContent = pretty({
+              current: pos,
+              geohash: BM.Geo.encode(pos.lat, pos.lng, 8),
+              midpointWithLondon: BM.Geo.midpoint(pos, { lat: 51.5074, lng: -0.1278 })
+            });
+            notify('success', 'Geolocation acquired.', 'Geo');
+            recordAction('geo.locate', pos);
+          }).catch(function (err) {
+            document.getElementById('geo-view').textContent = pretty({ error: err.message });
+          });
+        });
+        document.getElementById('geo-distance-btn').addEventListener('click', function () {
+          BM.Geo.getCurrentPosition({ timeout: 10000 }).then(function (pos) {
+            var london = { lat: 51.5074, lng: -0.1278 };
+            document.getElementById('geo-view').textContent = pretty({
+              distanceMeters: BM.Geo.distance(pos, london),
+              bearing: BM.Geo.bearing(pos, london),
+              boundingBox: BM.Geo.boundingBox(london, 5000)
+            });
+            recordAction('geo.distance');
+          }).catch(function (err) {
+            document.getElementById('geo-view').textContent = pretty({ error: err.message });
+          });
+        });
+
+        lazyApi = BM.Observe.lazyLoad('.lazy-load', {
+          onLoad: function (el) {
+            notify('info', 'Lazy asset loaded: ' + (el.alt || 'image'), 'Observe');
+            document.getElementById('observe-status').textContent = 'Loaded ' + (el.alt || 'image') + ' via BareMetal.Observe.lazyLoad().';
+          }
+        });
+        revealApi = BM.Observe.animateOnScroll('.reveal-card', { class: 'in-view', once: true });
+      }
+
+      function bootInfrastructure() {
+        pipelineRunner = BM.Pipeline.create(
+          function (value) { return String(value).trim(); },
+          function (value) { return value.toUpperCase(); }
+        ).tap(function (value) {
+          logger.info('Pipeline output', { value: value });
+        }).branch(function (value) {
+          return value.length > 12;
+        }, function (value) {
+          return value + ' ✔';
+        }, function (value) {
+          return value + ' ?';
+        });
+        document.getElementById('pipeline-run-btn').addEventListener('click', function () {
+          pipelineRunner.execute(document.getElementById('pipeline-input').value).then(function (output) {
+            document.getElementById('pipeline-view').textContent = pretty({ output: output });
+            recordAction('pipeline.run', { output: output });
+          });
+        });
+
+        stateMachine = BM.StateMachine.create({
+          initial: 'idle',
+          context: { attempts: 0 },
+          states: {
+            idle: { on: { START: 'running' } },
+            running: { on: {
+              FAIL: { target: 'error', action: function (ctx) { return { attempts: ctx.attempts + 1 }; } },
+              DONE: 'success'
+            } },
+            success: { on: { RESET: 'idle' } },
+            error: { on: { RESET: 'idle', START: 'running' } }
+          }
+        });
+        stateMachine.subscribe(function (snapshot) {
+          document.getElementById('machine-state-view').textContent = snapshot.state;
+          document.getElementById('machine-view').textContent = pretty(snapshot);
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('[data-machine-event]'), function (button) {
+          button.addEventListener('click', function () {
+            var result = stateMachine.send(button.getAttribute('data-machine-event'));
+            document.getElementById('machine-state-view').textContent = result.state;
+            document.getElementById('machine-view').textContent = pretty(result);
+            recordAction('machine.send', result);
+          });
+        });
+
+        BM.Workflow.create('uber-demo-workflow', [
+          { type: 'SET', name: 'sum', value: 0 },
+          { type: 'SET', name: 'items', value: [3, 5, 8] },
+          { type: 'FOREACH', var: 'item', in: 'items' },
+            { type: 'SET', name: 'sum', expr: 'sum + item' },
+          { type: 'END' },
+          { type: 'IF', condition: 'sum >= 10' },
+            { type: 'SET', name: 'status', value: 'approved' },
+          { type: 'ELSE' },
+            { type: 'SET', name: 'status', value: 'review' },
+          { type: 'END' }
+        ]);
+        document.getElementById('workflow-run-btn').addEventListener('click', function () {
+          BM.Workflow.run('uber-demo-workflow').then(function (context) {
+            document.getElementById('workflow-view').textContent = pretty(context);
+            recordAction('workflow.run', context);
+          });
+        });
+
+        try {
+          workerPool = BM.Workers.pool(function (job) {
+            function isPrime(n) {
+              var i;
+              if (n < 2) return false;
+              for (i = 2; i * i <= n; i++) if (n % i === 0) return false;
+              return true;
+            }
+            var count = 0;
+            var n;
+            for (n = 2; n <= job.limit; n++) if (isPrime(n)) count += 1;
+            return { limit: job.limit, primes: count };
+          }, { size: 2, timeout: 10000 });
+        } catch (err) {
+          workerPool = null;
+          document.getElementById('worker-view').textContent = pretty({ unsupported: true, reason: err.message });
+        }
+        document.getElementById('worker-run-btn').addEventListener('click', function () {
+          if (!workerPool) {
+            notify('warning', 'Workers are not supported in this environment.', 'Workers');
+            return;
+          }
+          var limit = Number(document.getElementById('worker-input').value || 1000);
+          workerPool.run({ limit: limit }).then(function (result) {
+            app.workerScore = String(result.primes);
+            document.getElementById('worker-view').textContent = pretty(result);
+            recordAction('workers.run', result);
+          }).catch(function (err) {
+            document.getElementById('worker-view').textContent = pretty({ error: err.message });
+          });
+        });
+
+        document.getElementById('testrunner-run-btn').addEventListener('click', function () {
+          var restore = BM.TestRunner.installGlobals();
+          describe('uber demo smoke', function () {
+            it('compares normalised urls', function () {
+              expect(BM.URL.compare('https://example.com:443/a?b=2&a=1', 'https://example.com/a?a=1&b=2')).toBe(true);
+            });
+            it('formats markdown headings', function () {
+              expect(BM.Markdown.toc('# Hello').length).toBe(1);
+            });
+            it('detects cache instance', function () {
+              expect(typeof cache.get).toBe('function');
+            });
+          });
+          run({ bail: false }).then(function (result) {
+            document.getElementById('testrunner-view').textContent = BM.TestRunner.toTAP(result);
+            restore();
+            recordAction('testrunner.run', result);
+          });
+        });
+      }
+
+      function initPicoScript() {
+        if (picoEditor) return;
+        picoEditor = BM.PicoScript.Editor.create(document.getElementById('picoscript-editor'), {
+          theme: 'dark',
+          fontSize: 13,
+          height: '780px',
+          source: [
+            'REM === HTTP GET Fast-Path Protocol Handler ===',
+            '',
+            'ON CONNECT:',
+            '  LET state = 0',
+            '  LET requests = 0',
+            'END ON',
+            '',
+            'ON DATA:',
+            '  LET method = PEEK(DATA$, 0)',
+            '  IF method = 71 THEN',
+            '    LET requests = requests + 1',
+            '    EMIT_STR("HTTP/1.1 200 OK")',
+            '    EMIT_CRLF()',
+            '    EMIT_STR("Content-Length: 2")',
+            '    EMIT_CRLF()',
+            '    EMIT_CRLF()',
+            '    EMIT_STR("OK")',
+            '  ELSE',
+            '    EMIT_STR("HTTP/1.1 405 Method Not Allowed")',
+            '    EMIT_CRLF()',
+            '    EMIT_CRLF()',
+            '  END IF',
+            'END ON',
+            '',
+            'ON TICK:',
+            '  IF requests = 0 THEN',
+            '    LET state = 99',
+            '  END IF',
+            'END ON',
+            '',
+            'ON CLOSE:',
+            '  LET state = -1',
+            'END ON'
+          ].join('\n')
+        });
+        picoEditor.compile();
+        recordAction('picoscript.init');
+      }
+
+      function authMockFetch(url, options) {
+        var href = typeof url === 'string' ? url : (url && url.url) || '';
+        if (href.indexOf('/.well-known/openid-configuration') > -1) {
+          return Promise.resolve(createJsonResponse({
+            authorization_endpoint: 'https://demo.identity.local/authorize',
+            token_endpoint: 'https://demo.identity.local/token',
+            end_session_endpoint: 'https://demo.identity.local/logout'
+          }));
+        }
+        if (href.indexOf('/token') > -1) {
+          var idToken = BM.Tokens.signSync({
+            sub: 'user-42',
+            name: 'Ada Lovelace',
+            email: 'ada@baremetal.dev',
+            roles: ['editor'],
+            permissions: ['analytics:read', 'analytics:edit'],
+            groups: ['Engineering'],
+            nonce: authNonce,
+            exp: Math.floor(Date.now() / 1000) + 3600
+          }, null, { algorithm: 'none' });
+          var accessToken = BM.Tokens.signSync({
+            sub: 'user-42',
+            scope: 'api profile',
+            exp: Math.floor(Date.now() / 1000) + 3600
+          }, null, { algorithm: 'none' });
+          return Promise.resolve(createJsonResponse({
+            access_token: accessToken,
+            id_token: idToken,
+            refresh_token: 'refresh-demo-token',
+            expires_in: 3600
+          }));
+        }
+        return Promise.resolve(createJsonResponse({ ok: true }));
+      }
+
+      function renderAuthUI() {
+        document.getElementById('auth-shell').innerHTML = '';
+        document.getElementById('token-inspector-shell').innerHTML = '';
+        BM.Auth.renderAuthGate(document.getElementById('auth-shell'), {
+          theme: 'dark',
+          title: 'Mock OIDC gateway',
+          subtitle: 'The login button intercepts redirects, fakes discovery, exchanges a token and then lights up RBAC.'
+        });
+        BM.Auth.renderTokenInspector(document.getElementById('token-inspector-shell'), {
+          theme: 'dark',
+          showRefreshToken: true
+        });
+      }
+
+      function ensureAuthReady() {
+        if (authInitialised) return Promise.resolve();
+        BM.Auth.configure({
+          authority: 'https://demo.identity.local',
+          clientId: 'uber-demo',
+          redirectUri: window.location.origin + basePath,
+          silentRedirectUri: window.location.origin + basePath,
+          scopes: 'openid profile email api',
+          storage: 'session'
+        });
+        BM.Auth._setRedirect(function (url) {
+          var parsed = new URL(url);
+          authNonce = parsed.searchParams.get('nonce');
+          var state = parsed.searchParams.get('state');
+          withMockFetch(authMockFetch, function () {
+            return BM.Auth.handleCallback(window.location.origin + basePath + '?code=demo-code&state=' + state);
+          }).then(function (sessionInfo) {
+            renderAuthUI();
+            BM.RBAC.setToken(sessionInfo.idToken);
+            notify('success', 'Mock login complete.', 'Auth');
+            recordAction('auth.login', sessionInfo.user);
+          }).catch(function (err) {
+            notify('error', err.message, 'Auth');
+          });
+        });
+        return withMockFetch(authMockFetch, function () {
+          return BM.Auth.initialize();
+        }).then(function () {
+          authInitialised = true;
+          renderAuthUI();
+          recordAction('auth.init');
+        });
+      }
+
+      function bootSecurity() {
+        BM.RBAC.configure({
+          tokenSource: 'manual',
+          claimMapping: { roles: 'roles', permissions: 'permissions', groups: 'groups', name: 'name' },
+          rolePermissions: {
+            viewer: ['analytics:read'],
+            editor: ['analytics:read', 'analytics:edit'],
+            admin: ['analytics:read', 'analytics:edit', 'analytics:delete']
+          },
+          superRoles: ['admin']
+        });
+        ensureAuthReady();
+
+        document.getElementById('auth-login-btn').addEventListener('click', function () {
+          ensureAuthReady().then(function () {
+            BM.Auth.login().catch(function () {});
+          });
+        });
+        document.getElementById('auth-logout-btn').addEventListener('click', function () {
+          BM.Auth.clearSession();
+          BM.RBAC.setToken('');
+          renderAuthUI();
+          recordAction('auth.logout');
+        });
+        document.getElementById('rbac-check-btn').addEventListener('click', function () {
+          var role = document.getElementById('rbac-role-select').value;
+          var token = BM.Tokens.signSync({
+            sub: 'demo-role',
+            roles: [role],
+            permissions: role === 'admin' ? ['analytics:read', 'analytics:edit', 'analytics:delete'] : role === 'editor' ? ['analytics:read', 'analytics:edit'] : ['analytics:read'],
+            groups: ['Engineering'],
+            exp: Math.floor(Date.now() / 1000) + 1800
+          }, null, { algorithm: 'none' });
+          BM.RBAC.setToken(token);
+          document.getElementById('rbac-view').textContent = pretty({
+            identity: BM.RBAC.identity(),
+            canEdit: BM.RBAC.can('analytics:edit'),
+            canDelete: BM.RBAC.can('analytics:delete'),
+            inEngineering: BM.RBAC.inGroup('Engineering')
+          });
+          recordAction('rbac.check', { role: role });
+        });
+
+        document.getElementById('crypto-run-btn').addEventListener('click', function () {
+          var password = document.getElementById('crypto-password').value;
+          var secret = document.getElementById('crypto-input').value;
+          BM.Crypto.deriveKey(password).then(function (derived) {
+            return BM.Crypto.encryptSymmetric(derived.key, secret).then(function (encrypted) {
+              return BM.Crypto.decryptSymmetric(derived.key, encrypted.iv, encrypted.ciphertext).then(function (plain) {
+                document.getElementById('crypto-view').textContent = pretty({
+                  iv: BM.Crypto.toBase64Url(encrypted.iv),
+                  ciphertext: BM.Crypto.toBase64Url(encrypted.ciphertext),
+                  decrypted: BM.Crypto.fromUtf8(plain)
+                });
+                recordAction('crypto.run');
+              });
+            });
+          }).catch(function (err) {
+            document.getElementById('crypto-view').textContent = pretty({ error: err.message });
+          });
+        });
+
+        var builtToken = null;
+        document.getElementById('tokens-build-btn').addEventListener('click', function () {
+          BM.Tokens.create({ role: 'editor' })
+            .subject('uber-demo-user')
+            .issuer('https://demo.identity.local')
+            .audience('uber-demo')
+            .expiresIn('15m')
+            .claim('theme', config.get('theme'))
+            .sign('super-secret-demo-key', 'HS256')
+            .then(function (token) {
+              builtToken = token;
+              document.getElementById('tokens-view').textContent = pretty({ token: token, decoded: BM.Tokens.decode(token) });
+              recordAction('tokens.build');
+            }).catch(function (err) {
+              document.getElementById('tokens-view').textContent = pretty({ error: err.message });
+            });
+        });
+        document.getElementById('tokens-verify-btn').addEventListener('click', function () {
+          if (!builtToken) return;
+          BM.Tokens.verify(builtToken, 'super-secret-demo-key', { algorithms: ['HS256'], audience: 'uber-demo' }).then(function (payload) {
+            document.getElementById('tokens-view').textContent = pretty({ token: builtToken, verifiedPayload: payload, expiresIn: BM.Tokens.expiresIn(builtToken) });
+            recordAction('tokens.verify');
+          }).catch(function (err) {
+            document.getElementById('tokens-view').textContent = pretty({ error: err.message });
+          });
+        });
+
+        var demoCart = BM.Pay.cart([
+          { id: 'sku-1', label: 'BareMetal hoodie', amount: 59, qty: 1, currency: 'USD' },
+          { id: 'sku-2', label: 'Shipping', amount: 9, qty: 1, currency: 'USD' }
+        ]);
+        document.getElementById('pay-validate-btn').addEventListener('click', function () {
+          var number = document.getElementById('pay-card-input').value;
+          document.getElementById('pay-view').textContent = pretty({
+            validation: BM.Pay.validate(number),
+            details: demoCart.toDetails('Uber demo total'),
+            canPay: BM.Pay.canPay(),
+            totalFormatted: BM.Pay.formatCurrency(demoCart.getTotal('USD'), 'USD', 'en-US')
+          });
+          recordAction('pay.validate');
+        });
+        document.getElementById('pay-request-btn').addEventListener('click', function () {
+          if (!BM.Pay.canPay()) {
+            document.getElementById('pay-view').textContent = pretty({ error: 'Payment Request API unavailable', details: demoCart.toDetails('Uber demo total') });
+            recordAction('pay.unavailable');
+            return;
+          }
+          BM.Pay.request(demoCart.toDetails('Uber demo total')).then(function (response) {
+            return BM.Pay.complete(response, 'success').then(function () {
+              document.getElementById('pay-view').textContent = pretty({ paid: true, methodName: response.methodName || 'unknown' });
+              recordAction('pay.request.success');
+            });
+          }).catch(function (err) {
+            document.getElementById('pay-view').textContent = pretty({ error: err.message });
+            recordAction('pay.request.error', { message: err.message });
+          });
+        });
+      }
+
+      function bootEverything() {
+        BM.Notify.configure({ theme: 'dark', maxVisible: 5, defaultPosition: 'bottom-right' });
+        BM.I18n.setLocale(app.locale);
+        setDirFromLocale(app.locale);
+        updateHeader();
+        app.capabilityScore = BM.Capabilities.score();
+        app.diagnosticCount = actionCounter.value();
+        bootConfig();
+        bootSession();
+        bootUtilities();
+        bootComponents();
+        bootData();
+        bootForms();
+        bootCommunication();
+        bootMedia();
+        bootVisualisation();
+        bootGeo();
+        bootInfrastructure();
+        bootSecurity();
+        refreshCapabilityGrid();
+        renderConfigViews();
+        renderDiagnostics();
+        setupRouting();
+        updateHeader();
+        setInterval(updateHeader, 1000);
+        recordAction('app.ready', { modulesLoaded: modules.length, listed: moduleCount });
+      }
+
+      bootEverything();
+    })();
+  </script>
+</body>
+</html>

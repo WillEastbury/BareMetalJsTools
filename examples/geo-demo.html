@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Location Toolkit — BareMetalJsTools</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --geo-bg: #07111f;
+      --geo-panel: rgba(10, 19, 36, .9);
+      --geo-border: rgba(146, 180, 255, .18);
+      --geo-text: #edf5ff;
+      --geo-muted: #91a6cc;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(82, 126, 255, .24), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(0, 204, 173, .12), transparent 22%),
+        var(--geo-bg);
+      color: var(--geo-text);
+    }
+    .page-wrapper, .main-content { background: transparent; }
+    .hero,
+    .demo-card {
+      border: 1px solid var(--geo-border);
+      border-radius: 1rem;
+      background: linear-gradient(180deg, rgba(12, 22, 40, .92), rgba(7, 13, 27, .9));
+      box-shadow: 0 20px 42px rgba(0, 0, 0, .24);
+    }
+    .hero { padding: 1.4rem; margin-bottom: 1rem; }
+    .demo-card .cd-h { background: rgba(255,255,255,.03); }
+    .map-grid {
+      position: relative;
+      min-height: 420px;
+      border-radius: 1rem;
+      border: 1px solid rgba(255,255,255,.06);
+      background:
+        linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px),
+        rgba(2, 9, 18, .95);
+      background-size: calc(100% / 12) calc(100% / 6);
+      overflow: hidden;
+      cursor: crosshair;
+    }
+    .map-grid::after {
+      content: 'Click to set Point A and Point B';
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: .35rem .7rem;
+      border-radius: 999px;
+      border: 1px solid var(--geo-border);
+      background: rgba(6, 15, 28, .75);
+      color: var(--geo-muted);
+      font-size: .78rem;
+    }
+    .marker,
+    .zone-point {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 6px rgba(255,255,255,.06);
+    }
+    .marker.a { background: #5cb3ff; }
+    .marker.b { background: #ffd166; }
+    .marker.current { background: #52e3a6; }
+    .zone-point {
+      width: 9px;
+      height: 9px;
+      border-width: 1px;
+      background: rgba(255,255,255,.24);
+      box-shadow: none;
+    }
+    .zone {
+      position: absolute;
+      border: 1px dashed rgba(82, 227, 166, .5);
+      background: rgba(82, 227, 166, .08);
+    }
+    .fc, .fsl {
+      background: rgba(2, 9, 18, .92);
+      border-color: rgba(157, 182, 235, .16);
+      color: var(--geo-text);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .35rem .72rem;
+      border-radius: 999px;
+      border: 1px solid var(--geo-border);
+      background: rgba(255,255,255,.03);
+      color: var(--geo-muted);
+      font-size: .82rem;
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: .85rem;
+    }
+    .metric,
+    .result-item {
+      padding: .9rem 1rem;
+      border-radius: .95rem;
+      border: 1px solid var(--geo-border);
+      background: rgba(255,255,255,.03);
+    }
+    .metric span,
+    .result-item span { display: block; color: var(--geo-muted); font-size: .8rem; margin-bottom: .35rem; }
+    .result-list { display: grid; gap: .8rem; }
+    .chart-slot {
+      min-height: 280px;
+      border-radius: .95rem;
+      border: 1px solid rgba(255,255,255,.06);
+      background: rgba(2, 9, 18, .95);
+      padding: .75rem;
+    }
+    .mono {
+      font-family: var(--bs-font-mono, ui-monospace, monospace);
+      font-size: .82rem;
+      color: #dce9ff;
+    }
+    .section-note { color: var(--geo-muted); font-size: .84rem; }
+    @media (max-width: 1000px) {
+      .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      .metric-grid { grid-template-columns: 1fr; }
+      .map-grid { min-height: 320px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="site-header site-header-dark">
+      <a class="brand" href="index.html">🔩 BareMetalJsTools</a>
+      <nav>
+        <a href="gamepad-demo.html">Gamepad</a>
+        <a href="geo-demo.html" class="act">Geo</a>
+      </nav>
+    </header>
+
+    <main class="main-content p4" style="overflow-y:auto;">
+      <div class="ctn">
+        <section class="hero">
+          <div class="fx jcb aic flex-wrap gp2">
+            <div>
+              <h1 class="mb1">Location Toolkit</h1>
+              <p class="lead mb0">Combine <strong>Geo</strong> helpers for current position, Haversine distance, geohash, and point-in-polygon checks with <strong>Forms</strong>, <strong>Charts</strong>, <strong>Notify</strong>, and a small geocoding <strong>Cache</strong>.</p>
+            </div>
+            <div class="fx gp2 flex-wrap aic">
+              <span class="pill" id="target-pill">Active target: Point A</span>
+              <span class="pill" id="cache-pill">Cache idle</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="rw g3">
+          <div class="cm7 stack">
+            <div class="cd demo-card">
+              <div class="cd-h">Interactive coordinate grid</div>
+              <div class="cd-b">
+                <div class="map-grid" id="map-grid">
+                  <div class="zone" id="zone-box"></div>
+                </div>
+                <div class="fx gp2 flex-wrap mt3">
+                  <button class="bt bt-p" id="locate-btn">Use current position</button>
+                  <button class="bt bt-op" id="toggle-target-btn">Toggle A / B</button>
+                  <button class="bt bt-os" id="clear-btn">Reset points</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="cd demo-card">
+              <div class="cd-h">Coordinate profile</div>
+              <div class="cd-b">
+                <div id="coord-chart" class="chart-slot"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cm5 stack">
+            <div class="cd demo-card">
+              <div class="cd-h">Coordinate form</div>
+              <div class="cd-b">
+                <form id="coords-form">
+                  <div class="rw g3">
+                    <div class="cm6">
+                      <label class="fl">Point A latitude</label>
+                      <input class="fc" name="latA" placeholder="51.5007">
+                    </div>
+                    <div class="cm6">
+                      <label class="fl">Point A longitude</label>
+                      <input class="fc" name="lngA" placeholder="-0.1246">
+                    </div>
+                    <div class="cm6">
+                      <label class="fl">Point B latitude</label>
+                      <input class="fc" name="latB" placeholder="48.8566">
+                    </div>
+                    <div class="cm6">
+                      <label class="fl">Point B longitude</label>
+                      <input class="fc" name="lngB" placeholder="2.3522">
+                    </div>
+                    <div class="c12">
+                      <label class="fl">Geocode a place</label>
+                      <div class="fx gp2 flex-wrap">
+                        <input class="fc" id="search-box" placeholder="Search for a city or address" style="flex:1 1 240px;">
+                        <button type="button" class="bt bt-op" id="search-btn">Search</button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="cd demo-card">
+              <div class="cd-h">Live metrics</div>
+              <div class="cd-b">
+                <div class="metric-grid">
+                  <div class="metric"><span>Distance</span><strong id="distance-metric">0 km</strong></div>
+                  <div class="metric"><span>Midpoint geohash</span><strong id="geohash-metric">—</strong></div>
+                  <div class="metric"><span>Inside demo zone</span><strong id="inside-metric">No</strong></div>
+                  <div class="metric"><span>Current point</span><strong id="current-metric">None</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cd demo-card">
+              <div class="cd-h">Geocoding results</div>
+              <div class="cd-b">
+                <p class="section-note">Results are cached with TTL + stale-while-revalidate for quick re-use.</p>
+                <div class="result-list" id="result-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer site-footer-dark tc">
+      Grid bounds span the world: latitude ±90, longitude ±180
+    </footer>
+  </div>
+
+  <script src="../src/BareMetal.Geo.js"></script>
+  <script src="../src/BareMetal.Charts.js"></script>
+  <script src="../src/BareMetal.Forms.js"></script>
+  <script src="../src/BareMetal.Notify.js"></script>
+  <script src="../src/BareMetal.Cache.js"></script>
+  <script>
+    (function () {
+      var mapGrid = document.getElementById('map-grid');
+      var zoneBox = document.getElementById('zone-box');
+      var formEl = document.getElementById('coords-form');
+      var resultList = document.getElementById('result-list');
+      var targetPill = document.getElementById('target-pill');
+      var cachePill = document.getElementById('cache-pill');
+      var distanceMetric = document.getElementById('distance-metric');
+      var geohashMetric = document.getElementById('geohash-metric');
+      var insideMetric = document.getElementById('inside-metric');
+      var currentMetric = document.getElementById('current-metric');
+      var searchBox = document.getElementById('search-box');
+      var formApi = BareMetal.Forms.create(formEl, {
+        fields: {
+          latA: { required: false, type: 'number', min: -90, max: 90 },
+          lngA: { required: false, type: 'number', min: -180, max: 180 },
+          latB: { required: false, type: 'number', min: -90, max: 90 },
+          lngB: { required: false, type: 'number', min: -180, max: 180 }
+        }
+      });
+      var cache = BareMetal.Cache.create({ ttl: 5 * 60 * 1000, swr: 15 * 60 * 1000, staleIfError: true });
+      var activeTarget = 'A';
+      var points = { A: null, B: null, current: null };
+      var zone = [
+        { lat: 25, lng: -20 },
+        { lat: 60, lng: -20 },
+        { lat: 60, lng: 30 },
+        { lat: 25, lng: 30 }
+      ];
+
+      BareMetal.Notify.configure({ defaultPosition: 'top-right', theme: 'dark' });
+      cache.on('hit', function () {
+        var stats = cache.stats();
+        cachePill.textContent = 'Cache: ' + stats.hits + ' hits / ' + stats.misses + ' misses';
+      });
+      cache.on('miss', function () {
+        var stats = cache.stats();
+        cachePill.textContent = 'Cache: ' + stats.hits + ' hits / ' + stats.misses + ' misses';
+      });
+
+      function clampLat(lat) {
+        return Math.max(-90, Math.min(90, Number(lat) || 0));
+      }
+
+      function clampLng(lng) {
+        return Math.max(-180, Math.min(180, Number(lng) || 0));
+      }
+
+      function normalizePoint(point) {
+        if (!point) return null;
+        return { lat: clampLat(point.lat), lng: clampLng(point.lng) };
+      }
+
+      function pointToGrid(point) {
+        var rect = mapGrid.getBoundingClientRect();
+        return {
+          left: ((point.lng + 180) / 360) * rect.width,
+          top: ((90 - point.lat) / 180) * rect.height
+        };
+      }
+
+      function gridToPoint(event) {
+        var rect = mapGrid.getBoundingClientRect();
+        var x = event.clientX - rect.left;
+        var y = event.clientY - rect.top;
+        return {
+          lat: 90 - (y / rect.height) * 180,
+          lng: (x / rect.width) * 360 - 180
+        };
+      }
+
+      function writeForm() {
+        formApi.setValues({
+          latA: points.A ? points.A.lat.toFixed(4) : '',
+          lngA: points.A ? points.A.lng.toFixed(4) : '',
+          latB: points.B ? points.B.lat.toFixed(4) : '',
+          lngB: points.B ? points.B.lng.toFixed(4) : ''
+        });
+      }
+
+      function drawPoint(name, point, className) {
+        var node = document.querySelector('.marker.' + className) || document.createElement('div');
+        if (!point) {
+          if (node.parentNode) node.parentNode.removeChild(node);
+          return;
+        }
+        var pos = pointToGrid(point);
+        node.className = 'marker ' + className;
+        node.style.left = pos.left + 'px';
+        node.style.top = pos.top + 'px';
+        node.title = name + ' · ' + point.lat.toFixed(4) + ', ' + point.lng.toFixed(4);
+        if (!node.parentNode) mapGrid.appendChild(node);
+      }
+
+      function drawZone() {
+        var topLeft = pointToGrid({ lat: zone[1].lat, lng: zone[0].lng });
+        var bottomRight = pointToGrid({ lat: zone[0].lat, lng: zone[2].lng });
+        zoneBox.style.left = topLeft.left + 'px';
+        zoneBox.style.top = topLeft.top + 'px';
+        zoneBox.style.width = Math.max(0, bottomRight.left - topLeft.left) + 'px';
+        zoneBox.style.height = Math.max(0, bottomRight.top - topLeft.top) + 'px';
+      }
+
+      function renderResults(list) {
+        resultList.innerHTML = list.length ? list.map(function (item, index) {
+          return '<div class="result-item">' +
+            '<span>' + (item.displayName || 'Result ' + (index + 1)) + '</span>' +
+            '<strong class="mono">' + item.lat.toFixed(4) + ', ' + item.lng.toFixed(4) + '</strong>' +
+            '<div class="fx gp2 flex-wrap mt2">' +
+              '<button class="bt bt-s bt-op" data-lat="' + item.lat + '" data-lng="' + item.lng + '">Set ' + activeTarget + '</button>' +
+            '</div>' +
+          '</div>';
+        }).join('') : '<div class="result-item"><span>No results</span><strong>Search for a location to populate cached geocode results.</strong></div>';
+        Array.prototype.slice.call(resultList.querySelectorAll('button[data-lat]')).forEach(function (button) {
+          button.addEventListener('click', function () {
+            points[activeTarget] = normalizePoint({ lat: button.getAttribute('data-lat'), lng: button.getAttribute('data-lng') });
+            writeForm();
+            render();
+          });
+        });
+      }
+
+      function renderChart() {
+        var mid = points.A && points.B ? BareMetal.Geo.midpoint(points.A, points.B) : null;
+        BareMetal.Charts.line('#coord-chart', [
+          { name: 'Latitude', values: [points.A ? points.A.lat : 0, points.B ? points.B.lat : 0, mid ? mid.lat : 0] },
+          { name: 'Longitude', values: [points.A ? points.A.lng : 0, points.B ? points.B.lng : 0, mid ? mid.lng : 0] }
+        ], {
+          width: 560,
+          height: 260,
+          labels: ['Point A', 'Point B', 'Midpoint'],
+          fill: false,
+          smooth: false,
+          colors: ['--bs-info', '--bs-warning']
+        });
+      }
+
+      function render() {
+        drawZone();
+        drawPoint('Point A', points.A, 'a');
+        drawPoint('Point B', points.B, 'b');
+        drawPoint('Current location', points.current, 'current');
+        targetPill.textContent = 'Active target: Point ' + activeTarget;
+        currentMetric.textContent = points.current ? (points.current.lat.toFixed(2) + ', ' + points.current.lng.toFixed(2)) : 'None';
+        if (points.A && points.B) {
+          var distance = BareMetal.Geo.distance(points.A, points.B);
+          var midpoint = BareMetal.Geo.midpoint(points.A, points.B);
+          distanceMetric.textContent = (distance / 1000).toFixed(2) + ' km';
+          geohashMetric.textContent = BareMetal.Geo.encode(midpoint.lat, midpoint.lng, 7);
+          insideMetric.textContent = BareMetal.Geo.isInside(midpoint, zone) ? 'Yes' : 'No';
+        } else {
+          distanceMetric.textContent = '0 km';
+          geohashMetric.textContent = '—';
+          insideMetric.textContent = 'No';
+        }
+        renderChart();
+      }
+
+      formApi.onChange(function (values) {
+        var nextA = values.latA !== '' && values.lngA !== '' ? normalizePoint({ lat: values.latA, lng: values.lngA }) : null;
+        var nextB = values.latB !== '' && values.lngB !== '' ? normalizePoint({ lat: values.latB, lng: values.lngB }) : null;
+        points.A = nextA;
+        points.B = nextB;
+        render();
+      });
+
+      mapGrid.addEventListener('click', function (event) {
+        points[activeTarget] = normalizePoint(gridToPoint(event));
+        writeForm();
+        render();
+        activeTarget = activeTarget === 'A' ? 'B' : 'A';
+        targetPill.textContent = 'Active target: Point ' + activeTarget;
+      });
+
+      document.getElementById('toggle-target-btn').addEventListener('click', function () {
+        activeTarget = activeTarget === 'A' ? 'B' : 'A';
+        targetPill.textContent = 'Active target: Point ' + activeTarget;
+      });
+      document.getElementById('clear-btn').addEventListener('click', function () {
+        points.A = null;
+        points.B = null;
+        writeForm();
+        render();
+      });
+      document.getElementById('locate-btn').addEventListener('click', function () {
+        BareMetal.Notify.info('Requesting location permission…');
+        BareMetal.Geo.getCurrentPosition({ enableHighAccuracy: true }).then(function (position) {
+          points.current = { lat: position.lat, lng: position.lng };
+          points[activeTarget] = points.current;
+          writeForm();
+          render();
+          BareMetal.Notify.success('Location permission granted.');
+        }).catch(function (error) {
+          BareMetal.Notify.warning('Location unavailable: ' + (error && error.message ? error.message : 'permission denied'));
+        });
+      });
+      document.getElementById('search-btn').addEventListener('click', function () {
+        var query = searchBox.value.trim();
+        if (!query) return;
+        cache.wrap('geo:' + query.toLowerCase(), function () {
+          return BareMetal.Geo.geocode(query);
+        }, { ttl: 5 * 60 * 1000, swr: 15 * 60 * 1000, staleIfError: true }).then(function (results) {
+          renderResults(results || []);
+          BareMetal.Notify.success('Loaded geocoding results for “' + query + '”.');
+        }).catch(function (error) {
+          renderResults([]);
+          BareMetal.Notify.warning('Geocoding failed: ' + (error && error.message ? error.message : 'request error'));
+        });
+      });
+
+      writeForm();
+      render();
+      renderResults([]);
+      window.addEventListener('resize', render);
+    })();
+  </script>
+</body>
+</html>

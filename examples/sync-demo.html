@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collaborative Editor Simulation — BareMetalJsTools</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --sync-bg: #08111f;
+      --sync-panel: rgba(10, 19, 36, .9);
+      --sync-border: rgba(146, 180, 255, .18);
+      --sync-text: #edf5ff;
+      --sync-muted: #93a6c9;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(118, 103, 255, .2), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(0, 204, 170, .12), transparent 22%),
+        var(--sync-bg);
+      color: var(--sync-text);
+    }
+    .page-wrapper, .main-content { background: transparent; }
+    .hero,
+    .demo-card {
+      border: 1px solid var(--sync-border);
+      border-radius: 1rem;
+      background: linear-gradient(180deg, rgba(12, 22, 40, .92), rgba(7, 13, 27, .9));
+      box-shadow: 0 20px 42px rgba(0, 0, 0, .24);
+    }
+    .hero { padding: 1.4rem; margin-bottom: 1rem; }
+    .demo-card .cd-h { background: rgba(255,255,255,.03); }
+    .editor {
+      width: 100%;
+      min-height: 320px;
+      border-radius: 1rem;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(2, 9, 18, .95);
+      color: #dce9ff;
+      font-family: var(--bs-font-mono, ui-monospace, monospace);
+      font-size: .84rem;
+      line-height: 1.55;
+      padding: 1rem;
+      resize: vertical;
+    }
+    .stack { display: grid; gap: 1rem; }
+    .bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: .75rem;
+      flex-wrap: wrap;
+    }
+    .meta-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: .8rem;
+    }
+    .meta-card,
+    .conflict-card,
+    .version-card {
+      padding: .9rem 1rem;
+      border-radius: .95rem;
+      border: 1px solid var(--sync-border);
+      background: rgba(255,255,255,.03);
+    }
+    .meta-card span,
+    .conflict-card span,
+    .version-card span {
+      display: block;
+      color: var(--sync-muted);
+      font-size: .8rem;
+      margin-bottom: .3rem;
+    }
+    .pre-box {
+      margin: 0;
+      padding: 1rem;
+      border-radius: .95rem;
+      border: 1px solid var(--sync-border);
+      background: rgba(2, 9, 18, .95);
+      color: #dce9ff;
+      font-family: var(--bs-font-mono, ui-monospace, monospace);
+      font-size: .8rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      overflow: auto;
+      max-height: 320px;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .35rem .72rem;
+      border-radius: 999px;
+      border: 1px solid var(--sync-border);
+      background: rgba(255,255,255,.03);
+      font-size: .82rem;
+      color: var(--sync-muted);
+    }
+    .error-box {
+      display: none;
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(255, 110, 132, .32);
+      background: rgba(255, 62, 92, .08);
+      color: #ffd9df;
+    }
+    .choice-row {
+      display: flex;
+      gap: .55rem;
+      flex-wrap: wrap;
+      margin-top: .75rem;
+    }
+    .choice-row .bt.active {
+      box-shadow: inset 0 0 0 1px rgba(121, 169, 255, .38), 0 0 0 1px rgba(121, 169, 255, .18);
+      background: rgba(121, 169, 255, .12);
+      color: #d9e7ff;
+    }
+    .version-list { display: grid; gap: .8rem; }
+    .section-note { color: var(--sync-muted); font-size: .84rem; }
+    @media (max-width: 1020px) {
+      .meta-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 720px) {
+      .meta-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="site-header site-header-dark">
+      <a class="brand" href="index.html">🔩 BareMetalJsTools</a>
+      <nav>
+        <a href="media-demo.html">Media</a>
+        <a href="sync-demo.html" class="act">Sync</a>
+        <a href="gamepad-demo.html">Gamepad</a>
+        <a href="geo-demo.html">Geo</a>
+      </nav>
+    </header>
+
+    <main class="main-content p4" style="overflow-y:auto;">
+      <div class="ctn">
+        <section class="hero">
+          <div class="bar">
+            <div>
+              <h1 class="mb1">Collaborative Editor Simulation</h1>
+              <p class="lead mb0">Two JSON editors simulate separate tabs. Changes move through a <strong>Pipeline</strong>, propagate with <strong>PubSub</strong>, merge using <strong>Sync</strong>, classify failures with <strong>Errors</strong>, persist versions with <strong>IDB</strong>, and support per-editor <strong>UndoRedo</strong>.</p>
+            </div>
+            <div class="fx gp2 flex-wrap aic">
+              <span class="status-pill" id="storage-pill">IDB: checking…</span>
+              <span class="status-pill" id="sync-pill">Ready to merge</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="error-box mb3" id="error-box"></div>
+
+        <div class="rw g3">
+          <div class="cm6">
+            <div class="cd demo-card">
+              <div class="cd-h bar">
+                <span>Tab A — local draft</span>
+                <div class="fx gp2 flex-wrap">
+                  <button class="bt bt-s bt-os" data-undo="left">Undo</button>
+                  <button class="bt bt-s bt-os" data-redo="left">Redo</button>
+                  <button class="bt bt-s bt-op" id="send-left-btn">Validate → emit</button>
+                </div>
+              </div>
+              <div class="cd-b stack">
+                <textarea class="editor" id="left-editor"></textarea>
+                <div class="section-note" id="left-history-note">No edits yet.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cm6">
+            <div class="cd demo-card">
+              <div class="cd-h bar">
+                <span>Tab B — remote draft</span>
+                <div class="fx gp2 flex-wrap">
+                  <button class="bt bt-s bt-os" data-undo="right">Undo</button>
+                  <button class="bt bt-s bt-os" data-redo="right">Redo</button>
+                  <button class="bt bt-s bt-op" id="send-right-btn">Validate → emit</button>
+                </div>
+              </div>
+              <div class="cd-b stack">
+                <textarea class="editor" id="right-editor"></textarea>
+                <div class="section-note" id="right-history-note">No edits yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rw g3 mt3">
+          <div class="cm8 stack">
+            <div class="cd demo-card">
+              <div class="cd-h bar">
+                <span>Pipeline + diff diagnostics</span>
+                <div class="fx gp2 flex-wrap">
+                  <button class="bt bt-s bt-p" id="merge-btn">Run three-way merge</button>
+                  <button class="bt bt-s bt-ok" id="apply-resolution-btn" disabled>Apply selected resolutions</button>
+                </div>
+              </div>
+              <div class="cd-b stack">
+                <div class="meta-row">
+                  <div class="meta-card"><span>Base version</span><strong id="base-version">0</strong></div>
+                  <div class="meta-card"><span>Tab A patch ops</span><strong id="left-ops">0</strong></div>
+                  <div class="meta-card"><span>Tab B patch ops</span><strong id="right-ops">0</strong></div>
+                  <div class="meta-card"><span>Conflicts</span><strong id="conflict-count">0</strong></div>
+                </div>
+                <div class="rw g3">
+                  <div class="cm6">
+                    <h5 class="mb2">Patch preview</h5>
+                    <pre class="pre-box" id="diff-preview">[]</pre>
+                  </div>
+                  <div class="cm6">
+                    <h5 class="mb2">Pipeline log</h5>
+                    <pre class="pre-box" id="pipeline-log">Pipeline idle.</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cd demo-card">
+              <div class="cd-h">Conflict resolution</div>
+              <div class="cd-b">
+                <p class="section-note">Conflicts appear when both tabs changed the same field from the shared base document. Pick which side wins, then apply the resolved merge.</p>
+                <div class="stack" id="conflict-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cm4 stack">
+            <div class="cd demo-card">
+              <div class="cd-h bar">
+                <span>Persisted versions</span>
+                <button class="bt bt-s bt-os" id="restore-btn">Restore last saved</button>
+              </div>
+              <div class="cd-b">
+                <div class="version-list" id="version-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer site-footer-dark tc">
+      Local collaboration simulation — no network calls, just Sync + PubSub + IndexedDB
+    </footer>
+  </div>
+
+  <script src="../src/BareMetal.Sync.js"></script>
+  <script src="../src/BareMetal.Pipeline.js"></script>
+  <script src="../src/BareMetal.Errors.js"></script>
+  <script src="../src/BareMetal.IDB.js"></script>
+  <script src="../src/BareMetal.UndoRedo.js"></script>
+  <script src="../src/BareMetal.PubSub.js"></script>
+  <script>
+    (function () {
+      var leftEditor = document.getElementById('left-editor');
+      var rightEditor = document.getElementById('right-editor');
+      var errorBox = document.getElementById('error-box');
+      var diffPreview = document.getElementById('diff-preview');
+      var pipelineLog = document.getElementById('pipeline-log');
+      var conflictList = document.getElementById('conflict-list');
+      var applyResolutionBtn = document.getElementById('apply-resolution-btn');
+      var versionList = document.getElementById('version-list');
+      var storagePill = document.getElementById('storage-pill');
+      var syncPill = document.getElementById('sync-pill');
+      var baseVersionNode = document.getElementById('base-version');
+      var leftOpsNode = document.getElementById('left-ops');
+      var rightOpsNode = document.getElementById('right-ops');
+      var conflictCountNode = document.getElementById('conflict-count');
+      var histories = {
+        left: BareMetal.UndoRedo.create(),
+        right: BareMetal.UndoRedo.create()
+      };
+      var notes = {
+        left: document.getElementById('left-history-note'),
+        right: document.getElementById('right-history-note')
+      };
+      var snapshots = { left: null, right: null };
+      var baseDoc = {
+        title: 'Quarterly rollout plan',
+        status: 'draft',
+        owner: 'Ava',
+        notes: 'Coordinate enablement with field engineering.',
+        checklist: ['Prep deck', 'Gather feedback'],
+        meta: { version: 0, lastEmitter: 'seed' }
+      };
+      var versions = [];
+      var store = null;
+      var pendingConflict = null;
+      var resolutions = {};
+      var bus = BareMetal.PubSub.create();
+
+      leftEditor.value = JSON.stringify(BareMetal.Sync.patch(baseDoc, [
+        { op: 'replace', path: ['status'], value: 'in-review' },
+        { op: 'replace', path: ['notes'], value: 'Coordinate enablement with field engineering and partner success.' },
+        { op: 'add', path: ['checklist', 2], value: 'Book review board' }
+      ]), null, 2);
+      rightEditor.value = JSON.stringify(BareMetal.Sync.patch(baseDoc, [
+        { op: 'replace', path: ['status'], value: 'approved' },
+        { op: 'replace', path: ['owner'], value: 'Kai' },
+        { op: 'replace', path: ['notes'], value: 'Coordinate enablement with field engineering and legal sign-off.' }
+      ]), null, 2);
+
+      function clone(value) {
+        return JSON.parse(JSON.stringify(value));
+      }
+
+      function safeParse(text, side) {
+        try {
+          return JSON.parse(text);
+        } catch (error) {
+          throw BareMetal.Errors.create('INVALID_JSON', side + ' editor contains invalid JSON.', {
+            category: 'validation',
+            cause: error,
+            userMessage: 'Fix JSON syntax in the ' + side + ' editor and try again.'
+          });
+        }
+      }
+
+      function setError(err) {
+        if (!err) {
+          errorBox.style.display = 'none';
+          errorBox.innerHTML = '';
+          return;
+        }
+        var info = BareMetal.Errors.classify(err);
+        var safe = BareMetal.Errors.toUserSafe(err);
+        errorBox.style.display = 'block';
+        errorBox.innerHTML = '<strong>' + safe.message + '</strong><br>' +
+          '<span>Category: ' + info.category + ' · Code: ' + safe.code + '</span>';
+      }
+
+      function noteHistory(side) {
+        var history = histories[side];
+        notes[side].textContent = history.canUndo() ? ('Undo: ' + (history.undoName() || 'Previous edit')) : 'No edits yet.';
+      }
+
+      function pushHistory(side, before, after) {
+        histories[side].push({
+          name: 'Edit ' + side + ' document',
+          execute: function () { setEditorText(side, after); },
+          undo: function () { setEditorText(side, before); }
+        });
+        noteHistory(side);
+      }
+
+      function setEditorText(side, text) {
+        if (side === 'left') leftEditor.value = text;
+        else rightEditor.value = text;
+        updateViews();
+      }
+
+      function setEditor(side, value) {
+        setEditorText(side, JSON.stringify(value, null, 2));
+      }
+
+      function bindEditorHistory(side, editor) {
+        editor.addEventListener('focusin', function () {
+          snapshots[side] = editor.value;
+        });
+        editor.addEventListener('focusout', function () {
+          if (snapshots[side] != null && snapshots[side] !== editor.value) {
+            pushHistory(side, snapshots[side], editor.value);
+          }
+          snapshots[side] = null;
+        });
+        editor.addEventListener('keydown', function (event) {
+          var mac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || '');
+          var mod = mac ? event.metaKey : event.ctrlKey;
+          if (!mod || event.altKey) return;
+          if (event.key.toLowerCase() === 'z' && event.shiftKey) {
+            event.preventDefault();
+            histories[side].redo();
+            noteHistory(side);
+            updateViews();
+            return;
+          }
+          if (event.key.toLowerCase() === 'y') {
+            event.preventDefault();
+            histories[side].redo();
+            noteHistory(side);
+            updateViews();
+            return;
+          }
+          if (event.key.toLowerCase() === 'z') {
+            event.preventDefault();
+            histories[side].undo();
+            noteHistory(side);
+            updateViews();
+          }
+        });
+      }
+
+      function currentDocs() {
+        return {
+          left: safeParse(leftEditor.value, 'left'),
+          right: safeParse(rightEditor.value, 'right')
+        };
+      }
+
+      function renderVersions() {
+        versionList.innerHTML = versions.length ? versions.slice().reverse().map(function (entry) {
+          return '<div class="version-card"><span>' + entry.reason + '</span><strong>' + entry.time + '</strong><div class="section-note">Base v' + entry.baseVersion + ' · source ' + entry.source + '</div></div>';
+        }).join('') : '<div class="version-card"><span>No versions yet</span><strong>Start emitting changes</strong></div>';
+      }
+
+      function persist(reason, source) {
+        var docs;
+        try {
+          docs = currentDocs();
+        } catch (err) {
+          setError(err);
+          return;
+        }
+        versions.push({
+          reason: reason,
+          source: source,
+          time: new Date().toLocaleTimeString([], { hour12: false }),
+          baseVersion: baseDoc.meta && baseDoc.meta.version || 0,
+          base: clone(baseDoc),
+          left: clone(docs.left),
+          right: clone(docs.right)
+        });
+        versions = versions.slice(-8);
+        renderVersions();
+        if (store) {
+          store.set('session', {
+            base: baseDoc,
+            left: docs.left,
+            right: docs.right,
+            versions: versions
+          });
+        }
+      }
+
+      function renderConflicts() {
+        if (!pendingConflict || !pendingConflict.merge.conflicts.length) {
+          conflictList.innerHTML = '<div class="conflict-card"><span>No active conflicts</span><strong>Run a merge or emit changes between tabs.</strong></div>';
+          applyResolutionBtn.disabled = true;
+          return;
+        }
+        conflictList.innerHTML = pendingConflict.merge.conflicts.map(function (conflict) {
+          var key = JSON.stringify(conflict.path);
+          return '<div class="conflict-card" data-conflict="' + key.replace(/"/g, '&quot;') + '">' +
+            '<span>Path</span><strong>' + conflict.path.join('.') + '</strong>' +
+            '<div class="pre-box" style="margin-top:.75rem; max-height:none;">' + JSON.stringify({ local: conflict.local, remote: conflict.remote, base: conflict.base }, null, 2) + '</div>' +
+            '<div class="choice-row">' +
+              '<button class="bt bt-s bt-op" data-resolution="local" data-key="' + key.replace(/"/g, '&quot;') + '">Use local</button>' +
+              '<button class="bt bt-s bt-op" data-resolution="remote" data-key="' + key.replace(/"/g, '&quot;') + '">Use remote</button>' +
+              '<button class="bt bt-s bt-op" data-resolution="base" data-key="' + key.replace(/"/g, '&quot;') + '">Use base</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+        Array.prototype.slice.call(conflictList.querySelectorAll('button[data-resolution]')).forEach(function (button) {
+          button.addEventListener('click', function () {
+            var key = button.getAttribute('data-key');
+            resolutions[key] = { use: button.getAttribute('data-resolution') };
+            Array.prototype.slice.call(button.parentNode.querySelectorAll('button')).forEach(function (node) {
+              node.classList.toggle('active', node === button);
+            });
+            applyResolutionBtn.disabled = pendingConflict.merge.conflicts.some(function (conflict) {
+              return !resolutions[JSON.stringify(conflict.path)];
+            });
+          });
+        });
+      }
+
+      function updateViews() {
+        var docs;
+        try {
+          docs = currentDocs();
+          setError(null);
+        } catch (err) {
+          setError(err);
+          return;
+        }
+        var leftPatch = BareMetal.Sync.diff(baseDoc, docs.left);
+        var rightPatch = BareMetal.Sync.diff(baseDoc, docs.right);
+        leftOpsNode.textContent = String(leftPatch.length);
+        rightOpsNode.textContent = String(rightPatch.length);
+        baseVersionNode.textContent = String(baseDoc.meta && baseDoc.meta.version || 0);
+        diffPreview.textContent = JSON.stringify({ fromBaseToLeft: leftPatch, fromBaseToRight: rightPatch }, null, 2);
+      }
+
+      function createPipeline(side) {
+        function parseStage(text) {
+          return safeParse(text, side);
+        }
+        function validateStage(doc) {
+          BareMetal.Errors.assert(doc && typeof doc === 'object' && !Array.isArray(doc), 'INVALID_DOC', 'Document must be an object.');
+          BareMetal.Errors.assert(typeof doc.title === 'string' && doc.title, 'INVALID_DOC', 'Document title is required.');
+          BareMetal.Errors.assert(typeof doc.notes === 'string' && doc.notes, 'INVALID_DOC', 'Document notes are required.');
+          return doc;
+        }
+        function transformStage(doc) {
+          var next = clone(doc);
+          next.meta = next.meta || {};
+          next.meta.version = (baseDoc.meta && baseDoc.meta.version || 0) + 1;
+          next.meta.updatedAt = new Date().toISOString();
+          next.meta.lastEmitter = side;
+          return next;
+        }
+        function emitStage(doc) {
+          bus.emit('sync.' + side, doc, { source: side });
+          return doc;
+        }
+        return BareMetal.Pipeline.create(parseStage, validateStage, transformStage, emitStage);
+      }
+
+      var pipelines = {
+        left: createPipeline('left'),
+        right: createPipeline('right')
+      };
+
+      function logPipeline(lines) {
+        pipelineLog.textContent = lines.join('\n');
+      }
+
+      function mergeInto(targetSide, remoteDoc, sourceSide) {
+        var docs = currentDocs();
+        var localDoc = docs[targetSide];
+        var merge = BareMetal.Sync.merge(localDoc, remoteDoc, baseDoc, 'field-level');
+        if (merge.conflicts.length) {
+          pendingConflict = {
+            targetSide: targetSide,
+            sourceSide: sourceSide,
+            merge: merge,
+            remoteDoc: remoteDoc
+          };
+          resolutions = {};
+          conflictCountNode.textContent = String(merge.conflicts.length);
+          syncPill.textContent = merge.conflicts.length + ' conflict(s) detected';
+          setError(BareMetal.Errors.create('MERGE_CONFLICT', 'Concurrent edits detected.', {
+            category: 'validation',
+            userMessage: 'Pick local, remote, or base values to resolve the merge conflicts.',
+            data: { conflicts: merge.conflicts.length }
+          }));
+          renderConflicts();
+          return;
+        }
+        pendingConflict = null;
+        resolutions = {};
+        conflictCountNode.textContent = '0';
+        syncPill.textContent = 'Merged ' + sourceSide + ' → ' + targetSide;
+        setEditor('left', merge.result);
+        setEditor('right', merge.result);
+        baseDoc = clone(merge.result);
+        baseDoc.meta = baseDoc.meta || {};
+        baseDoc.meta.version = (baseDoc.meta.version || 0);
+        persist('merged without conflicts', sourceSide);
+        renderConflicts();
+      }
+
+      bus.on('sync.left', function (doc) {
+        mergeInto('right', doc, 'left');
+      });
+      bus.on('sync.right', function (doc) {
+        mergeInto('left', doc, 'right');
+      });
+
+      function executePipeline(side) {
+        var editor = side === 'left' ? leftEditor : rightEditor;
+        var lines = ['Executing ' + side + ' pipeline…'];
+        pipelines[side].execute(editor.value, {
+          onStage: function (index, name, input, output) {
+            lines.push('#' + index + ' ' + name + ' → ' + (typeof output === 'string' ? output.slice(0, 40) : 'ok'));
+          }
+        }).then(function () {
+          logPipeline(lines.concat(['Emit complete. Sync event dispatched.']));
+          setError(null);
+          persist('emitted ' + side + ' changes', side);
+          updateViews();
+        }).catch(function (error) {
+          logPipeline(lines.concat(['Pipeline failed: ' + error.message]));
+          setError(error);
+        });
+      }
+
+      document.getElementById('send-left-btn').addEventListener('click', function () {
+        executePipeline('left');
+      });
+      document.getElementById('send-right-btn').addEventListener('click', function () {
+        executePipeline('right');
+      });
+      document.getElementById('merge-btn').addEventListener('click', function () {
+        try {
+          var docs = currentDocs();
+          mergeInto('right', docs.left, 'left');
+        } catch (error) {
+          setError(error);
+        }
+      });
+      applyResolutionBtn.addEventListener('click', function () {
+        if (!pendingConflict) return;
+        var resolved = BareMetal.Sync.resolve(pendingConflict.merge.conflicts, resolutions);
+        setEditor('left', resolved);
+        setEditor('right', resolved);
+        baseDoc = clone(resolved);
+        baseDoc.meta = baseDoc.meta || {};
+        baseDoc.meta.version = (baseDoc.meta.version || 0) + 1;
+        pendingConflict = null;
+        resolutions = {};
+        syncPill.textContent = 'Conflicts resolved';
+        conflictCountNode.textContent = '0';
+        setError(null);
+        renderConflicts();
+        persist('resolved conflicts', 'merge-ui');
+      });
+      document.getElementById('restore-btn').addEventListener('click', function () {
+        var entry = versions[versions.length - 1];
+        if (!entry) return;
+        baseDoc = clone(entry.base);
+        setEditor('left', entry.left);
+        setEditor('right', entry.right);
+        syncPill.textContent = 'Restored last saved version';
+        setError(null);
+        renderConflicts();
+      });
+
+      Array.prototype.slice.call(document.querySelectorAll('[data-undo]')).forEach(function (button) {
+        button.addEventListener('click', function () {
+          var side = button.getAttribute('data-undo');
+          histories[side].undo();
+          noteHistory(side);
+          updateViews();
+        });
+      });
+      Array.prototype.slice.call(document.querySelectorAll('[data-redo]')).forEach(function (button) {
+        button.addEventListener('click', function () {
+          var side = button.getAttribute('data-redo');
+          histories[side].redo();
+          noteHistory(side);
+          updateViews();
+        });
+      });
+
+      bindEditorHistory('left', leftEditor);
+      bindEditorHistory('right', rightEditor);
+      noteHistory('left');
+      noteHistory('right');
+      renderConflicts();
+      renderVersions();
+      updateViews();
+
+      if (BareMetal.IDB.isSupported()) {
+        BareMetal.IDB.kv('baremetal-sync-demo').then(function (db) {
+          store = db;
+          storagePill.textContent = 'IDB: connected';
+          return db.get('session');
+        }).then(function (saved) {
+          if (!saved) return;
+          baseDoc = saved.base || baseDoc;
+          versions = saved.versions || versions;
+          if (saved.left) leftEditor.value = JSON.stringify(saved.left, null, 2);
+          if (saved.right) rightEditor.value = JSON.stringify(saved.right, null, 2);
+          renderVersions();
+          updateViews();
+        }).catch(function () {
+          storagePill.textContent = 'IDB: unavailable';
+        });
+      } else {
+        storagePill.textContent = 'IDB: unsupported';
+      }
+    })();
+  </script>
+</body>
+</html>

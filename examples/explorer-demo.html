@@ -1,0 +1,4028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BareMetalWeb Explorer — PicoWAL Fabric Demo</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07131d;
+      --bg-elev-1: #0d1c28;
+      --bg-elev-2: #142635;
+      --bg-elev-3: #193246;
+      --bg-soft: rgba(20, 38, 53, 0.82);
+      --ink: #edf6ff;
+      --muted: #98b7ca;
+      --muted-2: #6d91a8;
+      --line: rgba(145, 182, 205, 0.16);
+      --line-strong: rgba(255, 255, 255, 0.14);
+      --accent: #ff7f6a;
+      --accent-soft: rgba(255, 127, 106, 0.14);
+      --accent-2: #6ec6ff;
+      --ok: #53d39b;
+      --warn: #f2c94c;
+      --danger: #ff5f7d;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --code: #08111a;
+      --field-gap: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(255, 127, 106, 0.11), transparent 28%),
+        radial-gradient(circle at 100% 0%, rgba(110, 198, 255, 0.11), transparent 32%),
+        linear-gradient(180deg, #061018, #091722 40%, #09141d 100%);
+      color: var(--ink);
+      font-family: Inter, "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden;
+    }
+
+    body {
+      line-height: 1.45;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    code,
+    pre,
+    .mono {
+      font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+    }
+
+    .explorer-shell {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .hero {
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(9, 23, 34, 0.95), rgba(9, 23, 34, 0.86));
+      backdrop-filter: blur(16px);
+      padding: 20px 24px 18px;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.15);
+      position: relative;
+      z-index: 4;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 127, 106, 0.4), rgba(110, 198, 255, 0.4), transparent);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(300px, 1.2fr) minmax(260px, 0.8fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .hero-title {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .hero-title h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2vw, 2.2rem);
+      letter-spacing: -0.03em;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 127, 106, 0.32);
+      background: rgba(255, 127, 106, 0.09);
+      color: #ffd5ce;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+    }
+
+    .hero-copy {
+      margin: 0;
+      max-width: 84ch;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .metric-tile {
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(180deg, rgba(19, 38, 53, 0.9), rgba(13, 28, 40, 0.95));
+      border: 1px solid var(--line);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .metric-label {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-2);
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      display: block;
+      font-size: 1.16rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .metric-sub {
+      display: block;
+      margin-top: 3px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .hero-actions {
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero-status {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(180deg, rgba(22, 43, 60, 0.92), rgba(9, 23, 34, 0.95));
+      padding: 16px 18px;
+      display: grid;
+      gap: 10px;
+      box-shadow: var(--shadow);
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--muted-2);
+      box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.03);
+    }
+
+    .status-dot.ok {
+      background: var(--ok);
+      box-shadow: 0 0 0 5px rgba(83, 211, 155, 0.12);
+    }
+
+    .status-dot.warn {
+      background: var(--warn);
+      box-shadow: 0 0 0 5px rgba(242, 201, 76, 0.12);
+    }
+
+    .status-dot.err {
+      background: var(--danger);
+      box-shadow: 0 0 0 5px rgba(255, 95, 125, 0.12);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 350px minmax(0, 1fr);
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(7, 19, 29, 0.98), rgba(9, 23, 34, 0.95));
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .panel {
+      margin: 18px;
+      margin-bottom: 0;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17, 33, 47, 0.95), rgba(10, 22, 31, 0.98));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .panel-head h2,
+    .panel-head h3,
+    .panel-head h4 {
+      margin: 0;
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+    }
+
+    .panel-body {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel-foot {
+      padding: 14px 16px;
+      border-top: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .connect-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field-group {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 0.74rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-2);
+      font-weight: 700;
+    }
+
+    .field-input,
+    .field-select,
+    .field-textarea {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(4, 13, 20, 0.8);
+      color: var(--ink);
+      padding: 11px 12px;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      font: inherit;
+    }
+
+    .field-input:focus,
+    .field-select:focus,
+    .field-textarea:focus {
+      border-color: rgba(110, 198, 255, 0.56);
+      box-shadow: 0 0 0 4px rgba(110, 198, 255, 0.12);
+      background: rgba(7, 18, 27, 0.95);
+    }
+
+    .field-textarea {
+      min-height: 84px;
+      resize: vertical;
+    }
+
+    .field-hint {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn-soft,
+    .btn-ghost,
+    .btn-accent,
+    .btn-danger {
+      appearance: none;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      padding: 10px 14px;
+      transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .btn-soft:hover,
+    .btn-ghost:hover,
+    .btn-accent:hover,
+    .btn-danger:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-soft {
+      background: rgba(110, 198, 255, 0.12);
+      color: #d9f0ff;
+      border: 1px solid rgba(110, 198, 255, 0.2);
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, var(--accent), #ff997f);
+      color: #190505;
+      box-shadow: 0 12px 26px rgba(255, 127, 106, 0.22);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ff6b8a, #ff4466);
+      color: #fff3f6;
+      box-shadow: 0 12px 26px rgba(255, 95, 125, 0.18);
+    }
+
+    .btn-soft:disabled,
+    .btn-ghost:disabled,
+    .btn-accent:disabled,
+    .btn-danger:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .caps-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .cap-tile {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      display: grid;
+      gap: 6px;
+    }
+
+    .cap-name {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted-2);
+      font-weight: 700;
+    }
+
+    .cap-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .pack-panel {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      margin-bottom: 18px;
+    }
+
+    .pack-scroll {
+      overflow: auto;
+      padding: 0 6px 10px 6px;
+      margin: 0 12px 12px;
+    }
+
+    .pack-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .pack-item {
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(18, 35, 50, 0.92), rgba(12, 24, 35, 0.96));
+      padding: 14px;
+      cursor: pointer;
+      transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+      display: grid;
+      gap: 8px;
+    }
+
+    .pack-item:hover {
+      transform: translateY(-1px);
+      border-color: rgba(110, 198, 255, 0.28);
+      background: linear-gradient(180deg, rgba(22, 42, 61, 0.96), rgba(12, 24, 35, 0.98));
+    }
+
+    .pack-item.active {
+      border-color: rgba(255, 127, 106, 0.4);
+      box-shadow: inset 0 0 0 1px rgba(255, 127, 106, 0.18), 0 18px 36px rgba(0, 0, 0, 0.18);
+      background: linear-gradient(180deg, rgba(52, 29, 27, 0.85), rgba(18, 35, 50, 0.96));
+    }
+
+    .pack-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .pack-name {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 0;
+    }
+
+    .pack-meta {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .perm-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .perm-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+    }
+
+    .perm-chip.allowed {
+      color: var(--ink);
+      border-color: rgba(83, 211, 155, 0.28);
+      background: rgba(83, 211, 155, 0.12);
+    }
+
+    .content {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+    }
+
+    .toolbar {
+      padding: 18px 20px 12px;
+      display: grid;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(8, 18, 26, 0.9), rgba(8, 18, 26, 0.76));
+      backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 3;
+    }
+
+    .toolbar-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-title {
+      display: grid;
+      gap: 4px;
+    }
+
+    .toolbar-title h2 {
+      margin: 0;
+      font-size: 1.22rem;
+      letter-spacing: -0.02em;
+    }
+
+    .toolbar-sub {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .toolbar-controls {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto auto auto auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .workspace-grid {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.92fr);
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .grid-pane,
+    .detail-pane {
+      min-height: 0;
+      overflow: hidden;
+      display: grid;
+    }
+
+    .grid-pane {
+      border-right: 1px solid var(--line);
+      grid-template-rows: 1fr;
+      background: linear-gradient(180deg, rgba(7, 18, 27, 0.98), rgba(7, 18, 27, 0.92));
+    }
+
+    .detail-pane {
+      background: linear-gradient(180deg, rgba(8, 18, 26, 0.98), rgba(10, 22, 31, 0.96));
+      grid-template-rows: minmax(0, 1fr);
+    }
+
+    .scroll-y {
+      min-height: 0;
+      overflow: auto;
+    }
+
+    .card-shell {
+      padding: 18px;
+      display: grid;
+      gap: 18px;
+      min-height: 0;
+    }
+
+    .grid-card,
+    .editor-card,
+    .schema-card,
+    .binary-card {
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17, 33, 47, 0.94), rgba(10, 22, 31, 0.98));
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .grid-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .grid-head h3,
+    .editor-head h3,
+    .schema-head h3,
+    .binary-head h3 {
+      margin: 0;
+      font-size: 0.96rem;
+    }
+
+    .grid-wrap {
+      overflow: auto;
+      max-height: calc(100vh - 270px);
+      position: relative;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-spacing: 0;
+    }
+
+    .data-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(7, 18, 27, 0.98);
+      border-bottom: 1px solid var(--line-strong);
+      padding: 12px 10px;
+      text-align: left;
+      font-size: 0.76rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-2);
+      white-space: nowrap;
+    }
+
+    .data-table tbody td {
+      padding: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      vertical-align: top;
+      color: var(--ink);
+      font-size: 0.9rem;
+    }
+
+    .data-table tbody tr {
+      cursor: pointer;
+      transition: background 0.16s ease;
+    }
+
+    .data-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .data-table tbody tr.active {
+      background: linear-gradient(90deg, rgba(255, 127, 106, 0.1), rgba(110, 198, 255, 0.05));
+      box-shadow: inset 2px 0 0 var(--accent);
+    }
+
+    .sort-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: none;
+      color: inherit;
+      font: inherit;
+      text-transform: inherit;
+      letter-spacing: inherit;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .row-id {
+      font-weight: 700;
+      color: #ffd7cf;
+    }
+
+    .row-type-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(110, 198, 255, 0.12);
+      color: #d8f0ff;
+      font-size: 0.72rem;
+      border: 1px solid rgba(110, 198, 255, 0.18);
+    }
+
+    .hex-preview {
+      display: block;
+      max-width: 240px;
+      color: #a8d0e8;
+      font-size: 0.78rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sentinel {
+      height: 2px;
+      margin: 0 0 8px;
+    }
+
+    .empty-state,
+    .loading-state {
+      padding: 28px 18px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .fabric-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 0 16px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .fabric-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      font-weight: 700;
+    }
+
+    .fabric-tab.active {
+      color: var(--ink);
+      background: linear-gradient(90deg, rgba(255, 127, 106, 0.2), rgba(110, 198, 255, 0.18));
+      border-color: rgba(255, 127, 106, 0.3);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    .editor-card {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      min-height: 540px;
+    }
+
+    .editor-head,
+    .schema-head,
+    .binary-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .editor-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .editor-content {
+      min-height: 0;
+      overflow: auto;
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .data-view {
+      display: grid;
+      gap: 14px;
+    }
+
+    .data-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .kv-card {
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      display: grid;
+      gap: 8px;
+    }
+
+    .kv-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted-2);
+      font-weight: 700;
+    }
+
+    .kv-value {
+      font-size: 0.94rem;
+      color: var(--ink);
+      word-break: break-word;
+    }
+
+    .data-table-lite {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table-lite th,
+    .data-table-lite td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .data-table-lite th {
+      color: var(--muted-2);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      width: 28%;
+    }
+
+    .ui-view {
+      display: grid;
+      gap: 16px;
+    }
+
+    .ui-banner {
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 127, 106, 0.2);
+      background: linear-gradient(180deg, rgba(255, 127, 106, 0.1), rgba(110, 198, 255, 0.05));
+      color: #ffd9d1;
+      display: grid;
+      gap: 6px;
+    }
+
+    .editor-form {
+      display: grid;
+      gap: var(--field-gap);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .form-card {
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+      transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .form-card.dirty {
+      border-color: rgba(255, 127, 106, 0.42);
+      background: rgba(255, 127, 106, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(255, 127, 106, 0.15);
+    }
+
+    .form-card.full {
+      grid-column: 1 / -1;
+    }
+
+    .field-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.74rem;
+      color: var(--muted);
+    }
+
+    .field-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+    }
+
+    .validation-list,
+    .diff-list,
+    .timeline-list {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      display: grid;
+      gap: 6px;
+      font-size: 0.86rem;
+    }
+
+    .execution-view {
+      display: grid;
+      gap: 14px;
+      min-height: 520px;
+    }
+
+    .execution-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .execution-metric {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      display: grid;
+      gap: 4px;
+    }
+
+    .execution-metric span:first-child {
+      color: var(--muted-2);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+    }
+
+    .execution-metric strong {
+      font-size: 1rem;
+      color: var(--ink);
+    }
+
+    .editor-host {
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+      background: #0a121a;
+      min-height: 430px;
+    }
+
+    .code-split {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .code-card {
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .code-card h4 {
+      margin: 0;
+      padding: 12px 14px;
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted-2);
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .code-card pre {
+      margin: 0;
+      padding: 14px;
+      max-height: 260px;
+      overflow: auto;
+      background: rgba(0, 0, 0, 0.2);
+      color: #cde7ff;
+      font-size: 0.79rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .schema-card,
+    .binary-card {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 320px;
+    }
+
+    .schema-body,
+    .binary-body {
+      min-height: 0;
+      overflow: auto;
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .schema-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .schema-stat {
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .schema-stat span {
+      color: var(--muted-2);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .schema-stat strong {
+      font-size: 1rem;
+      color: var(--ink);
+    }
+
+    .schema-table th,
+    .schema-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      text-align: left;
+      font-size: 0.85rem;
+      vertical-align: top;
+    }
+
+    .schema-table th {
+      position: sticky;
+      top: 0;
+      background: rgba(7, 18, 27, 0.96);
+      color: var(--muted-2);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.72rem;
+      z-index: 1;
+    }
+
+    .schema-table-wrap {
+      max-height: 280px;
+      overflow: auto;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+    }
+
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .legend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      display: inline-block;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .hex-card {
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.18);
+      overflow: hidden;
+    }
+
+    .hex-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .hex-dump,
+    .diff-dump {
+      margin: 0;
+      padding: 14px;
+      max-height: 280px;
+      overflow: auto;
+      background: #08111a;
+      color: #dcefff;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .hex-line {
+      display: grid;
+      grid-template-columns: 68px 1fr 1fr;
+      gap: 14px;
+      align-items: start;
+      padding: 2px 0;
+    }
+
+    .hex-offset {
+      color: #80a7bf;
+    }
+
+    .hex-bytes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .hex-byte {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      padding: 2px 4px;
+      border-radius: 6px;
+      color: #eff9ff;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .hex-ascii {
+      color: #9dc2d8;
+      letter-spacing: 0.12em;
+    }
+
+    .diff-byte {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 6px;
+      margin: 2px 5px 2px 0;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .diff-byte.changed {
+      background: rgba(255, 127, 106, 0.14);
+      border-color: rgba(255, 127, 106, 0.26);
+      color: #ffd9d1;
+    }
+
+    .diff-byte.same {
+      background: rgba(83, 211, 155, 0.08);
+      border-color: rgba(83, 211, 155, 0.18);
+      color: #ddfff0;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .mini-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .mini-badge.good {
+      color: #ddfff0;
+      border-color: rgba(83, 211, 155, 0.2);
+      background: rgba(83, 211, 155, 0.08);
+    }
+
+    .mini-badge.warn {
+      color: #fff2c7;
+      border-color: rgba(242, 201, 76, 0.24);
+      background: rgba(242, 201, 76, 0.1);
+    }
+
+    .mini-badge.bad {
+      color: #ffd4dd;
+      border-color: rgba(255, 95, 125, 0.22);
+      background: rgba(255, 95, 125, 0.1);
+    }
+
+    .split-pair {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .pill-title {
+      color: var(--muted-2);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .fabric-note {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .toolbar-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .small-button {
+      appearance: none;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--ink);
+      padding: 8px 11px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      transition: all 0.16s ease;
+    }
+
+    .small-button:hover {
+      border-color: rgba(110, 198, 255, 0.24);
+      background: rgba(110, 198, 255, 0.08);
+    }
+
+    .small-button.active {
+      border-color: rgba(255, 127, 106, 0.28);
+      background: rgba(255, 127, 106, 0.12);
+      color: #ffe0da;
+    }
+
+    .small-button.warn {
+      border-color: rgba(242, 201, 76, 0.2);
+      background: rgba(242, 201, 76, 0.08);
+      color: #fff0c0;
+    }
+
+    .small-button.danger {
+      border-color: rgba(255, 95, 125, 0.22);
+      background: rgba(255, 95, 125, 0.08);
+      color: #ffd8e0;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .nowrap {
+      white-space: nowrap;
+    }
+
+    .mt8 {
+      margin-top: 8px;
+    }
+
+    .mt12 {
+      margin-top: 12px;
+    }
+
+    .mt16 {
+      margin-top: 16px;
+    }
+
+    .mt20 {
+      margin-top: 20px;
+    }
+
+    .two-up {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .three-up {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .placeholder-art {
+      border-radius: 14px;
+      border: 1px dashed rgba(255, 255, 255, 0.16);
+      padding: 18px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--muted);
+    }
+
+    .placeholder-art strong {
+      color: var(--ink);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 1540px) {
+      .workspace {
+        grid-template-columns: 320px minmax(0, 1fr);
+      }
+
+      .workspace-grid {
+        grid-template-columns: minmax(0, 1fr) 400px;
+      }
+
+      .toolbar-controls {
+        grid-template-columns: minmax(220px, 1fr) auto auto;
+      }
+
+      .execution-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .hero-grid,
+      .workspace,
+      .workspace-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        grid-template-rows: auto auto auto;
+        overflow: auto;
+        max-height: 42vh;
+      }
+
+      .grid-pane {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .grid-wrap {
+        max-height: 48vh;
+      }
+    }
+
+    @media (max-width: 900px) {
+      body {
+        overflow: auto;
+      }
+
+      .explorer-shell {
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .hero {
+        position: sticky;
+        top: 0;
+      }
+
+      .hero-metrics,
+      .form-grid,
+      .split-pair,
+      .code-split,
+      .data-summary-grid,
+      .schema-grid,
+      .caps-grid,
+      .toolbar-controls,
+      .three-up,
+      .two-up {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="explorer-shell">
+    <header class="hero">
+      <div class="hero-grid">
+        <div>
+          <div class="hero-title">
+            <h1>🧭 BareMetalWeb Explorer</h1>
+            <span class="hero-badge">Schema = UI = Wire = Execution</span>
+          </div>
+          <p class="hero-copy">
+            A self-describing PicoWAL explorer built with BareMetal modules. One structure, four projections: the schema auto-generates the table,
+            the editor, the binary parser, and a live PicoScript protocol handler.
+          </p>
+          <div class="hero-metrics">
+            <div class="metric-tile">
+              <span class="metric-label">Session</span>
+              <span class="metric-value" m-text="session.activeLabel"></span>
+              <span class="metric-sub" m-text="session.userLabel"></span>
+            </div>
+            <div class="metric-tile">
+              <span class="metric-label">Selected Pack</span>
+              <span class="metric-value" m-text="selection.packLabel"></span>
+              <span class="metric-sub" m-text="selection.cardLabel"></span>
+            </div>
+            <div class="metric-tile">
+              <span class="metric-label">Cards</span>
+              <span class="metric-value" m-text="grid.totalLabel"></span>
+              <span class="metric-sub" m-text="grid.renderedLabel"></span>
+            </div>
+            <div class="metric-tile">
+              <span class="metric-label">Capabilities</span>
+              <span class="metric-value" m-text="capabilities.scoreLabel"></span>
+              <span class="metric-sub" m-text="capabilities.binaryLabel"></span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <div class="hero-status">
+            <div class="status-row">
+              <span class="status-chip">
+                <span class="status-dot" id="status-dot"></span>
+                <span m-text="connection.statusLabel"></span>
+              </span>
+              <span class="status-chip mono" m-text="diagnostics.lastDuration"></span>
+            </div>
+            <div class="status-row">
+              <span class="muted" m-text="connection.message"></span>
+            </div>
+            <div class="status-row">
+              <span class="mini-badge" id="circuit-badge">Circuit: closed</span>
+              <span class="mini-badge" id="rate-badge">Queue: idle</span>
+              <span class="mini-badge" id="session-badge">Fingerprint ready</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Connection Panel</h2>
+            <span class="mini-badge good" m-text="connection.binaryReadyLabel"></span>
+          </div>
+          <div class="panel-body">
+            <form class="connect-form" id="connection-form" m-submit="actions.login">
+              <div class="field-group">
+                <label class="field-label" for="server-url">PicoWAL URL</label>
+                <input id="server-url" class="field-input mono" type="text" m-value="connection.url" placeholder="http://localhost:80">
+                <div class="field-hint">Stored with <strong>BareMetal.Config</strong>, reused across sessions.</div>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="username">Username</label>
+                <input id="username" class="field-input" type="text" m-value="connection.username" placeholder="admin">
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="password">Password</label>
+                <input id="password" class="field-input" type="password" m-value="connection.password" placeholder="••••••••">
+              </div>
+              <div class="button-row">
+                <button class="btn-accent" type="submit">Connect</button>
+                <button class="btn-ghost" type="button" m-click="actions.restore">Resume</button>
+                <button class="btn-soft" type="button" m-click="actions.logout">Logout</button>
+              </div>
+            </form>
+          </div>
+          <div class="panel-foot">
+            <div class="badge-row">
+              <span class="mini-badge" m-text="session.expiryLabel"></span>
+              <span class="mini-badge" m-text="session.activityLabel"></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h3>Capabilities & Diagnostics</h3>
+            <span class="mini-badge" m-text="diagnostics.requestLabel"></span>
+          </div>
+          <div class="panel-body">
+            <div class="caps-grid" id="capability-grid"></div>
+            <div class="kv-card">
+              <span class="kv-label">Operation Timeline</span>
+              <ul class="timeline-list" id="timeline-list"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel pack-panel">
+          <div class="panel-head">
+            <h3>Pack Navigator</h3>
+            <div class="toolbar-group">
+              <button class="small-button" type="button" m-click="actions.refreshPacks">Refresh</button>
+            </div>
+          </div>
+          <div class="pack-scroll">
+            <div class="pack-list" id="pack-list"></div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="content">
+        <div class="toolbar">
+          <div class="toolbar-top">
+            <div class="toolbar-title">
+              <h2 id="toolbar-pack-name">No pack selected</h2>
+              <div class="toolbar-sub" id="toolbar-pack-sub">Connect to a PicoWAL server and choose a pack to begin browsing cards.</div>
+            </div>
+            <div class="toolbar-group">
+              <button class="small-button" type="button" m-click="actions.openCreate">New Card</button>
+              <button class="small-button" type="button" m-click="actions.reloadSelected">Reload Card</button>
+              <button class="small-button danger" type="button" m-click="actions.deleteSelected">Delete Card</button>
+            </div>
+          </div>
+          <div class="toolbar-controls">
+            <input id="grid-filter" class="field-input" type="search" placeholder="Filter rows, fields, hex or schema names…">
+            <button class="small-button" id="toggle-raw" type="button">Hex column</button>
+            <button class="small-button" id="view-data" type="button" data-view="data">Data</button>
+            <button class="small-button" id="view-ui" type="button" data-view="ui">UI</button>
+            <button class="small-button" id="view-execution" type="button" data-view="execution">Execution</button>
+          </div>
+        </div>
+
+        <div class="workspace-grid">
+          <div class="grid-pane">
+            <div class="card-shell scroll-y">
+              <section class="grid-card">
+                <div class="grid-head">
+                  <h3>Card Grid</h3>
+                  <div class="badge-row">
+                    <span class="mini-badge" id="grid-summary-badge">No cards loaded</span>
+                    <span class="mini-badge" id="grid-sort-badge">Sort: id ↑</span>
+                    <span class="mini-badge" id="grid-filter-badge">Filter: none</span>
+                  </div>
+                </div>
+                <div class="grid-wrap" id="grid-wrap">
+                  <table class="data-table">
+                    <thead id="grid-head-row"></thead>
+                    <tbody id="grid-body"></tbody>
+                  </table>
+                  <div id="grid-empty" class="empty-state">
+                    Choose a pack to populate the grid. Columns will be generated directly from the pack schema.<br>
+                    Enable <strong>Hex column</strong> to surface each card as raw wire data beside its decoded fields.
+                  </div>
+                  <div id="grid-sentinel" class="sentinel"></div>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <aside class="detail-pane">
+            <div class="card-shell scroll-y">
+              <section class="editor-card">
+                <div class="editor-head">
+                  <div>
+                    <h3>Card Editor / Fabric Views</h3>
+                    <div class="editor-meta">
+                      <span id="editor-card-meta">No card selected</span>
+                      <span id="editor-dirty-meta">Pristine</span>
+                      <span id="editor-history-meta">Undo/redo idle</span>
+                    </div>
+                  </div>
+                  <div class="toolbar-group">
+                    <button class="small-button" type="button" m-click="actions.undoEditor">Undo</button>
+                    <button class="small-button" type="button" m-click="actions.redoEditor">Redo</button>
+                    <button class="small-button active" type="button" id="save-card-inline">Save</button>
+                  </div>
+                </div>
+                <div class="fabric-tabs" id="fabric-tabs">
+                  <button class="fabric-tab active" type="button" data-view="data">① Data View</button>
+                  <button class="fabric-tab" type="button" data-view="ui">② UI View</button>
+                  <button class="fabric-tab" type="button" data-view="execution">③ Execution View</button>
+                </div>
+                <div class="editor-content" id="fabric-content"></div>
+              </section>
+
+              <section class="schema-card">
+                <div class="schema-head">
+                  <h3>Schema Viewer</h3>
+                  <div class="badge-row">
+                    <span class="mini-badge" id="schema-runtime-badge">Runtime type</span>
+                    <span class="mini-badge" id="schema-timing-badge">Timing —</span>
+                  </div>
+                </div>
+                <div class="schema-body" id="schema-body"></div>
+              </section>
+
+              <section class="binary-card">
+                <div class="binary-head">
+                  <h3>Binary Inspector</h3>
+                  <div class="badge-row">
+                    <span class="mini-badge" id="binary-size-badge">0 bytes</span>
+                    <span class="mini-badge" id="binary-diff-badge">No diff</span>
+                  </div>
+                </div>
+                <div class="binary-body" id="binary-body"></div>
+              </section>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="../src/BareMetal.Bind.js"></script>
+  <script src="../src/BareMetal.Routing.js"></script>
+  <script src="../src/BareMetal.Forms.js"></script>
+  <script src="../src/BareMetal.Schema.js"></script>
+  <script src="../src/BareMetal.Binary.js"></script>
+  <script src="../src/BareMetal.Session.js"></script>
+  <script src="../src/BareMetal.Config.js"></script>
+  <script src="../src/BareMetal.Notify.js"></script>
+  <script src="../src/BareMetal.UndoRedo.js"></script>
+  <script src="../src/BareMetal.Cache.js"></script>
+  <script src="../src/BareMetal.Observe.js"></script>
+  <script src="../src/BareMetal.Diagnostics.js"></script>
+  <script src="../src/BareMetal.Types.js"></script>
+  <script src="../src/BareMetal.PicoScript.js"></script>
+  <script src="../src/BareMetal.PicoScript.Editor.js"></script>
+  <script src="../src/BareMetal.PubSub.js"></script>
+  <script src="../src/BareMetal.Errors.js"></script>
+  <script src="../src/BareMetal.Transport.js"></script>
+  <script src="../src/BareMetal.Capabilities.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var BM = window.BareMetal || {};
+
+      var T = {
+        UINT8: 0x01,
+        UINT16: 0x02,
+        UINT32: 0x03,
+        INT8: 0x04,
+        INT16: 0x05,
+        INT32: 0x06,
+        BOOL: 0x07,
+        ASCII: 0x08,
+        UTF8: 0x09,
+        DATE: 0x0A,
+        TIME: 0x0B,
+        DATETIME: 0x0C,
+        IPV4: 0x0D,
+        MAC: 0x0E,
+        ENUM: 0x0F,
+        ARRAY_U16: 0x10,
+        BLOB: 0x11
+      };
+
+      var CARD_MAGIC = 0xCA7D;
+
+      var TYPE_NAMES = {};
+      TYPE_NAMES[T.UINT8] = 'uint8';
+      TYPE_NAMES[T.UINT16] = 'uint16';
+      TYPE_NAMES[T.UINT32] = 'uint32';
+      TYPE_NAMES[T.INT8] = 'int8';
+      TYPE_NAMES[T.INT16] = 'int16';
+      TYPE_NAMES[T.INT32] = 'int32';
+      TYPE_NAMES[T.BOOL] = 'bool';
+      TYPE_NAMES[T.ASCII] = 'ascii';
+      TYPE_NAMES[T.UTF8] = 'utf8';
+      TYPE_NAMES[T.DATE] = 'date';
+      TYPE_NAMES[T.TIME] = 'time';
+      TYPE_NAMES[T.DATETIME] = 'datetime';
+      TYPE_NAMES[T.IPV4] = 'ipv4';
+      TYPE_NAMES[T.MAC] = 'mac';
+      TYPE_NAMES[T.ENUM] = 'enum';
+      TYPE_NAMES[T.ARRAY_U16] = 'array_u16';
+      TYPE_NAMES[T.BLOB] = 'blob';
+
+      function own(obj, key) {
+        return Object.prototype.hasOwnProperty.call(obj, key);
+      }
+
+      function clone(value) {
+        if (value === undefined) return undefined;
+        return JSON.parse(JSON.stringify(value));
+      }
+
+      function isObject(value) {
+        return !!value && typeof value === 'object' && !Array.isArray(value);
+      }
+
+      function deepEqual(a, b) {
+        return JSON.stringify(a) === JSON.stringify(b);
+      }
+
+      function textEncode(value) {
+        return new TextEncoder().encode(String(value == null ? '' : value));
+      }
+
+      function textDecode(bytes) {
+        return new TextDecoder('utf-8').decode(bytes);
+      }
+
+      function asciiDecode(bytes) {
+        var chars = [];
+        var i;
+        for (i = 0; i < bytes.length; i++) chars.push(String.fromCharCode(bytes[i]));
+        return chars.join('');
+      }
+
+      function decodeValue(type, dv, off, len) {
+        switch (type) {
+          case T.UINT8:
+            return dv.getUint8(off);
+          case T.UINT16:
+            return dv.getUint16(off, true);
+          case T.UINT32:
+            return dv.getUint32(off, true);
+          case T.INT8:
+            return dv.getInt8(off);
+          case T.INT16:
+            return dv.getInt16(off, true);
+          case T.INT32:
+            return dv.getInt32(off, true);
+          case T.BOOL:
+            return dv.getUint8(off) !== 0;
+          case T.ASCII:
+          case T.UTF8: {
+            var plen = dv.getUint8(off);
+            var bytes = new Uint8Array(dv.buffer, dv.byteOffset + off + 1, plen);
+            return type === T.ASCII ? asciiDecode(bytes) : textDecode(bytes);
+          }
+          case T.DATE:
+            return {
+              y: dv.getUint16(off, true),
+              m: dv.getUint8(off + 2),
+              d: dv.getUint8(off + 3)
+            };
+          case T.TIME:
+            return {
+              h: dv.getUint8(off),
+              m: dv.getUint8(off + 1),
+              s: dv.getUint8(off + 2)
+            };
+          case T.DATETIME:
+            return {
+              y: dv.getUint16(off, true),
+              mo: dv.getUint8(off + 2),
+              d: dv.getUint8(off + 3),
+              h: dv.getUint8(off + 4),
+              mi: dv.getUint8(off + 5),
+              s: dv.getUint8(off + 6)
+            };
+          case T.IPV4:
+            return [
+              dv.getUint8(off),
+              dv.getUint8(off + 1),
+              dv.getUint8(off + 2),
+              dv.getUint8(off + 3)
+            ].join('.');
+          case T.MAC:
+            return Array.from(new Uint8Array(dv.buffer, dv.byteOffset + off, 6)).map(function (b) {
+              return b.toString(16).padStart(2, '0');
+            }).join(':');
+          case T.ENUM:
+            return dv.getUint8(off);
+          case T.ARRAY_U16: {
+            var arrayLen = dv.getUint8(off);
+            var arr = [];
+            var i;
+            for (i = 0; i < arrayLen; i += 2) arr.push(dv.getUint16(off + 1 + i, true));
+            return arr;
+          }
+          case T.BLOB: {
+            var blobLen = dv.getUint8(off);
+            return Array.from(new Uint8Array(dv.buffer, dv.byteOffset + off + 1, blobLen));
+          }
+          default:
+            return Array.from(new Uint8Array(dv.buffer, dv.byteOffset + off, len));
+        }
+      }
+
+      function encodeValue(type, val) {
+        var buf;
+        var dv;
+        var i;
+        switch (type) {
+          case T.UINT8:
+            return [Number(val || 0) & 0xFF];
+          case T.UINT16:
+            buf = new ArrayBuffer(2);
+            new DataView(buf).setUint16(0, Number(val || 0), true);
+            return Array.from(new Uint8Array(buf));
+          case T.UINT32:
+            buf = new ArrayBuffer(4);
+            new DataView(buf).setUint32(0, Number(val || 0), true);
+            return Array.from(new Uint8Array(buf));
+          case T.INT8:
+            return [(Number(val || 0) < 0 ? Number(val || 0) + 256 : Number(val || 0)) & 0xFF];
+          case T.INT16:
+            buf = new ArrayBuffer(2);
+            new DataView(buf).setInt16(0, Number(val || 0), true);
+            return Array.from(new Uint8Array(buf));
+          case T.INT32:
+            buf = new ArrayBuffer(4);
+            new DataView(buf).setInt32(0, Number(val || 0), true);
+            return Array.from(new Uint8Array(buf));
+          case T.BOOL:
+            return [val ? 1 : 0];
+          case T.ASCII:
+          case T.UTF8: {
+            var bytes = Array.from(textEncode(val || ''));
+            return [bytes.length].concat(bytes);
+          }
+          case T.DATE:
+            buf = new ArrayBuffer(4);
+            dv = new DataView(buf);
+            dv.setUint16(0, Number(val && val.y || 0), true);
+            dv.setUint8(2, Number(val && val.m || 0));
+            dv.setUint8(3, Number(val && val.d || 0));
+            return Array.from(new Uint8Array(buf));
+          case T.TIME:
+            return [Number(val && val.h || 0), Number(val && val.m || 0), Number(val && val.s || 0)];
+          case T.DATETIME:
+            buf = new ArrayBuffer(7);
+            dv = new DataView(buf);
+            dv.setUint16(0, Number(val && val.y || 0), true);
+            dv.setUint8(2, Number(val && (val.mo != null ? val.mo : val.m) || 0));
+            dv.setUint8(3, Number(val && val.d || 0));
+            dv.setUint8(4, Number(val && val.h || 0));
+            dv.setUint8(5, Number(val && (val.mi != null ? val.mi : val.m) || 0));
+            dv.setUint8(6, Number(val && val.s || 0));
+            return Array.from(new Uint8Array(buf));
+          case T.IPV4:
+            return String(val || '0.0.0.0').split('.').map(function (n) { return Number(n) || 0; });
+          case T.MAC:
+            return String(val || '00:00:00:00:00:00').split(':').map(function (n) { return parseInt(n, 16) || 0; });
+          case T.ENUM:
+            return [Number(val || 0) & 0xFF];
+          case T.ARRAY_U16: {
+            var list = Array.isArray(val) ? val : [];
+            var out = [list.length * 2];
+            for (i = 0; i < list.length; i++) {
+              out.push(Number(list[i] || 0) & 0xFF, (Number(list[i] || 0) >> 8) & 0xFF);
+            }
+            return out;
+          }
+          case T.BLOB: {
+            var blob = Array.isArray(val) ? val : [];
+            return [blob.length].concat(blob.map(function (b) { return Number(b || 0) & 0xFF; }));
+          }
+          default:
+            return Array.isArray(val) ? val : [Number(val || 0) & 0xFF];
+        }
+      }
+
+      function parseCard(ab) {
+        var dv = new DataView(ab);
+        var magic;
+        var version;
+        var fields = {};
+        var off = 4;
+        if (ab.byteLength < 4) return null;
+        magic = dv.getUint16(0, true);
+        if (magic !== CARD_MAGIC) return null;
+        version = dv.getUint16(2, true);
+        while (off + 1 < ab.byteLength) {
+          var ordByte = dv.getUint8(off);
+          var len = dv.getUint8(off + 1);
+          var ord = ordByte & 0x1F;
+          var flags = (ordByte >> 5) & 0x07;
+          if (ordByte === 0 && len === 0 && off > 4) break;
+          if (off + 2 + len > ab.byteLength) break;
+          fields[ord] = {
+            flags: flags,
+            data: new DataView(ab, off + 2, len),
+            offset: off,
+            length: len,
+            ordByte: ordByte
+          };
+          off += 2 + len;
+        }
+        return {
+          magic: magic,
+          version: version,
+          fields: fields
+        };
+      }
+
+      function buildDelta(version, fieldArray) {
+        var buf = new Uint8Array(2048);
+        var off = 4;
+        buf[0] = 0x7D;
+        buf[1] = 0xCA;
+        buf[2] = version & 0xFF;
+        buf[3] = (version >> 8) & 0xFF;
+        (fieldArray || []).slice().sort(function (a, b) { return a.ord - b.ord; }).forEach(function (field) {
+          var data = field.data instanceof Uint8Array ? field.data : new Uint8Array(field.data || []);
+          buf[off] = (field.flags ? ((field.flags & 0x07) << 5) : 0) | (field.ord & 0x1F);
+          buf[off + 1] = data.length;
+          buf.set(data, off + 2);
+          off += 2 + data.length;
+        });
+        return buf.slice(0, off).buffer;
+      }
+
+      function buildCard(version, fieldArray) {
+        var buf = new Uint8Array(2048);
+        var off = 4;
+        buf[0] = 0x7D;
+        buf[1] = 0xCA;
+        buf[2] = version & 0xFF;
+        buf[3] = (version >> 8) & 0xFF;
+        (fieldArray || []).slice().sort(function (a, b) { return a.ord - b.ord; }).forEach(function (field) {
+          var data = field.data instanceof Uint8Array ? field.data : new Uint8Array(field.data || []);
+          buf[off] = (field.flags ? ((field.flags & 0x07) << 5) : 0) | (field.ord & 0x1F);
+          buf[off + 1] = data.length;
+          buf.set(data, off + 2);
+          off += 2 + data.length;
+        });
+        return buf.slice(0, Math.max(off, 4)).buffer;
+      }
+
+      function parseFieldDefs(data, count) {
+        var defs = [];
+        var i;
+        for (i = 0; i < count; i++) {
+          defs.push({
+            ord: data.getUint8(i * 3) & 0x1F,
+            flags: (data.getUint8(i * 3) >> 5) & 0x07,
+            type: data.getUint8(i * 3 + 1),
+            maxlen: data.getUint8(i * 3 + 2)
+          });
+        }
+        return defs;
+      }
+
+      function parseFieldNames(dv) {
+        var bytes = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength);
+        return asciiDecode(bytes).split('\0').filter(Boolean);
+      }
+
+      function inputType(fieldType) {
+        switch (fieldType) {
+          case T.BOOL:
+            return 'checkbox';
+          case T.ASCII:
+          case T.UTF8:
+          case T.IPV4:
+          case T.MAC:
+            return 'text';
+          case T.UINT8:
+          case T.UINT16:
+          case T.UINT32:
+          case T.INT8:
+          case T.INT16:
+          case T.INT32:
+          case T.ENUM:
+            return 'number';
+          case T.DATE:
+            return 'date';
+          case T.TIME:
+            return 'time';
+          case T.DATETIME:
+            return 'datetime-local';
+          case T.ARRAY_U16:
+            return 'text';
+          case T.BLOB:
+            return 'textarea';
+          default:
+            return 'text';
+        }
+      }
+
+      function formatForInput(type, val) {
+        if (val == null) return type === T.BOOL ? false : '';
+        switch (type) {
+          case T.BOOL:
+            return !!val;
+          case T.DATE:
+            return val.y + '-' + String(val.m).padStart(2, '0') + '-' + String(val.d).padStart(2, '0');
+          case T.TIME:
+            return String(val.h).padStart(2, '0') + ':' + String(val.m).padStart(2, '0') + ':' + String(val.s).padStart(2, '0');
+          case T.DATETIME:
+            return val.y + '-' + String(val.mo).padStart(2, '0') + '-' + String(val.d).padStart(2, '0') + 'T' + String(val.h).padStart(2, '0') + ':' + String(val.mi).padStart(2, '0');
+          case T.ARRAY_U16:
+            return val.map(function (v) { return v === 0xFFFF ? 'ALL' : v; }).join(', ');
+          case T.BLOB:
+            return Array.isArray(val) ? val.map(function (b) { return Number(b).toString(16).padStart(2, '0'); }).join(' ') : '';
+          default:
+            return String(val);
+        }
+      }
+
+      function parseFromInput(type, value) {
+        var str = value;
+        if (type === T.BOOL) return !!value;
+        if (type === T.ASCII || type === T.UTF8 || type === T.IPV4 || type === T.MAC) return String(str == null ? '' : str);
+        if (type === T.UINT8 || type === T.UINT16 || type === T.UINT32 || type === T.ENUM) return parseInt(str, 10) || 0;
+        if (type === T.INT8 || type === T.INT16 || type === T.INT32) return parseInt(str, 10) || 0;
+        if (type === T.DATE) {
+          var d = String(str || '').split('-');
+          return { y: Number(d[0] || 0), m: Number(d[1] || 0), d: Number(d[2] || 0) };
+        }
+        if (type === T.TIME) {
+          var t = String(str || '').split(':');
+          return { h: Number(t[0] || 0), m: Number(t[1] || 0), s: Number(t[2] || 0) };
+        }
+        if (type === T.DATETIME) {
+          var parts = String(str || '').split('T');
+          var dd = (parts[0] || '').split('-');
+          var tt = (parts[1] || '').split(':');
+          return {
+            y: Number(dd[0] || 0),
+            mo: Number(dd[1] || 0),
+            d: Number(dd[2] || 0),
+            h: Number(tt[0] || 0),
+            mi: Number(tt[1] || 0),
+            s: Number(tt[2] || 0)
+          };
+        }
+        if (type === T.ARRAY_U16) {
+          return String(str || '').split(',').map(function (token) {
+            token = token.trim();
+            return token.toUpperCase() === 'ALL' ? 0xFFFF : parseInt(token, 10);
+          }).filter(function (n) {
+            return !isNaN(n);
+          });
+        }
+        if (type === T.BLOB) {
+          return String(str || '').replace(/[^0-9a-fA-F]/g, ' ').trim().split(/\s+/).filter(Boolean).map(function (hex) {
+            return parseInt(hex, 16) || 0;
+          });
+        }
+        return str;
+      }
+
+      function typeLabel(type) {
+        return TYPE_NAMES[type] || 'unknown';
+      }
+
+      function toHex(u8) {
+        return Array.from(u8 || []).map(function (b) { return Number(b).toString(16).padStart(2, '0'); }).join(' ');
+      }
+
+      function bytesToAscii(u8) {
+        return Array.from(u8 || []).map(function (b) {
+          return b >= 32 && b <= 126 ? String.fromCharCode(b) : '.';
+        }).join('');
+      }
+
+      function htmlEscape(value) {
+        return String(value == null ? '' : value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function ordinalColor(ordinal) {
+        return 'hsla(' + ((ordinal * 47) % 360) + ', 78%, 66%, 0.28)';
+      }
+
+      function fieldColor(ordinal) {
+        return 'hsl(' + ((ordinal * 47) % 360) + ', 76%, 64%)';
+      }
+
+      function formatValueForDisplay(type, value) {
+        if (value == null) return '<span class="muted">∅</span>';
+        if (type === T.BLOB) return '<span class="mono">' + htmlEscape(toHex(value)) + '</span>';
+        if (type === T.ARRAY_U16) return '<span class="mono">[' + htmlEscape(value.join(', ')) + ']</span>';
+        if (type === T.DATE) return htmlEscape(formatForInput(type, value));
+        if (type === T.TIME) return htmlEscape(formatForInput(type, value));
+        if (type === T.DATETIME) return htmlEscape(formatForInput(type, value));
+        if (typeof value === 'object') return '<span class="mono">' + htmlEscape(JSON.stringify(value)) + '</span>';
+        return htmlEscape(String(value));
+      }
+
+      function formatBytes(count) {
+        count = Number(count || 0);
+        if (count < 1024) return count + ' B';
+        if (count < 1024 * 1024) return (count / 1024).toFixed(1) + ' KB';
+        return (count / (1024 * 1024)).toFixed(2) + ' MB';
+      }
+
+      function formatDuration(ms) {
+        ms = Number(ms || 0);
+        if (ms < 1000) return ms.toFixed(1) + ' ms';
+        return (ms / 1000).toFixed(2) + ' s';
+      }
+
+      function node(tag, className, html) {
+        var el = document.createElement(tag);
+        if (className) el.className = className;
+        if (html != null) el.innerHTML = html;
+        return el;
+      }
+
+      function clearNode(el) {
+        while (el && el.firstChild) el.removeChild(el.firstChild);
+      }
+
+      function arrayBufferToUint8(ab) {
+        return ab instanceof Uint8Array ? ab : new Uint8Array(ab || new ArrayBuffer(0));
+      }
+
+      function uint8ToArrayBuffer(u8) {
+        return u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength);
+      }
+
+      function createPackedLoginBody(username, password) {
+        var body = new Uint8Array(64);
+        var i;
+        username = String(username || '');
+        password = String(password || '');
+        body[0] = Math.min(username.length, 31);
+        for (i = 0; i < username.length && i < 31; i++) body[1 + i] = username.charCodeAt(i);
+        body[32] = Math.min(password.length, 31);
+        for (i = 0; i < password.length && i < 31; i++) body[33 + i] = password.charCodeAt(i);
+        return body.buffer;
+      }
+
+      function schemaFieldName(schema, index, def) {
+        return schema.fieldNames[index] || ('field_' + def.ord);
+      }
+
+      function decodeCardIntoRow(schema, cardId, rawBytes, source) {
+        var rawBuffer = uint8ToArrayBuffer(arrayBufferToUint8(rawBytes));
+        var parsed = parseCard(rawBuffer);
+        var values = {};
+        var cells = [];
+        var i;
+        if (!parsed) return null;
+        for (i = 0; i < schema.fieldDefs.length; i++) {
+          var def = schema.fieldDefs[i];
+          var name = schemaFieldName(schema, i, def);
+          var entry = parsed.fields[def.ord];
+          var rawValue = entry ? decodeValue(def.type, entry.data, 0, entry.data.byteLength) : null;
+          values[name] = rawValue;
+          cells.push({
+            ord: def.ord,
+            name: name,
+            type: def.type,
+            typeName: typeLabel(def.type),
+            maxlen: def.maxlen,
+            flags: def.flags,
+            value: rawValue,
+            rawLength: entry ? entry.data.byteLength : 0,
+            inputType: inputType(def.type)
+          });
+        }
+        return {
+          id: cardId,
+          version: parsed.version,
+          rawBytes: arrayBufferToUint8(rawBytes),
+          values: values,
+          cells: cells,
+          source: source || 'unknown',
+          byteLength: arrayBufferToUint8(rawBytes).byteLength
+        };
+      }
+
+      function buildSchemaDefinition(meta) {
+        var shape = {};
+        meta.fieldDefs.forEach(function (def, index) {
+          var name = schemaFieldName(meta, index, def);
+          var schemaNode;
+          switch (def.type) {
+            case T.UINT8:
+              schemaNode = BM.Schema.number({ min: 0, max: 255, wire: 'uint8' });
+              break;
+            case T.UINT16:
+              schemaNode = BM.Schema.number({ min: 0, max: 65535, wire: 'uint16' });
+              break;
+            case T.UINT32:
+              schemaNode = BM.Schema.number({ min: 0, wire: 'uint32' });
+              break;
+            case T.INT8:
+              schemaNode = BM.Schema.number({ min: -128, max: 127, wire: 'int8' });
+              break;
+            case T.INT16:
+              schemaNode = BM.Schema.number({ min: -32768, max: 32767, wire: 'int16' });
+              break;
+            case T.INT32:
+              schemaNode = BM.Schema.number({ wire: 'int32' });
+              break;
+            case T.BOOL:
+              schemaNode = BM.Schema.boolean();
+              break;
+            case T.ASCII:
+              schemaNode = BM.Schema.string({ max: def.maxlen, wireType: 'String' });
+              break;
+            case T.UTF8:
+              schemaNode = BM.Schema.string({ max: def.maxlen, wireType: 'String' });
+              break;
+            case T.DATE:
+              schemaNode = BM.Schema.object({
+                y: BM.Schema.number({ wire: 'uint16' }),
+                m: BM.Schema.number({ wire: 'uint8' }),
+                d: BM.Schema.number({ wire: 'uint8' })
+              }, { wireType: 'DateOnly' });
+              break;
+            case T.TIME:
+              schemaNode = BM.Schema.object({
+                h: BM.Schema.number({ wire: 'uint8' }),
+                m: BM.Schema.number({ wire: 'uint8' }),
+                s: BM.Schema.number({ wire: 'uint8' })
+              }, { wireType: 'TimeOnly' });
+              break;
+            case T.DATETIME:
+              schemaNode = BM.Schema.object({
+                y: BM.Schema.number({ wire: 'uint16' }),
+                mo: BM.Schema.number({ wire: 'uint8' }),
+                d: BM.Schema.number({ wire: 'uint8' }),
+                h: BM.Schema.number({ wire: 'uint8' }),
+                mi: BM.Schema.number({ wire: 'uint8' }),
+                s: BM.Schema.number({ wire: 'uint8' })
+              }, { wireType: 'DateTimeOffset' });
+              break;
+            case T.IPV4:
+              schemaNode = BM.Schema.string({ wireType: 'String' });
+              break;
+            case T.MAC:
+              schemaNode = BM.Schema.string({ wireType: 'String' });
+              break;
+            case T.ENUM:
+              schemaNode = BM.Schema.number({ wireType: 'Enum', enumUnderlying: 'Byte' });
+              break;
+            case T.ARRAY_U16:
+              schemaNode = BM.Schema.array(BM.Schema.number({ wire: 'uint16' }), { wireType: 'String' });
+              break;
+            case T.BLOB:
+              schemaNode = BM.Schema.array(BM.Schema.number({ wire: 'uint8' }), { wireType: 'String' });
+              break;
+            default:
+              schemaNode = BM.Schema.string();
+              break;
+          }
+          schemaNode.ordinal = def.ord;
+          shape[name] = schemaNode;
+        });
+        return BM.Schema.object(shape, { version: 1 });
+      }
+
+      function buildFormRules(meta) {
+        var rules = {};
+        meta.fieldDefs.forEach(function (def, index) {
+          var name = schemaFieldName(meta, index, def);
+          var rule = { label: name };
+          if (def.type === T.UINT8 || def.type === T.UINT16 || def.type === T.UINT32 || def.type === T.INT8 || def.type === T.INT16 || def.type === T.INT32 || def.type === T.ENUM) rule.type = 'number';
+          if (def.type === T.ASCII || def.type === T.UTF8) rule.maxLength = def.maxlen || undefined;
+          rules[name] = rule;
+        });
+        return rules;
+      }
+
+      function flattenFieldArray(meta, valuesMap) {
+        var fields = [];
+        meta.fieldDefs.forEach(function (def, index) {
+          var name = schemaFieldName(meta, index, def);
+          var value = valuesMap[name];
+          if (value == null || value === '') {
+            if (def.type === T.BOOL && value === false) fields.push({ ord: def.ord, flags: def.flags, data: new Uint8Array(encodeValue(def.type, value)) });
+            return;
+          }
+          fields.push({
+            ord: def.ord,
+            flags: def.flags,
+            data: new Uint8Array(encodeValue(def.type, value))
+          });
+        });
+        return fields;
+      }
+
+      function analyzeBinary(rawBytes, schema) {
+        var bytes = arrayBufferToUint8(rawBytes);
+        var reader = new BM.Binary.SpanReader(bytes);
+        var sections = [];
+        var magic;
+        var version;
+        reader.ensure(4);
+        magic = reader.readUInt16();
+        version = reader.readUInt16();
+        sections.push({
+          start: 0,
+          end: 1,
+          label: 'magic 0x' + magic.toString(16).toUpperCase(),
+          color: 'rgba(255, 127, 106, 0.20)',
+          textColor: '#ffd5ce'
+        });
+        sections.push({
+          start: 2,
+          end: 3,
+          label: 'version ' + version,
+          color: 'rgba(110, 198, 255, 0.20)',
+          textColor: '#d7f1ff'
+        });
+        while (reader.off + 1 < bytes.byteLength) {
+          var fieldStart = reader.off;
+          var tag = reader.readByte();
+          var len = reader.readByte();
+          if (tag === 0 && len === 0 && fieldStart > 4) break;
+          if (reader.off + len > bytes.byteLength) break;
+          var ord = tag & 0x1F;
+          var def = schema && schema.fieldByOrd ? schema.fieldByOrd[ord] : null;
+          var label = def ? def.name + ' (' + def.typeName + ')' : 'ord ' + ord;
+          sections.push({
+            start: fieldStart,
+            end: fieldStart + 1,
+            label: label + ' tag',
+            color: ordinalColor(ord),
+            textColor: fieldColor(ord)
+          });
+          sections.push({
+            start: fieldStart + 2,
+            end: fieldStart + 1 + len,
+            label: label + ' data',
+            color: ordinalColor(ord),
+            textColor: fieldColor(ord)
+          });
+          reader.skip(len);
+        }
+        return {
+          magic: magic,
+          version: version,
+          sections: sections
+        };
+      }
+
+      function buildHexDump(rawBytes, schema) {
+        var bytes = arrayBufferToUint8(rawBytes);
+        var analysis = analyzeBinary(bytes, schema);
+        var sections = analysis.sections;
+        var lineSize = 16;
+        var html = [];
+        var offset;
+        function sectionAt(idx) {
+          var i;
+          for (i = 0; i < sections.length; i++) {
+            if (idx >= sections[i].start && idx <= sections[i].end) return sections[i];
+          }
+          return null;
+        }
+        for (offset = 0; offset < bytes.length; offset += lineSize) {
+          var lineBytes = [];
+          var ascii = [];
+          var i;
+          for (i = 0; i < lineSize && offset + i < bytes.length; i++) {
+            var b = bytes[offset + i];
+            var section = sectionAt(offset + i);
+            var style = section ? ' style="background:' + section.color + ';border-color:' + section.textColor + ';color:' + section.textColor + '"' : '';
+            var title = section ? ' title="' + htmlEscape(section.label) + ' @ 0x' + (offset + i).toString(16).toUpperCase() + '"' : '';
+            lineBytes.push('<span class="hex-byte"' + style + title + '>' + b.toString(16).padStart(2, '0') + '</span>');
+            ascii.push(b >= 32 && b <= 126 ? htmlEscape(String.fromCharCode(b)) : '.');
+          }
+          html.push(
+            '<div class="hex-line">' +
+              '<span class="hex-offset mono">0x' + offset.toString(16).padStart(4, '0') + '</span>' +
+              '<span class="hex-bytes">' + lineBytes.join('') + '</span>' +
+              '<span class="hex-ascii mono">' + ascii.join('') + '</span>' +
+            '</div>'
+          );
+        }
+        return {
+          html: html.join(''),
+          analysis: analysis
+        };
+      }
+
+      function buildHexDiff(beforeBytes, afterBytes) {
+        var a = arrayBufferToUint8(beforeBytes || new Uint8Array(0));
+        var b = arrayBufferToUint8(afterBytes || new Uint8Array(0));
+        var length = Math.max(a.length, b.length);
+        var line = [];
+        var changed = 0;
+        var i;
+        for (i = 0; i < length; i++) {
+          var av = i < a.length ? a[i] : null;
+          var bv = i < b.length ? b[i] : null;
+          var same = av === bv;
+          if (!same) changed++;
+          line.push(
+            '<span class="diff-byte ' + (same ? 'same' : 'changed') + '" title="0x' + i.toString(16).toUpperCase() + '">' +
+            '<span>' + (av == null ? '∅' : av.toString(16).padStart(2, '0')) + '</span>' +
+            '<span>→</span>' +
+            '<span>' + (bv == null ? '∅' : bv.toString(16).padStart(2, '0')) + '</span>' +
+            '</span>'
+          );
+        }
+        return {
+          html: line.join(''),
+          changed: changed,
+          before: a.length,
+          after: b.length
+        };
+      }
+
+      function generatePicoScript(schema) {
+        if (!schema) {
+          return [
+            'REM No schema selected yet',
+            'ON DATA:',
+            '  EMIT_STR("Select a pack first")',
+            'END ON'
+          ].join('\n');
+        }
+
+        var lines = [];
+        lines.push('REM === BareMetalWeb Explorer / PicoWAL Schema Handler ===');
+        lines.push('REM Pack ' + schema.pack + ': ' + schema.packName);
+        lines.push('REM Generated directly from field_defs and field_names');
+        lines.push('');
+        lines.push('ON CONNECT:');
+        lines.push('  LET last_magic = 0');
+        lines.push('  LET last_version = 0');
+        lines.push('  LET last_cursor = 4');
+        lines.push('END ON');
+        lines.push('');
+        lines.push('ON DATA:');
+        lines.push('  LET cursor = 4');
+        lines.push('  LET last_magic = PEEK_U16(DATA$, 0)');
+        lines.push('  LET last_version = PEEK_U16(DATA$, 2)');
+        lines.push('');
+        lines.push('  IF last_magic = ' + CARD_MAGIC + ' THEN');
+        lines.push('    LET card_ok = 1');
+        lines.push('  ELSE');
+        lines.push('    LET card_ok = 0');
+        lines.push('    EMIT_STR("bad magic")');
+        lines.push('  END IF');
+        lines.push('');
+        lines.push('  WHILE cursor + 1 < BUF_LEN(DATA$)');
+        lines.push('    LET field_tag = PEEK(DATA$, cursor)');
+        lines.push('    LET field_len = PEEK(DATA$, cursor + 1)');
+        lines.push('    LET field_ord = field_tag');
+        lines.push('    LET field_data = cursor + 2');
+        schema.fieldDefs.forEach(function (def, index) {
+          var name = schemaFieldName(schema, index, def).replace(/[^A-Za-z0-9_]/g, '_');
+          lines.push('');
+          lines.push('    IF field_ord = ' + def.ord + ' THEN');
+          lines.push('      REM ' + name + ' :: ' + typeLabel(def.type) + ' :: max ' + def.maxlen);
+          if (def.type === T.UINT8 || def.type === T.INT8 || def.type === T.BOOL || def.type === T.ENUM) {
+            lines.push('      LET ' + name + ' = PEEK(DATA$, field_data)');
+          } else if (def.type === T.UINT16 || def.type === T.INT16) {
+            lines.push('      LET ' + name + ' = PEEK_U16(DATA$, field_data)');
+          } else if (def.type === T.UINT32 || def.type === T.INT32) {
+            lines.push('      LET ' + name + ' = PEEK_U32(DATA$, field_data)');
+          } else if (def.type === T.ASCII || def.type === T.UTF8 || def.type === T.BLOB) {
+            lines.push('      LET ' + name + '_len = PEEK(DATA$, field_data)');
+            lines.push('      LET ' + name + ' = SLICE(DATA$, field_data + 1, ' + name + '_len)');
+          } else if (def.type === T.ARRAY_U16) {
+            lines.push('      LET ' + name + '_bytes = PEEK(DATA$, field_data)');
+          } else if (def.type === T.DATE) {
+            lines.push('      LET ' + name + '_year = PEEK_U16(DATA$, field_data)');
+            lines.push('      LET ' + name + '_month = PEEK(DATA$, field_data + 2)');
+            lines.push('      LET ' + name + '_day = PEEK(DATA$, field_data + 3)');
+          } else if (def.type === T.TIME) {
+            lines.push('      LET ' + name + '_hour = PEEK(DATA$, field_data)');
+            lines.push('      LET ' + name + '_minute = PEEK(DATA$, field_data + 1)');
+            lines.push('      LET ' + name + '_second = PEEK(DATA$, field_data + 2)');
+          } else if (def.type === T.DATETIME) {
+            lines.push('      LET ' + name + '_year = PEEK_U16(DATA$, field_data)');
+            lines.push('      LET ' + name + '_month = PEEK(DATA$, field_data + 2)');
+            lines.push('      LET ' + name + '_day = PEEK(DATA$, field_data + 3)');
+            lines.push('      LET ' + name + '_hour = PEEK(DATA$, field_data + 4)');
+            lines.push('      LET ' + name + '_minute = PEEK(DATA$, field_data + 5)');
+            lines.push('      LET ' + name + '_second = PEEK(DATA$, field_data + 6)');
+          } else {
+            lines.push('      LET ' + name + '_len = field_len');
+          }
+          lines.push('    END IF');
+        });
+        lines.push('');
+        lines.push('    LET cursor = cursor + field_len + 2');
+        lines.push('    LET last_cursor = cursor');
+        lines.push('  WEND');
+        lines.push('END ON');
+        lines.push('');
+        lines.push('ON CLOSE:');
+        lines.push('  LET last_cursor = 0');
+        lines.push('END ON');
+        return lines.join('\n');
+      }
+
+      function humanizeError(err) {
+        if (!BM.Errors) return { message: String(err && err.message || err || 'Unknown error'), code: 'ERROR' };
+        return BM.Errors.toUserSafe(err);
+      }
+
+      function parseResponseError(response, path, bodyText) {
+        return BM.Errors.create('HTTP_' + response.status, bodyText || response.statusText || 'Request failed', {
+          statusCode: response.status,
+          data: { path: path, status: response.status }
+        });
+      }
+
+      function toStatusClass(status) {
+        if (status === 'connected' || status === 'saved' || status === 'loaded') return 'ok';
+        if (status === 'connecting' || status === 'loading' || status === 'warning') return 'warn';
+        if (status === 'error' || status === 'expired') return 'err';
+        return '';
+      }
+
+      function safeCapabilityProfile() {
+        var nav = window.navigator || {};
+        return {
+          browser: nav.userAgent ? nav.userAgent.split(' ')[0] : 'Unknown',
+          os: nav.platform || 'Unknown'
+        };
+      }
+
+      function safeCapabilityScore() {
+        var result = BM.Capabilities.require(['binary-http', 'fetch', 'history', 'localStorage']);
+        return result.supported.length + '/' + (result.supported.length + result.missing.length);
+      }
+
+      BM.Notify.configure({
+        theme: 'dark',
+        defaultPosition: 'bottom-right',
+        maxVisible: 5,
+        gap: 12
+      });
+
+      BM.Capabilities.register('binary-http', function () {
+        return typeof ArrayBuffer !== 'undefined' && typeof Uint8Array !== 'undefined' && typeof DataView !== 'undefined' && typeof fetch === 'function';
+      });
+
+      BM.Diagnostics.enable();
+      var requestCounter = BM.Diagnostics.counter('picowal.requests');
+      var errorCounter = BM.Diagnostics.counter('picowal.errors');
+
+      var config = BM.Config.create({
+        schema: {
+          serverUrl: { type: 'string', required: true },
+          routeView: { type: 'string', default: 'data' }
+        }
+      });
+      config.layer('defaults', { serverUrl: 'http://localhost:80', routeView: 'data' }, BM.Config.priorities.defaults);
+      try {
+        var savedUrl = localStorage.getItem('bm-picowal-url');
+        if (savedUrl) config.layer('saved', { serverUrl: savedUrl }, BM.Config.priorities.file);
+      } catch (_) {}
+
+      var session = BM.Session.create({
+        ttl: 45 * 60 * 1000,
+        refreshBefore: 5 * 60 * 1000,
+        key: 'bm-picowal-session',
+        storage: 'localStorage',
+        syncTabs: true,
+        onExpire: function () {
+          setConnectionStatus('expired', 'Server session expired. Reconnect to continue.');
+          BM.Notify.warning('PicoWAL session expired', { title: 'Session' });
+        }
+      });
+
+      var activity = BM.Session.activity({
+        idleTimeout: 90 * 1000
+      });
+      activity.onIdle(function () {
+        state.session.activityLabel = 'Idle';
+      });
+      ['click', 'keydown', 'scroll', 'mousemove'].forEach(function (eventName) {
+        document.addEventListener(eventName, function () {
+          state.session.activityLabel = 'Active';
+          activity.touch();
+        }, { passive: true, capture: true });
+      });
+
+      var schemaCache = BM.Cache.create({ ttl: 5 * 60 * 1000, swr: 60 * 1000, maxSize: 64 });
+      var bus = BM.PubSub.create();
+      var transportQueue = BM.Transport.queue({ concurrency: 4, priority: true });
+      var guardedTransport = BM.Transport.circuit(function (job) {
+        return BM.Transport.retry(function () {
+          return job();
+        }, {
+          maxAttempts: 3,
+          baseDelay: 220,
+          maxDelay: 1200,
+          jitter: true,
+          retryOn: function (err) {
+            return BM.Errors.isRetryable(err);
+          }
+        });
+      }, {
+        threshold: 4,
+        resetTimeout: 5000
+      });
+
+      var metaLoader = BM.Transport.dedupe(function (packId) {
+        return 'schema:' + packId;
+      })(function (packId) {
+        return fetchSchema(packId);
+      });
+
+      BM.Types.define('PicoField', {
+        fields: {
+          ord: 'number',
+          name: 'string',
+          type: 'number',
+          typeName: 'string',
+          maxlen: 'number',
+          flags: 'number'
+        }
+      });
+
+      BM.Types.define('PicoPackSchema', {
+        fields: {
+          pack: 'number',
+          packName: 'string',
+          fieldCount: 'number',
+          fieldDefs: 'array',
+          fieldNames: 'array'
+        }
+      });
+
+      var reactive = BM.Bind.reactive({
+        connection: {
+          url: config.get('serverUrl') || 'http://localhost:80',
+          username: '',
+          password: '',
+          status: 'idle',
+          statusLabel: 'Disconnected',
+          message: 'Awaiting connection details.',
+          binaryReadyLabel: 'Binary ready'
+        },
+        session: {
+          active: false,
+          activeLabel: 'Offline',
+          userLabel: 'No authenticated user',
+          expiryLabel: 'Expiry —',
+          activityLabel: 'Active'
+        },
+        selection: {
+          packId: null,
+          packLabel: 'No pack',
+          cardId: null,
+          cardLabel: 'No card'
+        },
+        grid: {
+          totalLabel: '0 rows',
+          renderedLabel: '0 rendered',
+          filter: '',
+          sortKey: '__id__',
+          sortDir: 'asc',
+          rawHex: false,
+          visibleCount: 60,
+          rows: []
+        },
+        capabilities: {
+          scoreLabel: safeCapabilityScore(),
+          binaryLabel: BM.Capabilities.detect('binary-http') ? 'Binary enabled' : 'Binary missing'
+        },
+        diagnostics: {
+          lastDuration: 'Ready',
+          requestLabel: '0 requests'
+        },
+        actions: {
+          login: onLogin,
+          restore: onRestore,
+          logout: onLogout,
+          refreshPacks: onRefreshPacks,
+          openCreate: onCreateCard,
+          reloadSelected: onReloadSelected,
+          deleteSelected: onDeleteSelected,
+          undoEditor: onUndoEditor,
+          redoEditor: onRedoEditor
+        }
+      });
+
+      var state = reactive.state;
+      var watch = reactive.watch;
+      var refs = {
+        statusDot: document.getElementById('status-dot'),
+        packList: document.getElementById('pack-list'),
+        gridBody: document.getElementById('grid-body'),
+        gridHead: document.getElementById('grid-head-row'),
+        gridEmpty: document.getElementById('grid-empty'),
+        gridSentinel: document.getElementById('grid-sentinel'),
+        gridWrap: document.getElementById('grid-wrap'),
+        gridFilter: document.getElementById('grid-filter'),
+        fabricContent: document.getElementById('fabric-content'),
+        schemaBody: document.getElementById('schema-body'),
+        binaryBody: document.getElementById('binary-body'),
+        toolbarPackName: document.getElementById('toolbar-pack-name'),
+        toolbarPackSub: document.getElementById('toolbar-pack-sub'),
+        toggleRaw: document.getElementById('toggle-raw'),
+        gridSummaryBadge: document.getElementById('grid-summary-badge'),
+        gridSortBadge: document.getElementById('grid-sort-badge'),
+        gridFilterBadge: document.getElementById('grid-filter-badge'),
+        capabilityGrid: document.getElementById('capability-grid'),
+        timelineList: document.getElementById('timeline-list'),
+        saveCardInline: document.getElementById('save-card-inline'),
+        editorCardMeta: document.getElementById('editor-card-meta'),
+        editorDirtyMeta: document.getElementById('editor-dirty-meta'),
+        editorHistoryMeta: document.getElementById('editor-history-meta'),
+        fabricTabs: document.getElementById('fabric-tabs'),
+        schemaRuntimeBadge: document.getElementById('schema-runtime-badge'),
+        schemaTimingBadge: document.getElementById('schema-timing-badge'),
+        binarySizeBadge: document.getElementById('binary-size-badge'),
+        binaryDiffBadge: document.getElementById('binary-diff-badge'),
+        circuitBadge: document.getElementById('circuit-badge'),
+        rateBadge: document.getElementById('rate-badge'),
+        sessionBadge: document.getElementById('session-badge')
+      };
+
+      var appState = {
+        profile: null,
+        packs: [],
+        selectedPack: null,
+        selectedSchema: null,
+        selectedCard: null,
+        editor: {
+          row: null,
+          isNew: false,
+          formApi: null,
+          rules: null,
+          history: null,
+          currentValues: null,
+          originalValues: null,
+          beforeBytes: null,
+          afterBytes: null,
+          dirtyFields: [],
+          ignoreSnapshots: false,
+          lastHistoryState: null
+        },
+        execution: {
+          view: config.get('routeView') || 'data',
+          editorInstance: null,
+          lastSource: ''
+        },
+        observers: {
+          gridInfinite: null,
+          gridResize: null
+        },
+        diagnostics: {
+          timeline: []
+        }
+      };
+
+      function setConnectionStatus(status, message) {
+        state.connection.status = status;
+        state.connection.statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+        state.connection.message = message;
+        refs.statusDot.className = 'status-dot ' + toStatusClass(status);
+      }
+
+      function updateDerivedState() {
+        state.session.active = session.isActive();
+        state.session.activeLabel = session.isActive() ? 'Live session' : 'Offline';
+        var sessionData = session.getData() || {};
+        state.session.userLabel = sessionData.username ? (sessionData.username + ' · card ' + sessionData.userCard) : 'No authenticated user';
+        state.session.expiryLabel = session.getExpiry() ? ('Expiry ' + session.getExpiry().toLocaleTimeString()) : 'Expiry —';
+        state.selection.packId = appState.selectedPack ? appState.selectedPack.ord : null;
+        state.selection.packLabel = appState.selectedPack ? ('Pack ' + appState.selectedPack.ord + ' · ' + appState.selectedPack.name) : 'No pack';
+        state.selection.cardId = appState.selectedCard ? appState.selectedCard.id : null;
+        state.selection.cardLabel = appState.selectedCard ? ('Card ' + appState.selectedCard.id) : 'No card';
+        state.grid.totalLabel = appState.gridFiltered ? appState.gridFiltered.length + ' rows' : '0 rows';
+        state.grid.renderedLabel = Math.min(state.grid.visibleCount, appState.gridFiltered ? appState.gridFiltered.length : 0) + ' rendered';
+        state.capabilities.scoreLabel = safeCapabilityScore();
+        state.capabilities.binaryLabel = BM.Capabilities.detect('binary-http') ? 'Binary enabled' : 'Binary missing';
+        state.diagnostics.requestLabel = requestCounter.value() + ' requests · ' + errorCounter.value() + ' errors';
+        refs.circuitBadge.textContent = 'Circuit: ' + guardedTransport.state();
+        refs.rateBadge.textContent = 'Queue: ' + transportQueue.size() + ' queued / ' + transportQueue.pending() + ' running';
+        refs.sessionBadge.textContent = 'Fingerprint ' + BM.Session.fingerprint().slice(0, 10);
+      }
+
+      function recordTimeline(entry) {
+        appState.diagnostics.timeline.unshift(entry);
+        appState.diagnostics.timeline = appState.diagnostics.timeline.slice(0, 10);
+        renderTimeline();
+      }
+
+      function renderTimeline() {
+        clearNode(refs.timelineList);
+        if (!appState.diagnostics.timeline.length) {
+          refs.timelineList.innerHTML = '<li class="muted">No operations yet.</li>';
+          return;
+        }
+        appState.diagnostics.timeline.forEach(function (entry) {
+          var li = document.createElement('li');
+          li.innerHTML = '<span class="mono">' + htmlEscape(entry.name) + '</span> — ' + htmlEscape(entry.summary);
+          refs.timelineList.appendChild(li);
+        });
+      }
+
+      function renderCapabilities() {
+        var profile = safeCapabilityProfile();
+        var caps = [
+          { name: 'Binary HTTP', value: BM.Capabilities.detect('binary-http') ? 'Yes' : 'No' },
+          { name: 'Fetch', value: BM.Capabilities.detect('fetch') ? 'Yes' : 'No' },
+          { name: 'Routing', value: BM.Capabilities.detect('history') ? 'History API' : 'Fallback' },
+          { name: 'Storage', value: BM.Capabilities.detect('localStorage') ? 'LocalStorage' : 'Memory' },
+          { name: 'Profile', value: profile.browser + ' / ' + profile.os }
+        ];
+        clearNode(refs.capabilityGrid);
+        caps.forEach(function (cap) {
+          var tile = node('div', 'cap-tile');
+          tile.appendChild(node('span', 'cap-name', htmlEscape(cap.name)));
+          tile.appendChild(node('span', 'cap-value', htmlEscape(cap.value)));
+          refs.capabilityGrid.appendChild(tile);
+        });
+      }
+
+      async function perform(name, fn, attributes) {
+        var span = BM.Diagnostics.span(name, { attributes: attributes || {} });
+        var start = performance.now();
+        state.diagnostics.lastDuration = name + '…';
+        try {
+          var result = await fn();
+          var duration = performance.now() - start;
+          span.end({ ok: true, duration: duration });
+          state.diagnostics.lastDuration = name + ' · ' + formatDuration(duration);
+          recordTimeline({ name: name, summary: 'ok in ' + formatDuration(duration) });
+          return result;
+        } catch (err) {
+          var durationErr = performance.now() - start;
+          span.end({ ok: false, duration: durationErr, error: String(err && err.message || err) });
+          state.diagnostics.lastDuration = name + ' · failed after ' + formatDuration(durationErr);
+          recordTimeline({ name: name, summary: 'failed · ' + humanizeError(err).message });
+          throw err;
+        } finally {
+          updateDerivedState();
+        }
+      }
+
+      async function apiRequest(method, path, body, opts) {
+        opts = opts || {};
+        requestCounter.increment();
+        updateDerivedState();
+        return transportQueue.add(function () {
+          return guardedTransport(function () {
+            var url = new URL(path, state.connection.url).toString();
+            return fetch(url, {
+              method: method,
+              body: body || undefined,
+              credentials: 'include',
+              headers: opts.headers || undefined
+            }).then(async function (response) {
+              var allowStatus = opts.allowStatus || [];
+              if (!response.ok && allowStatus.indexOf(response.status) === -1) {
+                var bodyText = '';
+                try {
+                  bodyText = await response.text();
+                } catch (_) {}
+                throw parseResponseError(response, path, bodyText);
+              }
+              return response;
+            });
+          });
+        }, opts.priority || 'normal').catch(function (err) {
+          errorCounter.increment();
+          updateDerivedState();
+          throw err;
+        });
+      }
+
+      async function login(username, password) {
+        return perform('picowal.login', async function () {
+          var response = await apiRequest('POST', '/login', createPackedLoginBody(username, password), { priority: 'critical' });
+          var ab = await response.arrayBuffer();
+          if (ab.byteLength < 4) throw BM.Errors.create('LOGIN_INVALID', 'Login did not return a user card.', { category: 'auth', retryable: false });
+          return new DataView(ab).getUint32(0, true);
+        }, { user: username });
+      }
+
+      async function fetchSchema(packId) {
+        return perform('picowal.schema', async function () {
+          var response = await apiRequest('GET', '/0/0/' + packId, null, { priority: 'high' });
+          var ab = await response.arrayBuffer();
+          var meta = parseCard(ab);
+          if (!meta) throw BM.Errors.create('SCHEMA_INVALID', 'Schema card could not be parsed.', { category: 'validation', retryable: false, data: { packId: packId } });
+          var fieldCount = decodeValue(T.UINT8, meta.fields[1].data, 0, 1);
+          var fieldDefs = parseFieldDefs(meta.fields[2].data, fieldCount);
+          var fieldNames = parseFieldNames(meta.fields[5].data);
+          var packName = decodeValue(T.ASCII, meta.fields[0].data, 0, meta.fields[0].data.byteLength);
+          var schema = {
+            pack: packId,
+            packName: packName,
+            fieldCount: fieldCount,
+            fieldDefs: fieldDefs,
+            fieldNames: fieldNames,
+            fieldByOrd: {}
+          };
+          fieldDefs.forEach(function (def, index) {
+            schema.fieldByOrd[def.ord] = {
+              ord: def.ord,
+              flags: def.flags,
+              type: def.type,
+              typeName: typeLabel(def.type),
+              maxlen: def.maxlen,
+              name: schemaFieldName(schema, index, def)
+            };
+          });
+          var runtimeCheck = BM.Types.check(schema, 'PicoPackSchema');
+          schema.runtimeCheck = runtimeCheck;
+          schema.runtimeReflection = BM.Types.reflect('PicoPackSchema');
+          schema.schemaDef = buildSchemaDefinition(schema);
+          schema.binarySchema = BM.Schema.toBinary(schema.schemaDef, { version: 1, schemaHash: packId });
+          return schema;
+        }, { pack: packId });
+      }
+
+      async function loadMeta(packId) {
+        return schemaCache.wrap('schema:' + packId, function () {
+          return metaLoader(packId);
+        });
+      }
+
+      async function loadProfile(userCard) {
+        return perform('picowal.profile', async function () {
+          var userSchema = await loadMeta(1);
+          var row = await loadCard(1, userCard, userSchema);
+          if (!row) throw BM.Errors.create('PROFILE_MISSING', 'User profile could not be loaded.', { category: 'auth', retryable: false });
+          var profile = {
+            userCard: userCard,
+            username: row.values[userSchema.fieldNames[0] || 'field_0'] || '',
+            readPacks: row.values[userSchema.fieldNames[5] || 'field_5'] || [],
+            writePacks: row.values[userSchema.fieldNames[6] || 'field_6'] || [],
+            deletePacks: row.values[userSchema.fieldNames[7] || 'field_7'] || []
+          };
+          profile.isAdmin = (profile.readPacks || []).indexOf(0xFFFF) >= 0;
+          var packIds = profile.isAdmin ? [0,1,2,3,4,5,6,7,8,9,10] : (profile.readPacks || []).filter(function (n) { return n !== 0xFFFF; });
+          var packs = [];
+          for (var i = 0; i < packIds.length; i++) {
+            var packSchema = await loadMeta(packIds[i]);
+            packs.push({
+              ord: packIds[i],
+              name: packSchema.packName,
+              canRead: profile.isAdmin || profile.readPacks.indexOf(packIds[i]) >= 0,
+              canWrite: profile.isAdmin || profile.writePacks.indexOf(packIds[i]) >= 0,
+              canDelete: profile.isAdmin || profile.deletePacks.indexOf(packIds[i]) >= 0,
+              cardCount: null
+            });
+          }
+          packs.sort(function (a, b) { return a.ord - b.ord; });
+          profile.packs = packs;
+          return profile;
+        }, { userCard: userCard });
+      }
+
+      async function listCards(packId, schema) {
+        return perform('picowal.listCards', async function () {
+          var response = await apiRequest('GET', '/0/' + packId + '?start=0&limit=256', null, { priority: 'high' });
+          var ab = await response.arrayBuffer();
+          var dv = new DataView(ab);
+          var items = [];
+          var off = 0;
+          while (off + 5 < ab.byteLength) {
+            var cardOrd = dv.getUint32(off, true);
+            var payloadLen = dv.getUint16(off + 4, true);
+            if (cardOrd === 0xFFFFFFFF) break;
+            var payload = new Uint8Array(ab.slice(off + 6, off + 6 + payloadLen));
+            var row = decodeCardIntoRow(schema, cardOrd, payload, 'list');
+            if (row) items.push(row);
+            off += 6 + payloadLen;
+          }
+          return items;
+        }, { pack: packId });
+      }
+
+      async function loadCard(packId, cardId, schema) {
+        return perform('picowal.loadCard', async function () {
+          var response = await apiRequest('GET', '/0/' + packId + '/' + cardId, null, { priority: 'high', allowStatus: [404] });
+          if (response.status === 404) return null;
+          var ab = await response.arrayBuffer();
+          return decodeCardIntoRow(schema, cardId, new Uint8Array(ab), 'card');
+        }, { pack: packId, card: cardId });
+      }
+
+      async function saveCard(packId, cardId, version, schema, originalValues, currentValues, isNew) {
+        return perform('picowal.saveCard', async function () {
+          var validation = BM.Schema.validate(schema.schemaDef, currentValues);
+          if (!validation.valid) {
+            throw BM.Errors.create('CARD_INVALID', 'Schema validation failed.', {
+              category: 'validation',
+              retryable: false,
+              data: { errors: validation.errors }
+            });
+          }
+          var allFields = flattenFieldArray(schema, currentValues);
+          var deltaFields = isNew ? allFields : allFields.filter(function (field) {
+            var fieldInfo = schema.fieldByOrd[field.ord];
+            return !deepEqual(originalValues[fieldInfo.name], currentValues[fieldInfo.name]);
+          });
+          if (!deltaFields.length) return { saved: false, reason: 'nochanges' };
+          var buffer = buildDelta((isNew ? 1 : version + 1), deltaFields);
+          var response = await apiRequest('PUT', '/0/' + packId + '/' + cardId, buffer, { priority: 'critical' });
+          return { saved: response.ok, buffer: buffer };
+        }, { pack: packId, card: cardId });
+      }
+
+      async function deleteCard(packId, cardId) {
+        return perform('picowal.deleteCard', async function () {
+          var response = await apiRequest('DELETE', '/0/' + packId + '/' + cardId, null, { priority: 'critical' });
+          return response.ok;
+        }, { pack: packId, card: cardId });
+      }
+
+      function renderPackNavigator() {
+        clearNode(refs.packList);
+        if (!appState.packs.length) {
+          refs.packList.innerHTML = '<div class="placeholder-art"><strong>No packs yet</strong>Login to enumerate ACL-gated packs and schemas.</div>';
+          return;
+        }
+        appState.packs.forEach(function (pack) {
+          var item = node('button', 'pack-item' + (appState.selectedPack && appState.selectedPack.ord === pack.ord ? ' active' : ''));
+          item.type = 'button';
+          item.innerHTML =
+            '<div class="pack-head">' +
+              '<div>' +
+                '<p class="pack-name">' + htmlEscape(pack.name) + '</p>' +
+                '<div class="pack-meta">Pack ' + pack.ord + ' · ' + (pack.cardCount == null ? 'count unknown' : pack.cardCount + ' cards') + '</div>' +
+              '</div>' +
+              '<span class="row-type-chip">' + htmlEscape(BM.Types.of(pack)) + '</span>' +
+            '</div>' +
+            '<div class="perm-row">' +
+              '<span class="perm-chip ' + (pack.canRead ? 'allowed' : '') + '">👁 Read</span>' +
+              '<span class="perm-chip ' + (pack.canWrite ? 'allowed' : '') + '">✎ Write</span>' +
+              '<span class="perm-chip ' + (pack.canDelete ? 'allowed' : '') + '">🗑 Delete</span>' +
+            '</div>';
+          item.addEventListener('click', function () {
+            openPack(pack.ord);
+          });
+          refs.packList.appendChild(item);
+        });
+      }
+
+      function getGridRows() {
+        var rows = (appState.selectedPack && appState.selectedPack.rows ? appState.selectedPack.rows.slice() : []);
+        var filter = String(state.grid.filter || '').trim().toLowerCase();
+        var key = state.grid.sortKey;
+        var dir = state.grid.sortDir === 'desc' ? -1 : 1;
+        if (filter) {
+          rows = rows.filter(function (row) {
+            if (String(row.id).indexOf(filter) >= 0) return true;
+            if (toHex(row.rawBytes).toLowerCase().indexOf(filter) >= 0) return true;
+            return row.cells.some(function (cell) {
+              var valueText = cell.value == null ? '' : JSON.stringify(cell.value).toLowerCase();
+              return cell.name.toLowerCase().indexOf(filter) >= 0 || valueText.indexOf(filter) >= 0 || cell.typeName.toLowerCase().indexOf(filter) >= 0;
+            });
+          });
+        }
+        rows.sort(function (a, b) {
+          var av;
+          var bv;
+          if (key === '__id__') {
+            av = a.id;
+            bv = b.id;
+          } else {
+            av = a.values[key];
+            bv = b.values[key];
+          }
+          av = av == null ? '' : JSON.stringify(av);
+          bv = bv == null ? '' : JSON.stringify(bv);
+          if (av < bv) return -1 * dir;
+          if (av > bv) return 1 * dir;
+          return 0;
+        });
+        appState.gridFiltered = rows;
+        return rows;
+      }
+
+      function renderGrid() {
+        clearNode(refs.gridHead);
+        clearNode(refs.gridBody);
+        var pack = appState.selectedPack;
+        if (!pack || !pack.schema) {
+          refs.gridEmpty.style.display = '';
+          refs.gridSummaryBadge.textContent = 'No cards loaded';
+          refs.gridSortBadge.textContent = 'Sort: id ↑';
+          refs.gridFilterBadge.textContent = 'Filter: none';
+          updateDerivedState();
+          return;
+        }
+        refs.gridEmpty.style.display = 'none';
+        var rows = getGridRows();
+        refs.gridSummaryBadge.textContent = rows.length + ' visible / ' + pack.rows.length + ' total';
+        refs.gridSortBadge.textContent = 'Sort: ' + (state.grid.sortKey === '__id__' ? 'id' : state.grid.sortKey) + ' ' + (state.grid.sortDir === 'desc' ? '↓' : '↑');
+        refs.gridFilterBadge.textContent = 'Filter: ' + (state.grid.filter ? state.grid.filter : 'none');
+
+        var trHead = document.createElement('tr');
+        function appendHead(label, key) {
+          var th = document.createElement('th');
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'sort-button';
+          btn.innerHTML = htmlEscape(label) + (state.grid.sortKey === key ? ' <span>' + (state.grid.sortDir === 'desc' ? '↓' : '↑') + '</span>' : '');
+          btn.addEventListener('click', function () {
+            if (state.grid.sortKey === key) state.grid.sortDir = state.grid.sortDir === 'asc' ? 'desc' : 'asc';
+            else {
+              state.grid.sortKey = key;
+              state.grid.sortDir = 'asc';
+            }
+            renderGrid();
+          });
+          th.appendChild(btn);
+          trHead.appendChild(th);
+        }
+        appendHead('ID', '__id__');
+        pack.schema.fieldDefs.forEach(function (def, index) {
+          appendHead(schemaFieldName(pack.schema, index, def), schemaFieldName(pack.schema, index, def));
+        });
+        if (state.grid.rawHex) appendHead('Raw', '__raw__');
+        refs.gridHead.appendChild(trHead);
+
+        rows.slice(0, state.grid.visibleCount).forEach(function (row) {
+          var tr = document.createElement('tr');
+          if (appState.selectedCard && appState.selectedCard.id === row.id) tr.className = 'active';
+          tr.addEventListener('click', function () {
+            openCard(row.id);
+          });
+          tr.innerHTML = '<td class="row-id mono">' + row.id + '</td>';
+          pack.schema.fieldDefs.forEach(function (def, index) {
+            var name = schemaFieldName(pack.schema, index, def);
+            var td = document.createElement('td');
+            td.innerHTML = formatValueForDisplay(def.type, row.values[name]);
+            tr.appendChild(td);
+          });
+          if (state.grid.rawHex) {
+            var hexTd = document.createElement('td');
+            hexTd.innerHTML = '<span class="hex-preview mono">' + htmlEscape(toHex(row.rawBytes.slice(0, 24))) + '</span>';
+            tr.appendChild(hexTd);
+          }
+          refs.gridBody.appendChild(tr);
+        });
+        updateDerivedState();
+      }
+
+      function renderToolbar() {
+        if (!appState.selectedPack) {
+          refs.toolbarPackName.textContent = 'No pack selected';
+          refs.toolbarPackSub.textContent = 'Connect to a PicoWAL server and choose a pack to begin browsing cards.';
+        } else {
+          refs.toolbarPackName.textContent = 'Pack ' + appState.selectedPack.ord + ' — ' + appState.selectedPack.name;
+          refs.toolbarPackSub.textContent = appState.selectedPack.schema.fieldCount + ' schema fields · ' + appState.selectedPack.rows.length + ' cards loaded · permissions ' +
+            [appState.selectedPack.canRead ? 'R' : '-', appState.selectedPack.canWrite ? 'W' : '-', appState.selectedPack.canDelete ? 'D' : '-'].join('');
+        }
+        refs.toggleRaw.classList.toggle('active', !!state.grid.rawHex);
+      }
+
+      function renderFabricTabs() {
+        Array.from(refs.fabricTabs.querySelectorAll('[data-view]')).forEach(function (button) {
+          button.classList.toggle('active', button.getAttribute('data-view') === appState.execution.view);
+        });
+        Array.from(document.querySelectorAll('.toolbar-controls [data-view]')).forEach(function (button) {
+          button.classList.toggle('active', button.getAttribute('data-view') === appState.execution.view);
+        });
+      }
+
+      function renderDataView() {
+        var row = appState.editor.row || appState.selectedCard;
+        if (!row || !appState.selectedPack) {
+          refs.fabricContent.innerHTML = '<div class="placeholder-art"><strong>Data View</strong>Select a card and this tab will show the user-facing truth: decoded field values, runtime types, and card metadata.</div>';
+          return;
+        }
+
+        var tableRows = row.cells.map(function (cell) {
+          return '<tr>' +
+            '<th>' + htmlEscape(cell.name) + '</th>' +
+            '<td>' + formatValueForDisplay(cell.type, cell.value) + '</td>' +
+            '<td><span class="row-type-chip">' + htmlEscape(BM.Types.of(cell.value)) + '</span></td>' +
+            '<td class="mono">ord ' + cell.ord + ' · ' + htmlEscape(cell.typeName) + '</td>' +
+          '</tr>';
+        }).join('');
+
+        refs.fabricContent.innerHTML =
+          '<div class="data-view">' +
+            '<div class="ui-banner">' +
+              '<strong>The Data View is the user-facing truth.</strong>' +
+              '<span>This pane reads the card as structured values. Any edit in the UI view or new binary bytes in the execution view immediately changes what appears here.</span>' +
+            '</div>' +
+            '<div class="data-summary-grid">' +
+              '<div class="kv-card"><span class="kv-label">Card Identity</span><span class="kv-value mono">Pack ' + appState.selectedPack.ord + ' / Card ' + row.id + '</span></div>' +
+              '<div class="kv-card"><span class="kv-label">Version</span><span class="kv-value mono">' + row.version + '</span></div>' +
+              '<div class="kv-card"><span class="kv-label">Decoded Type</span><span class="kv-value">' + htmlEscape(BM.Types.of(row.values)) + '</span></div>' +
+              '<div class="kv-card"><span class="kv-label">Wire Size</span><span class="kv-value mono">' + formatBytes(row.byteLength) + '</span></div>' +
+            '</div>' +
+            '<div class="kv-card">' +
+              '<span class="kv-label">Fields</span>' +
+              '<table class="data-table-lite"><tbody>' + tableRows + '</tbody></table>' +
+            '</div>' +
+          '</div>';
+      }
+
+      function currentFormValues() {
+        if (!appState.editor.formApi) return clone(appState.editor.currentValues || {});
+        var raw = appState.editor.formApi.getValues();
+        var typed = {};
+        appState.selectedPack.schema.fieldDefs.forEach(function (def, index) {
+          var name = schemaFieldName(appState.selectedPack.schema, index, def);
+          typed[name] = parseFromInput(def.type, raw[name]);
+        });
+        return typed;
+      }
+
+      function computeDirtyFields(originalValues, currentValues) {
+        var dirty = [];
+        appState.selectedPack.schema.fieldDefs.forEach(function (def, index) {
+          var name = schemaFieldName(appState.selectedPack.schema, index, def);
+          if (!deepEqual(originalValues[name], currentValues[name])) dirty.push(name);
+        });
+        return dirty;
+      }
+
+      function updateEditorMeta() {
+        var row = appState.editor.row || appState.selectedCard;
+        if (!row) {
+          refs.editorCardMeta.textContent = 'No card selected';
+          refs.editorDirtyMeta.textContent = 'Pristine';
+          refs.editorHistoryMeta.textContent = 'Undo/redo idle';
+          return;
+        }
+        refs.editorCardMeta.textContent = 'Pack ' + appState.selectedPack.ord + ' / Card ' + row.id + ' · version ' + row.version + (appState.editor.isNew ? ' · new' : '');
+        refs.editorDirtyMeta.textContent = appState.editor.dirtyFields.length ? ('Dirty: ' + appState.editor.dirtyFields.join(', ')) : 'Pristine';
+        var historyState = appState.editor.lastHistoryState;
+        refs.editorHistoryMeta.textContent = historyState ? ('Undo ' + (historyState.canUndo ? '✓' : '—') + ' · Redo ' + (historyState.canRedo ? '✓' : '—')) : 'Undo/redo idle';
+      }
+
+      function refreshEditorDiff() {
+        if (!appState.editor.row || !appState.selectedPack) return;
+        var currentValues = currentFormValues();
+        appState.editor.currentValues = currentValues;
+        appState.editor.dirtyFields = computeDirtyFields(appState.editor.originalValues, currentValues);
+        appState.editor.beforeBytes = arrayBufferToUint8(buildCard(appState.editor.row.version, flattenFieldArray(appState.selectedPack.schema, appState.editor.originalValues)));
+        appState.editor.afterBytes = arrayBufferToUint8(buildCard(appState.editor.isNew ? 1 : appState.editor.row.version + 1, flattenFieldArray(appState.selectedPack.schema, currentValues)));
+        updateEditorMeta();
+        renderBinaryInspector();
+        if (appState.execution.view === 'data') renderDataView();
+        if (appState.execution.view === 'execution') renderExecutionView();
+      }
+
+      function renderUiView() {
+        var row = appState.editor.row || appState.selectedCard;
+        if (!row || !appState.selectedPack) {
+          refs.fabricContent.innerHTML = '<div class="placeholder-art"><strong>UI View</strong>The schema-driven editor will appear here once a card is selected.</div>';
+          return;
+        }
+
+        var values = clone(appState.editor.currentValues || row.values);
+        appState.editor.currentValues = values;
+        appState.editor.originalValues = clone(appState.editor.originalValues || row.values);
+        appState.editor.row = row;
+
+        var formWrap = node('div', 'ui-view');
+        formWrap.innerHTML =
+          '<div class="ui-banner">' +
+            '<strong>The UI View is generated from the schema.</strong>' +
+            '<span>Each field below exists because the pack metadata says it exists. Change the schema and the form changes. This is the schema projecting itself as interface.</span>' +
+          '</div>' +
+          '<div class="kv-card">' +
+            '<span class="kv-label">Card Addressing</span>' +
+            '<div class="two-up">' +
+              '<div class="field-group"><label class="field-label" for="editor-card-id">Card ID</label><input id="editor-card-id" class="field-input mono" type="number" value="' + row.id + '"></div>' +
+              '<div class="field-group"><label class="field-label" for="editor-card-version">Version</label><input id="editor-card-version" class="field-input mono" type="number" value="' + row.version + '" disabled></div>' +
+            '</div>' +
+          '</div>' +
+          '<form id="editor-form" class="editor-form">' +
+            '<div class="form-grid" id="form-grid"></div>' +
+          '</form>' +
+          '<div class="split-pair">' +
+            '<div class="kv-card"><span class="kv-label">Schema validation</span><div id="validation-box" class="muted">No validation issues.</div></div>' +
+            '<div class="kv-card"><span class="kv-label">Binary diff</span><div id="diff-box" class="muted">No diff yet.</div></div>' +
+          '</div>';
+
+        refs.fabricContent.innerHTML = '';
+        refs.fabricContent.appendChild(formWrap);
+
+        var formGrid = document.getElementById('form-grid');
+        appState.selectedPack.schema.fieldDefs.forEach(function (def, index) {
+          var name = schemaFieldName(appState.selectedPack.schema, index, def);
+          var value = values[name];
+          var card = node('div', 'form-card' + ((def.type === T.BLOB || def.type === T.UTF8) ? ' full' : ''));
+          var labelHtml =
+            '<div class="field-group">' +
+              '<label class="field-label" for="field_' + htmlEscape(name) + '">' + htmlEscape(name) + '</label>' +
+              '<div class="field-meta">' +
+                '<span class="field-pill">ord ' + def.ord + '</span>' +
+                '<span class="field-pill">' + htmlEscape(typeLabel(def.type)) + '</span>' +
+                '<span class="field-pill">max ' + def.maxlen + '</span>' +
+                '<span class="field-pill">flags ' + def.flags + '</span>' +
+              '</div>' +
+            '</div>';
+
+          if (def.type === T.BOOL) {
+            card.innerHTML = labelHtml + '<label class="checkbox-row"><input type="checkbox" name="' + htmlEscape(name) + '" id="field_' + htmlEscape(name) + '"' + (value ? ' checked' : '') + '><span>' + htmlEscape(name) + ' enabled</span></label>';
+          } else if (inputType(def.type) === 'textarea') {
+            card.innerHTML = labelHtml + '<textarea class="field-textarea mono" name="' + htmlEscape(name) + '" id="field_' + htmlEscape(name) + '" placeholder="hex bytes">' + htmlEscape(formatForInput(def.type, value)) + '</textarea>';
+          } else {
+            card.innerHTML = labelHtml + '<input class="field-input ' + (def.type === T.ASCII || def.type === T.UTF8 || def.type === T.ARRAY_U16 || def.type === T.BLOB || def.type === T.MAC || def.type === T.IPV4 ? 'mono' : '') + '" type="' + inputType(def.type) + '" name="' + htmlEscape(name) + '" id="field_' + htmlEscape(name) + '" value="' + htmlEscape(formatForInput(def.type, value)) + '">';
+          }
+          formGrid.appendChild(card);
+        });
+
+        if (appState.editor.formApi) appState.editor.formApi.destroy();
+        appState.editor.rules = buildFormRules(appState.selectedPack.schema);
+        appState.editor.formApi = BM.Forms.create(document.getElementById('editor-form'), { fields: appState.editor.rules });
+
+        if (!appState.editor.history) {
+          appState.editor.history = BM.UndoRedo.createSnap({
+            maxSize: 80,
+            onChange: function (historyState) {
+              appState.editor.lastHistoryState = historyState;
+              updateEditorMeta();
+            }
+          });
+          appState.editor.history.snapshot(values);
+        }
+
+        appState.editor.formApi.onChange(function () {
+          var typed = currentFormValues();
+          if (!appState.editor.ignoreSnapshots) appState.editor.history.snapshot(typed);
+          appState.editor.currentValues = typed;
+          appState.editor.dirtyFields = computeDirtyFields(appState.editor.originalValues, typed);
+          Array.from(document.querySelectorAll('#form-grid .form-card')).forEach(function (card, idx) {
+            var fieldName = schemaFieldName(appState.selectedPack.schema, idx, appState.selectedPack.schema.fieldDefs[idx]);
+            card.classList.toggle('dirty', appState.editor.dirtyFields.indexOf(fieldName) >= 0);
+          });
+          refreshEditorDiff();
+          renderValidationBox();
+        });
+
+        document.getElementById('editor-card-id').addEventListener('change', function (ev) {
+          var nextId = parseInt(ev.target.value, 10) || row.id;
+          row.id = nextId;
+          if (appState.selectedCard) appState.selectedCard.id = nextId;
+          updateEditorMeta();
+        });
+
+        renderValidationBox();
+        refreshEditorDiff();
+      }
+
+      function renderValidationBox() {
+        var validationBox = document.getElementById('validation-box');
+        var diffBox = document.getElementById('diff-box');
+        if (!validationBox || !diffBox || !appState.selectedPack || !appState.editor.currentValues) return;
+        var validation = BM.Schema.validate(appState.selectedPack.schema.schemaDef, appState.editor.currentValues);
+        if (!validation.valid) {
+          validationBox.innerHTML = '<ul class="validation-list">' + validation.errors.map(function (err) {
+            return '<li>' + htmlEscape((err.path || 'field') + ': ' + err.message) + '</li>';
+          }).join('') + '</ul>';
+        } else {
+          validationBox.innerHTML = '<div class="badge-row"><span class="mini-badge good">Schema validated</span><span class="mini-badge">toBinary members ' + appState.selectedPack.schema.binarySchema.members.length + '</span></div>';
+        }
+        if (appState.editor.beforeBytes && appState.editor.afterBytes) {
+          var diff = buildHexDiff(appState.editor.beforeBytes, appState.editor.afterBytes);
+          diffBox.innerHTML = diff.changed
+            ? '<div class="mono">' + diff.changed + ' bytes changed · ' + diff.before + ' → ' + diff.after + '</div><div class="mt8 diff-dump">' + diff.html + '</div>'
+            : '<div class="muted">No byte-level changes yet.</div>';
+        }
+      }
+
+      async function ensurePicoEditor() {
+        if (appState.execution.editorInstance) return appState.execution.editorInstance;
+        var host = node('div', 'editor-host');
+        refs.fabricContent.appendChild(host);
+        appState.execution.editorInstance = BM.PicoScript.Editor.create(host, {
+          theme: 'dark',
+          height: '560px',
+          fontSize: 12,
+          source: generatePicoScript(appState.selectedPack && appState.selectedPack.schema),
+          maxCycles: 100000,
+          maxBlocksPerEvent: 1024,
+          maxEmitBytes: 4096
+        });
+        return appState.execution.editorInstance;
+      }
+
+      async function renderExecutionView() {
+        if (!appState.selectedPack || !appState.selectedPack.schema) {
+          refs.fabricContent.innerHTML = '<div class="placeholder-art"><strong>Execution View</strong>Select a pack and card to compile a PicoScript handler that mirrors the schema\'s wire format.</div>';
+          return;
+        }
+        refs.fabricContent.innerHTML = '<div class="execution-view"><div class="execution-metrics" id="execution-metrics"></div><div id="pico-editor-host"></div><div class="code-split"><div class="code-card"><h4>C transpile</h4><pre id="c-transpile"></pre></div><div class="code-card"><h4>C# transpile</h4><pre id="cs-transpile"></pre></div></div></div>';
+        var host = document.getElementById('pico-editor-host');
+        if (appState.execution.editorInstance && typeof appState.execution.editorInstance.destroy === 'function') {
+          appState.execution.editorInstance.destroy();
+          appState.execution.editorInstance = null;
+        }
+        appState.execution.editorInstance = BM.PicoScript.Editor.create(host, {
+          theme: 'dark',
+          height: '560px',
+          fontSize: 12,
+          source: generatePicoScript(appState.selectedPack.schema),
+          maxCycles: 100000,
+          maxBlocksPerEvent: 1024,
+          maxEmitBytes: 4096
+        });
+        var source = generatePicoScript(appState.selectedPack.schema);
+        if (appState.execution.lastSource !== source) {
+          appState.execution.editorInstance.setSource(source);
+          appState.execution.lastSource = source;
+        }
+        var compiled = appState.execution.editorInstance.compile();
+        var trace = null;
+        if (appState.selectedCard && appState.selectedCard.rawBytes) {
+          try {
+            trace = await appState.execution.editorInstance.dispatch('data', appState.selectedCard.rawBytes);
+          } catch (_) {}
+        }
+        var cfg = appState.execution.editorInstance.getCfg ? appState.execution.editorInstance.getCfg() : BM.PicoScript.cfg(compiled);
+        document.getElementById('execution-metrics').innerHTML =
+          '<div class="execution-metric"><span>Bytecode</span><strong>' + compiled.bytecode.length + ' bytes</strong></div>' +
+          '<div class="execution-metric"><span>CFG Blocks</span><strong>' + ((cfg && cfg.blocks && cfg.blocks.length) || 0) + '</strong></div>' +
+          '<div class="execution-metric"><span>Dispatch</span><strong>' + (trace ? trace.haltReason || 'ok' : 'not run') + '</strong></div>' +
+          '<div class="execution-metric"><span>Emit bytes</span><strong>' + (trace && trace.emitBuffer ? trace.emitBuffer.length : 0) + '</strong></div>';
+        document.getElementById('c-transpile').textContent = BM.PicoScript.toC(source);
+        document.getElementById('cs-transpile').textContent = BM.PicoScript.toCSharp(source);
+      }
+
+      function renderSchemaViewer() {
+        if (!appState.selectedPack || !appState.selectedPack.schema) {
+          refs.schemaBody.innerHTML = '<div class="placeholder-art"><strong>Schema Viewer</strong>The pack schema card (metadata pack 0) will be decoded here with runtime types, ordinals, max lengths, and diagnostics timing.</div>';
+          refs.schemaRuntimeBadge.textContent = 'Runtime type';
+          refs.schemaTimingBadge.textContent = 'Timing —';
+          return;
+        }
+        var schema = appState.selectedPack.schema;
+        var stats = [
+          { label: 'Pack', value: schema.packName },
+          { label: 'Fields', value: schema.fieldCount },
+          { label: 'Binary members', value: schema.binarySchema.members.length }
+        ];
+        var statHtml = stats.map(function (stat) {
+          return '<div class="schema-stat"><span>' + htmlEscape(stat.label) + '</span><strong>' + htmlEscape(String(stat.value)) + '</strong></div>';
+        }).join('');
+        var rows = schema.fieldDefs.map(function (def, index) {
+          var name = schemaFieldName(schema, index, def);
+          var binaryMember = schema.binarySchema.members.find(function (member) { return member.ordinal === def.ord; });
+          return '<tr>' +
+            '<td class="mono">' + def.ord + '</td>' +
+            '<td>' + htmlEscape(name) + '</td>' +
+            '<td><span class="row-type-chip">' + htmlEscape(typeLabel(def.type)) + '</span></td>' +
+            '<td class="mono">' + def.maxlen + '</td>' +
+            '<td class="mono">' + def.flags + '</td>' +
+            '<td class="mono">' + htmlEscape(binaryMember ? binaryMember.wireType : 'n/a') + '</td>' +
+          '</tr>';
+        }).join('');
+        refs.schemaBody.innerHTML =
+          '<div class="schema-grid">' + statHtml + '</div>' +
+          '<div class="kv-card">' +
+            '<span class="kv-label">Runtime reflection</span>' +
+            '<div class="badge-row">' +
+              '<span class="mini-badge ' + (schema.runtimeCheck.ok ? 'good' : 'bad') + '">' + (schema.runtimeCheck.ok ? 'BareMetal.Types check passed' : 'Type check failed') + '</span>' +
+              '<span class="mini-badge">' + htmlEscape(schema.runtimeReflection.name) + '</span>' +
+              '<span class="mini-badge">' + htmlEscape(BM.Types.of(schema)) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="schema-table-wrap"><table class="schema-table"><thead><tr><th>Ord</th><th>Name</th><th>Type</th><th>Max</th><th>Flags</th><th>Wire</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+          '<div class="code-card"><h4>Schema → BareMetal.Schema.toBinary()</h4><pre>' + htmlEscape(JSON.stringify(schema.binarySchema, null, 2)) + '</pre></div>';
+        refs.schemaRuntimeBadge.textContent = 'Runtime ' + schema.runtimeReflection.name;
+        refs.schemaTimingBadge.textContent = state.diagnostics.lastDuration;
+      }
+
+      function renderBinaryInspector() {
+        var row = appState.editor.row || appState.selectedCard;
+        if (!row || !appState.selectedPack) {
+          refs.binaryBody.innerHTML = '<div class="placeholder-art"><strong>Binary Inspector</strong>Raw card bytes will appear here as colour-coded TLV spans parsed through BareMetal.Binary.SpanReader.</div>';
+          refs.binarySizeBadge.textContent = '0 bytes';
+          refs.binaryDiffBadge.textContent = 'No diff';
+          return;
+        }
+        var schema = appState.selectedPack.schema;
+        var dump = buildHexDump(row.rawBytes, schema);
+        var legend = dump.analysis.sections.map(function (section, index) {
+          return '<span class="legend-chip"><span class="legend-swatch" style="background:' + section.color + '"></span>' + htmlEscape(section.label) + '</span>';
+        }).slice(0, 12).join('');
+        var diff = appState.editor.afterBytes ? buildHexDiff(appState.editor.beforeBytes, appState.editor.afterBytes) : null;
+        refs.binaryBody.innerHTML =
+          '<div class="kv-card"><span class="kv-label">Boundaries</span><div class="legend-row">' + legend + '</div></div>' +
+          '<div class="hex-card"><div class="hex-toolbar"><span>Hover any byte to reveal field boundary metadata.</span><span class="mono">magic 0x' + dump.analysis.magic.toString(16).toUpperCase() + ' · version ' + dump.analysis.version + '</span></div><div class="hex-dump mono">' + dump.html + '</div></div>' +
+          '<div class="hex-card"><div class="hex-toolbar"><span>Before/after diff</span><span class="mono">' + (diff ? diff.changed + ' changes' : 'none') + '</span></div><div class="diff-dump mono">' + (diff ? diff.html : 'No edited buffer') + '</div></div>';
+        refs.binarySizeBadge.textContent = formatBytes(row.rawBytes.byteLength);
+        refs.binaryDiffBadge.textContent = diff ? (diff.changed ? diff.changed + ' bytes changed' : 'No diff') : 'No diff';
+      }
+
+      function renderCurrentView() {
+        renderFabricTabs();
+        if (appState.execution.view === 'data') renderDataView();
+        else if (appState.execution.view === 'ui') renderUiView();
+        else renderExecutionView();
+      }
+
+      async function openPack(packId) {
+        var pack = appState.packs.find(function (item) { return item.ord === packId; });
+        if (!pack) return;
+        if (!pack.canRead) {
+          BM.Notify.warning('You do not have read access to pack ' + packId, { title: 'ACL' });
+          return;
+        }
+        setConnectionStatus('loading', 'Loading schema and cards for pack ' + packId + '…');
+        var progress = BM.Notify.progress('Loading pack ' + packId + '…', { title: 'PicoWAL' });
+        try {
+          pack.schema = await loadMeta(packId);
+          pack.rows = await listCards(packId, pack.schema);
+          pack.cardCount = pack.rows.length;
+          appState.selectedPack = pack;
+          appState.selectedSchema = pack.schema;
+          state.grid.visibleCount = 60;
+          bus.sticky('pack.selected', pack);
+          renderToolbar();
+          renderPackNavigator();
+          renderGrid();
+          renderSchemaViewer();
+          if (pack.rows.length) {
+            await openCard(pack.rows[0].id);
+          } else {
+            appState.selectedCard = null;
+            appState.editor = {
+              row: null,
+              isNew: false,
+              formApi: null,
+              rules: null,
+              history: null,
+              currentValues: null,
+              originalValues: null,
+              beforeBytes: null,
+              afterBytes: null,
+              dirtyFields: [],
+              ignoreSnapshots: false,
+              lastHistoryState: null
+            };
+            renderCurrentView();
+            renderBinaryInspector();
+          }
+          progress.complete('Loaded ' + pack.rows.length + ' cards from ' + pack.name);
+          setConnectionStatus('loaded', 'Loaded pack ' + pack.name + ' with ' + pack.rows.length + ' cards.');
+        } catch (err) {
+          progress.error('Failed to load pack');
+          setConnectionStatus('error', humanizeError(err).message);
+          BM.Notify.error(humanizeError(err).message, { title: 'Load pack failed' });
+        }
+        updateDerivedState();
+      }
+
+      async function openCard(cardId) {
+        if (!appState.selectedPack || !appState.selectedPack.schema) return;
+        setConnectionStatus('loading', 'Loading card ' + cardId + ' from pack ' + appState.selectedPack.ord + '…');
+        try {
+          var row = await loadCard(appState.selectedPack.ord, cardId, appState.selectedPack.schema);
+          if (!row) {
+            BM.Notify.warning('Card ' + cardId + ' was not found.', { title: 'Missing card' });
+            return;
+          }
+          var existing = appState.selectedPack.rows.findIndex(function (entry) { return entry.id === row.id; });
+          if (existing >= 0) appState.selectedPack.rows[existing] = row;
+          else appState.selectedPack.rows.push(row);
+          appState.selectedCard = row;
+          appState.editor = {
+            row: row,
+            isNew: false,
+            formApi: null,
+            rules: null,
+            history: null,
+            currentValues: clone(row.values),
+            originalValues: clone(row.values),
+            beforeBytes: row.rawBytes,
+            afterBytes: row.rawBytes,
+            dirtyFields: [],
+            ignoreSnapshots: false,
+            lastHistoryState: null
+          };
+          bus.sticky('card.selected', row);
+          renderGrid();
+          renderCurrentView();
+          renderSchemaViewer();
+          renderBinaryInspector();
+          setConnectionStatus('connected', 'Card ' + row.id + ' selected.');
+        } catch (err) {
+          setConnectionStatus('error', humanizeError(err).message);
+          BM.Notify.error(humanizeError(err).message, { title: 'Load card failed' });
+        }
+        updateDerivedState();
+      }
+
+      function createBlankRow() {
+        if (!appState.selectedPack || !appState.selectedPack.schema) return null;
+        var values = {};
+        appState.selectedPack.schema.fieldDefs.forEach(function (def, index) {
+          values[schemaFieldName(appState.selectedPack.schema, index, def)] = def.type === T.BOOL ? false : null;
+        });
+        var nextId = 1;
+        appState.selectedPack.rows.forEach(function (row) {
+          nextId = Math.max(nextId, row.id + 1);
+        });
+        return {
+          id: nextId,
+          version: 0,
+          rawBytes: new Uint8Array(buildCard(0, [])),
+          values: values,
+          cells: appState.selectedPack.schema.fieldDefs.map(function (def, index) {
+            return {
+              ord: def.ord,
+              name: schemaFieldName(appState.selectedPack.schema, index, def),
+              type: def.type,
+              typeName: typeLabel(def.type),
+              maxlen: def.maxlen,
+              flags: def.flags,
+              value: values[schemaFieldName(appState.selectedPack.schema, index, def)]
+            };
+          }),
+          source: 'new',
+          byteLength: 0
+        };
+      }
+
+      async function saveCurrentEditor() {
+        if (!appState.selectedPack || !appState.editor.row) {
+          BM.Notify.warning('Select or create a card first.', { title: 'Editor' });
+          return;
+        }
+        var currentValues = currentFormValues();
+        var progress = BM.Notify.progress('Saving card ' + appState.editor.row.id + '…', { title: 'PicoWAL' });
+        try {
+          var result = await saveCard(
+            appState.selectedPack.ord,
+            appState.editor.row.id,
+            appState.editor.row.version,
+            appState.selectedPack.schema,
+            appState.editor.originalValues,
+            currentValues,
+            appState.editor.isNew
+          );
+          if (result.reason === 'nochanges') {
+            progress.complete('No changes to save');
+            BM.Notify.info('Card already matches the saved version.', { title: 'No changes' });
+            return;
+          }
+          var refreshed = await loadCard(appState.selectedPack.ord, appState.editor.row.id, appState.selectedPack.schema);
+          if (refreshed) {
+            var idx = appState.selectedPack.rows.findIndex(function (row) { return row.id === refreshed.id; });
+            if (idx >= 0) appState.selectedPack.rows[idx] = refreshed;
+            else appState.selectedPack.rows.unshift(refreshed);
+            appState.selectedCard = refreshed;
+            appState.editor.row = refreshed;
+            appState.editor.isNew = false;
+            appState.editor.originalValues = clone(refreshed.values);
+            appState.editor.currentValues = clone(refreshed.values);
+            appState.editor.beforeBytes = refreshed.rawBytes;
+            appState.editor.afterBytes = refreshed.rawBytes;
+            appState.editor.dirtyFields = [];
+            appState.editor.history = null;
+          }
+          renderPackNavigator();
+          renderGrid();
+          renderCurrentView();
+          renderBinaryInspector();
+          progress.complete('Card saved');
+          BM.Notify.success('Card ' + appState.selectedCard.id + ' saved to pack ' + appState.selectedPack.name, { title: 'PicoWAL' });
+          setConnectionStatus('saved', 'Saved card ' + appState.selectedCard.id + '.');
+        } catch (err) {
+          progress.error('Save failed');
+          BM.Notify.error(humanizeError(err).message, { title: 'Save failed' });
+          setConnectionStatus('error', humanizeError(err).message);
+        }
+        updateDerivedState();
+      }
+
+      function onUndoEditor() {
+        if (!appState.editor.history || !appState.editor.formApi) return;
+        var snapshot = appState.editor.history.undo();
+        if (!snapshot) return;
+        appState.editor.ignoreSnapshots = true;
+        appState.editor.formApi.setValues(objectToFormValues(snapshot));
+        appState.editor.ignoreSnapshots = false;
+        refreshEditorDiff();
+        renderValidationBox();
+      }
+
+      function onRedoEditor() {
+        if (!appState.editor.history || !appState.editor.formApi) return;
+        var snapshot = appState.editor.history.redo();
+        if (!snapshot) return;
+        appState.editor.ignoreSnapshots = true;
+        appState.editor.formApi.setValues(objectToFormValues(snapshot));
+        appState.editor.ignoreSnapshots = false;
+        refreshEditorDiff();
+        renderValidationBox();
+      }
+
+      function objectToFormValues(values) {
+        var output = {};
+        if (!appState.selectedPack || !appState.selectedPack.schema) return output;
+        appState.selectedPack.schema.fieldDefs.forEach(function (def, index) {
+          var name = schemaFieldName(appState.selectedPack.schema, index, def);
+          output[name] = formatForInput(def.type, values[name]);
+        });
+        return output;
+      }
+
+      async function onLogin(ev) {
+        if (ev) ev.preventDefault();
+        config.set('serverUrl', state.connection.url, 'runtime');
+        try {
+          localStorage.setItem('bm-picowal-url', state.connection.url);
+        } catch (_) {}
+        setConnectionStatus('connecting', 'Signing in to ' + state.connection.url + '…');
+        var progress = BM.Notify.progress('Connecting to PicoWAL…', { title: 'PicoWAL' });
+        try {
+          var userCard = await login(state.connection.username, state.connection.password);
+          var profile = await loadProfile(userCard);
+          session.init({
+            userCard: userCard,
+            username: profile.username || state.connection.username || 'user',
+            url: state.connection.url,
+            fingerprint: BM.Session.fingerprint()
+          });
+          appState.profile = profile;
+          appState.packs = profile.packs;
+          state.connection.password = '';
+          renderPackNavigator();
+          updateDerivedState();
+          setConnectionStatus('connected', 'Connected as ' + profile.username + ' (' + userCard + ').');
+          BM.Notify.success('Connected as ' + profile.username, { title: 'PicoWAL' });
+          progress.complete('Connected');
+          if (appState.packs.length) await openPack(appState.packs[0].ord);
+        } catch (err) {
+          progress.error('Connection failed');
+          setConnectionStatus('error', humanizeError(err).message);
+          BM.Notify.error(humanizeError(err).message, { title: 'Connection failed' });
+        }
+        updateDerivedState();
+      }
+
+      async function onRestore() {
+        var saved = session.getData();
+        if (!saved || !saved.userCard) {
+          BM.Notify.info('No saved session to restore.', { title: 'Session' });
+          return;
+        }
+        state.connection.url = saved.url || state.connection.url;
+        state.connection.username = saved.username || state.connection.username;
+        setConnectionStatus('connecting', 'Restoring previous session…');
+        try {
+          var profile = await loadProfile(saved.userCard);
+          appState.profile = profile;
+          appState.packs = profile.packs;
+          renderPackNavigator();
+          setConnectionStatus('connected', 'Restored session for ' + profile.username + '.');
+          BM.Notify.success('Session restored', { title: 'Session' });
+          if (appState.packs.length) await openPack(appState.packs[0].ord);
+        } catch (err) {
+          session.destroy();
+          setConnectionStatus('error', 'Restore failed: ' + humanizeError(err).message);
+          BM.Notify.warning('Saved session was invalid and has been cleared.', { title: 'Session' });
+        }
+        updateDerivedState();
+      }
+
+      function onLogout() {
+        session.destroy();
+        appState.profile = null;
+        appState.packs = [];
+        appState.selectedPack = null;
+        appState.selectedCard = null;
+        appState.selectedSchema = null;
+        schemaCache.clear();
+        renderPackNavigator();
+        renderToolbar();
+        renderGrid();
+        renderCurrentView();
+        renderSchemaViewer();
+        renderBinaryInspector();
+        setConnectionStatus('idle', 'Logged out.');
+        BM.Notify.info('Session cleared.', { title: 'PicoWAL' });
+        updateDerivedState();
+      }
+
+      async function onRefreshPacks() {
+        if (!session.isActive()) {
+          BM.Notify.warning('Connect before refreshing packs.', { title: 'Session' });
+          return;
+        }
+        schemaCache.clear();
+        await onRestore();
+      }
+
+      function onCreateCard() {
+        if (!appState.selectedPack) {
+          BM.Notify.warning('Select a pack first.', { title: 'Create card' });
+          return;
+        }
+        if (!appState.selectedPack.canWrite) {
+          BM.Notify.warning('This pack is read-only for your user.', { title: 'ACL' });
+          return;
+        }
+        var blank = createBlankRow();
+        appState.selectedCard = blank;
+        appState.editor = {
+          row: blank,
+          isNew: true,
+          formApi: null,
+          rules: null,
+          history: null,
+          currentValues: clone(blank.values),
+          originalValues: clone(blank.values),
+          beforeBytes: new Uint8Array(buildCard(0, [])),
+          afterBytes: new Uint8Array(buildCard(1, flattenFieldArray(appState.selectedPack.schema, blank.values))),
+          dirtyFields: [],
+          ignoreSnapshots: false,
+          lastHistoryState: null
+        };
+        appState.execution.view = 'ui';
+        syncRoute();
+        renderGrid();
+        renderCurrentView();
+        renderBinaryInspector();
+        setConnectionStatus('connected', 'Creating a new card in pack ' + appState.selectedPack.name + '.');
+      }
+
+      async function onReloadSelected() {
+        if (!appState.selectedCard || !appState.selectedPack) {
+          BM.Notify.info('Select a card first.', { title: 'Reload' });
+          return;
+        }
+        await openCard(appState.selectedCard.id);
+      }
+
+      async function onDeleteSelected() {
+        if (!appState.selectedPack || !appState.selectedCard) {
+          BM.Notify.warning('Select a card first.', { title: 'Delete card' });
+          return;
+        }
+        if (!appState.selectedPack.canDelete) {
+          BM.Notify.warning('Delete permission is not granted for this pack.', { title: 'ACL' });
+          return;
+        }
+        try {
+          await deleteCard(appState.selectedPack.ord, appState.selectedCard.id);
+          appState.selectedPack.rows = appState.selectedPack.rows.filter(function (row) { return row.id !== appState.selectedCard.id; });
+          appState.selectedCard = null;
+          appState.editor.row = null;
+          renderGrid();
+          renderCurrentView();
+          renderBinaryInspector();
+          BM.Notify.success('Card deleted.', { title: 'PicoWAL' });
+          setConnectionStatus('connected', 'Card deleted.');
+        } catch (err) {
+          BM.Notify.error(humanizeError(err).message, { title: 'Delete failed' });
+          setConnectionStatus('error', humanizeError(err).message);
+        }
+        updateDerivedState();
+      }
+
+      function syncRoute() {
+        var path = window.location.pathname || '/examples/explorer-demo.html';
+        var query = '?view=' + encodeURIComponent(appState.execution.view || 'data');
+        if (appState.selectedPack) query += '&pack=' + encodeURIComponent(appState.selectedPack.ord);
+        if (appState.selectedCard) query += '&card=' + encodeURIComponent(appState.selectedCard.id);
+        BM.Routing.navigate(path + query, null, true);
+      }
+
+      async function handleRoute(params, query) {
+        var requestedView = query.view || 'data';
+        appState.execution.view = ['data', 'ui', 'execution'].indexOf(requestedView) >= 0 ? requestedView : 'data';
+        renderFabricTabs();
+        if (query.pack && appState.packs.length) {
+          var packId = parseInt(query.pack, 10);
+          if (!appState.selectedPack || appState.selectedPack.ord !== packId) {
+            var exists = appState.packs.find(function (pack) { return pack.ord === packId; });
+            if (exists) await openPack(packId);
+          }
+        }
+        if (query.card && appState.selectedPack) {
+          var cardId = parseInt(query.card, 10);
+          if (!isNaN(cardId) && (!appState.selectedCard || appState.selectedCard.id !== cardId)) await openCard(cardId);
+        }
+        renderCurrentView();
+      }
+
+      function attachUiEvents() {
+        refs.gridFilter.addEventListener('input', function (ev) {
+          state.grid.filter = ev.target.value;
+          renderGrid();
+        });
+        refs.toggleRaw.addEventListener('click', function () {
+          state.grid.rawHex = !state.grid.rawHex;
+          renderToolbar();
+          renderGrid();
+        });
+        refs.saveCardInline.addEventListener('click', function () {
+          saveCurrentEditor();
+        });
+        Array.from(document.querySelectorAll('.toolbar-controls [data-view], #fabric-tabs [data-view]')).forEach(function (button) {
+          button.addEventListener('click', function () {
+            appState.execution.view = button.getAttribute('data-view');
+            syncRoute();
+            renderCurrentView();
+          });
+        });
+      }
+
+      function setupObservers() {
+        if (appState.observers.gridInfinite) appState.observers.gridInfinite.destroy();
+        appState.observers.gridInfinite = BM.Observe.infinite(refs.gridSentinel, function () {
+          if (!appState.gridFiltered || state.grid.visibleCount >= appState.gridFiltered.length) return;
+          state.grid.visibleCount += 40;
+          renderGrid();
+        }, { root: refs.gridWrap, threshold: 0.1 });
+
+        if (appState.observers.gridResize) appState.observers.gridResize.disconnect();
+        appState.observers.gridResize = BM.Observe.resize(refs.gridWrap, function (size) {
+          var rowsVisible = Math.max(20, Math.ceil((size.height || 560) / 42) + 10);
+          state.grid.visibleCount = Math.max(state.grid.visibleCount, rowsVisible);
+          renderGrid();
+        }, { debounce: 120 });
+      }
+
+      function bootstrapBus() {
+        bus.on('pack.selected', function () {
+          renderToolbar();
+          renderPackNavigator();
+          renderSchemaViewer();
+          renderGrid();
+        });
+        bus.on('card.selected', function () {
+          renderCurrentView();
+          renderBinaryInspector();
+          renderGrid();
+        });
+      }
+
+      function initialRender() {
+        BM.Bind.bind(document.getElementById('app'), state, watch);
+        renderCapabilities();
+        renderTimeline();
+        renderPackNavigator();
+        renderToolbar();
+        renderGrid();
+        renderCurrentView();
+        renderSchemaViewer();
+        renderBinaryInspector();
+        updateDerivedState();
+      }
+
+      function wireReactiveState() {
+        watch('connection', function () {
+          updateDerivedState();
+        });
+        session.onChange(function () {
+          updateDerivedState();
+        });
+      }
+
+      function initRouting() {
+        var currentPath = window.location.pathname || '/examples/explorer-demo.html';
+        BM.Routing.on(currentPath, handleRoute);
+        BM.Routing.start();
+      }
+
+      window.BareMetalExplorerDemo = {
+        state: state,
+        appState: appState,
+        decodeValue: decodeValue,
+        encodeValue: encodeValue,
+        parseCard: parseCard,
+        buildDelta: buildDelta,
+        openPack: openPack,
+        openCard: openCard,
+        saveCurrentEditor: saveCurrentEditor,
+        ready: false
+      };
+
+      bootstrapBus();
+      initialRender();
+      wireReactiveState();
+      attachUiEvents();
+      setupObservers();
+      initRouting();
+      updateDerivedState();
+      setConnectionStatus('idle', 'Ready. Connect to a PicoWAL server to materialise the fabric.');
+      window.BareMetalExplorerDemo.ready = true;
+    })();
+  </script>
+</body>
+</html>

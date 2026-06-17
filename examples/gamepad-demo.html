@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gamepad Tester — BareMetalJsTools</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --pad-bg: #07111f;
+      --pad-panel: rgba(10, 18, 33, .9);
+      --pad-border: rgba(145, 179, 255, .18);
+      --pad-text: #edf5ff;
+      --pad-muted: #91a6cc;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(83, 130, 255, .24), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(0, 217, 173, .14), transparent 22%),
+        var(--pad-bg);
+      color: var(--pad-text);
+    }
+    .page-wrapper, .main-content { background: transparent; }
+    .hero,
+    .demo-card {
+      border: 1px solid var(--pad-border);
+      border-radius: 1rem;
+      background: linear-gradient(180deg, rgba(12, 22, 40, .92), rgba(7, 13, 27, .9));
+      box-shadow: 0 20px 42px rgba(0, 0, 0, .24);
+    }
+    .hero { padding: 1.4rem; margin-bottom: 1rem; }
+    .demo-card .cd-h { background: rgba(255,255,255,.03); }
+    .pad-shell {
+      padding: 1rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(255,255,255,.06);
+      background: rgba(2, 8, 17, .95);
+    }
+    svg { width: 100%; height: auto; display: block; }
+    .pad-body { fill: rgba(245, 248, 255, .08); stroke: rgba(255,255,255,.16); stroke-width: 3; }
+    .pad-button,
+    .pad-trigger,
+    .pad-dpad,
+    .stick-base,
+    .stick-knob {
+      fill: rgba(255,255,255,.08);
+      stroke: rgba(255,255,255,.15);
+      stroke-width: 2;
+      transition: transform .12s ease, fill .12s ease, stroke .12s ease;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    .pad-button.active,
+    .pad-trigger.active,
+    .pad-dpad.active,
+    .stick-base.active,
+    .stick-knob.active {
+      fill: rgba(96, 231, 170, .35);
+      stroke: rgba(96, 231, 170, .8);
+    }
+    .press { transform: scale(1); }
+    .press-active { animation: pressPulse .22s ease; }
+    .axis-pulse { transform: scale(1); }
+    .axis-pulse-active { animation: axisPulse .18s ease; }
+    @keyframes pressPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.18); }
+      100% { transform: scale(1); }
+    }
+    @keyframes axisPulse {
+      0% { opacity: .8; }
+      50% { opacity: 1; }
+      100% { opacity: .8; }
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: .85rem;
+    }
+    .meta-card,
+    .axis-card {
+      padding: .9rem 1rem;
+      border-radius: .95rem;
+      border: 1px solid var(--pad-border);
+      background: rgba(255,255,255,.03);
+    }
+    .meta-card span,
+    .axis-card span { display: block; color: var(--pad-muted); font-size: .8rem; margin-bottom: .35rem; }
+    .axis-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .85rem;
+    }
+    .axis-meter {
+      position: relative;
+      height: .55rem;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,.06);
+      margin-top: .55rem;
+    }
+    .axis-meter > i,
+    .axis-meter > b {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      transform-origin: left center;
+    }
+    .axis-meter > i { background: rgba(255, 209, 102, .5); }
+    .axis-meter > b { background: rgba(96, 231, 170, .55); }
+    .table-box {
+      margin: 0;
+      padding: 1rem;
+      border-radius: .95rem;
+      border: 1px solid var(--pad-border);
+      background: rgba(2, 8, 17, .95);
+      color: #dce9ff;
+      font-family: var(--bs-font-mono, ui-monospace, monospace);
+      font-size: .82rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      overflow: auto;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      padding: .35rem .72rem;
+      border-radius: 999px;
+      border: 1px solid var(--pad-border);
+      background: rgba(255,255,255,.03);
+      color: var(--pad-muted);
+      font-size: .82rem;
+    }
+    .status-dot { width: .6rem; height: .6rem; border-radius: 50%; background: #6b7a99; }
+    .status-dot.live { background: #3ee59e; box-shadow: 0 0 12px rgba(62, 229, 158, .45); }
+    .status-dot.off { background: #ff7b91; box-shadow: 0 0 12px rgba(255, 123, 145, .38); }
+    @media (max-width: 1000px) {
+      .meta-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .axis-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .meta-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="site-header site-header-dark">
+      <a class="brand" href="index.html">🔩 BareMetalJsTools</a>
+      <nav>
+        <a href="sync-demo.html">Sync</a>
+        <a href="gamepad-demo.html" class="act">Gamepad</a>
+        <a href="geo-demo.html">Geo</a>
+      </nav>
+    </header>
+
+    <main class="main-content p4" style="overflow-y:auto;">
+      <div class="ctn">
+        <section class="hero">
+          <div class="fx jcb aic flex-wrap gp2">
+            <div>
+              <h1 class="mb1">Gamepad Tester</h1>
+              <p class="lead mb0">Poll the controller with <strong>BareMetal.Gamepad</strong>, animate presses with <strong>Animate</strong>, log timing precision through <strong>Diagnostics</strong>, and fire <strong>Notify</strong> alerts when controllers connect or disconnect.</p>
+            </div>
+            <div class="fx gp2 flex-wrap aic">
+              <span class="status-pill"><span class="status-dot" id="pad-dot"></span><span id="pad-status">Waiting for controller</span></span>
+              <label class="status-pill">Deadzone <input id="deadzone" type="range" min="0" max="0.35" step="0.01" value="0.12" style="width:120px;"></label>
+            </div>
+          </div>
+        </section>
+
+        <div class="rw g3">
+          <div class="cm8 stack">
+            <div class="cd demo-card">
+              <div class="cd-h">SVG controller visual</div>
+              <div class="cd-b">
+                <div class="pad-shell">
+                  <svg viewBox="0 0 540 300" aria-label="Gamepad visualiser">
+                    <path class="pad-body" d="M150 72c24-18 67-28 120-28s96 10 120 28c24 18 41 47 48 87l17 84c5 24-8 47-32 54-22 6-45-3-57-24l-25-42H199l-25 42c-12 21-35 30-57 24-24-7-37-30-32-54l17-84c7-40 24-69 48-87Z"></path>
+                    <rect class="pad-trigger" data-button="4" x="142" y="56" width="84" height="18" rx="9"></rect>
+                    <rect class="pad-trigger" data-button="5" x="314" y="56" width="84" height="18" rx="9"></rect>
+                    <rect class="pad-trigger" data-button="6" x="142" y="34" width="84" height="16" rx="8"></rect>
+                    <rect class="pad-trigger" data-button="7" x="314" y="34" width="84" height="16" rx="8"></rect>
+                    <rect class="pad-dpad" data-button="12" x="118" y="126" width="32" height="28" rx="8"></rect>
+                    <rect class="pad-dpad" data-button="13" x="118" y="182" width="32" height="28" rx="8"></rect>
+                    <rect class="pad-dpad" data-button="14" x="88" y="156" width="32" height="28" rx="8"></rect>
+                    <rect class="pad-dpad" data-button="15" x="148" y="156" width="32" height="28" rx="8"></rect>
+                    <circle class="pad-button" data-button="2" cx="382" cy="132" r="18"></circle>
+                    <circle class="pad-button" data-button="3" cx="416" cy="166" r="18"></circle>
+                    <circle class="pad-button" data-button="0" cx="382" cy="200" r="18"></circle>
+                    <circle class="pad-button" data-button="1" cx="450" cy="166" r="18"></circle>
+                    <circle class="pad-button" data-button="8" cx="238" cy="146" r="12"></circle>
+                    <circle class="pad-button" data-button="9" cx="302" cy="146" r="12"></circle>
+                    <circle class="stick-base" data-button="10" cx="202" cy="196" r="36"></circle>
+                    <circle class="stick-base" data-button="11" cx="336" cy="208" r="36"></circle>
+                    <circle class="stick-knob" id="left-stick" cx="202" cy="196" r="18"></circle>
+                    <circle class="stick-knob" id="right-stick" cx="336" cy="208" r="18"></circle>
+                    <text x="378" y="136" fill="currentColor" font-size="10" text-anchor="middle">X</text>
+                    <text x="416" y="170" fill="currentColor" font-size="10" text-anchor="middle">Y</text>
+                    <text x="382" y="204" fill="currentColor" font-size="10" text-anchor="middle">A</text>
+                    <text x="450" y="170" fill="currentColor" font-size="10" text-anchor="middle">B</text>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div class="cd demo-card">
+              <div class="cd-h">Raw vs deadzone-applied axes</div>
+              <div class="cd-b">
+                <div class="axis-grid" id="axis-grid"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cm4 stack">
+            <div class="cd demo-card">
+              <div class="cd-h">Input timing precision</div>
+              <div class="cd-b">
+                <div class="meta-grid">
+                  <div class="meta-card"><span>Profile</span><strong id="profile">—</strong></div>
+                  <div class="meta-card"><span>Poll count</span><strong id="poll-count">0</strong></div>
+                  <div class="meta-card"><span>Last delta</span><strong id="last-delta">0 ms</strong></div>
+                  <div class="meta-card"><span>P95 delta</span><strong id="p95-delta">0 ms</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cd demo-card">
+              <div class="cd-h">Mapped state</div>
+              <div class="cd-b">
+                <pre class="table-box" id="mapped-state">Waiting for input…</pre>
+              </div>
+            </div>
+
+            <div class="cd demo-card">
+              <div class="cd-h">Diagnostics timeline</div>
+              <div class="cd-b">
+                <pre class="table-box" id="timeline-box">No input yet.</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer site-footer-dark tc">
+      Press any button or move a stick to light up the SVG controller
+    </footer>
+  </div>
+
+  <script src="../src/BareMetal.Gamepad.js"></script>
+  <script src="../src/BareMetal.Animate.js"></script>
+  <script src="../src/BareMetal.Diagnostics.js"></script>
+  <script src="../src/BareMetal.Notify.js"></script>
+  <script>
+    (function () {
+      var deadzoneInput = document.getElementById('deadzone');
+      var padDot = document.getElementById('pad-dot');
+      var padStatus = document.getElementById('pad-status');
+      var profileNode = document.getElementById('profile');
+      var pollCountNode = document.getElementById('poll-count');
+      var lastDeltaNode = document.getElementById('last-delta');
+      var p95DeltaNode = document.getElementById('p95-delta');
+      var mappedState = document.getElementById('mapped-state');
+      var timelineBox = document.getElementById('timeline-box');
+      var axisGrid = document.getElementById('axis-grid');
+      var leftStick = document.getElementById('left-stick');
+      var rightStick = document.getElementById('right-stick');
+      var pollCounter = BareMetal.Diagnostics.counter('gamepad.polls');
+      var deltas = [];
+      var lastFrame = performance.now();
+      var currentDeadzone = parseFloat(deadzoneInput.value);
+      var lastTimelineMark = 0;
+      BareMetal.Notify.configure({ defaultPosition: 'top-right', theme: 'dark' });
+      BareMetal.Diagnostics.gauge('gamepad.delta', function () {
+        return deltas.length ? deltas[deltas.length - 1] : 0;
+      });
+
+      function percentile(values, ratio) {
+        if (!values.length) return 0;
+        var sorted = values.slice().sort(function (a, b) { return a - b; });
+        return sorted[Math.min(sorted.length - 1, Math.max(0, Math.ceil(sorted.length * ratio) - 1))];
+      }
+
+      function setPadStatus(active, text) {
+        padDot.className = 'status-dot ' + (active ? 'live' : 'off');
+        padStatus.textContent = text;
+      }
+
+      function moveStick(node, cx, cy, x, y) {
+        node.setAttribute('cx', cx + x * 14);
+        node.setAttribute('cy', cy + y * 14);
+        BareMetal.Animate.enter(node, 'axis-pulse');
+      }
+
+      function activateButton(index, active) {
+        var node = document.querySelector('[data-button="' + index + '"]');
+        if (!node) return;
+        node.classList.toggle('active', active);
+      }
+
+      function renderAxes(rawAxes, appliedAxes) {
+        var labels = ['Left X', 'Left Y', 'Right X', 'Right Y'];
+        axisGrid.innerHTML = labels.map(function (label, index) {
+          var raw = rawAxes[index] || 0;
+          var applied = appliedAxes[index] || 0;
+          return '<div class="axis-card">' +
+            '<span>' + label + '</span>' +
+            '<strong>' + raw.toFixed(3) + ' → ' + applied.toFixed(3) + '</strong>' +
+            '<div class="axis-meter"><i style="width:' + (Math.abs(raw) * 50) + '%; transform:translateX(' + (raw < 0 ? -100 : 0) + '%);"></i><b style="width:' + (Math.abs(applied) * 50) + '%; transform:translateX(' + (applied < 0 ? -100 : 0) + '%);"></b></div>' +
+          '</div>';
+        }).join('');
+      }
+
+      function renderTimeline() {
+        var events = BareMetal.Diagnostics.timeline().getEvents().slice(-8).map(function (event) {
+          return event.name + ' ' + JSON.stringify(event.data || {});
+        });
+        timelineBox.textContent = events.length ? events.join('\n') : 'No input yet.';
+      }
+
+      function renderState() {
+        var state = BareMetal.Gamepad.getState(0);
+        var rawPad = navigator.getGamepads && navigator.getGamepads()[0];
+        var rawAxes = rawPad && rawPad.axes ? Array.prototype.slice.call(rawPad.axes) : [0, 0, 0, 0];
+        var appliedAxes = state && state.axes ? state.axes : [0, 0, 0, 0];
+        var mapped = state ? BareMetal.Gamepad.map(0, { jump: 0, fire: 1, dash: 3, moveX: 0, moveY: 1, lookX: 2, lookY: 3 }) : {};
+        if (!state) {
+          setPadStatus(false, 'Waiting for controller');
+          profileNode.textContent = '—';
+          mappedState.textContent = 'Connect a controller and press any button.';
+          renderAxes(rawAxes, appliedAxes);
+          return;
+        }
+        profileNode.textContent = state.profile;
+        setPadStatus(true, state.id || 'Controller connected');
+        state.buttons.forEach(function (button) {
+          activateButton(button.index, button.pressed);
+        });
+        moveStick(leftStick, 202, 196, appliedAxes[0] || 0, appliedAxes[1] || 0);
+        moveStick(rightStick, 336, 208, appliedAxes[2] || 0, appliedAxes[3] || 0);
+        renderAxes(rawAxes, appliedAxes);
+        mappedState.textContent = JSON.stringify({
+          mapped: mapped,
+          deadzone: currentDeadzone,
+          buttonsPressed: state.buttons.filter(function (button) { return button.pressed; }).map(function (button) { return button.name; })
+        }, null, 2);
+      }
+
+      function restartPolling() {
+        currentDeadzone = parseFloat(deadzoneInput.value);
+        BareMetal.Gamepad.stop();
+        BareMetal.Gamepad.start({ deadzone: currentDeadzone, pollRate: 16 });
+      }
+
+      BareMetal.Gamepad.on('connect', function (event) {
+        BareMetal.Notify.success('Controller connected: ' + (event.gamepad.id || 'Unknown pad'));
+        BareMetal.Diagnostics.timeline().record('connect', { id: event.gamepad.id });
+        renderTimeline();
+      });
+      BareMetal.Gamepad.on('disconnect', function () {
+        BareMetal.Notify.warning('Controller disconnected.');
+        BareMetal.Diagnostics.timeline().record('disconnect', {});
+        renderTimeline();
+      });
+      BareMetal.Gamepad.on('buttondown', function (event) {
+        var node = document.querySelector('[data-button="' + event.button + '"]');
+        if (node) BareMetal.Animate.enter(node, 'press');
+        BareMetal.Diagnostics.timeline().record('buttondown', { button: event.name });
+        renderTimeline();
+      });
+      BareMetal.Gamepad.on('axismove', function (event) {
+        if (performance.now() - lastTimelineMark > 150) {
+          lastTimelineMark = performance.now();
+          BareMetal.Diagnostics.timeline().record('axismove', { axis: event.name, value: Number(event.value.toFixed(2)) });
+          renderTimeline();
+        }
+      });
+
+      deadzoneInput.addEventListener('input', restartPolling);
+      restartPolling();
+
+      function frame(now) {
+        var delta = now - lastFrame;
+        lastFrame = now;
+        deltas.push(delta);
+        deltas = deltas.slice(-120);
+        pollCounter.increment();
+        pollCountNode.textContent = String(pollCounter.value());
+        lastDeltaNode.textContent = delta.toFixed(1) + ' ms';
+        p95DeltaNode.textContent = percentile(deltas, 0.95).toFixed(1) + ' ms';
+        renderState();
+        requestAnimationFrame(frame);
+      }
+
+      renderTimeline();
+      renderState();
+      requestAnimationFrame(frame);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Form with Validation — BareMetalJsTools</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --demo-bg: #07111f;
+      --demo-panel: rgba(9, 20, 38, .88);
+      --demo-border: rgba(140, 180, 255, .18);
+      --demo-text: #e8f1ff;
+      --demo-muted: #95a8cf;
+      --demo-accent: #79a9ff;
+      --demo-glow: rgba(83, 138, 255, .2);
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(72, 129, 255, .28), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(0, 220, 180, .16), transparent 24%),
+        var(--demo-bg);
+      color: var(--demo-text);
+    }
+    .page-wrapper, .main-content { background: transparent; }
+    .site-header, .site-footer { backdrop-filter: blur(16px); }
+    .hero {
+      padding: 1.5rem;
+      border: 1px solid var(--demo-border);
+      border-radius: 1rem;
+      background: linear-gradient(135deg, rgba(16, 32, 58, .92), rgba(8, 17, 32, .86));
+      box-shadow: 0 20px 40px rgba(0, 0, 0, .25);
+    }
+    .demo-card {
+      background: var(--demo-panel);
+      border: 1px solid var(--demo-border);
+      border-radius: 1rem;
+      box-shadow: 0 18px 32px rgba(0, 0, 0, .22);
+    }
+    .demo-card .cd-h { background: rgba(255, 255, 255, .03); }
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: .75rem;
+      margin: 1rem 0 1.25rem;
+    }
+    .step-pill {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .85rem 1rem;
+      border-radius: .9rem;
+      border: 1px solid var(--demo-border);
+      background: rgba(255, 255, 255, .03);
+      color: var(--demo-muted);
+      font-size: .9rem;
+      transition: all .18s ease;
+    }
+    .step-pill strong {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.9rem;
+      height: 1.9rem;
+      border-radius: 999px;
+      background: rgba(121, 169, 255, .12);
+      color: var(--demo-text);
+      font-size: .85rem;
+    }
+    .step-pill.act {
+      color: var(--demo-text);
+      border-color: rgba(121, 169, 255, .44);
+      background: rgba(121, 169, 255, .1);
+      box-shadow: inset 0 0 0 1px rgba(121, 169, 255, .15), 0 0 0 1px rgba(121, 169, 255, .08);
+    }
+    .step-pill.done strong { background: rgba(31, 195, 123, .18); }
+    .wizard-step { display: none; }
+    .wizard-step.act { display: block; }
+    .fc, .fsl, textarea.fc {
+      background: rgba(3, 11, 24, .85);
+      border-color: rgba(157, 182, 235, .16);
+      color: var(--demo-text);
+    }
+    .fc::placeholder, textarea::placeholder { color: #7f90b7; }
+    .form-hint, .small-note { color: var(--demo-muted); font-size: .86rem; }
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .22rem .55rem;
+      border-radius: 999px;
+      border: 1px solid var(--demo-border);
+      background: rgba(255, 255, 255, .03);
+      font-size: .78rem;
+      color: var(--demo-muted);
+    }
+    .status-chip.ok { color: #79f2b5; border-color: rgba(62, 214, 131, .34); }
+    .status-chip.bad { color: #ff9aa8; border-color: rgba(255, 86, 111, .3); }
+    .field-shell { position: relative; }
+    .field-shell .status-chip { position: absolute; top: .65rem; right: .65rem; }
+    .side-stack { display: grid; gap: 1rem; }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: .85rem;
+    }
+    .mini-stat {
+      padding: .85rem 1rem;
+      border-radius: .9rem;
+      border: 1px solid var(--demo-border);
+      background: rgba(255, 255, 255, .03);
+    }
+    .mini-stat span { display: block; font-size: .78rem; color: var(--demo-muted); }
+    .mini-stat strong { display: block; margin-top: .25rem; }
+    .wizard-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: .75rem;
+      margin-top: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .json-box, .summary-list {
+      margin: 0;
+      padding: 1rem;
+      border-radius: .9rem;
+      border: 1px solid var(--demo-border);
+      background: rgba(2, 10, 20, .92);
+      color: #dbe9ff;
+      font-family: var(--bs-font-mono, ui-monospace, monospace);
+      font-size: .82rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      overflow: auto;
+    }
+    .summary-list {
+      font-family: inherit;
+      list-style: none;
+    }
+    .summary-list li + li { margin-top: .45rem; }
+    .summary-list strong { color: #9dc0ff; }
+    .badge-row {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+      margin-top: .75rem;
+    }
+    .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: .4rem .75rem;
+      border-radius: 999px;
+      background: rgba(121, 169, 255, .12);
+      color: #cfe0ff;
+      border: 1px solid rgba(121, 169, 255, .22);
+      font-size: .82rem;
+    }
+    .invalid-feedback { display: block; min-height: 1.2rem; }
+    .toolbar {
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .toolbar .status-chip { font-size: .82rem; }
+    .footer-note {
+      color: var(--demo-muted);
+      font-size: .84rem;
+      text-align: right;
+    }
+    @media (max-width: 980px) {
+      .stepper { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 680px) {
+      .stepper { grid-template-columns: 1fr; }
+      .wizard-actions { flex-direction: column-reverse; }
+      .wizard-actions .bt { width: 100%; }
+      .footer-note { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrapper">
+    <header class="site-header site-header-dark">
+      <a class="brand" href="index.html">🔩 BareMetalJsTools</a>
+      <nav>
+        <a href="forms-demo.html" class="act">Forms Demo</a>
+        <a href="realtime-demo.html">Realtime</a>
+        <a href="media-demo.html">Media</a>
+        <a href="sync-demo.html">Sync</a>
+      </nav>
+    </header>
+
+    <main class="main-content p4" style="overflow-y:auto;">
+      <div class="ctn">
+        <section class="hero mb3">
+          <div class="toolbar">
+            <div>
+              <h1 class="mb1">Contact Form with Validation</h1>
+              <p class="lead txm mb0">A dark, responsive four-step contact wizard powered by <strong>BareMetal.Forms</strong>, live <strong>Validate + Expressions</strong> checks, <strong>UndoRedo</strong>, <strong>Notify</strong>, and a final <strong>Schema</strong> payload gate.</p>
+            </div>
+            <div class="badge-row">
+              <span class="status-chip">Ctrl+Z / Ctrl+Y enabled</span>
+              <span class="status-chip" id="dirty-indicator">Pristine draft</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="rw g3">
+          <div class="cm8">
+            <div class="cd demo-card">
+              <div class="cd-b">
+                <div class="stepper" id="stepper">
+                  <div class="step-pill"><strong>1</strong><span>Personal</span></div>
+                  <div class="step-pill"><strong>2</strong><span>Address</span></div>
+                  <div class="step-pill"><strong>3</strong><span>Preferences</span></div>
+                  <div class="step-pill"><strong>4</strong><span>Confirm</span></div>
+                </div>
+
+                <form id="wizard-form" novalidate>
+                  <section class="wizard-step" data-step="0">
+                    <div class="rw g3">
+                      <div class="cm6">
+                        <label class="fl" for="firstName">First name</label>
+                        <input class="fc" id="firstName" name="firstName" placeholder="Ava" autocomplete="given-name">
+                        <div class="invalid-feedback" data-error-for="firstName"></div>
+                      </div>
+                      <div class="cm6">
+                        <label class="fl" for="lastName">Last name</label>
+                        <input class="fc" id="lastName" name="lastName" placeholder="Johnson" autocomplete="family-name">
+                        <div class="invalid-feedback" data-error-for="lastName"></div>
+                      </div>
+                      <div class="cm6">
+                        <label class="fl" for="email">Work email</label>
+                        <div class="field-shell">
+                          <input class="fc" id="email" name="email" type="email" placeholder="ava@northstar.dev" autocomplete="email">
+                          <span class="status-chip" data-pattern-status="email">Waiting</span>
+                        </div>
+                        <div class="invalid-feedback" data-error-for="email"></div>
+                      </div>
+                      <div class="cm6">
+                        <label class="fl" for="phone">Phone number</label>
+                        <div class="field-shell">
+                          <input class="fc" id="phone" name="phone" placeholder="+44 7911 123456" autocomplete="tel">
+                          <span class="status-chip" data-pattern-status="phone">Waiting</span>
+                        </div>
+                        <div class="invalid-feedback" data-error-for="phone"></div>
+                      </div>
+                      <div class="c12">
+                        <label class="fl" for="company">Company</label>
+                        <input class="fc" id="company" name="company" placeholder="Northstar Labs" autocomplete="organization">
+                        <div class="invalid-feedback" data-error-for="company"></div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="wizard-step" data-step="1">
+                    <div class="rw g3">
+                      <div class="c12">
+                        <label class="fl" for="street">Street address</label>
+                        <input class="fc" id="street" name="street" placeholder="221B Baker Street" autocomplete="street-address">
+                        <div class="invalid-feedback" data-error-for="street"></div>
+                      </div>
+                      <div class="cm5">
+                        <label class="fl" for="city">City</label>
+                        <input class="fc" id="city" name="city" placeholder="London" autocomplete="address-level2">
+                        <div class="invalid-feedback" data-error-for="city"></div>
+                      </div>
+                      <div class="cm3">
+                        <label class="fl" for="region">Region</label>
+                        <input class="fc" id="region" name="region" placeholder="Greater London" autocomplete="address-level1">
+                        <div class="invalid-feedback" data-error-for="region"></div>
+                      </div>
+                      <div class="cm4">
+                        <label class="fl" for="postalCode">Postal code</label>
+                        <input class="fc" id="postalCode" name="postalCode" placeholder="SW1A 1AA" autocomplete="postal-code">
+                        <div class="invalid-feedback" data-error-for="postalCode"></div>
+                      </div>
+                      <div class="cm6">
+                        <label class="fl" for="country">Country</label>
+                        <select class="fsl" id="country" name="country">
+                          <option value="">Select a country</option>
+                          <option>United Kingdom</option>
+                          <option>United States</option>
+                          <option>Canada</option>
+                          <option>Germany</option>
+                          <option>Australia</option>
+                        </select>
+                        <div class="invalid-feedback" data-error-for="country"></div>
+                      </div>
+                      <div class="cm6">
+                        <label class="fl" for="teamSize">Team size</label>
+                        <select class="fsl" id="teamSize" name="teamSize">
+                          <option value="">Choose team size</option>
+                          <option value="1-5">1–5 people</option>
+                          <option value="6-20">6–20 people</option>
+                          <option value="21-50">21–50 people</option>
+                          <option value="50+">50+ people</option>
+                        </select>
+                        <div class="invalid-feedback" data-error-for="teamSize"></div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="wizard-step" data-step="2">
+                    <div class="rw g3">
+                      <div class="c12">
+                        <label class="fl">Primary contact goal</label>
+                        <div class="rw g2">
+                          <div class="cm4"><label class="fch"><input class="fch-i" type="radio" name="contactReason" value="demo"><span class="fch-l">Product demo</span></label></div>
+                          <div class="cm4"><label class="fch"><input class="fch-i" type="radio" name="contactReason" value="pricing"><span class="fch-l">Pricing review</span></label></div>
+                          <div class="cm4"><label class="fch"><input class="fch-i" type="radio" name="contactReason" value="support"><span class="fch-l">Implementation support</span></label></div>
+                        </div>
+                        <div class="invalid-feedback" data-error-for="contactReason"></div>
+                      </div>
+                      <div class="c12">
+                        <label class="fl">Interests</label>
+                        <div class="rw g2">
+                          <div class="cm4"><label class="fch"><input class="fch-i" type="checkbox" name="interests" value="analytics"><span class="fch-l">Realtime analytics</span></label></div>
+                          <div class="cm4"><label class="fch"><input class="fch-i" type="checkbox" name="interests" value="automation"><span class="fch-l">Workflow automation</span></label></div>
+                          <div class="cm4"><label class="fch"><input class="fch-i" type="checkbox" name="interests" value="governance"><span class="fch-l">Security & governance</span></label></div>
+                        </div>
+                        <div class="invalid-feedback" data-error-for="interests"></div>
+                      </div>
+                      <div class="cm6">
+                        <label class="fl" for="budget">Quarterly budget</label>
+                        <select class="fsl" id="budget" name="budget">
+                          <option value="">Select range</option>
+                          <option value="<10k">Under $10k</option>
+                          <option value="10-50k">$10k–$50k</option>
+                          <option value="50-250k">$50k–$250k</option>
+                          <option value=">250k">Over $250k</option>
+                        </select>
+                        <div class="invalid-feedback" data-error-for="budget"></div>
+                      </div>
+                      <div class="cm6">
+                        <label class="fl" for="timeline">Decision timeline</label>
+                        <select class="fsl" id="timeline" name="timeline">
+                          <option value="">Choose timeline</option>
+                          <option>Within 30 days</option>
+                          <option>Quarterly planning</option>
+                          <option>Researching options</option>
+                        </select>
+                        <div class="invalid-feedback" data-error-for="timeline"></div>
+                      </div>
+                      <div class="c12">
+                        <label class="fl" for="message">What should we prepare before the call?</label>
+                        <textarea class="fc" id="message" name="message" rows="5" placeholder="Tell us about your current workflow, pain points, and the outcome you want."></textarea>
+                        <div class="invalid-feedback" data-error-for="message"></div>
+                      </div>
+                      <div class="c12">
+                        <label class="fch"><input class="fch-i" id="consent" name="consent" type="checkbox"><span class="fch-l">I agree to be contacted about this request.</span></label>
+                        <div class="invalid-feedback" data-error-for="consent"></div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="wizard-step" data-step="3">
+                    <div class="rw g3">
+                      <div class="cm6">
+                        <h5 class="mb2">Submission summary</h5>
+                        <ul class="summary-list" id="summary-list"></ul>
+                      </div>
+                      <div class="cm6">
+                        <h5 class="mb2">Schema-ready payload</h5>
+                        <pre class="json-box" id="payload-preview">{}</pre>
+                      </div>
+                    </div>
+                  </section>
+
+                  <div class="wizard-actions">
+                    <div class="fx gp2 flex-wrap">
+                      <button type="button" class="bt bt-op" id="back-btn">← Back</button>
+                      <button type="button" class="bt bt-os" id="undo-btn">Undo</button>
+                      <button type="button" class="bt bt-os" id="redo-btn">Redo</button>
+                    </div>
+                    <div class="fx gp2 flex-wrap aic">
+                      <span class="footer-note" id="undo-note">Nothing to undo yet.</span>
+                      <button type="button" class="bt bt-p" id="next-btn">Next step →</button>
+                      <button type="submit" class="bt bt-ok" id="submit-btn">Submit request</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="cm4">
+            <div class="side-stack">
+              <div class="cd demo-card">
+                <div class="cd-h">Live checks</div>
+                <div class="cd-b">
+                  <div class="summary-grid">
+                    <div class="mini-stat"><span>Wizard step</span><strong id="mini-step">1 / 4</strong></div>
+                    <div class="mini-stat"><span>Valid fields</span><strong id="mini-valid">0 / 15</strong></div>
+                    <div class="mini-stat"><span>Errors</span><strong id="mini-errors">0</strong></div>
+                    <div class="mini-stat"><span>Undo stack</span><strong id="mini-history">0 actions</strong></div>
+                  </div>
+                  <div class="badge-row" id="regex-badges"></div>
+                </div>
+              </div>
+
+              <div class="cd demo-card">
+                <div class="cd-h">Draft intelligence</div>
+                <div class="cd-b">
+                  <p class="small-note mb2">This sidebar is updated with <strong>BareMetal.Forms</strong> state and a final <strong>BareMetal.Schema</strong> model, so you can see exactly what will be submitted.</p>
+                  <pre class="json-box" id="draft-preview">{}</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer site-footer-dark tc">
+      Focused demo page · BareMetalJsTools examples
+    </footer>
+  </div>
+
+  <script src="../src/BareMetal.Forms.js"></script>
+  <script src="../src/BareMetal.Validate.js"></script>
+  <script src="../src/BareMetal.Expressions.js"></script>
+  <script src="../src/BareMetal.UndoRedo.js"></script>
+  <script src="../src/BareMetal.Notify.js"></script>
+  <script src="../src/BareMetal.Schema.js"></script>
+  <script>
+    (function () {
+      var formEl = document.getElementById('wizard-form');
+      var stepper = Array.prototype.slice.call(document.querySelectorAll('.step-pill'));
+      var steps = Array.prototype.slice.call(document.querySelectorAll('.wizard-step'));
+      var nextBtn = document.getElementById('next-btn');
+      var backBtn = document.getElementById('back-btn');
+      var submitBtn = document.getElementById('submit-btn');
+      var undoBtn = document.getElementById('undo-btn');
+      var redoBtn = document.getElementById('redo-btn');
+      var draftPreview = document.getElementById('draft-preview');
+      var payloadPreview = document.getElementById('payload-preview');
+      var summaryList = document.getElementById('summary-list');
+      var miniStep = document.getElementById('mini-step');
+      var miniValid = document.getElementById('mini-valid');
+      var miniErrors = document.getElementById('mini-errors');
+      var miniHistory = document.getElementById('mini-history');
+      var undoNote = document.getElementById('undo-note');
+      var dirtyIndicator = document.getElementById('dirty-indicator');
+      var regexBadges = document.getElementById('regex-badges');
+      var currentStep = 0;
+      var applyingHistory = false;
+      var beforeEdit = null;
+      var beforeField = '';
+      var totalFields = 15;
+      var stepFields = [
+        ['firstName', 'lastName', 'email', 'phone', 'company'],
+        ['street', 'city', 'region', 'postalCode', 'country', 'teamSize'],
+        ['contactReason', 'interests', 'budget', 'timeline', 'message', 'consent'],
+        []
+      ];
+      var rules = {
+        fields: {
+          firstName: { required: true, minLength: 2, label: 'First name' },
+          lastName: { required: true, minLength: 2, label: 'Last name' },
+          email: { required: true, pattern: BareMetal.Expressions.email.pattern, label: 'Email' },
+          phone: { required: true, pattern: BareMetal.Expressions.phone.pattern, label: 'Phone' },
+          company: { required: true, minLength: 2, label: 'Company' },
+          street: { required: true, minLength: 6, label: 'Street address' },
+          city: { required: true, minLength: 2, label: 'City' },
+          region: { required: true, minLength: 2, label: 'Region' },
+          postalCode: { required: true, minLength: 4, label: 'Postal code' },
+          country: { required: true, label: 'Country' },
+          teamSize: { required: true, label: 'Team size' },
+          contactReason: { required: true, label: 'Contact reason' },
+          interests: { required: true, min: 1, label: 'Interests' },
+          budget: { required: true, label: 'Budget' },
+          timeline: { required: true, label: 'Timeline' },
+          message: { required: true, minLength: 16, label: 'Message' },
+          consent: { required: true, custom: function (value) { return value ? '' : 'You must agree before submitting.'; }, label: 'Consent' }
+        }
+      };
+      var formApi = BareMetal.Forms.create(formEl, rules);
+      var history = BareMetal.UndoRedo.create();
+      var payloadSchema = BareMetal.Schema.object({
+        firstName: BareMetal.Schema.string({ minLength: 2 }),
+        lastName: BareMetal.Schema.string({ minLength: 2 }),
+        email: BareMetal.Schema.string({ pattern: BareMetal.Expressions.email.pattern }),
+        phone: BareMetal.Schema.string({ pattern: BareMetal.Expressions.phone.pattern }),
+        company: BareMetal.Schema.string({ minLength: 2 }),
+        address: BareMetal.Schema.object({
+          street: BareMetal.Schema.string({ minLength: 6 }),
+          city: BareMetal.Schema.string({ minLength: 2 }),
+          region: BareMetal.Schema.string({ minLength: 2 }),
+          postalCode: BareMetal.Schema.string({ minLength: 4 }),
+          country: BareMetal.Schema.string({ minLength: 2 })
+        }),
+        teamSize: BareMetal.Schema.string({ minLength: 2 }),
+        contactReason: BareMetal.Schema.string({ minLength: 2 }),
+        interests: BareMetal.Schema.array(BareMetal.Schema.string({ minLength: 2 }), { minLength: 1 }),
+        budget: BareMetal.Schema.string({ minLength: 2 }),
+        timeline: BareMetal.Schema.string({ minLength: 2 }),
+        message: BareMetal.Schema.string({ minLength: 16 }),
+        consent: BareMetal.Schema.boolean()
+      });
+
+      history.bindKeys(document);
+      BareMetal.Notify.configure({ defaultPosition: 'top-right', theme: 'dark' });
+
+      function clone(value) {
+        return JSON.parse(JSON.stringify(value || {}));
+      }
+
+      function valuesToPayload(values) {
+        var data = clone(values);
+        return {
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          company: data.company || '',
+          address: {
+            street: data.street || '',
+            city: data.city || '',
+            region: data.region || '',
+            postalCode: data.postalCode || '',
+            country: data.country || ''
+          },
+          teamSize: data.teamSize || '',
+          contactReason: data.contactReason || '',
+          interests: Array.isArray(data.interests) ? data.interests : (data.interests ? [data.interests] : []),
+          budget: data.budget || '',
+          timeline: data.timeline || '',
+          message: data.message || '',
+          consent: !!data.consent
+        };
+      }
+
+      function patternState() {
+        var values = formApi.getValues();
+        return BareMetal.Validate.validate({
+          email: { required: true, pattern: BareMetal.Expressions.email.pattern },
+          phone: { required: true, pattern: BareMetal.Expressions.phone.pattern }
+        }, {
+          email: values.email || '',
+          phone: values.phone || ''
+        });
+      }
+
+      function setFieldError(name, errors) {
+        var nodes = formEl.querySelectorAll('[name="' + name + '"]');
+        var msg = document.querySelector('[data-error-for="' + name + '"]');
+        var hasError = !!(errors && errors.length);
+        Array.prototype.forEach.call(nodes, function (node) {
+          node.classList.toggle('is-invalid', hasError);
+          if (!hasError && node.type !== 'radio' && node.type !== 'checkbox' && node.value) node.classList.add('is-valid');
+          if (hasError) node.classList.remove('is-valid');
+        });
+        if (msg) msg.textContent = hasError ? errors[0] : '';
+      }
+
+      function renderErrors(state) {
+        Object.keys(rules.fields).forEach(function (name) {
+          setFieldError(name, state.errors[name]);
+        });
+      }
+
+      function renderRegex() {
+        var checks = {
+          email: BareMetal.Expressions.email,
+          phone: BareMetal.Expressions.phone
+        };
+        var values = formApi.getValues();
+        var validation = patternState();
+        regexBadges.innerHTML = '';
+        Object.keys(checks).forEach(function (name) {
+          var value = (values[name] || '').trim();
+          var badge = document.querySelector('[data-pattern-status="' + name + '"]');
+          var ok = value && checks[name].test(value) && validation.errors.filter(function (err) { return err.path === name; }).length === 0;
+          var label = !value ? 'Waiting' : ok ? 'Pattern OK' : 'Needs format';
+          if (badge) {
+            badge.textContent = label;
+            badge.className = 'status-chip' + (ok ? ' ok' : value ? ' bad' : '');
+          }
+          var chip = document.createElement('span');
+          chip.className = 'tag-pill';
+          chip.textContent = (name === 'email' ? 'Email' : 'Phone') + ': ' + label;
+          regexBadges.appendChild(chip);
+        });
+      }
+
+      function updateSummary() {
+        var values = formApi.getValues();
+        var payload = valuesToPayload(values);
+        var items = [
+          ['Name', (values.firstName || '') + ' ' + (values.lastName || '')],
+          ['Contact', values.email || '—'],
+          ['Phone', values.phone || '—'],
+          ['Company', values.company || '—'],
+          ['Address', [values.street, values.city, values.region, values.postalCode, values.country].filter(Boolean).join(', ') || '—'],
+          ['Reason', values.contactReason || '—'],
+          ['Interests', payload.interests.join(', ') || '—'],
+          ['Budget', values.budget || '—'],
+          ['Timeline', values.timeline || '—']
+        ];
+        summaryList.innerHTML = items.map(function (item) {
+          return '<li><strong>' + item[0] + ':</strong> ' + (item[1] || '—') + '</li>';
+        }).join('');
+        draftPreview.textContent = JSON.stringify(values, null, 2);
+        payloadPreview.textContent = JSON.stringify(payload, null, 2);
+      }
+
+      function updateHistoryUi() {
+        undoBtn.disabled = !history.canUndo();
+        redoBtn.disabled = !history.canRedo();
+        undoNote.textContent = history.canUndo() ? ('Undo: ' + (history.undoName() || 'Previous edit')) : 'Nothing to undo yet.';
+        miniHistory.textContent = history.size() + ' actions';
+      }
+
+      function updateMetrics() {
+        var state = formApi.getState();
+        var validFields = Object.keys(rules.fields).filter(function (name) {
+          return !state.errors[name] && state.values[name] !== undefined && state.values[name] !== '' && !(Array.isArray(state.values[name]) && !state.values[name].length);
+        }).length;
+        miniStep.textContent = (currentStep + 1) + ' / 4';
+        miniValid.textContent = validFields + ' / ' + totalFields;
+        miniErrors.textContent = Object.keys(state.errors).length;
+        dirtyIndicator.textContent = state.dirty ? 'Unsaved draft' : 'Pristine draft';
+        dirtyIndicator.className = 'status-chip' + (state.dirty ? ' bad' : ' ok');
+      }
+
+      function renderStep() {
+        steps.forEach(function (step, index) {
+          step.classList.toggle('act', index === currentStep);
+        });
+        stepper.forEach(function (pill, index) {
+          pill.classList.toggle('act', index === currentStep);
+          pill.classList.toggle('done', index < currentStep);
+        });
+        backBtn.style.visibility = currentStep === 0 ? 'hidden' : 'visible';
+        nextBtn.style.display = currentStep === steps.length - 1 ? 'none' : 'inline-flex';
+        submitBtn.style.display = currentStep === steps.length - 1 ? 'inline-flex' : 'none';
+        updateSummary();
+        updateMetrics();
+      }
+
+      function validateCurrentStep() {
+        var state = formApi.getState();
+        renderErrors(state);
+        return !stepFields[currentStep].some(function (name) {
+          return !!state.errors[name];
+        });
+      }
+
+      function restoreValues(snapshot) {
+        applyingHistory = true;
+        formApi.setValues(snapshot);
+        applyingHistory = false;
+        refresh();
+      }
+
+      function pushHistory(name, before, after) {
+        history.push({
+          name: name,
+          execute: function () { restoreValues(after); },
+          undo: function () { restoreValues(before); }
+        });
+        updateHistoryUi();
+      }
+
+      function refresh() {
+        renderErrors(formApi.getState());
+        renderRegex();
+        updateSummary();
+        updateMetrics();
+        updateHistoryUi();
+      }
+
+      formApi.onChange(function () {
+        refresh();
+      });
+
+      formEl.addEventListener('focusin', function (event) {
+        if (!event.target.name || applyingHistory) return;
+        beforeEdit = clone(formApi.getValues());
+        beforeField = event.target.name;
+      });
+
+      formEl.addEventListener('focusout', function (event) {
+        var afterEdit;
+        var label;
+        if (!beforeEdit || applyingHistory || !event.target.name || beforeField !== event.target.name) return;
+        afterEdit = clone(formApi.getValues());
+        if (JSON.stringify(beforeEdit) !== JSON.stringify(afterEdit)) {
+          label = event.target.getAttribute('data-label') || event.target.name;
+          pushHistory('Edit ' + label, beforeEdit, afterEdit);
+        }
+        beforeEdit = null;
+        beforeField = '';
+      }, true);
+
+      nextBtn.addEventListener('click', function () {
+        if (!validateCurrentStep()) {
+          BareMetal.Notify.warning('Fix the highlighted fields before moving on.');
+          return;
+        }
+        currentStep = Math.min(steps.length - 1, currentStep + 1);
+        renderStep();
+      });
+
+      backBtn.addEventListener('click', function () {
+        currentStep = Math.max(0, currentStep - 1);
+        renderStep();
+      });
+
+      undoBtn.addEventListener('click', function () {
+        history.undo();
+        updateHistoryUi();
+        refresh();
+      });
+
+      redoBtn.addEventListener('click', function () {
+        history.redo();
+        updateHistoryUi();
+        refresh();
+      });
+
+      history.on('undo', function () { refresh(); });
+      history.on('redo', function () { refresh(); });
+
+      formApi.onSubmit(function (values) {
+        var payload = valuesToPayload(values);
+        var schemaResult = BareMetal.Schema.validate(payloadSchema, payload);
+        if (!schemaResult.valid) {
+          currentStep = 3;
+          renderStep();
+          payloadPreview.textContent = JSON.stringify({ schemaErrors: schemaResult.errors, payload: payload }, null, 2);
+          BareMetal.Notify.error('Final schema validation failed. Review the confirm step.');
+          return;
+        }
+        BareMetal.Notify.success('Contact request submitted successfully.', { title: 'Submission complete' });
+        history.clear();
+        formApi.reset();
+        currentStep = 0;
+        renderStep();
+        refresh();
+      });
+
+      renderStep();
+      refresh();
+    })();
+  </script>
+</body>
+</html>
