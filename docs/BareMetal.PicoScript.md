@@ -1,293 +1,105 @@
 # BareMetal.PicoScript
 
-> BASIC-style protocol compiler that turns event-driven PicoScript into bytecode, jump graphs, runtime traces, and portable handler code.
+> The real PicoScript 16-opcode ISA compiler + VM, bundled as a single BareMetalJsTools module.
 
-**Size:** 107 KB source / 51 KB minified  
-**Dependencies:** None
+This is a self-contained bundle of the [PicoScript](https://github.com/WillEastbury/picoscript) toolchain — the same deterministic bytecode compiler and VM that runs on bare metal (RP2350), PIOS, and in the browser. It replaces the old protocol-BASIC compiler with the full 16-opcode ISA.
 
-## Quick Start
+## What's inside
+
+| Component | Origin | Purpose |
+|-----------|--------|---------|
+| `pico_hooks.js` | auto-generated | 456 hook codes for 63 namespaces |
+| `picocompress.js` | vendored | PicoCompress RLE codec |
+| `picobrotli.js` | vendored | Brotli encoder/decoder |
+| `picoc.js` | compiler | 4-frontend compiler (C, BASIC, Python, English) |
+| `picovm.js` | VM | 16-opcode deterministic VM with full host-hook surface |
+
+## Quick start
 
 ```html
-<script src="BareMetal.PicoScript.min.js"></script>
+<script src="BareMetal.PicoScript.js"></script>
 <script>
-var source = [
-  'ON CONNECT:',
-  '  EMIT("HTTP/1.1 200 OK")',
-  '  EMIT_CRLF()',
-  '  EMIT("Content-Type: text/plain")',
-  '  EMIT_CRLF()',
-  '  EMIT_CRLF()',
-  '  EMIT("hello from PicoScript")',
-  'END ON'
-].join('\n');
+  var ps = BareMetal.PicoScript;
 
-var compiled = BareMetal.PicoScript.compile(source);
-var result = BareMetal.PicoScript.dispatch(compiled, 'connect', { vars: {} });
+  // Compile C-syntax PicoScript
+  var result = ps.compileC('int x = 42; Io.WriteByte(x);');
 
-console.log(new TextDecoder().decode(result.emitBuffer));
-console.log(BareMetal.PicoScript.cfg(compiled));
+  // Run it
+  var vm = new ps.VM();
+  vm.run(result.words);
+  console.log(vm.output); // [42]
 </script>
 ```
 
-## API Reference
+## API
 
-### `tokenize(source)` → `Array`
+### Compiler
 
-Splits PicoScript source into lexer tokens with `type`, `value`, `line`, and `col` metadata.
+| Method | Description |
+|--------|-------------|
+| `compile(source, lang)` | Compile source in any language (`"c"`, `"basic"`, `"python"`, `"english"`) |
+| `compileC(source)` | Compile C-syntax PicoScript |
+| `compileBasic(source)` | Compile BASIC-syntax PicoScript |
+| `compilePython(source)` | Compile Python-syntax PicoScript |
+| `compileEnglish(source)` | Compile English-syntax PicoScript |
+| `compileDebug(source, lang)` | Compile with debug info (source maps) |
 
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `source` | `string` | `''` | Raw PicoScript source |
+All compile methods return `{ words: number[], ... }`.
 
-**Example:**
+### VM
+
 ```js
-var tokens = BareMetal.PicoScript.tokenize('LET X = 42');
-console.log(tokens[0]);
+var vm = new ps.VM(opts);
+vm.run(words);         // execute bytecode
+vm.step();             // single-step (for debuggers)
+vm.regs                // register file (R0-R15)
+vm.output              // output buffer (bytes)
+vm.halted              // true when execution complete
+vm.steps               // instruction count
 ```
 
-### `parse(sourceOrTokens)` → `AST`
+Constructor options: `{ maxSteps, caps, seed, noAlloc, cards, cardStore, gpioProvider }`.
 
-Parses source text or a token array into a `Program` AST.
+### Hook table (for editor completions)
 
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `sourceOrTokens` | `string \| Array` | — | Raw source or the array returned by `tokenize()` |
-
-**Example:**
 ```js
-var tokens = BareMetal.PicoScript.tokenize('PRINT "hi"');
-var ast = BareMetal.PicoScript.parse(tokens);
-console.log(ast.type, ast.body.length);
+ps.hooks.BY_CODE        // { 0x280: "Process.Self", 0x290: "Timer.After", ... }
+ps.namespaces()         // ["Attention","Auth","BitLinear","Bits","Capsule","Capability",...]
+ps.methods("Process")   // ["Args","Exit","Kill","Parent","Self","Spawn","Status","Wait"]
+ps.methods("Timer")     // ["After","Cancel","Elapsed","Every"]
+ps.hookCode("Process", "Self")  // 0x280
 ```
 
-### `compile(sourceOrAst)` → `CompiledProgram`
+### Sub-modules
 
-Compiles PicoScript into bytecode plus symbol tables, labels, event entries, and source maps.
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `sourceOrAst` | `string \| object` | — | PicoScript source or a parsed AST |
-
-`CompiledProgram` includes `bytecode`, `data`, `symbols`, `_symbols`, `labels`, `sourceMap`, `callArgs`, `builtinEntries`, `userFunctions`, and `entries`.
-
-**Example:**
 ```js
-var compiled = BareMetal.PicoScript.compile([
-  'LET COUNT = 1',
-  'ON TICK:',
-  '  LET COUNT = COUNT + 1',
-  'END ON'
-].join('\n'));
-
-console.log(compiled.entries, compiled.labels);
+ps.PicoCompress.compress(data)    // PicoCompress RLE
+ps.PicoBrotli                     // Brotli encoder/decoder
 ```
 
-### `run(bytecodeObj, opts)` → `Result | Promise<Result>`
+## Namespaces (63 total, 456 hooks)
 
-Runs a compiled program from its `main` entry.
+The full namespace surface includes:
 
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `bytecodeObj` | `object` | — | Compiled program returned by `compile()` or `assemble()` |
-| `opts` | `object` | `{}` | VM options such as `maxCycles`, `inputFn`, `printFn`, `trace`, and `async` |
+- **Core:** `Math`, `Flow`, `Thread`, `Dsp`, `Net`, `Kernel`
+- **Memory:** `Memory`, `Span`, `Descriptor`, `Arena`, `Lease`
+- **I/O:** `Io`, `Utf8Writer`, `Utf8Reader`, `Json`, `Xml`, `TextRender`
+- **Storage:** `Storage`, `Query`, `Search`
+- **Text:** `String`, `Number`, `Maths`, `Template`
+- **System:** `DateTime`, `Locale`, `Environment`, `Context`
+- **Security:** `Crypto`, `X509`, `Auth`
+- **HTTP:** `Http`, `Html`, `Req`, `Resp`
+- **Hardware:** `Gpio`, `Device`, `Stream`, `Dot8`
+- **Capsules:** `Pack`, `Card`, `Fifo`, `Capsule`
+- **UI:** `Ui`, `Event`, `Assert`
+- **AI:** `Tensor`, `BitLinear`, `Quant`, `Attention`, `Tokenizer`, `Model`, `Kv`, `Sampling`
+- **OS-worker:** `Process`, `Env`, `Timer`, `Scheduler`, `Principal`, `Capability`, `Sandbox`, `Error`
+- **Codec:** `Compress`
 
-`Result` includes `vars`, `output`, `emitBuffer`, `cycles`, `halted`, `haltReason`, `trace`, and `error`.
+## Replaces
 
-**Example:**
-```js
-var compiled = BareMetal.PicoScript.compile('LET X = 2 + 3\nPRINT X');
-var result = BareMetal.PicoScript.run(compiled);
-console.log(result.output, result.vars);
-```
+This module replaces the old `BareMetal.PicoScript` protocol-BASIC compiler and `BareMetal.PicoScript.Editor` 4-pane IDE. Those compiled a different instruction set (EMIT/PEEK/GOSUB BASIC DSL). This is the real PicoScript 16-opcode ISA used by PIOS.
 
-### `dispatch(bytecodeObj, event, context, opts)` → `Result | Promise<Result>`
+## Size
 
-Runs a specific event entry such as `data`, `tick`, `connect`, or `close` with protocol safety rails enabled.
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `bytecodeObj` | `object` | — | Compiled program |
-| `event` | `string` | `'main'` | Event name looked up in `compiled.entries` |
-| `context` | `object` | `{}` | Event context with `buffer` and optional `vars` |
-| `opts` | `object` | `{}` | Overrides for `maxCycles`, `maxBlocksPerEvent`, `maxEmitBytes`, `maxSlices`, `strict`, `trace`, and `async` |
-
-`dispatch()` injects the incoming buffer as `DATA$` and `_BUFFER`, returns emitted bytes as `emitBuffer`, and strips the internal buffer variables from `vars`.
-
-**Example:**
-```js
-var source = [
-  'ON DATA:',
-  '  IF BUF_LEN(DATA$) > 0 THEN EMIT(PEEK(DATA$, 0))',
-  'END ON'
-].join('\n');
-
-var compiled = BareMetal.PicoScript.compile(source);
-var result = BareMetal.PicoScript.dispatch(compiled, 'data', {
-  buffer: new Uint8Array([65])
-}, { trace: true });
-
-console.log(Array.from(result.emitBuffer), result.trace);
-```
-
-### `exec(source, opts)` → `Result | Promise<Result>`
-
-Convenience helper that compiles source and immediately runs it.
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `source` | `string` | `''` | PicoScript source to compile and run |
-| `opts` | `object` | `{}` | Same options accepted by `run()` |
-
-**Example:**
-```js
-var result = BareMetal.PicoScript.exec('PRINT 1 + 1');
-console.log(result.output);
-```
-
-### `assemble(asmSource)` → `CompiledProgram`
-
-Builds a compiled program from PicoScript assembly text.
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `asmSource` | `string` | `''` | Assembly text containing opcodes, labels, and optional `DATA` lines |
-
-**Example:**
-```js
-var program = BareMetal.PicoScript.assemble([
-  'PUSH_STR "OK"',
-  'PRINT',
-  'HALT'
-].join('\n'));
-
-console.log(program.bytecode);
-```
-
-### `disassemble(bytecodeObj)` → `string`
-
-Turns compiled bytecode back into readable assembly annotated with source lines.
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `bytecodeObj` | `object` | — | Compiled program |
-
-**Example:**
-```js
-var compiled = BareMetal.PicoScript.compile('PRINT "hello"');
-console.log(BareMetal.PicoScript.disassemble(compiled));
-```
-
-### `createVM(opts)` → `VM`
-
-Creates a low-level VM instance for manual stepping, variable injection, and custom execution control.
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `opts` | `object` | `{}` | VM config including `maxCycles`, `maxBlocksPerEvent`, `maxEmitBytes`, `maxSlices`, `strict`, `inputFn`, `printFn`, `trace`, `async`, and `startPc` |
-
-A `VM` exposes `load()`, `step()`, `run()`, `reset()`, `getState()`, `setVariable()`, `setInternalVariable()`, `getVariable()`, `emit()`, `emitU8()`, `emitU16()`, `emitU32()`, and `emitString()`.
-
-**Example:**
-```js
-var vm = BareMetal.PicoScript.createVM({ trace: true });
-vm.load(BareMetal.PicoScript.compile('LET X = 7\nPRINT X'));
-console.log(vm.step());
-console.log(vm.run());
-```
-
-### `cfg(bytecodeObj)` → `{ blocks, entry, leaders, blockLeaders }`
-
-Extracts a control-flow graph from compiled bytecode.
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `bytecodeObj` | `object` | — | Compiled program |
-
-Each block includes `id`, `start`, `end`, `sourceLine`, `edges`, and `isTarget`.
-
-**Example:**
-```js
-var compiled = BareMetal.PicoScript.compile('IF 1 THEN PRINT "A" ELSE PRINT "B"');
-console.log(BareMetal.PicoScript.cfg(compiled).blocks);
-```
-
-### `toCSharp(source)` → `string`
-
-Transpiles PicoScript into a C# `ProtocolHandler` class skeleton.
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `source` | `string` | `''` | PicoScript source |
-
-**Example:**
-```js
-var csharp = BareMetal.PicoScript.toCSharp('ON CONNECT:\n  EMIT("OK")\nEND ON');
-console.log(csharp);
-```
-
-### `toC(source)` → `string`
-
-Transpiles PicoScript into a C protocol handler using a `proto_ctx_t` emit buffer.
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `source` | `string` | `''` | PicoScript source |
-
-**Example:**
-```js
-var cCode = BareMetal.PicoScript.toC('ON DATA:\n  EMIT(PEEK(DATA$, 0))\nEND ON');
-console.log(cCode);
-```
-
-### `format(source)` → `string`
-
-Formats PicoScript into normalized, pretty-printed source.
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `source` | `string` | `''` | PicoScript source |
-
-**Example:**
-```js
-var pretty = BareMetal.PicoScript.format('if 1 then print "x"');
-console.log(pretty);
-```
-
-### `validate(source)` → `{ valid, errors }`
-
-Compiles source in validation mode and returns structured compile errors.
-
-| Param | Type | Default | Description |
-|-------|------|---------|-------------|
-| `source` | `string` | `''` | PicoScript source |
-
-**Example:**
-```js
-var result = BareMetal.PicoScript.validate('IF THEN');
-console.log(result.valid, result.errors[0]);
-```
-
-### `OPCODES` → `object`
-
-Opcode name-to-byte lookup table used by the compiler, assembler, and disassembler.
-
-**Example:**
-```js
-console.log(BareMetal.PicoScript.OPCODES.HALT);
-```
-
-### `VERSION` → `string`
-
-Current module version string.
-
-**Example:**
-```js
-console.log(BareMetal.PicoScript.VERSION);
-```
-
-## Notes
-- Event blocks compile to separate entry points under `compiled.entries`, including `main`, `data`, `tick`, `connect`, and `close`.
-- Protocol builtins include `EMIT`, `EMIT_U8`, `EMIT_U16`, `EMIT_U32`, `EMIT_STR`, `EMIT_CRLF`, `PEEK`, `PEEK_U16`, `PEEK_U32`, `SLICE`, and `BUF_LEN`.
-- `dispatch()` enables strict mode and safety rails by default: `maxBlocksPerEvent`, `maxEmitBytes`, and `maxSlices`.
-- `SLEEP` only works when the VM is created or run with `async: true`.
-- `EMIT()` writes raw bytes; `EMIT_STR()` writes a length-prefixed string payload.
+~322 KB source (includes all 5 sub-modules). The entire compiler + VM + codec suite in one file.

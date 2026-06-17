@@ -92,8 +92,7 @@
     "./themes/wavefunction": "./src/themes/wavefunction.css",
     "./themes/lava": "./src/themes/lava.css",
     "./themes/candy": "./src/themes/candy.css",
-    "./fonts": "./src/fonts/fonts.css",
-    "./picoscript-editor": "./src/BareMetal.PicoScript.Editor.js"
+    "./fonts": "./src/fonts/fonts.css"
   },
   "scripts": {
     "test": "jest",

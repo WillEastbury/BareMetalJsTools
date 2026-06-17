@@ -1,93 +1,116 @@
 /**
- * @jest-environment jest-environment-jsdom
+ * @jest-environment jsdom
  */
-'use strict';
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
 
-function loadPicoScript() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.PicoScript.js'), 'utf8');
-  const fn = new Function('BareMetal', code + '\nreturn BareMetal.PicoScript;');
-  return fn({});
-}
+const SRC_PATH = path.join(__dirname, '..', 'src', 'BareMetal.PicoScript.js');
 
-function outputOf(result) {
-  return result.output.join('');
+function loadModule() {
+  const code = fs.readFileSync(SRC_PATH, 'utf8');
+  const fn = new Function('document', code + '\nreturn BareMetal.PicoScript;');
+  return fn(global.document);
 }
 
 describe('BareMetal.PicoScript', () => {
-  let P;
+  let ps;
 
   beforeAll(() => {
-    P = loadPicoScript();
+    ps = loadModule();
   });
 
-  test('executes hello world and exposes versioned API', () => {
-    expect(P.VERSION).toBe('1.0.0');
-    expect(outputOf(P.exec('PRINT "Hello, World!"'))).toBe('Hello, World!\n');
+  test('exports VERSION 2.0.0', () => {
+    expect(ps.VERSION).toBe('2.0.0');
   });
 
-  test('runs BASIC examples for loops arrays data and gosub', () => {
-    expect(outputOf(P.exec([
-      'DATA 10, 20, 30, "hello"',
-      'READ x',
-      'READ y',
-      'READ z',
-      'READ name$',
-      'PRINT x + y + z',
-      'PRINT name$'
-    ].join('\n')))).toBe('60\nhello\n');
-
-    expect(outputOf(P.exec([
-      'LET x = 5',
-      'GOSUB double',
-      'PRINT x',
-      'END',
-      '',
-      'double:',
-      '  LET x = x * 2',
-      'RETURN'
-    ].join('\n')))).toBe('10\n');
-
-    expect(outputOf(P.exec([
-      'DIM scores(5)',
-      'FOR i = 0 TO 4',
-      '  LET scores(i) = (i + 1) * 10',
-      'NEXT i',
-      'LET total = 0',
-      'FOR i = 0 TO 4',
-      '  LET total = total + scores(i)',
-      'NEXT i',
-      'PRINT "Average: "; total / 5'
-    ].join('\n')))).toBe('Average: 30\n');
+  test('has compiler methods', () => {
+    expect(typeof ps.compile).toBe('function');
+    expect(typeof ps.compileC).toBe('function');
+    expect(typeof ps.compileBasic).toBe('function');
+    expect(typeof ps.compilePython).toBe('function');
+    expect(typeof ps.compileEnglish).toBe('function');
   });
 
-  test('supports conditionals loops goto and user functions', () => {
-    expect(outputOf(P.exec('LET x = 2\nIF x > 1 THEN PRINT "yes" ELSE PRINT "no"'))).toBe('yes\n');
-    expect(outputOf(P.exec('LET i = 0\nWHILE i < 3\nPRINT i\nLET i = i + 1\nWEND'))).toBe('0\n1\n2\n');
-    expect(outputOf(P.exec('LET i = 0\nDO\nPRINT i\nLET i = i + 1\nLOOP WHILE i < 3'))).toBe('0\n1\n2\n');
-    expect(outputOf(P.exec('GOTO done\nPRINT "bad"\ndone:\nPRINT "ok"'))).toBe('ok\n');
-    expect(outputOf(P.exec('DEF FN DOUBLE(x) = x * 2\nPRINT DOUBLE(5)'))).toBe('10\n');
+  test('has VM constructor', () => {
+    expect(typeof ps.VM).toBe('function');
   });
 
-  test('compiles disassembles assembles and runs through VM API', () => {
-    const compiled = P.compile('INPUT x\nPRINT x + 1');
-    const vm = P.createVM({ inputFn: () => '7' });
-    vm.load(compiled);
-    expect(outputOf(vm.run())).toBe('8\n');
-    expect(vm.getVariable('x')).toBe(7);
-
-    const asm = P.disassemble(P.compile('PRINT 41 + 1'));
-    const rebuilt = P.assemble(asm);
-    expect(outputOf(P.run(rebuilt))).toBe('42\n');
-    expect(compiled.bytecode).toBeInstanceOf(Uint8Array);
+  test('has hook table with 456 entries', () => {
+    expect(Object.keys(ps.hooks.BY_CODE).length).toBe(456);
   });
 
-  test('formats validates and supports async sleep', async () => {
-    expect(P.validate('LET x = ').valid).toBe(false);
-    expect(P.format('let x=1\nif x then print "ok" else print "bad"')).toContain('LET X = 1');
+  test('namespaces() returns 63 namespaces', () => {
+    const ns = ps.namespaces();
+    expect(ns.length).toBe(63);
+    expect(ns).toContain('Process');
+    expect(ns).toContain('Timer');
+    expect(ns).toContain('Error');
+    expect(ns).toContain('Capsule');
+    expect(ns).toContain('Env');
+    expect(ns).toContain('Principal');
+    expect(ns).toContain('Sandbox');
+    expect(ns).toContain('Storage');
+    expect(ns).toContain('Tensor');
+  });
 
-    const result = await P.exec('PRINT "A"\nSLEEP 1\nPRINT "B"', { async: true });
-    expect(outputOf(result)).toBe('A\nB\n');
+  test('methods() returns hook methods for a namespace', () => {
+    expect(ps.methods('Process')).toEqual(
+      ['Args', 'Exit', 'Kill', 'Parent', 'Self', 'Spawn', 'Status', 'Wait']
+    );
+    expect(ps.methods('Timer')).toEqual(['After', 'Cancel', 'Elapsed', 'Every']);
+    expect(ps.methods('Env')).toEqual(['Count', 'Get', 'Key', 'Set']);
+  });
+
+  test('hookCode() returns correct codes', () => {
+    expect(ps.hookCode('Process', 'Self')).toBe(0x280);
+    expect(ps.hookCode('Timer', 'After')).toBe(0x290);
+    expect(ps.hookCode('Error', 'Code')).toBe(0x2B2);
+    expect(ps.hookCode('Capsule', 'Call')).toBe(0x2C0);
+  });
+
+  test('C frontend compiles and runs', () => {
+    const r = ps.compileC('int x = 42; Io.WriteByte(x);');
+    expect(r.words.length).toBeGreaterThan(0);
+    const vm = new ps.VM();
+    vm.run(r.words);
+    expect(vm.output).toEqual([42]);
+  });
+
+  test('BASIC frontend compiles', () => {
+    const r = ps.compileBasic('LET R0 = 42\nRETURN');
+    expect(r.words.length).toBeGreaterThan(0);
+  });
+
+  test('Python frontend compiles', () => {
+    const r = ps.compilePython('x = 42');
+    expect(r.words.length).toBeGreaterThan(0);
+  });
+
+  test('English frontend compiles', () => {
+    const r = ps.compileEnglish('Set R0 to 42.\nReturn.');
+    expect(r.words.length).toBeGreaterThan(0);
+  });
+
+  test('OS-worker Process.Self compiles and runs', () => {
+    const r = ps.compileC('int pid = Process.Self(); Io.WriteByte(pid);');
+    const vm = new ps.VM();
+    vm.run(r.words);
+    expect(vm.output[0]).toBe(1); // default self pid
+  });
+
+  test('OS-worker Timer.After compiles and runs', () => {
+    const r = ps.compileC('int h = Timer.After(100); Io.WriteByte(h);');
+    const vm = new ps.VM();
+    vm.run(r.words);
+    expect(vm.output[0]).toBe(1); // first timer handle
+  });
+
+  test('PicoCompress sub-module available', () => {
+    expect(ps.PicoCompress).toBeDefined();
+    expect(typeof ps.PicoCompress.compress).toBe('function');
+  });
+
+  test('PicoBrotli sub-module available', () => {
+    expect(ps.PicoBrotli).toBeDefined();
   });
 });
