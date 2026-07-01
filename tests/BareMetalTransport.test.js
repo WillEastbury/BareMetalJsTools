@@ -3,22 +3,14 @@
  */
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
 
 const SRC_PATH = path.resolve(__dirname, '../src/BareMetal.Transport.js');
 
 function loadTransport() {
-  const code = fs.readFileSync(SRC_PATH, 'utf8');
-  const moduleObj = { exports: {} };
-  const previousBareMetal = global.BareMetal;
-  try {
-    const fn = new Function('BareMetal', 'module', code + '\nreturn BareMetal.Transport || module.exports;');
-    return fn({}, moduleObj);
-  } finally {
-    if (typeof previousBareMetal === 'undefined') delete global.BareMetal;
-    else global.BareMetal = previousBareMetal;
-  }
+  jest.resetModules();
+  delete require.cache[require.resolve(SRC_PATH)];
+  return require(SRC_PATH);
 }
 
 function deferred() {

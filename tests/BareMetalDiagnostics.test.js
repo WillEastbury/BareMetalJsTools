@@ -4,15 +4,13 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 const SRC = path.resolve(__dirname, '../src/BareMetal.Diagnostics.js');
 
 function loadDiagnostics() {
-  const code = fs.readFileSync(SRC, 'utf8');
-  window.BareMetal = {};
-  const fn = new Function('module', code + '\nreturn window.BareMetal.Diagnostics;');
-  return fn({ exports: {} });
+  jest.resetModules();
+  delete require.cache[require.resolve(SRC)];
+  return require(SRC);
 }
 
 describe('BareMetal.Diagnostics', () => {
@@ -231,6 +229,116 @@ describe('BareMetal.Diagnostics', () => {
     expect(math.add(5, 7)).toBe(12);
     expect(Diagnostics.timeline().getEvents('trace.end')).toEqual(expect.arrayContaining([
       expect.objectContaining({ data: expect.objectContaining({ name: 'Math.add' }) })
+    ]));
+  });
+});
+
+describe('branch coverage - Diagnostics', () => {
+  test('spans, traces, and perf helpers cover unnamed, disabled, async, and mocked performance paths', async () => {
+    jest.useFakeTimers();
+    const originalPerformance = global.performance;
+    const mockPerformance = {
+      now: jest.fn(() => Date.now()),
+      mark: jest.fn(),
+      measure: jest.fn(),
+      clearMarks: jest.fn(),
+      clearMeasures: jest.fn()
+    };
+
+    Object.defineProperty(global, 'performance', { configurable: true, writable: true, value: mockPerformance });
+
+    let Diagnostics;
+    try {
+      Diagnostics = loadDiagnostics();
+      Diagnostics.enable();
+
+      const unnamed = Diagnostics.span();
+      const firstEnd = unnamed.end({ ok: true });
+      expect(firstEnd.name).toBe('');
+      expect(unnamed.end({ ignored: true })).toBe(firstEnd);
+
+      const rejected = Diagnostics.trace('trace.reject', () => Promise.reject(new Error('nope')));
+      await expect(rejected()).rejects.toThrow('nope');
+      expect(Diagnostics.timeline().getEvents('trace.end')).toEqual(expect.arrayContaining([
+        expect.objectContaining({ data: expect.objectContaining({ name: 'trace.reject', error: true }) })
+      ]));
+
+      Diagnostics.perf.mark();
+      Diagnostics.perf.measure('missing-marks', 'start', 'end');
+      Diagnostics.perf.clear();
+
+      expect(mockPerformance.mark).toHaveBeenCalledWith('');
+      expect(mockPerformance.measure).toHaveBeenCalledWith('missing-marks', 'start', 'end');
+      expect(mockPerformance.clearMarks).toHaveBeenCalled();
+      expect(mockPerformance.clearMeasures).toHaveBeenCalled();
+
+      Diagnostics.disable();
+      const noopSpan = Diagnostics.span('noop');
+      expect(noopSpan.addEvent('ignored').setAttribute('a', 1).end()).toEqual({});
+      expect(Diagnostics.trace('noop-trace')()).toBeUndefined();
+    } finally {
+      Object.defineProperty(global, 'performance', { configurable: true, writable: true, value: originalPerformance });
+      jest.runOnlyPendingTimers();
+      jest.useRealTimers();
+    }
+  });
+
+  test('inspect, why, watch, and gauges cover maps, sets, typed arrays, chains, and failures', () => {
+    const Diagnostics = loadDiagnostics();
+    Diagnostics.enable();
+
+    expect(Diagnostics.inspect(new Map([[1, 'a']]))).toEqual(expect.objectContaining({ type: 'map', size: 1 }));
+    expect(Diagnostics.inspect(new Set(['x', 'y']))).toEqual(expect.objectContaining({ type: 'set', size: 2 }));
+    expect(Diagnostics.inspect(new Uint8Array([1, 2, 3]))).toEqual(expect.objectContaining({ type: 'typed-array', size: 3 }));
+    expect(Diagnostics.inspect({ deep: { child: { leaf: true } } }, { maxDepth: 1 }).depth).toBe(1);
+
+    const observed = { count: 0 };
+    const changes = [];
+    const off = Diagnostics.watch(observed, 'count', (change) => changes.push(change));
+    observed.count = 1;
+    observed.count = 2;
+    off();
+    observed.count = 3;
+
+    expect(changes).toHaveLength(2);
+    expect(Diagnostics.why('count').map((entry) => entry.new)).toEqual([1, 2]);
+    expect(Diagnostics.why(2).map((entry) => entry.new)).toEqual([1, 2]);
+
+    const locked = {};
+    Object.defineProperty(locked, 'value', { configurable: false, writable: true, value: 1 });
+    const lockedSpy = jest.fn();
+    const offLocked = Diagnostics.watch(locked, 'value', lockedSpy);
+    locked.value = 2;
+    offLocked();
+    expect(lockedSpy).not.toHaveBeenCalled();
+
+    const unstable = Diagnostics.gauge('unstable', () => { throw new Error('boom'); });
+    expect(unstable.sample()).toBeUndefined();
+
+    const steady = Diagnostics.gauge('steady', () => 3);
+    expect(steady.value()).toBe(3);
+    expect(steady.history().length).toBeGreaterThan(0);
+  });
+
+  test('hook avoids double wrapping and handles non-objects', () => {
+    const Diagnostics = loadDiagnostics();
+    Diagnostics.enable();
+
+    const tool = {
+      add(a, b) {
+        return a + b;
+      }
+    };
+
+    expect(Diagnostics.hook('noop', null)).toBeNull();
+    Diagnostics.hook('Tool', tool);
+    const wrapped = tool.add;
+    Diagnostics.hook('Tool', tool);
+
+    expect(tool.add).toBe(wrapped);
+    expect(tool.add(1, 2)).toBe(3);
+    expect(Diagnostics.report().spans).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'Tool.add' })
     ]));
   });
 });

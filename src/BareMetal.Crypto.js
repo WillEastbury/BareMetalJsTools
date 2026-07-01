@@ -144,3 +144,4 @@ BareMetal.Crypto = (() => {
     toBase64Url, fromBase64Url, toUtf8, fromUtf8, randomBytes
   };
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Crypto;

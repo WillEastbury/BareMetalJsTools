@@ -286,3 +286,4 @@ BareMetal.Progressive = (() => {
     onMessage: onMessage
   };
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Progressive;

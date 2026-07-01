@@ -790,6 +790,9 @@ BareMetal.Auth = (() => {
     onAuthChange: onAuthChange,
     attachToRest: attachToRest,
     _setRedirect: function (fn) { _redirect = fn; },
+    parseJwt: parseJwt,
+    createPkce: createPkce,
+    decodeJwtParts: decodeJwtParts,
     renderLogin: renderLogin,
     renderLogout: renderLogout,
     renderWhoami: renderWhoami,
@@ -798,3 +801,5 @@ BareMetal.Auth = (() => {
     renderAuthGate: renderAuthGate
   };
 })();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Auth;

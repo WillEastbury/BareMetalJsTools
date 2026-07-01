@@ -3,13 +3,9 @@
  */
 'use strict';
 const path = require('path');
-const fs = require('fs');
 
 function loadProgressive(mockRest, mockKVStore) {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Progressive.js'), 'utf8');
-  const bm = {};
-  if (mockRest) bm.Rest = mockRest;
-  if (mockKVStore) bm.LocalKVStore = mockKVStore;
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Progressive.js');
 
   const mockRegistration = {
     installing: null, waiting: null,
@@ -31,16 +27,22 @@ function loadProgressive(mockRest, mockKVStore) {
 
   const mockNavigator = { serviceWorker: mockSW, onLine: true };
 
-  // Provide a minimal window with matchMedia
   const mockWindow = Object.assign({}, global.window || {}, {
     addEventListener: jest.fn(),
     matchMedia: jest.fn().mockReturnValue({ matches: false })
   });
 
-  const fn = new Function('document', 'BareMetal', 'navigator', 'window', 'localStorage',
-    code + '\nreturn BareMetal;');
-  const result = fn(global.document, bm, mockNavigator, mockWindow, global.localStorage);
-  return { Progressive: result.Progressive, mockSW, mockRegistration, mockNavigator, mockWindow };
+  mockWindow.document = global.document;
+  mockWindow.navigator = mockNavigator;
+
+  global.window = mockWindow;
+  Object.defineProperty(global, 'navigator', { configurable: true, writable: true, value: mockNavigator });
+
+  jest.resetModules();
+
+  delete require.cache[require.resolve(srcPath)];
+  const Progressive = require(srcPath);
+  return { Progressive, mockSW, mockRegistration, mockNavigator, mockWindow };
 }
 
 describe('BareMetal.Progressive', () => {

@@ -11,7 +11,14 @@ BareMetal.Rendering = (() => {
 
   let _cache = null;  // entity list cache (populated by listEntities)
 
+  function _requireDeps() {
+    if (!BareMetal.Communications || !BareMetal.Bind || !BareMetal.Template) {
+      throw new Error('Rendering: missing BareMetal.Communications, BareMetal.Bind, or BareMetal.Template');
+    }
+  }
+
   async function createEntity(slug) {
+    _requireDeps();
     const api  = BareMetal.Communications.entity(slug);
     const meta = await api.metadata();
 
@@ -87,17 +94,25 @@ BareMetal.Rendering = (() => {
   }
 
   async function listEntities() {
+    _requireDeps();
     if (!_cache) _cache = await BareMetal.Communications.call('GET', BareMetal.Communications.getRoot() + '_meta');
     return _cache;
   }
 
   // Expose minibind-compatible surface as window.minibind
   window.minibind = {
-    setRoot:         r => BareMetal.Communications.setRoot(r),
+    setRoot:         r => {
+      if (!BareMetal.Communications || typeof BareMetal.Communications.setRoot !== 'function') {
+        throw new Error('Rendering: missing BareMetal.Communications');
+      }
+      return BareMetal.Communications.setRoot(r);
+    },
     createNewEntity: n => createEntity(n),
     listEntities,
-    bind:            BareMetal.Bind.bind
+    bind:            BareMetal.Bind && BareMetal.Bind.bind ? BareMetal.Bind.bind : function () {}
   };
 
   return { createEntity, listEntities };
 })();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Rendering;

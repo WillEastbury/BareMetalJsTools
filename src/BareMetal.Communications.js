@@ -2,6 +2,7 @@
 // Handles CRUD, metadata fetch and 401 redirect.
 // Uses BMW WebSocket binary transport when connected, BSO1 when available, JSON as fallback.
 // API: setRoot(url), getRoot(), entity(slug), call(method, url, body), connectWs()
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.Communications = (() => {
   'use strict';
@@ -465,3 +466,4 @@ BareMetal.Communications = (() => {
 
   return { setRoot, getRoot, entity, call, ensureBinary, isBinaryAvailable, init, byId, resolveRouteId, connectWs, isWsReady, walStream, walStreamAll, setCompression, getCompression };
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Communications;

@@ -4,15 +4,13 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 const SRC = path.resolve(__dirname, '../src/BareMetal.Errors.js');
 
 function loadErrors() {
-  delete global.BareMetal;
-  const code = fs.readFileSync(SRC, 'utf8');
-  const fn = new Function(code + '\nreturn BareMetal.Errors;');
-  return fn();
+  jest.resetModules();
+  delete require.cache[require.resolve(SRC)];
+  return require(SRC);
 }
 
 describe('BareMetal.Errors', () => {

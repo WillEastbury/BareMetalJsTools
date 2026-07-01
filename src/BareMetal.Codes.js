@@ -1056,3 +1056,4 @@ var units=(function(){var a,m;function p(){if(a)return a;a=[];m={};R.units.repla
 var S={};function subdivisions(code){code=String(code||'').toUpperCase();if(!code)return Promise.resolve([]);if(S[code])return Promise.resolve(S[code]);if(typeof fetch!=='function')return Promise.resolve(S[code]=[]);S[code]=fetch('codes/'+code+'.json').then(function(r){return r&&r.ok&&typeof r.json==='function'?r.json():[];}).catch(function(){return[];}).then(function(v){return S[code]=Array.isArray(v)?v:[];});return Promise.resolve(S[code]);}
 return{countries:countries,currencies:currencies,days:days,months:months,languages:languages,timezones:timezones,http:http,mime:mime,colours:colours,cards:cards,units:units,subdivisions:subdivisions};
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Codes;

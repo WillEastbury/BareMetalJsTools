@@ -3,7 +3,6 @@
  */
 'use strict';
 const path = require('path');
-const fs = require('fs');
 
 const SRC_PATH = path.resolve(__dirname, '../src/BareMetal.FileIO.js');
 
@@ -56,9 +55,9 @@ class MockFileReader {
 }
 
 function loadFileIO() {
-  const code = fs.readFileSync(SRC_PATH, 'utf8');
-  const fn = new Function('BareMetal', 'document', 'window', 'FileReader', 'File', 'Blob', 'URL', 'setTimeout', 'clearTimeout', code + '\nreturn BareMetal.FileIO;');
-  return fn({}, global.document, global.window, global.FileReader, global.File, global.Blob, global.URL, setTimeout, clearTimeout);
+  jest.resetModules();
+  delete require.cache[require.resolve(SRC_PATH)];
+  return require(SRC_PATH);
 }
 
 describe('BareMetal.FileIO', () => {

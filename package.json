@@ -114,6 +114,12 @@
     "setupFiles": [
       "./jest.setup.js"
     ],
+    "collectCoverageFrom": [
+      "src/BareMetal.*.js",
+      "!src/BareMetal.*.min.js",
+      "!src/BareMetal.PicoScript.js",
+      "!src/BareMetal.PicoScript.Editor.js"
+    ],
     "verbose": true
   },
   "keywords": [

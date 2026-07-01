@@ -4,15 +4,13 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 const { webcrypto } = require('crypto');
 
 const SRC_PATH = path.resolve(__dirname, '../src/BareMetal.Blob.js');
 
 function loadBlobModule() {
-  const code = fs.readFileSync(SRC_PATH, 'utf8');
-  const fn = new Function('BareMetal', 'module', code + '\nreturn BareMetal.Blob;');
-  return fn({}, { exports: {} });
+  delete require.cache[SRC_PATH];
+  return require(SRC_PATH);
 }
 
 function mockResponse(headers) {

@@ -2,9 +2,12 @@
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.Components = (() => {
   'use strict';
-  const { getPath, topKey, resolveBinding, resolveInScope, parsePairs, el } = BareMetal.Bind;
+  const _bind = BareMetal.Bind || {};
+  const { getPath, topKey, resolveBinding, resolveInScope, parsePairs, el } = _bind;
 
   function bindComponents(root, state, watch) {
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+    if (!getPath || !topKey || !el || typeof watch !== 'function') return;
 
     // m-img (reactive src + lazy loading + fallback)
     root.querySelectorAll('[m-img]').forEach(n => {
@@ -582,3 +585,5 @@ BareMetal.Components = (() => {
 
   return { bindComponents };
 })();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Components;

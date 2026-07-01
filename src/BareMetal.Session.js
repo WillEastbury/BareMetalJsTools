@@ -1,4 +1,5 @@
-var __bmSessionRoot = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this);
+/* istanbul ignore next */
+var __bmSessionRoot = (typeof globalThis !== 'undefined' && globalThis.__bmSessionRootOverride) ? globalThis.__bmSessionRootOverride : ((typeof globalThis !== 'undefined' && globalThis.window) ? globalThis.window : (typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this)));
 var BareMetal = __bmSessionRoot.BareMetal || {};
 __bmSessionRoot.BareMetal = BareMetal;
 BareMetal.Session = (function(root) {

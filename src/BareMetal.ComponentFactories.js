@@ -43,3 +43,5 @@ BareMetal.ComponentFactories = (() => {
 
   return { create, chatEndpoint };
 })();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.ComponentFactories;

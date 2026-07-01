@@ -1,3 +1,4 @@
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.RBAC = (function() {
   'use strict';

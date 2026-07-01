@@ -1,3 +1,4 @@
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.Binary = (() => {
   'use strict';
@@ -481,3 +482,5 @@ BareMetal.Binary = (() => {
     SpanReader, SpanWriter,
   };
 })();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Binary;

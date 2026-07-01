@@ -4,16 +4,23 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 const SRC = path.resolve(__dirname, '../src/BareMetal.Cache.js');
 
 function loadCache() {
-  const code = fs.readFileSync(SRC, 'utf8');
-  const mod = { exports: {} };
-  delete global.window.BareMetal;
-  const fn = new Function('window', 'module', code + '\nreturn window.BareMetal.Cache || module.exports;');
-  return fn(global.window, mod);
+  jest.resetModules();
+  delete require.cache[require.resolve(SRC)];
+  return require(SRC);
+}
+
+function deferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
 }
 
 describe('BareMetal.Cache', () => {
@@ -194,5 +201,97 @@ describe('BareMetal.Cache', () => {
     expect(cache.size()).toBe(2);
     expect(cache.has('first')).toBe(false);
     expect(cache.stats().evictions).toBe(1);
+  });
+
+  test('supports localStorage serialization, explicit ttl overrides, and event unsubscription', () => {
+    jest.useFakeTimers();
+    const seen = [];
+    const cache = Cache.create({
+      storage: 'localStorage',
+      namespace: 'BareMetal.Cache:serialized:',
+      ttl: 500,
+      serialize: JSON.stringify,
+      deserialize: JSON.parse
+    });
+    const offHit = cache.on('hit', (payload) => seen.push(payload.key));
+
+    cache.set('profile', { id: 1 }, { ttl: 0, tags: ['user', 'profile'] });
+    expect(cache.__peekRaw('profile')).toEqual(expect.objectContaining({
+      ttl: 0,
+      expires: 0,
+      tags: ['user', 'profile']
+    }));
+    expect(cache.get('profile')).toEqual({ id: 1 });
+    offHit();
+    expect(cache.get('profile')).toEqual({ id: 1 });
+    expect(seen).toEqual(['profile']);
+    expect(cache.on('unknown', 'bad')).toEqual(expect.any(Function));
+  });
+
+  test('custom map-like storage supports entries, remove fallback, and missing deletes', () => {
+    const data = new Map();
+    const storage = {
+      get: (key) => data.get(key),
+      set: (key, value) => data.set(key, value),
+      remove: (key) => data.delete(key),
+      entries: () => data.entries()
+    };
+    const cache = Cache.create({ storage });
+
+    cache.set('one', 1, { tags: ['a', 'b'] });
+    cache.set('two', 2, { tags: ['b'] });
+
+    expect(cache.entries()).toEqual(expect.arrayContaining([
+      ['one', expect.objectContaining({ value: 1, tags: ['a', 'b'] })],
+      ['two', expect.objectContaining({ value: 2, tags: ['b'] })]
+    ]));
+    expect(cache.invalidateByTag('b')).toBe(2);
+    expect(cache.invalidate('missing')).toBe(false);
+    expect(cache.delete('missing')).toBe(false);
+    expect(cache.delete('one')).toBe(true);
+  });
+
+  test('dedupes concurrent wrap calls and memoizes async results', async () => {
+    const cache = Cache.create({ ttl: 1000 });
+    const gate = deferred();
+    const fetchFn = jest.fn(() => gate.promise);
+
+    const first = cache.wrap('shared', fetchFn);
+    const second = cache.wrap('shared', fetchFn);
+
+    expect(first).toBe(second);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+
+    gate.resolve('value');
+    await expect(first).resolves.toBe('value');
+    expect(cache.get('shared')).toBe('value');
+
+    const asyncFn = jest.fn(async (value) => value * 2);
+    const memoized = Cache.memoize(asyncFn, { ttl: 1000 });
+    await expect(memoized(4)).resolves.toBe(8);
+    expect(memoized(4)).toBe(8);
+    memoized.clear();
+    await expect(memoized(4)).resolves.toBe(8);
+    expect(asyncFn).toHaveBeenCalledTimes(2);
+  });
+
+  test('tiered caches propagate invalidation, clear, and stale-if-error fallback', async () => {
+    jest.useFakeTimers();
+    const l1 = Cache.create({ ttl: 50, swr: 100 });
+    const l2 = Cache.create({ ttl: 50, swr: 100, storage: 'localStorage', namespace: 'BareMetal.Cache:tiered-extra:' });
+    const tiered = Cache.tiered([l1, l2]);
+
+    tiered.set('shared', 'stale', { ttl: 50, tags: ['shared'] });
+    jest.advanceTimersByTime(60);
+    expect(tiered.wrap('shared', () => Promise.resolve('fresh'), { swr: 100 })).toBe('stale');
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(tiered.get('shared')).toBe('fresh');
+    expect(tiered.invalidateByTag('shared')).toBe(2);
+    expect(tiered.get('shared')).toBeUndefined();
+    await expect(tiered.wrap('shared', () => Promise.reject(new Error('boom')), { staleIfError: true })).resolves.toBe('fresh');
+    tiered.clear();
+    expect(tiered.size()).toBe(0);
   });
 });

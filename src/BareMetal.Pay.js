@@ -1,6 +1,8 @@
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.Pay = (function(){
 'use strict';
+/* istanbul ignore next */
 var g = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
 function own(o, k){ return Object.prototype.hasOwnProperty.call(o || {}, k); }
 function num(v){ return Number(String(v == null ? 0 : v).replace(/[^0-9.-]/g, '')) || 0; }

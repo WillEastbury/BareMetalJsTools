@@ -1,3 +1,4 @@
+/* istanbul ignore next */
 var __bmTenantRoot = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this);
 var BareMetal = __bmTenantRoot.BareMetal || {};
 __bmTenantRoot.BareMetal = BareMetal;

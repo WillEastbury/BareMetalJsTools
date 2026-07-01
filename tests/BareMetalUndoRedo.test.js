@@ -3,14 +3,19 @@
  */
 'use strict';
 const path = require('path');
-const fs = require('fs');
 
 const SRC_PATH = path.resolve(__dirname, '../src/BareMetal.UndoRedo.js');
 
 function loadUndoRedo(platform) {
-  const code = fs.readFileSync(SRC_PATH, 'utf8');
-  const fn = new Function('BareMetal', 'module', 'document', 'navigator', code + '\nreturn BareMetal.UndoRedo;');
-  return fn({}, { exports: {} }, global.document, { platform: platform || 'Win32' });
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.UndoRedo.js');
+  Object.defineProperty(global, 'navigator', {
+    configurable: true,
+    writable: true,
+    value: { platform: platform || 'Win32' }
+  });
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 describe('BareMetal.UndoRedo', () => {

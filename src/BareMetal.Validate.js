@@ -109,3 +109,4 @@ BareMetal.Validate = (function () {
 
   return { validate: validate, addRule: addRule };
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Validate;

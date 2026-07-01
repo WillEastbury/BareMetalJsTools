@@ -450,3 +450,4 @@ BareMetal.Tokens = (function() {
     fromBase64Url: fromBase64Url
   };
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Tokens;

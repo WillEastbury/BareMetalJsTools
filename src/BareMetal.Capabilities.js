@@ -1,8 +1,10 @@
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.Capabilities = (function(){
   'use strict';
 
-  var root = (typeof window !== 'undefined' && window) ? window : ((typeof globalThis !== 'undefined' && globalThis) ? globalThis : this);
+  /* istanbul ignore next */
+  var root = (typeof globalThis !== 'undefined' && globalThis.__bmCapabilitiesRoot) ? globalThis.__bmCapabilitiesRoot : ((typeof globalThis !== 'undefined' && globalThis.window) ? globalThis.window : ((typeof window !== 'undefined' && window) ? window : ((typeof globalThis !== 'undefined' && globalThis) ? globalThis : this)));
   var custom = {};
   var watchers = [];
   var teardown = [];

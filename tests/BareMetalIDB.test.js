@@ -7,12 +7,12 @@ if (typeof globalThis.structuredClone !== 'function') {
 }
 require('fake-indexeddb/auto');
 const path = require('path');
-const fs = require('fs');
 
 function loadIDB() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.IDB.js'), 'utf8');
-  const fn = new Function('BareMetal', code + '\nreturn BareMetal.IDB;');
-  return fn({});
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.IDB.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 function schema() {

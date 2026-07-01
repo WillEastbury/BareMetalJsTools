@@ -1,15 +1,14 @@
 /**
  * @jest-environment jsdom
  */
-const fs = require('fs');
 const path = require('path');
 
 const SRC_PATH = path.join(__dirname, '..', 'src', 'BareMetal.PicoScript.js');
 
 function loadModule() {
-  const code = fs.readFileSync(SRC_PATH, 'utf8');
-  const fn = new Function('document', code + '\nreturn BareMetal.PicoScript;');
-  return fn(global.document);
+  jest.resetModules();
+  delete require.cache[require.resolve(SRC_PATH)];
+  return require(SRC_PATH);
 }
 
 describe('BareMetal.PicoScript', () => {

@@ -4,7 +4,6 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 const SRC = path.resolve(__dirname, '../src/BareMetal.Scan.js');
 const finderPattern = [
@@ -43,10 +42,9 @@ const digitFont = {
 };
 
 function loadScan() {
-  delete global.BareMetal;
-  const code = fs.readFileSync(SRC, 'utf8');
-  const fn = new Function(code + '\nreturn BareMetal.Scan;');
-  return fn();
+  jest.resetModules();
+  delete require.cache[require.resolve(SRC)];
+  return require(SRC);
 }
 
 function makeImage(width, height, fill) {

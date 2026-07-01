@@ -4,14 +4,13 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 const SRC = path.resolve(__dirname, '../src/BareMetal.Geo.js');
 
 function loadGeo() {
-  const code = fs.readFileSync(SRC, 'utf8');
-  const fn = new Function(code + '\nreturn BareMetal.Geo;');
-  return fn();
+  jest.resetModules();
+  delete require.cache[require.resolve(SRC)];
+  return require(SRC);
 }
 
 function setGeo(value) {

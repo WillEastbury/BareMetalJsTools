@@ -1,3 +1,4 @@
+/* istanbul ignore next */
 var __bmLauncherRoot = (typeof globalThis !== 'undefined') ? globalThis : ((typeof window !== 'undefined') ? window : this);
 var BareMetal = __bmLauncherRoot.BareMetal || {};
 __bmLauncherRoot.BareMetal = BareMetal;

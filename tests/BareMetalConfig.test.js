@@ -4,12 +4,13 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 function loadConfigModule() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Config.js'), 'utf8');
-  const fn = new Function('BareMetal', 'module', code + '\nreturn { namespace: BareMetal.Config, exported: module.exports };');
-  return fn({}, { exports: {} });
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Config.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  const exported = require(srcPath);
+  return { namespace: exported, exported };
 }
 
 describe('BareMetal.Config', () => {

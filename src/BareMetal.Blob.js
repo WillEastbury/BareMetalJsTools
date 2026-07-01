@@ -1,7 +1,9 @@
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.Blob = (function(){
   'use strict';
 
+  /* istanbul ignore next */
   var g = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
   var cryptoRef = g.crypto || null;
   var subtle = cryptoRef && cryptoRef.subtle ? cryptoRef.subtle : null;

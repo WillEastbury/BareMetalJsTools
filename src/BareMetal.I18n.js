@@ -176,3 +176,4 @@ BareMetal.I18n = (function () {
     configure: configure
   };
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.I18n;

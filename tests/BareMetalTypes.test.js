@@ -4,14 +4,12 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 function loadTypes() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Types.js'), 'utf8');
-  const win = {};
-  const module = { exports: null };
-  const fn = new Function('module', 'exports', 'window', 'globalThis', code + '\nreturn module.exports || (window.BareMetal && window.BareMetal.Types);');
-  return fn(module, {}, win, win);
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Types.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 describe('BareMetal.Types', () => {

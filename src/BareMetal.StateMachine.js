@@ -93,3 +93,4 @@ BareMetal.StateMachine = (function () {
 
   return { create: create };
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.StateMachine;

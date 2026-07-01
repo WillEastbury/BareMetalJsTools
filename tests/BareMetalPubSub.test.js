@@ -4,12 +4,12 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 function loadPubSub() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.PubSub.js'), 'utf8');
-  const fn = new Function('BareMetal', 'module', code + '\nreturn BareMetal.PubSub;');
-  return fn({}, { exports: {} });
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.PubSub.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 describe('BareMetal.PubSub', () => {

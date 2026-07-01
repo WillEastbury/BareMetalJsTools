@@ -3,15 +3,15 @@
  */
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
 
 const SRC = path.resolve(__dirname, '../src/BareMetal.Gamepad.js');
 
 function loadGamepad() {
-  const code = fs.readFileSync(SRC, 'utf8');
-  const fn = new Function(code + '\nreturn BareMetal.Gamepad;');
-  return fn();
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Gamepad.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 function setNav(name, value) {

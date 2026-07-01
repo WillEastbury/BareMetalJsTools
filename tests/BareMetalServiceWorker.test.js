@@ -3,10 +3,9 @@
  */
 'use strict';
 const path = require('path');
-const fs = require('fs');
 
 function loadServiceWorker() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.ServiceWorker.js'), 'utf8');
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.ServiceWorker.js');
 
   const listeners = {};
   const mockCache = {
@@ -35,8 +34,18 @@ function loadServiceWorker() {
     }
   };
 
-  const fn = new Function('self', code);
-  fn(mockSelf);
+  const previousSelf = Object.getOwnPropertyDescriptor(global, 'self');
+  Object.defineProperty(global, 'self', { configurable: true, writable: true, value: mockSelf });
+
+  try {
+    jest.resetModules();
+    delete require.cache[require.resolve(srcPath)];
+    require(srcPath);
+  } finally {
+    if (previousSelf) Object.defineProperty(global, 'self', previousSelf);
+    else delete global.self;
+  }
+
   return { listeners, mockSelf, mockCache };
 }
 

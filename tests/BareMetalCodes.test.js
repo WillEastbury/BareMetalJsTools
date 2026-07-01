@@ -3,13 +3,38 @@
  */
 'use strict';
 const path=require('path');
-const fs=require('fs');
 
-function loadCodes(fetchImpl){
-  const code=fs.readFileSync(path.resolve(__dirname,'../src/BareMetal.Codes.js'),'utf8');
-  const bm={};
-  const fn=new Function('document','BareMetal','fetch',code+'\nreturn BareMetal;');
-  return fn(global.document,bm,fetchImpl).Codes;
+function loadCodes(fetchImpl) {
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Codes.js');
+  const previousFetch = Object.getOwnPropertyDescriptor(global, 'fetch');
+
+  if (fetchImpl) {
+    Object.defineProperty(global, 'fetch', { configurable: true, writable: true, value: fetchImpl });
+  }
+
+  jest.resetModules();
+
+  delete require.cache[require.resolve(srcPath)];
+  const Codes = require(srcPath);
+
+  if (fetchImpl) {
+    const subdivisions = Codes.subdivisions;
+    Codes.subdivisions = function(...args) {
+      const currentFetch = Object.getOwnPropertyDescriptor(global, 'fetch');
+      Object.defineProperty(global, 'fetch', { configurable: true, writable: true, value: fetchImpl });
+      try {
+        return subdivisions.apply(this, args);
+      } finally {
+        if (currentFetch) Object.defineProperty(global, 'fetch', currentFetch);
+        else delete global.fetch;
+      }
+    };
+
+    if (previousFetch) Object.defineProperty(global, 'fetch', previousFetch);
+    else delete global.fetch;
+  }
+
+  return Codes;
 }
 
 describe('BareMetal.Codes',()=>{

@@ -9,28 +9,23 @@ const fs   = require('fs');
 const SRC = path.resolve(
   __dirname, '../src/BareMetal.Bind.js'
 );
+const COMP_SRC = path.resolve(__dirname, '../src/BareMetal.Components.js');
 
-// Helper: load BareMetal.Bind into the current jsdom context each time.
+// Single-module load via require() for Istanbul coverage tracking.
 function loadBind() {
-  const code = fs.readFileSync(SRC, 'utf8');
-  const fn = new Function('document', 'requestAnimationFrame',
-    code + '\nreturn BareMetal.Bind;'
-  );
-  const raf = typeof globalThis.requestAnimationFrame === 'function'
-    ? globalThis.requestAnimationFrame : (cb) => setTimeout(cb, 0);
-  return fn(global.document, raf);
+  delete require.cache[SRC];
+  return require(SRC);
 }
 
 // Helper: load Bind + Components for widget directive tests.
+// Kept as new Function so both modules share one BareMetal namespace.
 function loadBindWithComponents() {
-  const bindCode = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Bind.js'), 'utf8');
-  const compCode = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Components.js'), 'utf8');
+  const bindCode = fs.readFileSync(SRC, 'utf8');
+  const compCode = fs.readFileSync(COMP_SRC, 'utf8');
   const fn = new Function('document', 'requestAnimationFrame',
     bindCode + '\n' + compCode + '\nreturn { Bind: BareMetal.Bind, Components: BareMetal.Components };'
   );
-  const raf = typeof globalThis.requestAnimationFrame === 'function'
-    ? globalThis.requestAnimationFrame : (cb) => setTimeout(cb, 0);
-  return fn(global.document, raf);
+  return fn(global.document, global.requestAnimationFrame);
 }
 
 // ── reactive() ────────────────────────────────────────────────────────────

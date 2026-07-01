@@ -4,7 +4,6 @@
 'use strict';
 
 const path = require('path');
-const fs   = require('fs');
 
 // ── Load the library under test ────────────────────────────────────────────
 const SRC = path.resolve(
@@ -12,13 +11,10 @@ const SRC = path.resolve(
 );
 
 function loadRouter() {
-  // Provide a clean window each time
   delete global.BMRouter;
-  const code = fs.readFileSync(SRC, 'utf8');
-  // The IIFE uses `window` as `global`; jsdom exposes window globally
-  // eslint-disable-next-line no-new-func
-  new Function('window', code)(global.window);
-  return global.BMRouter;
+  jest.resetModules();
+  delete require.cache[require.resolve(SRC)];
+  return require(SRC);
 }
 
 // ── patternToRegex / route matching (via BMRouter._dispatch) ───────────────

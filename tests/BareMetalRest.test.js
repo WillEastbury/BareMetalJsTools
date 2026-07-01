@@ -4,7 +4,6 @@
 'use strict';
 
 const path = require('path');
-const fs   = require('fs');
 
 const SRC = path.resolve(
   __dirname, '../src/BareMetal.Communications.js'
@@ -12,24 +11,9 @@ const SRC = path.resolve(
 
 // Helper: load the module so its `fetch` references global.fetch at call time.
 function loadRest() {
-  const code = fs.readFileSync(SRC, 'utf8');
-  const fn = new Function(
-    'fetch', 'document', 'location', 'FormData', 'URLSearchParams',
-    'WebSocket', 'TextEncoder', 'TextDecoder', 'DataView', 'Uint8Array',
-    code + '\nreturn BareMetal.Communications;'
-  );
-  return fn(
-    (...args) => global.fetch(...args),
-    global.document,
-    global.location,
-    global.FormData,
-    global.URLSearchParams,
-    global.WebSocket || MockWebSocket,
-    global.TextEncoder || require('util').TextEncoder,
-    global.TextDecoder || require('util').TextDecoder,
-    DataView,
-    Uint8Array
-  );
+  jest.resetModules();
+  delete require.cache[require.resolve(SRC)];
+  return require(SRC);
 }
 
 // Minimal WebSocket mock for testing
@@ -417,5 +401,246 @@ describe('BareMetalRest – WebSocket transport', () => {
   test('new exports: connectWs, isWsReady are present', () => {
     expect(typeof rest.connectWs).toBe('function');
     expect(typeof rest.isWsReady).toBe('function');
+  });
+});
+
+describe('BareMetalRest additional coverage', () => {
+  function binaryResponse(buffer, extraHeaders = {}) {
+    return {
+      ok: true,
+      status: 200,
+      headers: {
+        get: (name) => extraHeaders[name.toLowerCase()] || extraHeaders[name] || ''
+      },
+      arrayBuffer: () => Promise.resolve(buffer),
+      text: () => Promise.resolve('')
+    };
+  }
+
+  afterEach(() => {
+    delete global.fetch;
+    delete global.WebSocket;
+    delete global.BareMetal;
+    delete global.__lastWs;
+  });
+
+  test('compression settings compress requests and decompress responses', async () => {
+    const injectedBareMetal = {
+      Compress: {
+        compress: jest.fn(() => new Uint8Array([9, 8, 7])),
+        decompress: jest.fn(() => new TextEncoder().encode('{"ok":true}'))
+      }
+    };
+    global.fetch = jest.fn().mockResolvedValue(binaryResponse(new Uint8Array([1, 2]).buffer, {
+      'content-type': 'application/json',
+      'content-encoding': 'BareMetal.Compress'
+    }));
+    const code = require('fs').readFileSync(SRC, 'utf8');
+    const rest = new Function('BareMetal', code + '\nreturn BareMetal.Communications;')(injectedBareMetal);
+    rest.setCompression({ enabled: true, minSize: 1, profile: 'small' });
+
+    const result = await rest.call('POST', '/api/compressed', { payload: 'x'.repeat(20) });
+
+    expect(rest.getCompression()).toMatchObject({ enabled: true, minSize: 1, profile: 'small' });
+    expect(injectedBareMetal.Compress.compress).toHaveBeenCalled();
+    expect(global.fetch.mock.calls[0][1].headers['Content-Encoding']).toBe('BareMetal.Compress');
+    expect(global.fetch.mock.calls[0][1].headers['Accept-Encoding']).toBe('BareMetal.Compress');
+    expect(injectedBareMetal.Compress.decompress).toHaveBeenCalled();
+    expect(result).toEqual({ ok: true });
+  });
+
+  test('binary entity paths, delta helpers, and ensureBinary use BareMetal.Binary when available', async () => {
+    const injectedBareMetal = {
+      Binary: {
+        setSigningKey: jest.fn().mockResolvedValue(),
+        fetchSchema: jest.fn().mockResolvedValue({ name: 'orders' }),
+        deserializeList: jest.fn().mockResolvedValue([{ id: 1 }]),
+        deserialize: jest.fn().mockResolvedValue({ id: 2 }),
+        serialize: jest.fn().mockResolvedValue(new Uint8Array([5, 6, 7])),
+        applyDeltaJson: jest.fn().mockResolvedValue({ version: 2 }),
+        fetchLayout: jest.fn().mockResolvedValue({}),
+        buildDelta: jest.fn()
+          .mockReturnValueOnce(null)
+          .mockReturnValueOnce(new Uint8Array([7, 7])),
+        applyDelta: jest.fn().mockResolvedValue({ saved: true })
+      }
+    };
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce({ ok: true, text: () => Promise.resolve(' signing-key ') })
+      .mockResolvedValueOnce(binaryResponse(new Uint8Array([1]).buffer))
+      .mockResolvedValueOnce(binaryResponse(new Uint8Array([2]).buffer))
+      .mockResolvedValueOnce(binaryResponse(new Uint8Array([3]).buffer))
+      .mockResolvedValueOnce(binaryResponse(new Uint8Array([4]).buffer))
+      .mockResolvedValueOnce({ ok: true, status: 204, headers: { get: () => '' } });
+
+    const code = require('fs').readFileSync(SRC, 'utf8');
+    const rest = new Function('BareMetal', code + '\nreturn BareMetal.Communications;')(injectedBareMetal);
+    rest.setRoot('/api/');
+
+    await rest.ensureBinary();
+    expect(injectedBareMetal.Binary.setSigningKey).toHaveBeenCalledWith('signing-key');
+    expect(rest.isBinaryAvailable()).toBe(true);
+
+    await expect(rest.entity('orders').list({ state: 'open' })).resolves.toEqual({ data: [{ id: 1 }], count: -1 });
+    await expect(rest.entity('orders').get(2)).resolves.toEqual({ id: 2 });
+    await expect(rest.entity('orders').create({ item: 'widget' })).resolves.toEqual({ id: 2 });
+    await expect(rest.entity('orders').update(2, { qty: 4 })).resolves.toEqual({ id: 2 });
+    await expect(rest.entity('orders').remove(2)).resolves.toBeNull();
+    await expect(rest.entity('orders').delta(2, { qty: 5 }, 1)).resolves.toEqual({ version: 2 });
+    await expect(rest.entity('orders').deltaFromTracker({ entity: { Key: 99, name: 'cached' } })).resolves.toEqual({ Key: 99, name: 'cached' });
+    await expect(rest.entity('orders').deltaFromTracker({ entity: { Key: 100 }, changes: true })).resolves.toEqual({ saved: true });
+    expect(injectedBareMetal.Binary.fetchLayout).toHaveBeenCalledWith('orders');
+    expect(injectedBareMetal.Binary.applyDelta).toHaveBeenCalledWith('orders', 100, expect.any(Uint8Array));
+  });
+
+  test('wal stream helpers parse complete and truncated buffers', async () => {
+    function walBuffer(records) {
+      const chunks = [];
+      const count = new Uint8Array(4);
+      new DataView(count.buffer).setUint32(0, records.length, true);
+      chunks.push(count);
+      records.forEach((record) => {
+        const bytes = record == null ? new Uint8Array(0) : new Uint8Array(record);
+        const header = new Uint8Array(4);
+        new DataView(header.buffer).setUint32(0, bytes.length, true);
+        chunks.push(header);
+        if (bytes.length) chunks.push(bytes);
+      });
+      const total = chunks.reduce((sum, part) => sum + part.length, 0);
+      const out = new Uint8Array(total);
+      let offset = 0;
+      chunks.forEach((part) => {
+        out.set(part, offset);
+        offset += part.length;
+      });
+      return out.buffer;
+    }
+
+    const full = walBuffer([[1, 2, 3], null]);
+    const truncated = full.slice(0, full.byteLength - 1);
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(binaryResponse(full))
+      .mockResolvedValueOnce(binaryResponse(truncated));
+    const rest = loadRest();
+
+    await expect(rest.walStream('orders')).resolves.toEqual({
+      records: [full.slice(8, 11), null],
+      complete: true
+    });
+    const partial = await rest.walStreamAll();
+    expect(partial.complete).toBe(false);
+    expect(partial.records).toHaveLength(1);
+  });
+
+  test('websocket entity dispatch encodes frames and decodes payloads', async () => {
+    class EchoWebSocket extends MockWebSocket {
+      constructor(url) {
+        super(url);
+        global.__lastWs = this;
+      }
+    }
+    global.WebSocket = EchoWebSocket;
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(jsonResponse([{ verb: 'GET', path: '/api/items', id: 1 }]))
+      .mockResolvedValueOnce(jsonResponse({
+        protocol: 'BMW1.0',
+        routes: [{ name: 'listItems', opcode: 7 }]
+      }));
+    const rest = loadRest();
+    await rest.init();
+
+    const promise = rest.entity('items').list();
+    await Promise.resolve();
+
+    const sent = global.__lastWs._sent[0];
+    const view = new DataView(sent.buffer || sent);
+    const requestId = view.getUint32(2, true);
+    const json = new TextEncoder().encode(JSON.stringify({ via: 'ws' }));
+    const buf = new Uint8Array(9 + json.length);
+    new DataView(buf.buffer).setUint16(0, 7 << 2);
+    new DataView(buf.buffer).setUint32(2, requestId, true);
+    buf[6] = json.length & 0xFF;
+    buf[7] = (json.length >> 8) & 0xFF;
+    buf[8] = (json.length >> 16) & 0xFF;
+    buf.set(json, 9);
+    global.__lastWs.onmessage({ data: buf.buffer });
+
+    await expect(promise).resolves.toEqual({ via: 'ws' });
+  });
+
+  test('websocket create sends payload frames with encoded JSON bodies', async () => {
+    class EchoWebSocket extends MockWebSocket {
+      constructor(url) {
+        super(url);
+        global.__lastWs = this;
+      }
+    }
+    global.WebSocket = EchoWebSocket;
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(jsonResponse([{ verb: 'POST', path: '/api/items', id: 3 }]))
+      .mockResolvedValueOnce(jsonResponse({
+        protocol: 'BMW1.0',
+        routes: [{ name: 'createItems', opcode: 9 }]
+      }));
+    const rest = loadRest();
+    await rest.init();
+
+    const created = rest.entity('items').create({ name: 'widget' });
+    await Promise.resolve();
+    const sent = global.__lastWs._sent[0];
+    expect(sent.byteLength).toBeGreaterThan(6);
+    const reqId = new DataView(sent.buffer).getUint32(2, true);
+    const json = new TextEncoder().encode(JSON.stringify({ created: true }));
+    const buf = new Uint8Array(9 + json.length);
+    new DataView(buf.buffer).setUint16(0, 9 << 2);
+    new DataView(buf.buffer).setUint32(2, reqId, true);
+    buf[6] = json.length & 0xFF;
+    buf[7] = (json.length >> 8) & 0xFF;
+    buf[8] = (json.length >> 16) & 0xFF;
+    buf.set(json, 9);
+    global.__lastWs.onmessage({ data: buf.buffer });
+
+    await expect(created).resolves.toEqual({ created: true });
+    expect(reqId).toBeGreaterThan(0);
+  });
+
+  test('call rejects unauthorized responses and websocket decode errors fall back to HTTP', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      headers: { get: () => 'text/plain' },
+      text: () => Promise.resolve('unauthorized')
+    });
+    const rest = loadRest();
+    await expect(rest.call('GET', '/api/protected')).rejects.toThrow('Unauthorized');
+
+    class EchoWebSocket extends MockWebSocket {
+      constructor(url) {
+        super(url);
+        global.__lastWs = this;
+      }
+    }
+    global.WebSocket = EchoWebSocket;
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce(jsonResponse([{ verb: 'GET', path: '/api/items', id: 1 }]))
+      .mockResolvedValueOnce(jsonResponse({ protocol: 'BMW1.0', routes: [{ name: 'listItems', opcode: 5 }] }))
+      .mockResolvedValueOnce(jsonResponse([{ via: 'http' }]));
+    const wsRest = loadRest();
+    await wsRest.init();
+    const pending = wsRest.entity('items').list();
+    await Promise.resolve();
+    const sent = global.__lastWs._sent[0];
+    const reqId = new DataView(sent.buffer).getUint32(2, true);
+    const invalidJson = new TextEncoder().encode('{bad');
+    const bad = new Uint8Array(9 + invalidJson.length);
+    new DataView(bad.buffer).setUint16(0, 5 << 2);
+    new DataView(bad.buffer).setUint32(2, reqId, true);
+    bad[6] = invalidJson.length & 0xFF;
+    bad[7] = (invalidJson.length >> 8) & 0xFF;
+    bad[8] = (invalidJson.length >> 16) & 0xFF;
+    bad.set(invalidJson, 9);
+    global.__lastWs.onmessage({ data: bad.buffer });
+    await expect(pending).resolves.toEqual([{ via: 'http' }]);
   });
 });

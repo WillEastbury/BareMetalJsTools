@@ -3,12 +3,12 @@
  */
 'use strict';
 const path = require('path');
-const fs = require('fs');
 
 function loadExpressions() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Expressions.js'), 'utf8');
-  const fn = new Function('BareMetal', code + '\nreturn BareMetal.Expressions;');
-  return fn({});
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Expressions.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 describe('BareMetal.Expressions', () => {

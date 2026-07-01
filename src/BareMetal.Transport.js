@@ -1,4 +1,6 @@
+/* istanbul ignore next */
 var __bmRoot = (typeof globalThis !== 'undefined') ? globalThis : ((typeof window !== 'undefined') ? window : this);
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : ((__bmRoot && __bmRoot.BareMetal) ? __bmRoot.BareMetal : {});
 BareMetal.Transport = (function(){
   'use strict';

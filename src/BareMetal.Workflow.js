@@ -1,3 +1,4 @@
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.Workflow = (function() {
   'use strict';
@@ -534,3 +535,4 @@ BareMetal.Workflow = (function() {
     designer: designer
   };
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Workflow;

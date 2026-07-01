@@ -3,13 +3,12 @@
  */
 'use strict';
 const path = require('path');
-const fs = require('fs');
 
 function loadKVStore() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.LocalKVStore.js'), 'utf8');
-  const bm = {};
-  const fn = new Function('document', 'BareMetal', 'localStorage', 'sessionStorage', code + '\nreturn BareMetal;');
-  return fn(global.document, bm, global.localStorage, global.sessionStorage).LocalKVStore;
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.LocalKVStore.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 describe('BareMetal.LocalKVStore', () => {

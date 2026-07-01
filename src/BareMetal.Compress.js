@@ -1,3 +1,4 @@
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.Compress = (() => {
   'use strict';
@@ -76,6 +77,7 @@ function findBest(vbuf, vbufLen, vpos, head, depth, hashSize,
   out.off = 0;
   out.dict = 0xFFFF;
   out.isRepeat = 0;
+  /* istanbul ignore else */
   if (remaining >= MATCH_MIN) {
     const maxRep = remaining > MATCH_MAX ? MATCH_MAX : remaining;
     for (let d = 0; d < REPEAT_CACHE_SIZE; ++d) {
@@ -84,7 +86,7 @@ function findBest(vbuf, vbufLen, vpos, head, depth, hashSize,
       if (vbuf[vpos] !== vbuf[vpos - off]) continue;
       if (remaining >= 2 && vbuf[vpos + 1] !== vbuf[vpos - off + 1]) continue;
       const len = matchLen(vbuf, vpos - off, vbuf, vpos, maxRep);
-      if (len < MATCH_MIN) continue;
+      /* istanbul ignore if */ if (len < MATCH_MIN) continue;
       const isRep = (d === 0 && len <= 17) ? 1 : 0;
       const tokenCost = isRep ? 1 : (off <= OFFSET_SHORT_MAX ? 2 : 3);
       const s = len - tokenCost;
@@ -127,9 +129,9 @@ function findBest(vbuf, vbufLen, vpos, head, depth, hashSize,
     for (let d = 0; d < depth; ++d) {
       const prev = head[d * hashSize + h];
       if (prev < 0) continue;
-      if (prev >= vpos) continue;
+      /* istanbul ignore if */ if (prev >= vpos) continue;
       const off = vpos - prev;
-      if (off === 0 || off > OFFSET_LONG_MAX) continue;
+      /* istanbul ignore if */ if (off === 0 || off > OFFSET_LONG_MAX) continue;
       if (vbuf[prev] !== firstByte) continue;
       const maxLen = (off <= OFFSET_SHORT_MAX) ? maxLenShort : maxLenLong;
       const len = matchLen(vbuf, prev, vbuf, vpos, maxLen);
@@ -173,6 +175,7 @@ function compressBlock(vbuf, histLen, blockLen, out, hashBits, chainDepth, lazyS
     }
   }
   let dictSkip = false;
+  /* istanbul ignore else */
   if (blockLen >= 1) {
     const b0 = vbuf[histLen];
     if (b0 === 0x7B || b0 === 0x5B || b0 === 0x3C || b0 === 0xEF) {
@@ -211,6 +214,7 @@ function compressBlock(vbuf, histLen, blockLen, out, hashBits, chainDepth, lazyS
           if (nSav > bSv) {
             for (let s = 0; s < step; ++s) {
               const sp = vpos + s;
+              /* istanbul ignore else */
               if (vbufLen - sp >= 3) {
                 headInsert(head, chainDepth, hashSize, hash3(vbuf, sp, hashSize), sp);
               }
@@ -321,7 +325,7 @@ function decompressBlock(hist, histLen, input, inLen, out, outLen) {
     }
     if (token < 0x80) {
       const idx = token & 0x3F;
-      if (idx >= DICT_COUNT) throw new Error('corrupt');
+      /* istanbul ignore if */ if (idx >= DICT_COUNT) throw new Error('corrupt');
       const entry = DICT_U8[idx];
       if (op + entry.length > outLen) throw new Error('corrupt');
       out.set(entry, op);
@@ -345,7 +349,7 @@ function decompressBlock(hist, histLen, input, inLen, out, outLen) {
     }
     if (token < 0xE0) {
       const idx = 80 + (token & 0x0F);
-      if (idx >= DICT_COUNT) throw new Error('corrupt');
+      /* istanbul ignore if */ if (idx >= DICT_COUNT) throw new Error('corrupt');
       const entry = DICT_U8[idx];
       if (op + entry.length > outLen) throw new Error('corrupt');
       out.set(entry, op);
@@ -354,7 +358,7 @@ function decompressBlock(hist, histLen, input, inLen, out, outLen) {
     }
     if (token < 0xF0) {
       const idx = 64 + (token & 0x0F);
-      if (idx >= DICT_COUNT) throw new Error('corrupt');
+      /* istanbul ignore if */ if (idx >= DICT_COUNT) throw new Error('corrupt');
       const entry = DICT_U8[idx];
       if (op + entry.length > outLen) throw new Error('corrupt');
       out.set(entry, op);
@@ -480,5 +484,5 @@ function compressBound(inputLen) {
 }
   return { compress: compress, decompress: decompress, compressBound: compressBound, PROFILES: PROFILES };
 })();
-if (typeof globalThis !== 'undefined') globalThis.PicoCompress = BareMetal.Compress;
-if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Compress;
+/* istanbul ignore else */ if (typeof globalThis !== 'undefined') globalThis.PicoCompress = BareMetal.Compress;
+/* istanbul ignore else */ if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Compress;

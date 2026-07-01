@@ -1,4 +1,5 @@
 // BareMetal.LocalKVStore — client-side key-value storage abstraction
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.LocalKVStore = (() => {
   'use strict';
@@ -409,3 +410,4 @@ BareMetal.LocalKVStore = (() => {
 
   return { create: create };
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.LocalKVStore;

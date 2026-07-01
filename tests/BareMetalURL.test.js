@@ -4,13 +4,11 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 function loadURL() {
-  delete global.window.BareMetal;
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.URL.js'), 'utf8');
-  const fn = new Function('window', 'module', code + '\nreturn window.BareMetal.URL;');
-  return fn(global.window, { exports: {} });
+  jest.resetModules();
+  delete require.cache[require.resolve(path.resolve(__dirname, '../src/BareMetal.URL.js'))];
+  return require(path.resolve(__dirname, '../src/BareMetal.URL.js'));
 }
 
 describe('BareMetal.URL', () => {
@@ -114,5 +112,67 @@ describe('BareMetal.URL', () => {
 
   test('decode safely handles malformed sequences', () => {
     expect(URLTools.decode('%E0%A4%A')).toBe('%E0%A4%A');
+  });
+});
+
+describe('branch coverage - URL', () => {
+  test('parse build encode and decode cover empty fragment ipv6 and nested query branches', () => {
+    const URLTools = loadURL();
+
+    expect(URLTools.parse('mailto:test@example.com#frag')).toEqual(expect.objectContaining({
+      protocol: 'mailto:',
+      host: '',
+      pathname: 'test@example.com',
+      hash: '#frag',
+      params: {},
+      segments: ['test@example.com']
+    }));
+    expect(URLTools.parse('http://[::1]:8080/a').hostname).toBe('[::1]');
+    expect(URLTools.build({ hostname: 'example.com', port: '8080', segments: ['a', 'b'], params: { q: 'x' } })).toBe('//example.com:8080/a/b?q=x');
+    expect(URLTools.build({ pathname: '/plain' })).toBe('/plain');
+
+    expect(URLTools.query.encode({ a: null, b: undefined, list: [1, null, { x: 'y' }] })).toBe('a&list=1&list&list%5B2%5D%5Bx%5D=y');
+    expect(URLTools.query.decode('arr%5B%5D=1&arr%5B%5D=2&obj%5Ba%5D=1&obj%5Bb%5D=2')).toEqual({
+      arr: ['1', '2'],
+      obj: { a: '1', b: '2' }
+    });
+    expect(URLTools.encode("!'()* ")).toBe('%21%27%28%29%2A%20');
+  });
+
+  test('routing normalization resolve and validity cover mismatch wildcard and cross origin branches', () => {
+    const URLTools = loadURL();
+
+    expect(URLTools.params('/files/*', '/files/a/b/c')).toEqual({ '*': 'a/b/c' });
+    expect(URLTools.params('/users/:id', '/users')).toBeNull();
+    expect(URLTools.params('/users/:id', '/accounts/1')).toBeNull();
+    expect(URLTools.template('/x/:missing/:id', { id: 'A B' })).toBe('/x//A%20B');
+    expect(URLTools.normalize('HTTP://Example.com:80//a/./b/../c/')).toBe('http://example.com/a/c');
+    expect(URLTools.resolve('https://example.com/a/b/c', '')).toBe('https://example.com/a/b/c');
+    expect(URLTools.resolve('https://example.com/a/b/c?x=1#old', '#new')).toBe('https://example.com/a/b/c?x=1#new');
+    expect(URLTools.resolve('https://example.com/a/b/c?x=1#old', '?y=2')).toBe('https://example.com/a/b/c?y=2');
+    expect(URLTools.isValid('')).toBe(false);
+    expect(URLTools.isValid('https://exa mple.com')).toBe(false);
+    expect(URLTools.isRelative('docs/page')).toBe(true);
+    expect(URLTools.relative('https://one.com/a', 'https://two.com/b')).toBe('https://two.com/b');
+  });
+
+  test('query merge remove hash and relative cover nested deletion and empty result branches', () => {
+    const URLTools = loadURL();
+
+    const merged = URLTools.query.merge('/api?filters%5Btags%5D%5B%5D=a&filters%5Btags%5D%5B%5D=b', {
+      filters: { tags: ['c'], page: 2 },
+      extra: 'y',
+      skip: undefined
+    });
+    expect(URLTools.query.decode(URLTools.parse(merged).search)).toEqual({
+      filters: { tags: 'c', page: '2' },
+      extra: 'y'
+    });
+
+    const removed = URLTools.query.remove(merged, ['filters[page]', 'filters[tags]', 'missing']);
+    expect(URLTools.query.decode(URLTools.parse(removed).search)).toEqual({ extra: 'y' });
+    expect(URLTools.hash.get('/x')).toBe('');
+    expect(URLTools.hash.set('/x#old', '')).toBe('/x');
+    expect(URLTools.relative('https://example.com/a/b/', 'https://example.com/a/b/')).toBe('');
   });
 });

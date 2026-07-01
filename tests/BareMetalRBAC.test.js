@@ -3,13 +3,12 @@
  */
 'use strict';
 const path = require('path');
-const fs = require('fs');
+
+const SRC = path.resolve(__dirname, '../src/BareMetal.RBAC.js');
 
 function loadRBAC() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.RBAC.js'), 'utf8');
-  const bm = {};
-  const fn = new Function('BareMetal', 'document', 'localStorage', 'sessionStorage', 'setTimeout', 'clearTimeout', code + '\nreturn BareMetal;');
-  return fn(bm, global.document, global.localStorage, global.sessionStorage, setTimeout, clearTimeout).RBAC;
+  delete require.cache[SRC];
+  return require(SRC);
 }
 
 function base64url(value) {
@@ -106,5 +105,135 @@ describe('BareMetal.RBAC', () => {
     expect(document.getElementById('disable').getAttribute('disabled')).toBe('disabled');
     expect(document.getElementById('disable').getAttribute('aria-disabled')).toBe('true');
     expect(document.getElementById('classy').classList.contains('admin-view')).toBe(true);
+  });
+});
+
+describe('branch coverage - RBAC', () => {
+  let RBAC;
+
+  beforeEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    document.body.innerHTML = '';
+    RBAC = loadRBAC();
+    RBAC.clearToken();
+    RBAC.configure({
+      tokenSource: 'localStorage',
+      tokenKey: 'auth_token',
+      claimMapping: {},
+      rolePermissions: {},
+      groupRoles: {},
+      superRoles: [],
+      onChange: null
+    });
+  });
+
+  test('manual tokens, empty role checks, and super roles cover permission branches', () => {
+    const future = Math.floor(Date.now() / 1000) + 3600;
+
+    RBAC.configure({ tokenSource: 'manual', superRoles: [] });
+    RBAC.setToken(fakeJwt({ sub: 'plain-user', exp: future }));
+    expect(RBAC.identity()).toEqual(expect.objectContaining({
+      userId: 'plain-user',
+      roles: [],
+      groups: [],
+      permissions: [],
+      scopes: []
+    }));
+    expect(RBAC.hasRole('admin')).toBe(false);
+    expect(RBAC.hasAnyRole([])).toBe(false);
+    expect(RBAC.hasAllRoles([])).toBe(true);
+    expect(RBAC.check({ roles: ['admin'] })).toBe(false);
+    expect(RBAC.checkAny({})).toBe(false);
+
+    RBAC.configure({ tokenSource: 'manual', superRoles: ['admin'] });
+    RBAC.setToken(fakeJwt({
+      role: 'admin',
+      permissions: 'read write',
+      group: 'ops',
+      given_name: 'Ada',
+      family_name: 'Lovelace',
+      tid: 'tenant-1',
+      exp: future
+    }));
+
+    expect(RBAC.identity()).toEqual(expect.objectContaining({
+      name: 'Ada Lovelace',
+      roles: ['admin'],
+      groups: ['ops'],
+      tenant: 'tenant-1',
+      permissions: expect.arrayContaining(['read', 'write'])
+    }));
+    expect(RBAC.can('delete-anything')).toBe(true);
+    expect(RBAC.inAnyGroup(['sales', 'ops'])).toBe(true);
+    expect(RBAC.canAny(['missing'])).toBe(true);
+    expect(RBAC.canAll(['missing'])).toBe(true);
+    expect(RBAC.guard({ tenant: ['tenant-1'] })()).toBe(true);
+    expect(RBAC.check({ tenant: ['tenant-1', 'tenant-2'] })).toBe(true);
+    expect(RBAC.checkAny({ tenant: ['tenant-2', 'tenant-1'] })).toBe(true);
+  });
+
+  test('token sources, expiry handling, and DOM edge cases cover fallback paths', () => {
+    const future = Math.floor(Date.now() / 1000) + 3600;
+    const cookieToken = fakeJwt({ sub: 'cookie-user', permissions: ['view'], exp: future });
+    const sessionToken = fakeJwt({ sub: 'session-user', roles: ['reviewer'], exp: future });
+
+    document.cookie = 'auth_token=' + encodeURIComponent(cookieToken) + '; path=/';
+    sessionStorage.setItem('auth_token', sessionToken);
+
+    RBAC.configure({ tokenSource: 'cookie' });
+    expect(RBAC.identity().userId).toBe('cookie-user');
+
+    RBAC.configure({ tokenSource: 'sessionStorage' });
+    expect(RBAC.identity().userId).toBe('session-user');
+    expect(RBAC.hasRole('reviewer')).toBe(true);
+
+    RBAC.configure({ tokenSource: 'manual' });
+    RBAC.setToken(fakeJwt({ roles: ['viewer'], permissions: ['read'], exp: future }));
+    expect(RBAC.applyDOM({})).toBe(0);
+
+    const root = document.createElement('section');
+    root.setAttribute('data-rbac-show', 'role:viewer');
+    root.setAttribute('data-rbac-class', 'role:admin=admin-only,perm:read=reader');
+    document.body.appendChild(root);
+    expect(RBAC.applyDOM(root)).toBe(1);
+    expect(root.style.display).toBe('');
+    expect(root.classList.contains('reader')).toBe(true);
+    expect(root.classList.contains('admin-only')).toBe(false);
+
+    RBAC.setToken('not-a-jwt');
+    expect(RBAC.identity()).toBeNull();
+
+    RBAC.setToken(fakeJwt({ sub: 'expired', exp: Math.floor(Date.now() / 1000) - 1 }));
+    expect(RBAC.isAuthenticated()).toBe(false);
+  });
+
+  test('expiry listeners fire when a token times out', () => {
+    const changeSpy = jest.fn();
+    const expirySpy = jest.fn();
+
+    jest.useFakeTimers();
+    try {
+      RBAC = loadRBAC();
+      RBAC.clearToken();
+      RBAC.configure({ tokenSource: 'manual', onChange: changeSpy });
+      const offExpiry = RBAC.onExpiry(expirySpy);
+
+      RBAC.setToken(fakeJwt({
+        sub: 'soon-expired',
+        exp: Math.floor(Date.now() / 1000) + 1
+      }));
+
+      jest.advanceTimersByTime(1100);
+
+      expect(expirySpy).toHaveBeenCalledWith(expect.objectContaining({ userId: 'soon-expired' }));
+      expect(changeSpy).toHaveBeenLastCalledWith(null);
+      expect(RBAC.identity()).toBeNull();
+
+      offExpiry();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

@@ -154,3 +154,4 @@ BareMetal.Logger = (function () {
     beacon: beacon
   };
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Logger;

@@ -1,3 +1,4 @@
+/* istanbul ignore next */
 var root = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
 root.BareMetal = root.BareMetal || {};
 var BareMetal = root.BareMetal;

@@ -4,16 +4,16 @@
 'use strict';
 
 const path = require('path');
-const fs   = require('fs');
 
 const SRC = path.resolve(
   __dirname, '../src/BareMetal.Template.js'
 );
 
 function loadTemplate() {
-  const code = fs.readFileSync(SRC, 'utf8');
-  const fn = new Function('document', code + '\nreturn BareMetal.Template;');
-  return fn(global.document);
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Template.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 // ── buildForm ──────────────────────────────────────────────────────────────

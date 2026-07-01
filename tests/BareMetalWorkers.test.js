@@ -2,15 +2,15 @@
  * @jest-environment jest-environment-jsdom
  */
 'use strict';
-const fs = require('fs');
 const path = require('path');
 
 const SRC_PATH = path.resolve(__dirname, '../src/BareMetal.Workers.js');
 
 function loadWorkers() {
-  const code = fs.readFileSync(SRC_PATH, 'utf8');
-  const fn = new Function('BareMetal', code + '\nreturn BareMetal.Workers;');
-  return fn({});
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Workers.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 function deferred() {

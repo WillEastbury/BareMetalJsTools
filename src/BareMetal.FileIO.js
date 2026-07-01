@@ -1,6 +1,8 @@
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.FileIO = (function(){
 'use strict';
+/* istanbul ignore next */
 var g = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
 var mm = {
 'image/*':['.png','.jpg','.jpeg','.gif','.webp','.bmp','.svg','.ico'],

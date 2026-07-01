@@ -508,3 +508,5 @@ BareMetal.Graph = (() => {
 
   return { create };
 })();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Graph;

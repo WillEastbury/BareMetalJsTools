@@ -4,14 +4,12 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 function loadSchema() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Schema.js'), 'utf8');
-  const win = {};
-  const module = { exports: null };
-  const fn = new Function('module', 'exports', 'window', 'globalThis', code + '\nreturn module.exports || (window.BareMetal && window.BareMetal.Schema);');
-  return fn(module, {}, win, win);
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Schema.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 describe('BareMetal.Schema', () => {
@@ -279,5 +277,126 @@ describe('BareMetal.Schema', () => {
     expect(restored.shape.key.wireType).toBe('Identifier');
     expect(restored.shape.value.wire).toBe('int64');
     expect(restored.shape.stamp.format).toBe('dateonly');
+  });
+});
+
+describe('branch coverage - Schema', () => {
+  test('validation and coercion cover missing, wrong, nested, array, and additional property cases', () => {
+    const Schema = loadSchema();
+    const strictSchema = Schema.object({
+      id: Schema.number({ integer: true }),
+      count: Schema.number({ default: 5 }),
+      enabled: Schema.boolean({ coerce: true }),
+      nested: Schema.object({
+        name: Schema.string({ min: 2 }),
+        scores: Schema.array(Schema.number(), { min: 1, max: 2 })
+      }, { strict: true })
+    }, { strict: true });
+
+    const invalid = Schema.parse(strictSchema, {
+      id: 'oops',
+      count: undefined,
+      enabled: 'yes',
+      nested: { name: 'A', scores: ['1', 'x', 3], extra: true },
+      extraRoot: true
+    });
+
+    expect(invalid.ok).toBe(false);
+    expect(invalid.errors.map((item) => item.path).sort()).toEqual([
+      'extraRoot',
+      'id',
+      'nested.extra',
+      'nested.name',
+      'nested.scores',
+      'nested.scores[1]'
+    ]);
+
+    expect(Schema.transform(strictSchema, {
+      id: '7',
+      count: undefined,
+      enabled: '0',
+      nested: { name: '  ok  ', scores: [2] }
+    })).toEqual({
+      id: 7,
+      count: 5,
+      enabled: false,
+      nested: { name: '  ok  ', scores: [2] }
+    });
+
+    expect(Schema.parse(
+      Schema.object({ name: Schema.string() }, { strict: false }),
+      { name: 'Ada', extra: true }
+    )).toEqual({ ok: true, value: { name: 'Ada', extra: true } });
+
+    expect(Schema.defaults(Schema.object({
+      mode: Schema.oneOf([Schema.string({ default: 'safe' })]),
+      meta: Schema.object({ active: Schema.boolean({ default: true }) })
+    }))).toEqual({ mode: 'safe', meta: { active: true } });
+  });
+
+  test('versions, unions, and custom validators cover migration and transform edge cases', () => {
+    const Schema = loadSchema();
+    const versioned = Schema.version(
+      Schema.object({ name: Schema.string(), active: Schema.boolean({ default: true }) }),
+      2,
+      [{ from: 1, to: 2, up: (data) => ({ name: data.name, active: data.active !== false }), down: (data) => ({ name: data.name }) }]
+    );
+    const missingUp = Schema.version(Schema.string(), 2, [{ from: 1, to: 2 }]);
+    const missingDown = Schema.version(Schema.string(), 2, [{ from: 1, to: 2, up: (value) => value }]);
+    const union = Schema.oneOf([Schema.number(), Schema.string({ trim: true, uppercase: true })]);
+    const unknownCustom = Schema.custom('unknown-validator');
+    const throwingCustom = Schema.custom('throws', () => { throw new Error('Boom'); });
+
+    expect(versioned.migrate({ name: 'Ada' }, 2, 2)).toEqual({ name: 'Ada' });
+    expect(() => versioned.migrate({ name: 'Ada' }, 1, 3)).toThrow('Migration path not found.');
+    expect(() => missingUp.migrate('x', 1, 2)).toThrow('Missing up migration from 1 to 2.');
+    expect(() => missingDown.migrate('x', 2, 1)).toThrow('Missing down migration from 1 to 2.');
+
+    expect(Schema.coerce(Schema.number(), true)).toBe(1);
+    expect(Schema.transform(union, '  hi ')).toBe('HI');
+    expect(Schema.parse(unknownCustom, 'x')).toEqual({
+      ok: false,
+      errors: [{ path: '', code: 'custom', message: 'Unknown custom validator: unknown-validator.' }]
+    });
+    expect(Schema.parse(throwingCustom, 'x')).toEqual({
+      ok: false,
+      errors: [{ path: '', code: 'custom', message: 'Boom' }]
+    });
+  });
+
+  test('json and binary helpers cover invalid descriptors, wire mappings, and explicit overrides', () => {
+    const Schema = loadSchema();
+    const schema = Schema.object({
+      code: Schema.string({ wireType: 'Char', ordinal: 2 }),
+      kind: Schema.number({ enumUnderlying: 'Byte', enumValues: ['A', 'B'], ordinal: 0 }),
+      when: Schema.date({ format: 'timeonly', ordinal: 1 })
+    });
+
+    expect(Schema.fromJSON(null)).toBeNull();
+    expect(Schema.extend(Schema.string(), { fallback: Schema.boolean() }).shape.fallback.type).toBe('boolean');
+    expect(Schema.pick(Schema.string(), ['x']).type).toBe('string');
+    expect(Schema.omit(Schema.number(), ['x']).type).toBe('number');
+    expect(Schema.partial(Schema.boolean()).type).toBe('boolean');
+
+    const binary = Schema.toBinary(schema, { schemaHash: 42 });
+    expect(binary).toEqual({
+      members: [
+        { name: 'kind', wireType: 'Enum', isNullable: false, enumUnderlying: 'Byte', enumValues: ['A', 'B'], ordinal: 0 },
+        { name: 'when', wireType: 'TimeOnly', isNullable: false, ordinal: 1 },
+        { name: 'code', wireType: 'Char', isNullable: false, ordinal: 2 }
+      ],
+      version: 1,
+      schemaHash: 42
+    });
+    expect(() => Schema.toBinary(Schema.string())).toThrow('toBinary requires an object schema');
+
+    const restored = Schema.fromBinary({
+      members: [
+        { name: 'mystery', wireType: 'Weird', isNullable: true },
+        { name: 'stamp', wireType: 'DateTimeOffset', isNullable: false }
+      ]
+    });
+    expect(restored.shape.mystery).toEqual(expect.objectContaining({ type: 'string', nullable: true, wireType: 'Weird' }));
+    expect(restored.shape.stamp).toEqual(expect.objectContaining({ type: 'date', format: 'offset', wireType: 'DateTimeOffset' }));
   });
 });

@@ -4,12 +4,12 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 function loadNotify() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Notify.js'), 'utf8');
-  const fn = new Function('BareMetal', 'module', code + '\nreturn BareMetal.Notify;');
-  return fn({}, { exports: {} });
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Notify.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 describe('BareMetal.Notify', () => {

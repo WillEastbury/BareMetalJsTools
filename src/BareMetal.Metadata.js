@@ -1,4 +1,5 @@
 // BareMetalMetadata — client-side entity schema registry
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.Metadata = (() => {
   'use strict';
@@ -278,3 +279,4 @@ BareMetal.Metadata = (() => {
     fromBinary: fromBinary
   };
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Metadata;

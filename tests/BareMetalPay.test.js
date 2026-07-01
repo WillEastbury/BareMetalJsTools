@@ -4,14 +4,13 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 const SRC_PATH = path.resolve(__dirname, '../src/BareMetal.Pay.js');
 
 function loadPay() {
-  const code = fs.readFileSync(SRC_PATH, 'utf8');
-  const fn = new Function('BareMetal', 'window', 'PaymentRequest', 'Intl', code + '\nreturn BareMetal.Pay;');
-  return fn({}, global.window, global.PaymentRequest, global.Intl);
+  jest.resetModules();
+  delete require.cache[require.resolve(SRC_PATH)];
+  return require(SRC_PATH);
 }
 
 describe('BareMetal.Pay', () => {
@@ -153,5 +152,105 @@ describe('BareMetal.Pay', () => {
     expect(abort).toHaveBeenCalledTimes(1);
     expect(complete).toHaveBeenCalledWith('success');
     expect(retry).toHaveBeenCalledWith({ cardNumber: 'bad' });
+  });
+
+  test('request normalizes complex methods and details', async () => {
+    const show = jest.fn().mockResolvedValue({ request: { existing: true } });
+    const PaymentRequestMock = jest.fn(function PaymentRequest(methods, details, opts) {
+      this.methods = methods;
+      this.details = details;
+      this.opts = opts;
+      this.show = show;
+    });
+    global.PaymentRequest = PaymentRequestMock;
+    Pay = loadPay();
+
+    const shipping = Pay.shipping([{ id: 'std', label: 'Standard', amount: 5 }]);
+    const details = {
+      id: 42,
+      total: { label: 'Order total', amount: { value: 12.345, currency: 'EUR' } },
+      displayItems: [{ id: 'sku-1', amount: 10, pending: true }],
+      shippingOptions: shipping,
+      modifiers: [{ supportedMethods: 'basic-card' }]
+    };
+    const response = await Pay.request(details, [
+      ['basic-card', { googlePay: { environment: 'TEST' } }],
+      { type: 'apple', config: { version: 3 } },
+      { supportedMethods: 'https://custom-pay', data: 'raw' }
+    ]);
+
+    expect(PaymentRequestMock).toHaveBeenCalledWith([
+      { supportedMethods: 'basic-card', data: {} },
+      { supportedMethods: 'https://google.com/pay', data: { environment: 'TEST' } },
+      { supportedMethods: 'https://apple.com/apple-pay', data: { version: 3 } },
+      { supportedMethods: 'https://custom-pay', data: 'raw' }
+    ], {
+      id: '42',
+      total: { label: 'Order total', amount: { currency: 'EUR', value: '12.35' } },
+      displayItems: [{ label: 'sku-1', amount: { currency: 'EUR', value: '10.00' }, pending: true }],
+      shippingOptions: [{ id: 'std', label: 'Standard', amount: { currency: 'USD', value: '5.00' }, selected: true }],
+      modifiers: [{ supportedMethods: 'basic-card' }]
+    }, {});
+    expect(response.request).toBe(PaymentRequestMock.mock.instances[0]);
+  });
+
+  test('formatCurrency falls back when Intl formatting throws', () => {
+    const original = Intl.NumberFormat;
+    Intl.NumberFormat = jest.fn(() => { throw new Error('no intl'); });
+    try {
+      expect(Pay.formatCurrency('9.5', 'ZZZ')).toBe('ZZZ 9.50');
+    } finally {
+      Intl.NumberFormat = original;
+    }
+  });
+
+  test('cart handles seeded data, duplicate ids, removals, and mixed currencies', () => {
+    const cart = Pay.cart([
+      { id: 'a', name: 'Alpha', value: 5, qty: 1, currency: 'USD' },
+      { id: 'eur', label: 'Euro', amount: 3, qty: 2, currency: 'EUR', pending: true }
+    ]);
+
+    cart.add({ id: 'a', amount: 7, qty: 2 })
+      .add({ id: 'zero', amount: 1, qty: 0 })
+      .update('missing', 4)
+      .update('eur', 0)
+      .remove('missing');
+
+    expect(cart.getItems()).toEqual([
+      { id: 'a', label: 'Alpha', amount: 7, qty: 3, currency: 'USD', pending: false }
+    ]);
+    expect(cart.getTotal()).toBe(21);
+    expect(cart.getTotal('EUR')).toBe(0);
+  });
+
+  test('shipping normalizes default selection and object additions', () => {
+    const shipping = Pay.shipping({
+      currency: 'CAD',
+      options: [
+        { id: 'slow', label: 'Slow', amount: 2 },
+        { id: 'fast', label: 'Fast', amount: { value: 10, currency: 'CAD' }, selected: true }
+      ]
+    });
+
+    shipping.add({ id: 'pickup', label: 'Pickup', amount: 0, selected: false });
+
+    expect(shipping.getSelected()).toEqual({
+      id: 'fast',
+      label: 'Fast',
+      amount: { currency: 'CAD', value: '10.00' },
+      selected: true
+    });
+    expect(shipping.toArray()).toHaveLength(3);
+  });
+
+  test('validate handles empty and non-digit card numbers', () => {
+    expect(Pay.validate('')).toEqual({ valid: false, type: null });
+    expect(Pay.validate('abcd-efgh')).toEqual({ valid: false, type: null });
+  });
+
+  test('abort, complete, and retry return false when methods are unavailable or fail', async () => {
+    await expect(Pay.abort({ request: { abort: () => Promise.reject(new Error('boom')) } })).resolves.toBe(false);
+    await expect(Pay.complete({}, 'success')).resolves.toBe(false);
+    await expect(Pay.retry({}, { field: 'bad' })).resolves.toBe(false);
   });
 });

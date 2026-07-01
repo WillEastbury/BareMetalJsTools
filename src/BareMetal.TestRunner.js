@@ -716,3 +716,5 @@ BareMetal.TestRunner = (function () {
 
   return api;
 })();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.TestRunner;

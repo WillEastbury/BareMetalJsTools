@@ -319,3 +319,5 @@ BareMetal.A11y = (function () {
     onSchemeChange: onSchemeChange
   };
 })();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.A11y;

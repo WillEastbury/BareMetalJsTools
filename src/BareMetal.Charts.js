@@ -374,3 +374,5 @@ BareMetal.Charts = (() => {
   // --- Public API ---
   return { bar, line, sparkline, donut, gauge };
 })();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Charts;

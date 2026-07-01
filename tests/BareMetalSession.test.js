@@ -4,7 +4,6 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 function createStorageMock() {
   let data = {};
@@ -65,31 +64,18 @@ function createBroadcastChannelMock() {
 }
 
 function loadSession(env) {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Session.js'), 'utf8');
-  const fn = new Function(
-    'window',
-    'document',
-    'navigator',
-    'localStorage',
-    'sessionStorage',
-    'BroadcastChannel',
-    'module',
-    'exports',
-    'screen',
-    code + '\nreturn window.BareMetal.Session;'
-  );
-  return fn(
-    env.window,
-    env.window.document,
-    env.window.navigator,
-    env.window.localStorage,
-    env.window.sessionStorage,
-    env.window.BroadcastChannel,
-    { exports: {} },
-    {},
-    env.window.screen || {}
-  );
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Session.js');
+
+  try {
+    global.__bmSessionRootOverride = env.window;
+    jest.resetModules();
+    delete require.cache[require.resolve(srcPath)];
+    return require(srcPath);
+  } finally {
+    delete global.__bmSessionRootOverride;
+  }
 }
+
 
 describe('BareMetal.Session', () => {
   let Session;
@@ -266,5 +252,124 @@ describe('BareMetal.Session', () => {
 
     first.init({ accessToken: 'a2' });
     expect(second.get('accessToken')).toBe('a2');
+  });
+});
+
+describe('branch coverage - Session', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  test('covers guard fallback storage sync and refresh edge cases', async () => {
+    const storageState = {};
+    const listeners = {};
+    const storage = {
+      getItem: jest.fn((key) => (Object.prototype.hasOwnProperty.call(storageState, key) ? storageState[key] : null)),
+      setItem: jest.fn((key, value) => { storageState[key] = String(value); }),
+      removeItem: jest.fn((key) => { delete storageState[key]; })
+    };
+    const root = {
+      BareMetal: {},
+      document,
+      navigator: { userAgent: 'ua', languages: ['en'], platform: 'p', vendor: 'v' },
+      screen: {},
+      localStorage: storage,
+      sessionStorage: createStorageMock(),
+      location: { hostname: 'example.test' },
+      Intl: { DateTimeFormat() { throw new Error('no tz'); } },
+      process,
+      addEventListener(type, handler) { listeners[type] = handler; },
+      removeEventListener(type) { delete listeners[type]; },
+      setTimeout,
+      clearTimeout
+    };
+    const Session = loadSession({ window: root });
+    const redirect = jest.fn();
+
+    expect(Session.fingerprint()).toBe(Session.fingerprint());
+    await expect(Session.guard(() => Promise.resolve(false), redirect)({ route: '/nope' })).resolves.toBe(false);
+    await expect(Session.guard(() => Promise.reject(new Error('boom')), redirect)({ route: '/boom' })).resolves.toBe(false);
+    expect(Session.guard(null)({})).toBe(true);
+    expect(redirect).toHaveBeenCalledTimes(2);
+
+    const syncA = Session.tabSync('fallback');
+    const syncB = Session.tabSync('fallback');
+    const seen = jest.fn();
+    const offSeen = syncB.onMessage(seen);
+
+    expect(syncA.broadcast({ type: 'ping', ok: true })).toBe(true);
+    const channelKey = storage.setItem.mock.calls[0][0];
+    listeners.storage({ key: channelKey, newValue: JSON.stringify({ type: 'pong', ok: true }) });
+    listeners.storage({ key: channelKey, newValue: '' });
+    expect(seen).toHaveBeenCalledWith({ type: 'pong', ok: true });
+    offSeen();
+    syncA.destroy();
+    expect(syncA.broadcast({ type: 'late' })).toBe(false);
+    syncB.destroy();
+
+    storageState.corrupt = '{bad json';
+    const changes = [];
+    const expires = [];
+    const session = Session.create({ storage: 'localStorage', key: 'corrupt', ttl: 0, onExpire: (info) => expires.push(info) });
+    const offChange = session.onChange((data, meta) => changes.push({ data, meta }));
+
+    expect(session.getData()).toBeNull();
+    expect(session.set('beforeInit', 1)).toBe(session);
+    expect(session.get('beforeInit')).toBe(1);
+    expect(session.extend(50)).toBe(session);
+    await expect(session.refresh()).rejects.toThrow('refreshFn required');
+
+    session.init({ accessToken: 'a', expiresIn: 1 });
+    const refreshFn = jest.fn().mockResolvedValue({ accessToken: 'b', expiresAt: new Date(Date.now() + 2000) });
+    const [one, two] = await Promise.all([session.refresh(refreshFn), session.refresh()]);
+    expect(refreshFn).toHaveBeenCalledTimes(1);
+    expect(one).toEqual(two);
+    expect(session.getExpiry()).toBeInstanceOf(Date);
+
+    const rotateFn = jest.fn().mockResolvedValue({ accessToken: 'c', expiry: Date.now() + 3000 });
+    const rotated = await Promise.all([
+      session.rotate({ refreshFn: rotateFn, lockout: false }),
+      session.rotate({ refreshFn: rotateFn, lockout: false })
+    ]);
+    await session.rotate({ refreshFn: rotateFn, lockout: false });
+    expect(rotateFn).toHaveBeenCalledTimes(2);
+    expect(rotated[0].accessToken).toBe('c');
+
+    offChange();
+    session.destroy();
+    expect(session.getData()).toBeNull();
+    expect(changes.some((entry) => entry.meta.type === 'init')).toBe(true);
+    expect(expires[expires.length - 1]).toEqual(expect.objectContaining({ reason: 'destroyed' }));
+  });
+
+  test('covers activity cleanup and no-op extension paths', () => {
+    jest.useFakeTimers();
+    const Session = loadSession({ window: {
+      BareMetal: {},
+      document,
+      navigator: {},
+      screen: {},
+      localStorage: createStorageMock(),
+      sessionStorage: createStorageMock(),
+      location: { hostname: 'example.test' },
+      Intl,
+      process,
+      addEventListener: window.addEventListener.bind(window),
+      removeEventListener: window.removeEventListener.bind(window),
+      setTimeout,
+      clearTimeout
+    } });
+
+    const tracker = Session.activity({ idleTimeout: 25, events: [] });
+    expect(typeof tracker.onIdle(null)).toBe('function');
+    tracker.touch();
+    jest.advanceTimersByTime(26);
+    expect(tracker.isIdle()).toBe(true);
+    tracker.destroy();
+
+    const session = Session.create({ storage: 'memory', key: 'noop', ttl: 0 });
+    expect(session.extend(100)).toBe(session);
+    expect(session.get('missing')).toBeNull();
   });
 });

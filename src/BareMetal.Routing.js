@@ -194,3 +194,4 @@ function isVNextPath(href) {
   return BMRouter;
 })();
 window.BMRouter = BareMetal.Routing;
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Routing;

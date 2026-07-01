@@ -3,12 +3,12 @@
  */
 'use strict';
 const path = require('path');
-const fs = require('fs');
 
 function loadMarkdown() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Markdown.js'), 'utf8');
-  const fn = new Function('document', code + '\nreturn BareMetal.Markdown;');
-  return fn(global.document);
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Markdown.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 describe('BareMetal.Markdown', () => {

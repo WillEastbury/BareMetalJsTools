@@ -4,20 +4,12 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 function loadTenant() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Tenant.js'), 'utf8');
-  const windowLike = {
-    BareMetal: {},
-    Promise: Promise,
-    setTimeout: setTimeout,
-    clearTimeout: clearTimeout,
-    Date: Date,
-    JSON: JSON
-  };
-  const fn = new Function('window', 'module', 'exports', code + '\nreturn window.BareMetal.Tenant;');
-  return fn(windowLike, { exports: {} }, {});
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Tenant.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 describe('BareMetal.Tenant', () => {
@@ -251,5 +243,109 @@ describe('BareMetal.Tenant', () => {
     expect(ImportedTenant.limits('alpha').check('storage', 25)).toEqual({ allowed: true, remaining: 75, limit: 100 });
     expect(ImportedTenant.features('alpha').list().sort()).toEqual(['export', 'search']);
     expect(typeof snapshot.created).toBe('string');
+  });
+});
+
+describe('branch coverage - Tenant', () => {
+  let Tenant;
+
+  function addTenant(id, opts) {
+    const tenant = Tenant.create(id, opts);
+    Tenant.store.add(tenant);
+    return tenant;
+  }
+
+  beforeEach(() => {
+    Tenant = loadTenant();
+  });
+
+  test('current, scope, middleware, and store removal cover missing and restore branches', () => {
+    expect(Tenant.current()).toBeNull();
+    expect(() => Tenant.create()).toThrow('Tenant id is required');
+
+    addTenant('alpha');
+    addTenant('beta', { parent: 'alpha' });
+
+    expect(Tenant.scope('alpha').id).toBe('alpha');
+    Tenant.current('alpha');
+    expect(Tenant.resolve(null).id).toBe('alpha');
+    expect(Tenant.middleware((tenantId, value) => ({ tenantId, current: Tenant.current().id, value }))('x'))
+      .toEqual({ tenantId: 'alpha', current: 'alpha', value: 'x' });
+    expect(() => Tenant.scope('beta', () => { throw new Error('boom'); })).toThrow('boom');
+    expect(Tenant.current().id).toBe('alpha');
+    expect(Tenant.impersonate('beta', () => Tenant.current().id)).toBe('beta');
+    expect(Tenant.current().id).toBe('alpha');
+
+    Tenant.store.remove('alpha');
+    expect(Tenant.current()).toBeNull();
+    expect(() => Tenant.current('missing')).toThrow(/Unknown tenant/);
+  });
+
+  test('tenant-scoped storage and config cover no-context, global, inheritance, and mutation branches', () => {
+    const changes = [];
+    const cache = Tenant.isolate('session');
+    const offChange = Tenant.onChange((event) => changes.push(event.type));
+
+    addTenant('org', {
+      config: { theme: 'dark' },
+      metadata: { subdomain: 'acme', header: 'X-Tenant-ID', headers: ['x-tenant-id'], claim: 'tid' }
+    });
+    addTenant('team', { parent: 'org', config: { region: 'eu' } });
+
+    expect(() => cache.get('token')).toThrow(/No current tenant context/);
+
+    Tenant.config(null, { locale: 'en-GB' });
+    expect(Tenant.config('team')).toEqual({ locale: 'en-GB', theme: 'dark', region: 'eu' });
+    expect(Tenant.config('team', 'theme')).toBe('dark');
+    expect(Tenant.config('team', { theme: 'light', timezone: 'UTC' })).toEqual({
+      locale: 'en-GB',
+      theme: 'light',
+      region: 'eu',
+      timezone: 'UTC'
+    });
+    expect(Tenant.config('team', 'timezone')).toBe('UTC');
+
+    Tenant.current('team');
+    cache.set('token', 't1');
+    cache.set('temp', { ok: true });
+    cache.delete('temp');
+    expect(cache.keys()).toEqual(['token']);
+    expect(cache.get('token')).toBe('t1');
+    cache.clear();
+    expect(cache.keys()).toEqual([]);
+
+    expect(Tenant.resolve({ path: '/t/acme' }).id).toBe('org');
+    expect(Tenant.resolve({ header: 'x-tenant-id', headers: { 'X-Tenant-ID': 'org' } }).id).toBe('org');
+    expect(Tenant.resolve({ claim: 'tid', claims: { TID: 'org' } }).id).toBe('org');
+    expect(changes).toContain('config');
+
+    offChange();
+  });
+
+  test('partition, hierarchy, limits, features, and import cover fallback and reset branches', () => {
+    addTenant('root', { limits: { maxStorage: 10, features: ['search'] }, usage: { storage: 9 } });
+    addTenant('child', { parent: 'root' });
+
+    Tenant.current('root');
+    expect(Tenant.hierarchy().children.map((tenant) => tenant.id)).toEqual(['child']);
+
+    const partition = Tenant.partition([{ id: 1, tenantId: 'root' }]);
+    expect(partition.move(99, 'root', 'child')).toBeNull();
+    expect(partition.query('root', (item) => item.id === 1)).toEqual([{ id: 1, tenantId: 'root' }]);
+
+    const limiter = Tenant.limits('root');
+    expect(limiter.check('storage', 2)).toEqual({ allowed: false, remaining: 0, limit: 10 });
+    expect(limiter.check('users', 1)).toEqual({ allowed: true, remaining: Infinity, limit: null });
+    limiter.reset('storage');
+    expect(Tenant.limits('root').check('storage', 1)).toEqual({ allowed: true, remaining: 9, limit: 10 });
+    Tenant.limits('root', { maxUsers: '3', features: ['search', 'export'] });
+    expect(Tenant.features('root').enable('search')).toEqual(['search', 'export']);
+    expect(Tenant.features('root').disable('search')).toEqual(['export']);
+
+    expect(() => Tenant.import({})).toThrow('Tenant import requires an id');
+
+    const sealed = Tenant.seal('root');
+    expect(sealed.sealed).toBe(true);
+    expect(() => Tenant.store.add({ id: 'root', sealed: false })).toThrow(/sealed/);
   });
 });

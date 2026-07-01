@@ -4,20 +4,14 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 const SRC_PATH = path.resolve(__dirname, '../src/BareMetal.Print.js');
 
 function loadPrint() {
-  const code = fs.readFileSync(SRC_PATH, 'utf8');
-  const win = { document: global.document, Blob: global.Blob || Blob };
-  win.window = win;
-  win.globalThis = win;
-  win.BareMetal = {};
-  const mod = { exports: {} };
-  const exp = {};
-  const fn = new Function('window', 'globalThis', 'module', 'exports', 'BareMetal', 'document', 'Blob', code + '\nreturn window.BareMetal.Print || BareMetal.Print || module.exports || exports.Print;');
-  return fn(win, win, mod, exp, win.BareMetal, global.document, global.Blob || Blob);
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Print.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 describe('BareMetal.Print', () => {

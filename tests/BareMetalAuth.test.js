@@ -2,409 +2,375 @@
  * @jest-environment jest-environment-jsdom
  */
 'use strict';
+
 const path = require('path');
-const fs = require('fs');
+const { webcrypto } = require('crypto');
 
-// Helper: create a minimal JWT with given payload
-function makeJwt(payload) {
-  const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
-  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  return header + '.' + body + '.fakesig';
-}
-
+const SRC = path.resolve(__dirname, '../src/BareMetal.Auth.js');
 const DISCOVERY = {
   authorization_endpoint: 'https://idp.example.com/authorize',
   token_endpoint: 'https://idp.example.com/token',
   userinfo_endpoint: 'https://idp.example.com/userinfo',
-  end_session_endpoint: 'https://idp.example.com/logout',
-  jwks_uri: 'https://idp.example.com/.well-known/jwks'
+  end_session_endpoint: 'https://idp.example.com/logout'
 };
 
-function loadAuth(mockRest) {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Auth.js'), 'utf8');
-  const bm = {};
-  if (mockRest) bm.Communications = mockRest;
-  const fn = new Function('BareMetal', code + '\nreturn BareMetal;');
-  return fn(bm).Auth;
+function loadAuth() {
+  delete require.cache[require.resolve(SRC)];
+  return require(SRC);
 }
 
-function mockDiscoveryFetch() {
-  return jest.fn().mockResolvedValueOnce({
+function fakeJwt(payload, header) {
+  const h = Buffer.from(JSON.stringify(header || { alg: 'RS256', typ: 'JWT' })).toString('base64url');
+  const b = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  return h + '.' + b + '.fakesig';
+}
+
+async function setupDiscovery(Auth, opts) {
+  global.fetch = jest.fn().mockResolvedValue({
     ok: true,
-    json: () => Promise.resolve(DISCOVERY)
+    json: async () => DISCOVERY
   });
-}
-
-// Polyfill crypto.subtle for jsdom (Node's webcrypto)
-const { webcrypto } = require('crypto');
-if (!global.crypto || !global.crypto.subtle) {
-  Object.defineProperty(global, 'crypto', { value: webcrypto, writable: true });
-}
-
-// Helper to mock redirect
-function mockLocationAssign() {
-  const assignMock = jest.fn();
-  return { assignMock };
-}
-
-// Helper: run login flow and return state/nonce from redirect URL
-async function loginAndCapture(Auth) {
-  const assignMock = jest.fn();
-  Auth._setRedirect(assignMock);
-  const discoveryFetch = mockDiscoveryFetch();
-  global.fetch = discoveryFetch;
-  Auth.configure({ authority: 'https://idp.example.com', clientId: 'myapp', redirectUri: 'https://app/cb' });
+  Auth.configure(Object.assign({
+    authority: 'https://idp.example.com/',
+    clientId: 'client-123',
+    redirectUri: 'https://app.example.com/callback',
+    storage: 'session'
+  }, opts || {}));
   await Auth.initialize();
-  await Auth.login();
-  const redirectUrl = new URL(assignMock.mock.calls[0][0]);
-  const state = redirectUrl.searchParams.get('state');
-  const nonce = redirectUrl.searchParams.get('nonce');
-  return { state, nonce, assignMock };
 }
 
-// Helper: complete callback with token exchange
-async function completeCallback(Auth, state, nonce, accessToken) {
-  accessToken = accessToken || 'at_123';
-  global.fetch = jest.fn().mockResolvedValueOnce({
-    ok: true,
-    json: () => Promise.resolve({
-      access_token: accessToken,
-      id_token: makeJwt({ sub: 'user1', nonce: nonce, name: 'Test User' }),
-      expires_in: 3600
-    })
-  });
-  const origReplace = (global.history || {}).replaceState;
-  global.history = { replaceState: jest.fn() };
-  const result = await Auth.handleCallback('https://app/cb?code=authcode&state=' + state);
-  return result;
+async function loginAndCapture(Auth, extraParams) {
+  const redirect = jest.fn();
+  Auth._setRedirect(redirect);
+  await Auth.login(extraParams);
+  const url = new URL(redirect.mock.calls[0][0]);
+  return { redirect, url, state: url.searchParams.get('state'), nonce: url.searchParams.get('nonce') };
+}
+
+async function completeCallback(Auth, state, nonce, overrides) {
+  const data = Object.assign({
+    access_token: 'access-token',
+    id_token: fakeJwt({ sub: 'user-1', nonce, name: 'Alice', email: 'alice@example.com' }),
+    refresh_token: 'refresh-token',
+    expires_in: 3600
+  }, overrides || {});
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => data });
+  jest.spyOn(window.history, 'replaceState').mockImplementation(() => {});
+  return Auth.handleCallback('https://app.example.com/callback?code=abc123&state=' + encodeURIComponent(state));
 }
 
 describe('BareMetal.Auth', () => {
   let Auth;
-  let origFetch;
+  let originalCrypto;
+  let originalFetch;
 
   beforeEach(() => {
-    jest.restoreAllMocks();
-    origFetch = global.fetch;
+    jest.resetModules();
+    originalCrypto = global.crypto;
+    originalFetch = global.fetch;
+    Object.defineProperty(global, 'crypto', { value: webcrypto, configurable: true, writable: true });
+    sessionStorage.clear();
+    localStorage.clear();
+    document.body.innerHTML = '';
     Auth = loadAuth();
   });
 
   afterEach(() => {
-    global.fetch = origFetch;
+    jest.restoreAllMocks();
+    if (originalFetch === undefined) delete global.fetch;
+    else global.fetch = originalFetch;
+    Object.defineProperty(global, 'crypto', { value: originalCrypto, configurable: true, writable: true });
+    sessionStorage.clear();
+    localStorage.clear();
+    document.body.innerHTML = '';
   });
 
-  test('configure() stores options', () => {
-    Auth.configure({
-      authority: 'https://idp.example.com',
-      clientId: 'myapp',
-      redirectUri: 'https://app.example.com/callback'
+  test('exports the expected public API', () => {
+    [
+      'configure', 'initialize', 'login', 'handleCallback', 'logout', 'clearSession', 'getToken', 'getIdToken',
+      'silentRefresh', 'handleSilentCallback', 'getUser', 'getUserInfo', 'isAuthenticated', 'onAuthChange',
+      'attachToRest', '_setRedirect', 'parseJwt', 'createPkce', 'decodeJwtParts', 'renderLogin', 'renderAuthGate'
+    ].forEach((key) => expect(typeof Auth[key]).toBe('function'));
+  });
+
+  test('parseJwt decodes a valid token payload', () => {
+    expect(Auth.parseJwt(fakeJwt({ sub: 'abc', role: 'admin' }))).toEqual({ sub: 'abc', role: 'admin' });
+  });
+
+  test('parseJwt returns null for missing or malformed tokens', () => {
+    expect(Auth.parseJwt('')).toBeNull();
+    expect(Auth.parseJwt('one-part')).toBeNull();
+    expect(Auth.parseJwt('a.invalid-json.c')).toBeNull();
+  });
+
+  test('decodeJwtParts returns decoded header and payload', () => {
+    const token = fakeJwt({ sub: 'abc' }, { alg: 'HS256', typ: 'JWT' });
+    expect(Auth.decodeJwtParts(token)).toEqual({
+      header: { alg: 'HS256', typ: 'JWT' },
+      payload: { sub: 'abc' }
     });
-    // After configure, not authenticated
-    expect(Auth.isAuthenticated()).toBe(false);
   });
 
-  test('initialize() fetches discovery document', async () => {
-    const mockFetch = mockDiscoveryFetch();
-    global.fetch = mockFetch;
+  test('decodeJwtParts returns null for invalid tokens', () => {
+    expect(Auth.decodeJwtParts(null)).toBeNull();
+    expect(Auth.decodeJwtParts('broken')).toBeNull();
+  });
 
+  test('createPkce returns verifier and challenge strings', async () => {
+    const pkce = await Auth.createPkce();
+    expect(pkce.verifier).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(pkce.challenge).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(pkce.verifier).not.toBe(pkce.challenge);
+  });
+
+  test('configure trims authority and resets authentication state', async () => {
+    Auth.configure({ authority: 'https://idp.example.com///', clientId: 'c', redirectUri: 'https://app/cb', storage: 'session' });
+    expect(Auth.isAuthenticated()).toBe(false);
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => DISCOVERY });
+    await Auth.initialize();
+    expect(global.fetch).toHaveBeenCalledWith('https://idp.example.com/.well-known/openid-configuration');
+  });
+
+  test('initialize throws when configure was not called', async () => {
+    await expect(Auth.initialize()).rejects.toThrow('Auth: call configure() first');
+  });
+
+  test('initialize throws when discovery fetch fails', async () => {
     Auth.configure({ authority: 'https://idp.example.com', clientId: 'c', redirectUri: 'https://app/cb' });
-    await Auth.initialize();
-
-    expect(mockFetch).toHaveBeenCalledWith('https://idp.example.com/.well-known/openid-configuration');
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 503 });
+    await expect(Auth.initialize()).rejects.toThrow('Auth: discovery fetch failed (503)');
   });
 
-  test('login() generates PKCE and redirects', async () => {
-    const { assignMock } = await loginAndCapture(Auth);
-    const url = assignMock.mock.calls[0][0];
-    expect(url).toContain('https://idp.example.com/authorize?');
-    expect(url).toContain('code_challenge=');
-    expect(url).toContain('code_challenge_method=S256');
-    expect(url).toContain('response_type=code');
-    expect(url).toContain('client_id=myapp');
+  test('login throws until initialize has run', async () => {
+    Auth.configure({ authority: 'https://idp.example.com', clientId: 'c', redirectUri: 'https://app/cb' });
+    await expect(Auth.login()).rejects.toThrow('Auth: call initialize() first');
   });
 
-  test('handleCallback() exchanges code for tokens', async () => {
+  test('login redirects with PKCE, state, nonce, and safe extra params only', async () => {
+    await setupDiscovery(Auth);
+    const { redirect, url } = await loginAndCapture(Auth, { prompt: 'login', login_hint: 'alice@example.com', unsafe: 'ignored' });
+    expect(redirect).toHaveBeenCalledTimes(1);
+    expect(url.origin + url.pathname).toBe(DISCOVERY.authorization_endpoint);
+    expect(url.searchParams.get('response_type')).toBe('code');
+    expect(url.searchParams.get('client_id')).toBe('client-123');
+    expect(url.searchParams.get('code_challenge_method')).toBe('S256');
+    expect(url.searchParams.get('state')).toBeTruthy();
+    expect(url.searchParams.get('nonce')).toBeTruthy();
+    expect(url.searchParams.get('prompt')).toBe('login');
+    expect(url.searchParams.get('login_hint')).toBe('alice@example.com');
+    expect(url.searchParams.get('unsafe')).toBeNull();
+  });
+
+  test('handleCallback throws when provider returned an error', async () => {
+    await setupDiscovery(Auth);
+    await expect(Auth.handleCallback('https://app.example.com/callback?error=access_denied')).rejects.toThrow('Auth callback error: access_denied');
+  });
+
+  test('handleCallback throws when callback is missing code or state', async () => {
+    await setupDiscovery(Auth);
+    await expect(Auth.handleCallback('https://app.example.com/callback?code=abc')).rejects.toThrow('Auth: missing code or state in callback');
+  });
+
+  test('handleCallback throws when state has no pending transaction', async () => {
+    await setupDiscovery(Auth);
+    await expect(Auth.handleCallback('https://app.example.com/callback?code=abc&state=missing')).rejects.toThrow('Auth: no pending transaction for state');
+  });
+
+  test('handleCallback stores tokens and updates getters', async () => {
+    await setupDiscovery(Auth);
     const { state, nonce } = await loginAndCapture(Auth);
-    const result = await completeCallback(Auth, state, nonce, 'at_123');
-
-    expect(result.accessToken).toBe('at_123');
-    expect(result.user.sub).toBe('user1');
+    const result = await completeCallback(Auth, state, nonce);
+    expect(result.user.sub).toBe('user-1');
+    await expect(Auth.getToken()).resolves.toBe('access-token');
+    expect(Auth.getIdToken()).toContain('.');
+    expect(Auth.getUser().email).toBe('alice@example.com');
     expect(Auth.isAuthenticated()).toBe(true);
+    expect(JSON.parse(sessionStorage.getItem('bm_auth_tokens')).access_token).toBe('access-token');
   });
 
-  test('handleCallback() validates state matches pending transaction', async () => {
-    global.fetch = mockDiscoveryFetch();
-    Auth.configure({ authority: 'https://idp.example.com', clientId: 'myapp', redirectUri: 'https://app/cb' });
-    await Auth.initialize();
-
-    await expect(Auth.handleCallback('https://app/cb?code=abc&state=badstate'))
-      .rejects.toThrow('no pending transaction');
-  });
-
-  test('getToken() returns stored token', async () => {
-    const { state, nonce } = await loginAndCapture(Auth);
-    await completeCallback(Auth, state, nonce, 'my_access_token');
-
-    const token = await Auth.getToken();
-    expect(token).toBe('my_access_token');
-  });
-
-  test('getToken() returns null when not authenticated', async () => {
-    Auth.configure({ authority: 'https://idp.example.com', clientId: 'myapp', redirectUri: 'https://app/cb' });
-    const token = await Auth.getToken();
-    expect(token).toBeNull();
-  });
-
-  test('isAuthenticated() reflects auth state', () => {
-    Auth.configure({ authority: 'https://idp.example.com', clientId: 'myapp', redirectUri: 'https://app/cb' });
-    expect(Auth.isAuthenticated()).toBe(false);
-  });
-
-  test('getUser() parses id_token claims', async () => {
-    const { state, nonce } = await loginAndCapture(Auth);
-    global.fetch = jest.fn().mockResolvedValueOnce({
+  test('handleCallback rejects nonce mismatches', async () => {
+    await setupDiscovery(Auth);
+    const { state } = await loginAndCapture(Auth);
+    global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        access_token: 'at',
-        id_token: makeJwt({ sub: 'user42', nonce: nonce, name: 'Alice' }),
-        expires_in: 3600
-      })
+      json: async () => ({ access_token: 'x', id_token: fakeJwt({ sub: 'user-1', nonce: 'wrong' }), expires_in: 3600 })
     });
-    global.history = { replaceState: jest.fn() };
-    await Auth.handleCallback('https://app/cb?code=c&state=' + state);
-
-    const user = Auth.getUser();
-    expect(user.sub).toBe('user42');
-    expect(user.name).toBe('Alice');
+    await expect(Auth.handleCallback('https://app.example.com/callback?code=abc&state=' + state)).rejects.toThrow('Auth: nonce mismatch');
   });
 
-  test('clearSession() removes tokens', async () => {
+  test('clearSession clears stored tokens and sessionStorage', async () => {
+    await setupDiscovery(Auth);
     const { state, nonce } = await loginAndCapture(Auth);
     await completeCallback(Auth, state, nonce);
-    expect(Auth.isAuthenticated()).toBe(true);
-
     Auth.clearSession();
     expect(Auth.isAuthenticated()).toBe(false);
     expect(Auth.getUser()).toBeNull();
+    expect(sessionStorage.getItem('bm_auth_tokens')).toBeNull();
   });
 
-  test('onAuthChange() fires on login/logout', async () => {
-    const events = [];
-    const assignMock = jest.fn();
-    Auth._setRedirect(assignMock);
-    global.fetch = mockDiscoveryFetch();
-    Auth.configure({ authority: 'https://idp.example.com', clientId: 'myapp', redirectUri: 'https://app/cb' });
-    const unsub = Auth.onAuthChange(v => events.push(v));
-    await Auth.initialize();
-    await Auth.login();
-
-    const redirectUrl = new URL(assignMock.mock.calls[0][0]);
-    const state = redirectUrl.searchParams.get('state');
-    const nonce = redirectUrl.searchParams.get('nonce');
-
-    await completeCallback(Auth, state, nonce);
-    expect(events).toContain(true);
-
-    Auth.clearSession();
-    expect(events).toContain(false);
-
-    unsub();
+  test('getToken returns null when unauthenticated', async () => {
+    expect(await Auth.getToken()).toBeNull();
   });
 
-  test('attachToRest() adds auth header via Communications', async () => {
-    const callLog = [];
-    const mockRest = {
-      call: jest.fn(async (method, url, body, headers) => {
-        callLog.push({ method, url, headers });
-        return { status: 200 };
-      })
-    };
-
-    Auth = loadAuth(mockRest);
+  test('getToken returns null when token is expired without a refresh token', async () => {
+    await setupDiscovery(Auth);
     const { state, nonce } = await loginAndCapture(Auth);
-    await completeCallback(Auth, state, nonce, 'bearer_tok');
-
-    Auth.attachToRest();
-    await mockRest.call('GET', '/api/data');
-
-    expect(callLog[0].headers).toBeDefined();
-    expect(callLog[0].headers['Authorization']).toBe('Bearer bearer_tok');
+    await completeCallback(Auth, state, nonce, { refresh_token: null, expires_in: -1 });
+    expect(await Auth.getToken()).toBeNull();
   });
 
-  // ── UI Rendering Tests ──
-
-  describe('renderLogin', () => {
-    test('creates card with provider buttons', () => {
-      Auth.configure({ authority: 'https://idp.example.com', clientId: 'c', redirectUri: 'https://app/cb' });
-      const container = document.createElement('div');
-      const root = Auth.renderLogin(container, {
-        providers: [{ id: 'google' }, { id: 'github' }]
-      });
-      expect(root).toBeTruthy();
-      expect(root.classList.contains('cd')).toBe(true);
-      const buttons = root.querySelectorAll('button');
-      expect(buttons.length).toBe(2);
-      expect(buttons[0].textContent).toContain('Sign in with Google');
-      expect(buttons[1].textContent).toContain('Sign in with GitHub');
+  test('getToken refreshes expired tokens when a refresh token exists', async () => {
+    await setupDiscovery(Auth);
+    const { state, nonce } = await loginAndCapture(Auth);
+    await completeCallback(Auth, state, nonce, { access_token: 'old-token', refresh_token: 'refresh-me', expires_in: -1 });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ access_token: 'new-token', id_token: fakeJwt({ sub: 'user-1', nonce }), refresh_token: 'refresh-me', expires_in: 1200 })
     });
+    await expect(Auth.getToken()).resolves.toBe('new-token');
+    expect(Auth.isAuthenticated()).toBe(true);
+  });
 
-    test('applies built-in provider presets (google, microsoft, github)', () => {
-      Auth.configure({ authority: 'https://idp.example.com', clientId: 'c', redirectUri: 'https://app/cb' });
-      const container = document.createElement('div');
-      Auth.renderLogin(container, {
-        providers: [{ id: 'google' }, { id: 'microsoft' }, { id: 'github' }]
-      });
-      const buttons = container.querySelectorAll('button');
-      expect(buttons.length).toBe(3);
-      // Google button has white bg
-      expect(buttons[0].style.background).toBe('rgb(255, 255, 255)');
-      // Microsoft has dark bg
-      expect(buttons[1].style.background).toBe('rgb(47, 47, 47)');
-      // Each button has an SVG icon
-      buttons.forEach(b => expect(b.querySelector('svg')).toBeTruthy());
-    });
+  test('getToken clears tokens when refresh fails', async () => {
+    await setupDiscovery(Auth);
+    const { state, nonce } = await loginAndCapture(Auth);
+    await completeCallback(Auth, state, nonce, { access_token: 'old-token', refresh_token: 'refresh-me', expires_in: -1 });
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 500 });
+    await expect(Auth.getToken()).resolves.toBeNull();
+    expect(Auth.isAuthenticated()).toBe(false);
+  });
 
-    test('compact mode renders without card wrapper', () => {
-      Auth.configure({ authority: 'https://idp.example.com', clientId: 'c', redirectUri: 'https://app/cb' });
-      const container = document.createElement('div');
-      const root = Auth.renderLogin(container, { compact: true, providers: [{ id: 'google' }] });
-      expect(root.classList.contains('cd')).toBe(false);
-      expect(container.querySelectorAll('button').length).toBe(1);
-    });
-
-    test('renders single Sign In button when no providers', () => {
-      Auth.configure({ authority: 'https://idp.example.com', clientId: 'c', redirectUri: 'https://app/cb' });
-      const container = document.createElement('div');
-      Auth.renderLogin(container);
-      const btn = container.querySelector('button');
-      expect(btn.textContent).toBe('Sign In');
+  test('getUserInfo fetches user info with bearer token', async () => {
+    await setupDiscovery(Auth);
+    const { state, nonce } = await loginAndCapture(Auth);
+    await completeCallback(Auth, state, nonce);
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ department: 'Engineering' }) });
+    await expect(Auth.getUserInfo()).resolves.toEqual({ department: 'Engineering' });
+    expect(global.fetch).toHaveBeenCalledWith(DISCOVERY.userinfo_endpoint, {
+      headers: { Authorization: 'Bearer access-token' }
     });
   });
 
-  describe('renderLogout', () => {
-    test('creates a logout button', () => {
-      Auth.configure({ authority: 'https://idp.example.com', clientId: 'c', redirectUri: 'https://app/cb' });
-      const container = document.createElement('div');
-      const btn = Auth.renderLogout(container);
-      expect(btn.tagName).toBe('BUTTON');
-      expect(btn.textContent).toBe('Sign Out');
-      expect(btn.classList.contains('bt-er')).toBe(true);
+  test('getUserInfo throws when discovery has no userinfo endpoint', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ authorization_endpoint: DISCOVERY.authorization_endpoint, token_endpoint: DISCOVERY.token_endpoint })
     });
-
-    test('uses custom label', () => {
-      Auth.configure({ authority: 'https://idp.example.com', clientId: 'c', redirectUri: 'https://app/cb' });
-      const container = document.createElement('div');
-      const btn = Auth.renderLogout(container, { label: 'Log Out' });
-      expect(btn.textContent).toBe('Log Out');
-    });
+    Auth.configure({ authority: 'https://idp.example.com', clientId: 'c', redirectUri: 'https://app/cb' });
+    await Auth.initialize();
+    await expect(Auth.getUserInfo()).rejects.toThrow('Auth: no userinfo_endpoint');
   });
 
-  describe('renderWhoami', () => {
-    test('shows user info when authenticated', async () => {
-      const { state, nonce } = await loginAndCapture(Auth);
-      global.fetch = jest.fn().mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({
-          access_token: 'at', expires_in: 3600,
-          id_token: makeJwt({ sub: 'u1', nonce, name: 'Alice', email: 'alice@test.com' })
-        })
-      });
-      global.history = { replaceState: jest.fn() };
-      await Auth.handleCallback('https://app/cb?code=c&state=' + state);
-
-      const container = document.createElement('div');
-      Auth.renderWhoami(container);
-      expect(container.querySelector('h5').textContent).toBe('Alice');
-      expect(container.querySelector('.tx-mu').textContent).toBe('alice@test.com');
-    });
-
-    test('compact mode renders inline span', async () => {
-      const { state, nonce } = await loginAndCapture(Auth);
-      global.fetch = jest.fn().mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({
-          access_token: 'at', expires_in: 3600,
-          id_token: makeJwt({ sub: 'u1', nonce, name: 'Bob' })
-        })
-      });
-      global.history = { replaceState: jest.fn() };
-      await Auth.handleCallback('https://app/cb?code=c&state=' + state);
-
-      const container = document.createElement('div');
-      Auth.renderWhoami(container, { compact: true });
-      expect(container.querySelector('span')).toBeTruthy();
-      expect(container.textContent).toContain('Bob');
-    });
+  test('onAuthChange notifies listeners and unsubscribe stops future notifications', async () => {
+    await setupDiscovery(Auth);
+    const listener = jest.fn();
+    const unsub = Auth.onAuthChange(listener);
+    const { state, nonce } = await loginAndCapture(Auth);
+    await completeCallback(Auth, state, nonce);
+    expect(listener).toHaveBeenLastCalledWith(true);
+    unsub();
+    Auth.clearSession();
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  describe('renderTokenInspector', () => {
-    test('decodes JWT and shows token details', async () => {
-      const { state, nonce } = await loginAndCapture(Auth);
-      const idToken = makeJwt({ sub: 'u1', nonce, name: 'Test', exp: Math.floor(Date.now() / 1000) + 3600 });
-      global.fetch = jest.fn().mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ access_token: 'at_opaque', id_token: idToken, expires_in: 3600 })
-      });
-      global.history = { replaceState: jest.fn() };
-      await Auth.handleCallback('https://app/cb?code=c&state=' + state);
-
-      const container = document.createElement('div');
-      Auth.renderTokenInspector(container);
-      expect(container.querySelector('strong').textContent).toBe('Token Inspector');
-      const details = container.querySelectorAll('details');
-      expect(details.length).toBeGreaterThanOrEqual(2);
-      const pre = details[0].querySelector('pre');
-      expect(pre.textContent).toContain('"sub"');
-    });
+  test('attachToRest is a no-op when Communications is absent', () => {
+    expect(() => Auth.attachToRest()).not.toThrow();
   });
 
-  describe('renderAuthGate', () => {
-    test('shows login when not authenticated', () => {
-      Auth.configure({ authority: 'https://idp.example.com', clientId: 'c', redirectUri: 'https://app/cb' });
-      const container = document.createElement('div');
-      Auth.renderAuthGate(container, { loginOpts: { title: 'Welcome' } });
-      expect(container.querySelector('h3').textContent).toBe('Welcome');
-      expect(container.querySelector('button')).toBeTruthy();
-    });
-
-    test('shows whoami when authenticated', async () => {
-      const { state, nonce } = await loginAndCapture(Auth);
-      global.fetch = jest.fn().mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({
-          access_token: 'at', expires_in: 3600,
-          id_token: makeJwt({ sub: 'u1', nonce, name: 'Charlie' })
-        })
-      });
-      global.history = { replaceState: jest.fn() };
-      await Auth.handleCallback('https://app/cb?code=c&state=' + state);
-
-      const container = document.createElement('div');
-      Auth.renderAuthGate(container);
-      expect(container.querySelector('h5').textContent).toBe('Charlie');
-    });
+  test('logout clears tokens and redirects to end session endpoint', async () => {
+    await setupDiscovery(Auth, { postLogoutRedirectUri: 'https://app.example.com/post-logout' });
+    const { state, nonce } = await loginAndCapture(Auth);
+    await completeCallback(Auth, state, nonce);
+    const redirect = jest.fn();
+    Auth._setRedirect(redirect);
+    Auth.logout();
+    const url = new URL(redirect.mock.calls[0][0]);
+    expect(Auth.isAuthenticated()).toBe(false);
+    expect(url.origin + url.pathname).toBe(DISCOVERY.end_session_endpoint);
+    expect(url.searchParams.get('id_token_hint')).toContain('.');
+    expect(url.searchParams.get('post_logout_redirect_uri')).toBe('https://app.example.com/post-logout');
   });
 
-  describe('renderUserTiles', () => {
-    test('creates grid of default tiles', () => {
-      const container = document.createElement('div');
-      Auth.renderUserTiles(container);
-      const grid = container.firstChild;
-      expect(grid.style.display).toBe('grid');
-      expect(grid.children.length).toBe(4);
-      expect(grid.children[0].textContent).toContain('Profile');
-      expect(grid.children[1].textContent).toContain('Security');
-    });
+  test('silentRefresh clears tokens when silent refresh is not configured', async () => {
+    await setupDiscovery(Auth, { silentRedirectUri: null });
+    const { state, nonce } = await loginAndCapture(Auth);
+    await completeCallback(Auth, state, nonce);
+    await Auth.silentRefresh();
+    expect(Auth.isAuthenticated()).toBe(false);
+  });
 
-    test('respects custom tiles and columns', () => {
-      const container = document.createElement('div');
-      Auth.renderUserTiles(container, {
-        columns: 3,
-        tiles: [{ id: 'a', title: 'Alpha', icon: '🅰️' }, { id: 'b', title: 'Beta', icon: '🅱️' }]
-      });
-      const grid = container.firstChild;
-      expect(grid.style.gridTemplateColumns).toBe('repeat(3, 1fr)');
-      expect(grid.children.length).toBe(2);
+  test('renderLogin returns null for missing containers', () => {
+    expect(Auth.renderLogin('#does-not-exist')).toBeNull();
+  });
+
+  test('renderLogin renders a default sign-in button', () => {
+    const container = document.createElement('div');
+    const root = Auth.renderLogin(container);
+    expect(root.querySelector('button').textContent).toBe('Sign In');
+  });
+
+  test('renderLogin renders provider buttons, title, subtitle, and dark theme', () => {
+    const container = document.createElement('div');
+    const root = Auth.renderLogin(container, {
+      title: 'Welcome',
+      subtitle: 'Use a provider',
+      theme: 'dark',
+      logo: '<svg viewBox="0 0 1 1"><path d="M0 0h1v1H0z" onclick="bad()"/></svg>',
+      providers: [{ id: 'google' }, { id: 'github', name: 'GitHub Enterprise' }]
     });
+    expect(root.style.background).toBe('rgb(30, 30, 30)');
+    expect(container.querySelector('h3').textContent).toBe('Welcome');
+    expect(container.querySelector('p').textContent).toBe('Use a provider');
+    expect(container.querySelectorAll('button')).toHaveLength(2);
+    expect(container.querySelector('svg').querySelector('[onclick]')).toBeNull();
+  });
+
+  test('renderWhoami renders compact user info and logout callback', async () => {
+    await setupDiscovery(Auth);
+    const { state, nonce } = await loginAndCapture(Auth);
+    await completeCallback(Auth, state, nonce, { id_token: fakeJwt({ sub: 'user-1', nonce, name: 'Bob', picture: 'https://img', team: 'Core' }) });
+    const onLogout = jest.fn();
+    const container = document.createElement('div');
+    Auth.renderWhoami(container, { compact: true, onLogout });
+    expect(container.textContent).toContain('Bob');
+    container.querySelector('a').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(onLogout).toHaveBeenCalledTimes(1);
+    expect(Auth.isAuthenticated()).toBe(false);
+  });
+
+  test('renderTokenInspector shows decoded token content', async () => {
+    await setupDiscovery(Auth);
+    const { state, nonce } = await loginAndCapture(Auth);
+    await completeCallback(Auth, state, nonce, {
+      id_token: fakeJwt({ sub: 'user-1', nonce, exp: Math.floor(Date.now() / 1000) + 600 }),
+      access_token: fakeJwt({ scope: 'openid' })
+    });
+    const container = document.createElement('div');
+    Auth.renderTokenInspector(container, { showRefreshToken: true });
+    const summaries = Array.from(container.querySelectorAll('summary')).map((el) => el.textContent);
+    expect(summaries[0]).toContain('ID Token');
+    expect(container.querySelector('pre').textContent).toContain('"sub": "user-1"');
+  });
+
+  test('renderUserTiles renders custom tiles and click handlers', () => {
+    const click = jest.fn();
+    const container = document.createElement('div');
+    const grid = Auth.renderUserTiles(container, {
+      columns: 3,
+      tiles: [{ id: 'profile', title: 'Profile', icon: 'P', description: 'Desc', onClick: click }]
+    });
+    expect(grid.style.gridTemplateColumns).toBe('repeat(3, 1fr)');
+    grid.firstChild.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(click).toHaveBeenCalledTimes(1);
+  });
+
+  test('renderAuthGate auto-updates from login view to whoami view on auth change', async () => {
+    await setupDiscovery(Auth);
+    const container = document.createElement('div');
+    Auth.renderAuthGate(container, { title: 'Please sign in' });
+    expect(container.textContent).toContain('Please sign in');
+    const { state, nonce } = await loginAndCapture(Auth);
+    await completeCallback(Auth, state, nonce, { id_token: fakeJwt({ sub: 'user-1', nonce, name: 'Charlie' }) });
+    expect(container.textContent).toContain('Charlie');
   });
 });

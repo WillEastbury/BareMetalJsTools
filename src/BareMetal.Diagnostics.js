@@ -1,3 +1,4 @@
+/* istanbul ignore next */
 var window = typeof globalThis !== 'undefined' ? (globalThis.window = globalThis.window || globalThis) : this;
 window.BareMetal = window.BareMetal || {};
 var BareMetal = window.BareMetal;
@@ -5,6 +6,7 @@ var BareMetal = window.BareMetal;
 BareMetal.Diagnostics = (function () {
   'use strict';
 
+  /* istanbul ignore next */
   var root = typeof globalThis !== 'undefined' ? globalThis : window;
   var hasOwn = Object.prototype.hasOwnProperty;
   var perfApi = root.performance || null;

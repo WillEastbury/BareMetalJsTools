@@ -1,7 +1,9 @@
+/* istanbul ignore next */
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.Sync = (function(){
   'use strict';
 
+  /* istanbul ignore next */
   var root = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this);
   var ABSENT = { __bmSyncAbsent: true };
   var idSeq = 0;

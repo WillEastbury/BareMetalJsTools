@@ -4,13 +4,12 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 function loadSearch() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Search.js'), 'utf8');
-  const fn = new Function('BareMetal', 'module', 'window', code + '\nreturn BareMetal.Search;');
-  const window = {};
-  return fn({}, { exports: {} }, window);
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Search.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 describe('BareMetal.Search', () => {
@@ -126,5 +125,85 @@ describe('BareMetal.Search', () => {
 
     expect(result[0].id).toBe('2');
     expect(result[0].score).toBeGreaterThan(0);
+  });
+});
+
+describe('branch coverage - Search', () => {
+  test('empty queries pagination sorting and clear index cover guard branches', () => {
+    const Search = loadSearch();
+    const index = Search.createIndex({ fields: ['title', 'body', 'category'], stemming: false });
+    index.addAll([
+      { id: '1', title: 'Gamma', body: 'third', category: 'c' },
+      { id: '2', title: 'Alpha', body: 'first', category: 'a' },
+      { id: '3', title: 'Beta', body: 'second', category: 'b' }
+    ], 'id');
+
+    expect(index.search('', { limit: 2, offset: 0 }).results).toHaveLength(2);
+    expect(index.search('', { limit: 2, offset: 2 }).results).toHaveLength(1);
+    expect(index.search('missing', { sort: 'title:asc' })).toEqual({ results: [], total: 0, facets: {} });
+    expect(index.search('', { sort: 'title:asc' }).results.map((item) => item.id)).toEqual(['2', '3', '1']);
+    expect(index.search('', { sort: '-title' }).results.map((item) => item.id)).toEqual(['1', '3', '2']);
+
+    index.remove('nope');
+    index.clear();
+    expect(index.stats()).toEqual(expect.objectContaining({ docCount: 0, termCount: 0, avgDocLength: 0 }));
+    expect(index.search('').results).toEqual([]);
+  });
+
+  test('special chars case sensitivity filters field queries and highlights cover alternative paths', () => {
+    const Search = loadSearch();
+    const sensitive = Search.createIndex({ fields: ['title', 'body'], caseSensitive: true, stopWords: false });
+    sensitive.addAll([
+      { id: 'A', title: 'Alpha', body: 'MiXeD body', category: ['tech', 'code'] },
+      { id: 'B', title: 'alpha', body: 'mixed body', category: ['docs'] }
+    ], 'id');
+
+    expect(sensitive.search('mixed').results.map((item) => item.id)).toEqual(['B']);
+
+    const insensitive = Search.createIndex({ fields: ['title', 'body'], caseSensitive: false, stopWords: false });
+    insensitive.addAll([
+      { id: 'A', title: 'Alpha', body: 'MiXeD body', category: ['tech', 'code'] },
+      { id: 'B', title: 'alpha', body: 'mixed body', category: ['docs'] }
+    ], 'id');
+    expect(insensitive.search('mixed').results.map((item) => item.id)).toEqual(expect.arrayContaining(['A', 'B']));
+
+    const html = Search.highlight('<b>C++</b> guide', ['C++'], { tag: 'em', contextWords: 1, maxLength: 20 });
+    expect(html).toContain('<em>C++</em>');
+
+    const indexed = Search.createIndex({ fields: ['title', 'body'], stemming: false });
+    indexed.addAll([
+      { id: '1', title: 'Regex guide', body: 'special chars .* and []', category: ['tech'] },
+      { id: '2', title: 'Plain text', body: 'nothing to see', category: ['misc'] }
+    ], 'id');
+    expect(indexed.search('category:tech', { fields: ['title', 'body'] }).results.map((item) => item.id)).toEqual(['1']);
+    expect(indexed.search('guide', { filter: { category: 'tech' } }).results.map((item) => item.id)).toEqual(['1']);
+    expect(indexed.search('guide', { filter: { category: 'missing' } }).total).toBe(0);
+  });
+
+  test('pipeline query parsing suggestions import and similarity cover remaining branches', () => {
+    const Search = loadSearch();
+    const synonymPipe = Search.pipeline([Search.pipeline.synonym({ fast: ['quick'] })]);
+    const ngramPipe = Search.pipeline([Search.pipeline.ngram(2)]);
+
+    expect(synonymPipe('fast')).toEqual(['fast', 'quick']);
+    expect(ngramPipe('one two three')).toEqual(expect.arrayContaining(['one', 'two', 'three', 'one two', 'two three']));
+    expect(Search.query.parse('')).toEqual(expect.objectContaining({ clauses: [], groups: [{ include: [], exclude: [] }], hasOr: false }));
+
+    const index = Search.createIndex({ fields: ['title', 'body'], stemming: true });
+    index.addAll([
+      { id: '1', title: 'Search systems', body: 'Find better results quickly' },
+      { id: '2', title: 'Finder tools', body: 'Search result ranking' }
+    ], 'id');
+
+    expect(index.suggest('serch', { fuzzy: 1, limit: 5 })[0]).toEqual(expect.objectContaining({ term: 'search' }));
+    expect(index.suggest('serch', { field: 'unknown', fuzzy: 1 })).toEqual([]);
+    expect(index.filter((doc) => doc.title.indexOf('Search') > -1)).toEqual(['1']);
+    expect(index.filter(() => { throw new Error('skip'); })).toEqual([]);
+    expect(index.similar('missing')).toEqual([]);
+
+    const restored = Search.createIndex({ fields: ['ignored'] });
+    restored.import({ config: { fields: [] }, docs: [{ id: 'x', title: 'Hello', body: 'World' }] });
+    expect(restored.options().fields).toEqual(['title', 'body']);
+    expect(restored.search('hello').results.map((item) => item.id)).toEqual(['x']);
   });
 });

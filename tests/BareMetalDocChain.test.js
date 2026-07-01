@@ -4,15 +4,13 @@
 'use strict';
 
 const path = require('path');
-const fs = require('fs');
 
 const SRC_PATH = path.resolve(__dirname, '../src/BareMetal.DocChain.js');
 
 function loadDocChain() {
-  const code = fs.readFileSync(SRC_PATH, 'utf8');
-  const win = { BareMetal: {} };
-  const fn = new Function('window', 'globalThis', 'module', 'exports', 'BareMetal', code + '\nreturn window.BareMetal.DocChain || BareMetal.DocChain || module.exports;');
-  return fn(win, win, { exports: {} }, {}, win.BareMetal);
+  jest.resetModules();
+  delete require.cache[require.resolve(SRC_PATH)];
+  return require(SRC_PATH);
 }
 
 function setupTypes(DC) {
@@ -260,5 +258,103 @@ describe('BareMetal.DocChain', () => {
     expect(deep.status).toBe('draft');
     expect(deepChildren.map((doc) => doc.type).sort()).toEqual(['dispatch', 'invoice']);
     expect(DC.descendants(deep, { type: 'payment' })).toHaveLength(1);
+  });
+});
+
+describe('BareMetal.DocChain additional coverage', () => {
+  let DC;
+
+  beforeEach(() => {
+    DC = loadDocChain();
+    setupTypes(DC);
+    DC.store.clear();
+  });
+
+  test('template, merge, find, and query cover defaults and aggregation strategies', () => {
+    DC.defineType('note', {
+      fields: {
+        title: { type: 'string', default: 'Untitled', required: true },
+        tags: { type: 'array', default: ['seed'] },
+        meta: { type: 'object', default: { version: 1 } }
+      },
+      meta: { category: 'docs' }
+    });
+
+    expect(DC.template('note', { title: 'Preset', extra: true })).toEqual({
+      type: 'note',
+      data: { title: 'Preset', tags: ['seed'], meta: { version: 1 }, extra: true },
+      status: 'draft',
+      meta: { category: 'docs' }
+    });
+
+    const one = DC.create('quotation', { customer: 'Acme', total: 10, items: ['a'] }, { timestamp: 10 });
+    const two = DC.create('quotation', { customer: 'Beta', total: 15, items: ['b'], flags: { vip: true } }, { timestamp: 20 });
+    const merged = DC.merge([one, two]);
+    const first = DC.merge([one, two], 'first');
+    const last = DC.merge([one, two], 'last');
+    const custom = DC.merge([one, two], (items) => items.map((doc) => doc.id).join(':'));
+
+    expect(merged.data.customer).toEqual(['Acme', 'Beta']);
+    expect(merged.data.items).toEqual(['a', 'b']);
+    expect(merged.meta.mergedFrom).toEqual([one.id, two.id]);
+    expect(first.data).toEqual(one.data);
+    expect(last.data).toEqual(two.data);
+    expect(custom).toBe(one.id + ':' + two.id);
+    expect(DC.find((doc) => typeof doc.data.total === 'number' && doc.data.total >= 10).map((doc) => doc.id)).toEqual([one.id, two.id, first.id, last.id]);
+    expect(DC.query({ createdAfter: 15, hasChildren: false }).map((doc) => doc.id)).toEqual([two.id, merged.id, first.id, last.id]);
+  });
+
+  test('validate, store removal, serialization variants, and hook cleanup cover edge cases', () => {
+    const onCreate = jest.fn();
+    const offCreate = DC.onCreate('quotation', onCreate);
+    offCreate();
+
+    const bad = DC.create('quotation', { total: 'oops', items: 'bad' });
+    const validation = DC.validate(bad);
+    expect(validation.valid).toBe(false);
+    expect(validation.errors).toEqual(expect.arrayContaining([
+      'Missing required field: customer',
+      'Field total should be number',
+      'Field items should be array'
+    ]));
+
+    const chain = createChain(DC);
+    DC.link(chain.invoice, chain.dispatch, 'references');
+    const treeData = DC.serialize(DC.tree(chain.quote));
+    const listData = DC.serialize([chain.quote, chain.order]);
+    expect(treeData.docs.map((doc) => doc.id)).toEqual(expect.arrayContaining([chain.quote.id, chain.invoice.id, chain.payment.id]));
+    expect(listData.rootId).toBe(chain.quote.id);
+
+    DC.store.remove(chain.order.id);
+    expect(DC.store.get(chain.order.id)).toBeNull();
+    expect(DC.store.get(chain.payment.id)).toBeNull();
+    expect(DC.query({ parentId: chain.quote.id })).toEqual([]);
+
+    const missingParent = loadDocChain();
+    setupTypes(missingParent);
+    missingParent.store.clear();
+    missingParent.deserialize({
+      rootId: 'order-999',
+      docs: [{
+        id: 'order-999',
+        type: 'order',
+        data: {},
+        status: 'draft',
+        parentId: 'missing-parent',
+        children: [],
+        created: 1,
+        updated: 1,
+        version: 1,
+        meta: {},
+        auditTrail: []
+      }],
+      types: {},
+      links: []
+    });
+    expect(missingParent.validate('order-999')).toEqual({
+      valid: false,
+      errors: ['Parent document not found']
+    });
+    expect(onCreate).not.toHaveBeenCalled();
   });
 });

@@ -1,3 +1,4 @@
+/* istanbul ignore next */
 var window = typeof globalThis !== 'undefined' ? (globalThis.window = globalThis.window || globalThis) : this;
 window.BareMetal = window.BareMetal || {};
 var BareMetal = window.BareMetal;

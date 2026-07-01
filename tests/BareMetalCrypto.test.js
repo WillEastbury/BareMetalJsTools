@@ -3,16 +3,17 @@
  */
 'use strict';
 const path = require('path');
-const fs = require('fs');
 
 // jsdom lacks full Web Crypto — use Node's webcrypto
 const { webcrypto } = require('crypto');
 
 function loadCrypto() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Crypto.js'), 'utf8');
-  const bm = {};
-  const fn = new Function('document', 'BareMetal', 'crypto', code + '\nreturn BareMetal;');
-  return fn(global.document, bm, webcrypto).Crypto;
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Crypto.js');
+  Object.defineProperty(global, 'crypto', { configurable: true, value: webcrypto });
+  if (global.window) Object.defineProperty(global.window, 'crypto', { configurable: true, value: webcrypto });
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 const C = loadCrypto();

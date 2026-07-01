@@ -3,13 +3,12 @@
  */
 'use strict';
 const path = require('path');
-const fs = require('fs');
 
 function loadTime() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Time.js'), 'utf8');
-  const bm = {};
-  const fn = new Function('document', 'BareMetal', 'Intl', code + '\nreturn BareMetal;');
-  return fn(global.document, bm, global.Intl).Time;
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Time.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 let T;

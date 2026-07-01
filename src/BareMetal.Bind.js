@@ -359,3 +359,5 @@ BareMetal.Bind = (() => {
     resolveInScope, resolveBinding, parsePairs, applyRow, el
   };
 })();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Bind;

@@ -4,13 +4,12 @@
 'use strict';
 
 const path = require('path');
-const fs   = require('fs');
 
 function loadMetadata() {
-  const code = fs.readFileSync(path.resolve(__dirname, '../src/BareMetal.Metadata.js'), 'utf8');
-  const bm = {};
-  const fn = new Function('document', 'BareMetal', code + '\nreturn BareMetal;');
-  return fn(global.document, bm).Metadata;
+  const srcPath = path.resolve(__dirname, '../src/BareMetal.Metadata.js');
+  jest.resetModules();
+  delete require.cache[require.resolve(srcPath)];
+  return require(srcPath);
 }
 
 describe('BareMetalMetadata – register & get', () => {

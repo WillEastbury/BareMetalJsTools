@@ -268,3 +268,4 @@ BareMetal.Time = (() => {
     hasTemporal: hasTemporal, toTemporal: toTemporal, fromTemporal: fromTemporal
   };
 })();
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Time;
