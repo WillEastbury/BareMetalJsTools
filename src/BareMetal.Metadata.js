@@ -44,6 +44,21 @@ BareMetal.Metadata = (() => {
         fd.type = 'select';
         fd.options = f.enumValues.map(v => ({ value: v, label: v }));
       }
+      // Distinct value/label options (e.g. foreign-key selects). Takes
+      // precedence over enumValues when both are supplied.
+      if (Array.isArray(f.options) && f.options.length) {
+        fd.type = 'select';
+        fd.options = f.options.map(o => ({ value: o.value, label: o.label !== undefined ? o.label : o.value }));
+      }
+      // Lookup / foreign-key metadata understood by Template & Rendering.
+      if (f.lookupUrl) {
+        fd.type = 'select';
+        fd.lookupUrl = f.lookupUrl;
+        if (f.lookupValueField !== undefined) fd.lookupValueField = f.lookupValueField;
+        if (f.lookupDisplayField !== undefined) fd.lookupDisplayField = f.lookupDisplayField;
+      }
+      if (f.ref !== undefined) fd.ref = f.ref;
+      if (f.isForeignKey !== undefined) fd.isForeignKey = f.isForeignKey;
       if (f.list !== undefined) fd.list = f.list;
       if (f.edit !== undefined) fd.edit = f.edit;
       if (f.create !== undefined) fd.create = f.create;

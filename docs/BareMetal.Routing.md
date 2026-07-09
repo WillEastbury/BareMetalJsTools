@@ -57,6 +57,24 @@ Starts routing by listening for `popstate`, intercepting internal anchor clicks,
 BMRouter.start();
 ```
 
+#### Hash mode
+
+`start({ mode: 'hash' })` opts into hash-based routing (`#/customers/42`) instead of the default History API (`pushState`) mode. Use it when the same origin also serves server-rendered pages at real paths, so SPA deep-links/reloads stay client-side without a server catch-all route.
+
+In hash mode the router reads the route from `location.hash` (defaulting to `/`), listens on `hashchange`, intercepts internal `#/…` anchor links, and `navigate()` writes to the hash. The public API is otherwise unchanged.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| mode | string | `'history'` | `'history'` (pushState/popstate) or `'hash'` (location.hash/hashchange). |
+
+**Example:**
+```js
+BMRouter
+  .on('/', renderHome)
+  .on('/products/:id', ({ id }) => renderProduct(id))
+  .start({ mode: 'hash' });   // routes on #/products/42
+```
+
 ### `navigate(path, state, replace)` → `void`
 
 Pushes or replaces a history entry, parses query parameters, and dispatches without a page reload.

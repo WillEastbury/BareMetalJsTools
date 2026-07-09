@@ -199,3 +199,74 @@ describe('BMRouter – navigate()', () => {
     expect(handler).toHaveBeenCalledWith({}, { q: 'jest' }, null);
   });
 });
+
+// ── hash mode ─────────────────────────────────────────────────────────────
+
+describe('BMRouter – hash mode', () => {
+  let router;
+
+  beforeEach(() => {
+    router = loadRouter();
+    router._routes = [];
+    router._notFound = null;
+    router._mode = 'history';
+    router._suppressChange = null;
+    window.history.replaceState(null, '', '/');
+    window.location.hash = '';
+  });
+
+  test('start({mode:"hash"}) dispatches the current hash route', () => {
+    window.location.hash = '#/products';
+    const handler = jest.fn();
+    router.on('/products', handler);
+    router.start({ mode: 'hash' });
+    expect(router._mode).toBe('hash');
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalledWith({}, {}, null);
+  });
+
+  test('start({mode:"hash"}) defaults to "/" when no hash present', () => {
+    window.location.hash = '';
+    const home = jest.fn();
+    router.on('/', home);
+    router.start({ mode: 'hash' });
+    expect(home).toHaveBeenCalledTimes(1);
+  });
+
+  test('navigate() writes to location.hash and dispatches once', () => {
+    router.start({ mode: 'hash' });
+    const handler = jest.fn();
+    router.on('/customers/:id', handler);
+    router.navigate('/customers/42');
+    expect(window.location.hash).toBe('#/customers/42');
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalledWith({ id: '42' }, {}, null);
+  });
+
+  test('navigate() parses query params from the hash path', () => {
+    router.start({ mode: 'hash' });
+    const handler = jest.fn();
+    router.on('/search', handler);
+    router.navigate('/search?q=jest');
+    expect(handler).toHaveBeenCalledWith({}, { q: 'jest' }, null);
+  });
+
+  test('a hashchange from a manual edit dispatches the new route', () => {
+    router.start({ mode: 'hash' });
+    const handler = jest.fn();
+    router.on('/manual', handler);
+    window.location.hash = '#/manual';
+    window.dispatchEvent(new window.HashChangeEvent('hashchange'));
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  test('the hashchange triggered by navigate() does not double-dispatch', () => {
+    router.start({ mode: 'hash' });
+    const handler = jest.fn();
+    router.on('/once', handler);
+    router.navigate('/once');
+    // Simulate the async hashchange the write would trigger.
+    window.dispatchEvent(new window.HashChangeEvent('hashchange'));
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+});

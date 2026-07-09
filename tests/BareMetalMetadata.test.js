@@ -46,8 +46,58 @@ describe('BareMetalMetadata – register & get', () => {
     expect(o.fields.id.hidden).toBe(true);
   });
 
-  test('normalizeType preserves Country and Email casing', () => {
+  test('rich format carries distinct value/label options as a select', () => {
     meta.register({
+      name: 'Ticket',
+      fields: [
+        { name: 'priority', type: 'text', label: 'Priority', options: [
+          { value: 1, label: 'Low' },
+          { value: 2, label: 'High' }
+        ] }
+      ]
+    });
+    const t = meta.get('ticket');
+    expect(t.fields.priority.type).toBe('select');
+    expect(t.fields.priority.options).toEqual([
+      { value: 1, label: 'Low' },
+      { value: 2, label: 'High' }
+    ]);
+  });
+
+  test('rich format defaults option label to its value when omitted', () => {
+    meta.register({
+      name: 'Flag',
+      fields: [
+        { name: 'code', type: 'text', options: [{ value: 'A' }, { value: 'B' }] }
+      ]
+    });
+    const f = meta.get('flag');
+    expect(f.fields.code.options).toEqual([
+      { value: 'A', label: 'A' },
+      { value: 'B', label: 'B' }
+    ]);
+  });
+
+  test('rich format carries foreign-key lookup metadata onto the field', () => {
+    meta.register({
+      name: 'Order',
+      fields: [
+        { name: 'customerId', type: 'text', label: 'Customer',
+          lookupUrl: '/api/customer', lookupValueField: 'id', lookupDisplayField: 'name',
+          ref: 'customer', isForeignKey: true }
+      ]
+    });
+    const o = meta.get('order');
+    const fk = o.fields.customerId;
+    expect(fk.type).toBe('select');
+    expect(fk.lookupUrl).toBe('/api/customer');
+    expect(fk.lookupValueField).toBe('id');
+    expect(fk.lookupDisplayField).toBe('name');
+    expect(fk.ref).toBe('customer');
+    expect(fk.isForeignKey).toBe(true);
+  });
+
+  test('normalizeType preserves Country and Email casing', () => {    meta.register({
       name: 'Contact',
       fields: [
         { name: 'country', type: 'Country' },

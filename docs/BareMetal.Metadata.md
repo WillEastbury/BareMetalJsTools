@@ -50,6 +50,26 @@ const customer = BareMetal.Metadata.register({
 });
 ```
 
+Foreign-key / lookup fields can be declared in a single `register()` call using
+`options` (static value/label pairs) or `lookupUrl` (remote lookup):
+
+```js
+BareMetal.Metadata.register({
+  name: 'Order',
+  fields: [
+    { name: 'id', type: 'hidden', isIdField: true },
+    // static distinct value/label options
+    { name: 'priority', type: 'select', options: [
+      { value: 1, label: 'Low' }, { value: 2, label: 'High' }
+    ] },
+    // remote foreign-key lookup (Template/Rendering fetch the options)
+    { name: 'customerId', type: 'select', label: 'Customer',
+      lookupUrl: '/api/customer', lookupValueField: 'id', lookupDisplayField: 'name',
+      ref: 'customer', isForeignKey: true }
+  ]
+});
+```
+
 ### `get(slug)` → `object | null`
 
 Returns a registered metadata record.
@@ -186,7 +206,12 @@ const meta = BareMetal.Metadata.fromBinary(arrayBuffer);
 | `required` | boolean | Marks the field as required. |
 | `readOnly` | boolean | Marks the field as readonly. |
 | `isIdField` | boolean | Makes the field readonly and hidden. |
-| `enumValues` | string[] | Converts the field to a `select` with generated options. |
+| `enumValues` | string[] | Converts the field to a `select` with generated options (value === label). |
+| `options` | `{value,label}[]` | Converts the field to a `select` with distinct value/label pairs (e.g. foreign-key options). `label` defaults to `value` when omitted. Takes precedence over `enumValues`. |
+| `lookupUrl` | string | Marks the field a `select` backed by a remote lookup; passed through for `Template`/`Rendering` to fetch options. |
+| `lookupValueField` | string | Response field used as the option value (default `id` in Template). |
+| `lookupDisplayField` | string | Response field used as the option label (default `name` in Template). |
+| `ref` / `isForeignKey` | string / boolean | Optional foreign-key hints preserved on the normalized field for tooling. |
 | `list` / `edit` / `create` | boolean | Extra flags preserved on the normalized field. |
 
 ### Simple format input

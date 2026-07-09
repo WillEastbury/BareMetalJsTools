@@ -19,6 +19,8 @@ BareMetal.Routing = (() => {
 var BMRouter = {
     _routes: [],
     _notFound: null,
+    _mode: 'history',
+    _suppressChange: null,
 
     /**
      * Register a route handler.
@@ -42,25 +44,61 @@ var BMRouter = {
     },
 
     /**
-     * Start the router: listen for popstate events and dispatch the current URL.
+     * Start the router: dispatch the current URL and listen for changes.
+     *
+     * @param {object} [opts]
+     * @param {string} [opts.mode] 'history' (default, pushState/popstate) or
+     *        'hash' (location.hash / hashchange). Hash mode keeps the SPA
+     *        self-contained when the same origin also serves server-rendered
+     *        routes at real paths (no server catch-all required).
      */
-    start: function () {
+    start: function (opts) {
         var self = this;
-        window.addEventListener('popstate', function (e) {
-            self._dispatch(window.location.pathname, window.location.search, e.state);
-        });
+        this._mode = (opts && opts.mode === 'hash') ? 'hash' : 'history';
+        if (this._mode === 'hash') {
+            // hashchange fires on manual URL edits and back/forward between
+            // hash entries; dedupe against the last programmatic navigation.
+            window.addEventListener('hashchange', function () {
+                var loc = self._parseHash();
+                if (self._suppressChange === (loc.pathname + loc.search)) {
+                    self._suppressChange = null;
+                    return;
+                }
+                self._suppressChange = null;
+                self._dispatch(loc.pathname, loc.search, null);
+            });
+        } else {
+            window.addEventListener('popstate', function (e) {
+                self._dispatch(window.location.pathname, window.location.search, e.state);
+            });
+        }
         // Intercept clicks on vnext-internal anchor tags
         document.addEventListener('click', function (e) {
             var anchor = e.target.closest('a[href]');
             if (!anchor) return;
             var href = anchor.getAttribute('href');
+            if (self._mode === 'hash') {
+                if (!href || href.charAt(0) !== '#') return;
+                var hpath = href.substring(1) || '/';
+                if (hpath.charAt(0) !== '/') hpath = '/' + hpath;
+                if (isVNextPath(hpath)) {
+                    e.preventDefault();
+                    self.navigate(hpath, null, anchor.dataset.replace === 'true');
+                }
+                return;
+            }
             if (!href || href.startsWith('#') || anchor.target === '_blank') return;
             if (isVNextPath(href)) {
                 e.preventDefault();
                 self.navigate(href, null, anchor.dataset.replace === 'true');
             }
         });
-        this._dispatch(window.location.pathname, window.location.search, window.history.state);
+        if (this._mode === 'hash') {
+            var loc = this._parseHash();
+            this._dispatch(loc.pathname, loc.search, null);
+        } else {
+            this._dispatch(window.location.pathname, window.location.search, window.history.state);
+        }
     },
 
     /**
@@ -70,16 +108,40 @@ var BMRouter = {
      * @param {boolean} [replace] When true uses replaceState instead of pushState
      */
     navigate: function (path, state, replace) {
-        var url = path;
-        if (replace) {
-            window.history.replaceState(state || null, '', url);
-        } else {
-            window.history.pushState(state || null, '', url);
-        }
+        if (path.charAt(0) !== '/') path = '/' + path;
         var qIdx = path.indexOf('?');
         var pathname = qIdx >= 0 ? path.substring(0, qIdx) : path;
         var search   = qIdx >= 0 ? path.substring(qIdx) : '';
+        if (this._mode === 'hash') {
+            // Suppress the hashchange this write triggers; we dispatch directly.
+            this._suppressChange = pathname + search;
+            var url = '#' + path;
+            if (replace) {
+                window.history.replaceState(state || null, '', url);
+            } else {
+                window.history.pushState(state || null, '', url);
+            }
+            this._dispatch(pathname, search, state || null);
+            return;
+        }
+        var histUrl = path;
+        if (replace) {
+            window.history.replaceState(state || null, '', histUrl);
+        } else {
+            window.history.pushState(state || null, '', histUrl);
+        }
         this._dispatch(pathname, search, state || null);
+    },
+
+    /** @private Parse location.hash into { pathname, search }. */
+    _parseHash: function () {
+        var raw = window.location.hash.replace(/^#/, '') || '/';
+        if (raw.charAt(0) !== '/') raw = '/' + raw;
+        var qIdx = raw.indexOf('?');
+        return {
+            pathname: qIdx >= 0 ? raw.substring(0, qIdx) : raw,
+            search:   qIdx >= 0 ? raw.substring(qIdx) : ''
+        };
     },
 
     /** @private */
