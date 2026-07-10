@@ -47,13 +47,51 @@ The generated English source for the workflow above:
 ```
 Set sum to 0.
 For each i from 1 to 5:
-    Set sum to sum + i.
-If sum >= 15:
+    Set sum to sum plus i.
+If sum is at least 15:
     Set status to 1.
 Otherwise:
     Set status to 2.
 Print status.
 ```
+
+## Arrays
+
+Workflows can hold integer arrays and loop over their **values**. An array is
+lowered to a base address + length in PicoScript `Memory`; `FOREACH` iterates the
+element values via `Memory.Get(base + i)`.
+
+```js
+BareMetal.WorkflowPico.run([
+  { type: 'SET', name: 'data', value: [10, 20, 30] },   // array literal
+  { type: 'SET', name: 'sum', value: 0 },
+  { type: 'FOREACH', var: 'item', in: 'data' },          // iterate VALUES
+    { type: 'SET', name: 'sum', expr: 'sum + item' },
+  { type: 'END' },
+  { type: 'LOG', message: 'sum' }
+]);   // output decodes to 60
+```
+
+lowers to:
+
+```
+Memory.Set(8192, 10).
+Memory.Set(8193, 20).
+Memory.Set(8194, 30).
+Set data to 8192.
+Set data_len to 3.
+Set sum to 0.
+For each _fe0 from 0 to 2:
+    Set item to Memory.Get(8192 plus _fe0).
+    Set sum to sum plus item.
+Print sum.
+```
+
+`FOREACH` accepts an **array variable** (declared by a prior `SET name value:[...]`,
+or aliased via `LOAD from variable`) or an **inline literal** (`in: '[3,4,5]'`).
+Runtime arrays that cannot be resolved at compile time still lower to a single
+iteration with a warning. The array base address starts at `8192` (override with
+`opts.arrayBase`).
 
 ## API Reference
 
@@ -88,7 +126,7 @@ Compiles, lowers to bytecode, and executes on a fresh `PicoScript.VM`. `output` 
 
 ### `translateExpr(expr)` → `string`
 
-Translates a JS-ish expression to the English operator dialect (`==`/`===` → `is`, `&&` → `and`, `||` → `or`; string literals are preserved). Exposed for tooling/tests.
+Translates a JS-ish expression to the English **word-operator** dialect: `+ - * / %` → `plus minus times divided by modulo`; `== === != !==` → `is` / `is not`; `> <` → `is greater than` / `is less than`; `>= <=` → `is at least` / `is at most`; `&& ||` → `and` / `or`. String literals are preserved. Operator spellings match `developercli/tools/forge_assets/flow.js` (the graph→English sibling frontend) and the `oracle.js` differential harness. Exposed for tooling/tests.
 
 ### `attachToDesigner(controller, opts)` → `HTMLButtonElement | null`
 
@@ -118,20 +156,33 @@ Emits `bm:workflow-pico-error` (`detail.error`) if compilation throws.
 
 | Workflow step | PicoScript (English) | Notes |
 |---------------|----------------------|-------|
-| `SET name value` / `SET name expr` | `Set <name> to <rhs>.` | `expr` is operator-translated; `${expr}` values become expressions. |
+| `SET name value` / `SET name expr` | `Set <name> to <rhs>.` | `expr` is word-operator translated; `${expr}` values become expressions. |
+| `SET name [a,b,c]` (array literal) | `Memory.Set(base+k, …).` + `Set <name> to base.` + `Set <name>_len to N.` | Materialises an integer array into `Memory`; the variable holds the base address. |
 | `IF` / `ELSE` / `END` | `If <cond>:` / `Otherwise:` + indentation | Empty blocks get a `Set _nop to 0.` filler. |
 | `FOR var from to step` | `For each <var> from <from> to <to> by <step>:` | Inclusive bounds, matching the Workflow engine. |
-| `FOREACH` / `FOREACHP` | `For each <var> from 0 to <len-1>:` | Integer VM has no arrays: `<var>` is bound to the **index**, not the element. Non-literal arrays lower to a single iteration. Always warns. |
+| `FOREACH` / `FOREACHP` over an array | `For each _feN from 0 to len-1:` + `Set <var> to Memory.Get(base plus _feN).` | Real **value** iteration over an array variable or inline literal. `FOREACHP` lowers to sequential (warns). |
+| `FOREACH` over an unresolvable runtime array | `For each <var> from 0 to 0:` | Single iteration + warning (can't size a runtime array on the VM). |
 | `LOG message` | `Print <value>.` | Numeric / identifier / `${expr}` messages print; free-text strings become a comment + warning. |
 | `WAIT ms` | `Timer.After(<ms>).` | Non-blocking on the VM (warns). |
-| `WEB` / `LOAD` / `SAVE` | `# …` comment | Require host transport/storage hooks; not executed by the integer VM (warns). |
+| `LOAD name from variable` | `Set <name> to <source>.` | Plain (array-aware) assignment. |
+| `LOAD`/`SAVE` `from`/`to` `memory` \| `scratch` | `Memory.Get/Set(key)` \| `Context.Get/SetScratchValue(key)` | Real VM host hooks (0x37/0x36, 0xeb/0xea). |
+| `LOAD`/`SAVE` (localStorage/sessionStorage/json/http) | `# …` comment | Require host storage/transport hooks; not executed by the integer VM (warns). |
+| `WEB` | `# WEB …` comment | HTTP requires a host transport hook (warns). |
 | `CALL workflow` | `# CALL <workflow>` | Nested workflows are not linked; compile them separately (warns). |
 
 ### Representable vs. host-only
 
-- **Faithful:** integer variables, arithmetic (`+ - * / %`), comparisons (`> < >= <= == !=`), boolean `and`/`or`, `IF`/`ELSE`, `FOR`, nested blocks, `LOG` of numbers/variables.
-- **Best-effort with warnings:** `FOREACH`/`FOREACHP` (index only), `WAIT` (non-blocking), string values (quoted but not numerically meaningful).
-- **Host-only (comments + warnings):** `WEB`, `LOAD`, `SAVE`, `CALL`, string interpolation, non-scalar values.
+- **Faithful:** integer variables, arithmetic (`plus minus times divided by modulo`), comparisons, boolean `and`/`or`, `IF`/`ELSE`, `FOR`, nested blocks, **integer arrays + FOREACH over values**, `LOAD`/`SAVE` to `variable`/`memory`/`scratch`, `LOG` of numbers/variables.
+- **Best-effort with warnings:** `FOREACHP` (sequential), unresolvable runtime arrays (single iteration), `WAIT` (non-blocking), string values (quoted but not numerically meaningful).
+- **Host-only (comments + warnings):** `WEB`, `LOAD`/`SAVE` to storage/HTTP/JSON, `CALL`, string interpolation, non-scalar values.
+
+### Cross-language contract
+
+The emitted dialect and data ABI are kept in sync with the C# VM in
+`developercli/workflow`:
+
+- **Dialect:** PicoScript **English**, word-form operators — matching `developercli/workflow/test/oracle.js`, the differential oracle that compiles English through this same `BareMetal.PicoScript` bundle and pins the C# `PicoVm` to identical `words`/registers/output.
+- **Data ABI:** `Context.GetScratchValue`/`SetScratchValue` (0xeb/0xea) and `Memory.Get`/`Memory.Set` (0x37/0x36) — the exact hook codes implemented by the C# `WorkflowHost`, so array/scratch workflows run bit-identically on both VMs (bind a `WorkflowHost` on the C# side to back `Memory`).
 
 ## Notes
 

@@ -42,22 +42,31 @@ describe('WorkflowPico – source generation', () => {
     ]);
     expect(source).toContain('Set sum to 0.');
     expect(source).toContain('For each i from 1 to 5 by 1:');
-    expect(source).toContain('    Set sum to sum + i.');
-    expect(source).toContain('If sum >= 15:');
+    expect(source).toContain('    Set sum to sum plus i.');
+    expect(source).toContain('If sum is at least 15:');
     expect(source).toContain('Otherwise:');
     expect(source).toContain('Print status.');
   });
 
-  test('translates ==, &&, || to English operators', () => {
+  test('translates JS operators to English word operators', () => {
     const { source } = WP.compile([
       { type: 'SET', name: 'r', expr: 'a == 1 && b != 2 || c === 3' }
     ]);
-    expect(source.trim()).toBe('Set r to a is 1 and b != 2 or c is 3.');
+    expect(source.trim()).toBe('Set r to a is 1 and b is not 2 or c is 3.');
   });
 
-  test('emits negative literals with a subtraction form', () => {
+  test('translates arithmetic and comparison words', () => {
+    expect(WP.compile([{ type: 'SET', name: 'x', expr: 'a * b - c / d % e' }]).source.trim())
+      .toBe('Set x to a times b minus c divided by d modulo e.');
+    expect(WP.compile([{ type: 'IF', condition: 'x > 1', }, { type: 'END' }]).source)
+      .toContain('If x is greater than 1:');
+    expect(WP.compile([{ type: 'IF', condition: 'x <= 1', }, { type: 'END' }]).source)
+      .toContain('If x is at most 1:');
+  });
+
+  test('emits negative literals with a word subtraction form', () => {
     const { source } = WP.compile([{ type: 'SET', name: 'x', value: -5 }]);
-    expect(source.trim()).toBe('Set x to (0 - 5).');
+    expect(source.trim()).toBe('Set x to (0 minus 5).');
   });
 
   test('sanitizes invalid identifiers', () => {
@@ -75,7 +84,7 @@ describe('WorkflowPico – source generation', () => {
 
   test('${expr} in SET value is treated as an expression', () => {
     const { source } = WP.compile([{ type: 'SET', name: 'y', value: '${a + 1}' }]);
-    expect(source.trim()).toBe('Set y to (a + 1).');
+    expect(source.trim()).toBe('Set y to (a plus 1).');
   });
 
   test('accepts a registered workflow name via BareMetal.Workflow', () => {
@@ -112,14 +121,17 @@ describe('WorkflowPico – warnings for non-representable steps', () => {
     expect(warnings.join(' ')).toMatch(/WAIT/);
   });
 
-  test('FOREACH over a literal array binds the index and warns', () => {
+  test('FOREACH over a literal array materializes into Memory and iterates values', () => {
     const { source, warnings } = WP.compile([
-      { type: 'FOREACH', var: 'idx', in: '[10,20,30]' },
-      { type: 'SET', name: 's', expr: 's + idx' },
+      { type: 'FOREACH', var: 'item', in: '[10,20,30]' },
+      { type: 'SET', name: 's', expr: 's + item' },
       { type: 'END' }
     ]);
-    expect(source).toContain('For each idx from 0 to 2:');
-    expect(warnings.join(' ')).toMatch(/index/);
+    expect(source).toContain('Memory.Set(8192, 10).');
+    expect(source).toContain('Memory.Set(8194, 30).');
+    expect(source).toContain('For each _fe0 from 0 to 2:');
+    expect(source).toContain('Set item to Memory.Get(8192 plus _fe0).');
+    expect(warnings).toHaveLength(0);
   });
 
   test('unsupported step types become comments', () => {
@@ -188,15 +200,38 @@ describe('WorkflowPico – compile + run on the PicoScript VM', () => {
     expect(tail(r.output)).toBe(42);
   });
 
-  test('FOREACH over a literal array sums indices', () => {
+  test('FOREACH over an array variable sums element VALUES', () => {
     const r = run([
+      { type: 'SET', name: 'data', value: [10, 20, 30] },
       { type: 'SET', name: 's', value: 0 },
-      { type: 'FOREACH', var: 'idx', in: '[10,20,30]' },
-      { type: 'SET', name: 's', expr: 's + idx' },
+      { type: 'FOREACH', var: 'item', in: 'data' },
+      { type: 'SET', name: 's', expr: 's + item' },
       { type: 'END' },
       { type: 'LOG', message: 's' }
     ]);
-    expect(tail(r.output)).toBe(3); // 0 + 1 + 2
+    expect(tail(r.output)).toBe(60); // 10 + 20 + 30 (values, not indices)
+  });
+
+  test('FOREACH over an inline literal array sums VALUES', () => {
+    const r = run([
+      { type: 'SET', name: 's', value: 0 },
+      { type: 'FOREACH', var: 'v', in: '[3,4,5]' },
+      { type: 'SET', name: 's', expr: 's + v' },
+      { type: 'END' },
+      { type: 'LOG', message: 's' }
+    ]);
+    expect(tail(r.output)).toBe(12);
+  });
+
+  test('LOAD from variable + SAVE/LOAD memory round-trip', () => {
+    const r = run([
+      { type: 'SET', name: 'a', value: 41 },
+      { type: 'LOAD', name: 'b', from: 'variable', key: 'a + 1' },
+      { type: 'SAVE', name: 'b', to: 'memory', key: 100 },
+      { type: 'LOAD', name: 'c', from: 'memory', key: 100 },
+      { type: 'LOG', message: 'c' }
+    ]);
+    expect(tail(r.output)).toBe(42);
   });
 });
 
