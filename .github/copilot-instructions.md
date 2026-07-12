@@ -52,6 +52,7 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 | `BareMetal.RBAC.js` | `BareMetal.RBAC` | Client-side RBAC (reads JWT, checks roles/groups/permissions, DOM attrs) |
 | `BareMetal.Workflow.js` | `BareMetal.Workflow` | Workflow engine (SET/IF/FOR/FOREACH/FOREACHP/WEB/LOAD/SAVE + designer) |
 | `BareMetal.WorkflowPico.js` | `BareMetal.WorkflowPico` | Compiles Workflow step lists to PicoScript (English dialect); workflow designer as a PicoScript frontend + "Compile to PicoScript" designer button |
+| `BareMetal.Report.js` | `BareMetal.Report` | Report & form builder: one templated layout engine (report=read-only, form=read-write) + render, form write-back, and a visual designer to create/edit templates |
 | `BareMetal.Markdown.js` | `BareMetal.Markdown` | GFM Markdown-to-HTML renderer (render, toc, frontMatter, sanitize) |
 | `BareMetal.PicoScript.js` | `BareMetal.PicoScript` | Protocol compiler: BASIC DSL → bytecode → CFG. Event dispatch, EMIT/PEEK, safety rails, trace |
 | `BareMetal.PicoScript.Editor.js` | `BareMetal.PicoScript.Editor` | 4-pane protocol compiler IDE (source/IR/CFG/trace) |
@@ -93,6 +94,7 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 - `BareMetal.Auth` → soft dep on `BareMetal.Communications` (attachToRest auto-injects tokens)
 - `BareMetal.Progressive` → soft deps on `BareMetal.Communications`, `BareMetal.LocalKVStore`
 - `BareMetal.WorkflowPico` → soft deps on `BareMetal.PicoScript` (for `toWords`/`run`), `BareMetal.Workflow` (compile-by-name + designer button)
+- `BareMetal.Report` → fully standalone (layout engine + designer); pairs with any data source (Communications/Workflow/Storage/PicoScript)
 - All others → fully standalone
 
 ## Key Conventions

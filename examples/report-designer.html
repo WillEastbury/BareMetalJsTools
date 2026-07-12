@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BareMetal.Report — report &amp; form designer</title>
+<link href="../src/BareMetalStyles.min.css" rel="stylesheet">
+<style>
+  body { font-family: system-ui, sans-serif; margin: 20px; max-width: 900px; }
+  h1 { font-size: 20px; }
+  .bm-report-preview { margin: 10px 0; padding: 8px; border: 1px solid #ddd; border-radius: 6px; }
+  table.pico-report { border-collapse: collapse; font-size: 14px; }
+  table.pico-report th, table.pico-report td { border: 1px solid #ccc; padding: 3px 10px; text-align: left; }
+  table.pico-report tfoot td { font-weight: 700; background: #f4f4f4; }
+  .pico-form-row { display: flex; gap: 12px; flex-wrap: wrap; margin: 4px 0; }
+  .pico-field { display: flex; flex-direction: column; font-size: 12px; }
+  .pico-field input { border: 1px solid #bbb; border-radius: 4px; padding: 2px 4px; }
+  .bm-report-text { background: #0c0e14; color: #9fb0c8; padding: 8px; border-radius: 6px; font-size: 12px; white-space: pre-wrap; }
+  .bt { padding: 3px 8px; margin: 0; }
+  #json { width: 100%; height: 120px; font-family: monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>BareMetal.Report — design a report or form</h1>
+<p>Stage 1 (data) is the integers in the <b>data</b> box; stage 2 (layout) is the
+template you build below. Toggle <b>report</b> (read-only) / <b>form</b> (read-write).</p>
+
+<div id="designer"></div>
+
+<h3>Live template JSON</h3>
+<textarea id="json" readonly></textarea>
+
+<script src="../src/BareMetal.Report.js"></script>
+<script>
+  var d = BareMetal.Report.designer(document.getElementById('designer'), {
+    data: [2, 10, 3, 20, 1, 50],
+    template: {
+      title: 'Orders',
+      mode: 'report',
+      columns: [
+        { label: 'Qty',   field: 0, width: 5, format: 'int', editable: true },
+        { label: 'Price', field: 1, width: 6, format: 'int', editable: true }
+      ],
+      aggregates: [{ column: 0, fn: 'sum' }, { column: 1, fn: 'sum' }]
+    }
+  });
+  var json = document.getElementById('json');
+  function sync(t) { json.value = JSON.stringify(t, null, 2); }
+  sync(d.getTemplate());
+  document.getElementById('designer').addEventListener('bm:report-change', function (e) {
+    sync(e.detail.template);
+  });
+</script>
+</body>
+</html>
