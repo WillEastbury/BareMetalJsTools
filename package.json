@@ -83,6 +83,7 @@
     "./tenant": "./src/BareMetal.Tenant.js",
     "./forms": "./src/BareMetal.Forms.js",
     "./search": "./src/BareMetal.Search.js",
+    "./vectorsearch": "./src/BareMetal.VectorSearch.js",
     "./scan": "./src/BareMetal.Scan.js",
     "./schedule": "./src/BareMetal.Schedule.js",
     "./styles": "./src/BareMetalStyles.css",
