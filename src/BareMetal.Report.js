@@ -190,6 +190,88 @@ BareMetal.Report = (() => {
     return map;
   }
 
+  // ── stage-1 data sources ─────────────────────────────────────────────────────
+  // A report/form needs a flat list of ints. loadData resolves a data-source
+  // descriptor to that list (async), decoupling the layout (stage 2) from where
+  // the data comes from (stage 1): a literal array, a REST endpoint, a Workflow
+  // (BareMetal.WorkflowPico) program, a PicoScript program, or a custom function.
+  function normalizeInts(d) {
+    if (Array.isArray(d)) return d.map(function (v) { return v | 0; });
+    return flattenNumbers(d);
+  }
+
+  // Extract every number from a JSON value in document order.
+  function flattenNumbers(json) {
+    var out = [];
+    (function walk(v) {
+      if (typeof v === 'number') out.push(v | 0);
+      else if (Array.isArray(v)) v.forEach(walk);
+      else if (v && typeof v === 'object') Object.keys(v).forEach(function (k) { walk(v[k]); });
+    })(json);
+    return out;
+  }
+
+  // Decode a PicoScript VM output buffer to ints. `Print` writes each value as a
+  // 4-byte big-endian int, so decode in 4-byte groups.
+  function decodeVmInts(output) {
+    var bytes = [];
+    (output || []).forEach(function (chunk) {
+      if (Array.isArray(chunk) || (typeof Uint8Array !== 'undefined' && chunk instanceof Uint8Array)) {
+        for (var i = 0; i < chunk.length; i++) bytes.push(chunk[i] & 0xFF);
+      } else bytes.push(chunk & 0xFF);
+    });
+    var out = [];
+    for (var j = 0; j + 4 <= bytes.length; j += 4) {
+      out.push(((bytes[j] << 24) | (bytes[j + 1] << 16) | (bytes[j + 2] << 8) | bytes[j + 3]) | 0);
+    }
+    return out;
+  }
+
+  function resolvePico(opts) {
+    if (opts && opts.pico) return opts.pico;
+    if (typeof BareMetal !== 'undefined' && BareMetal.PicoScript) return BareMetal.PicoScript;
+    if (typeof window !== 'undefined' && window.BareMetal && window.BareMetal.PicoScript) return window.BareMetal.PicoScript;
+    return null;
+  }
+
+  function loadData(source, opts) {
+    opts = opts || {};
+    return new Promise(function (resolve, reject) {
+      if (!source) return resolve([]);
+      if (Array.isArray(source)) return resolve(normalizeInts(source));
+      var kind = String(source.kind || 'literal').toLowerCase();
+      try {
+        if (kind === 'literal') return resolve(normalizeInts(source.values || []));
+        if (kind === 'function' && typeof source.fn === 'function') {
+          return Promise.resolve(source.fn()).then(function (d) { resolve(normalizeInts(d)); }, reject);
+        }
+        if (kind === 'rest' || kind === 'fetch' || kind === 'url') {
+          var Comm = BareMetal.Communications;
+          var getter;
+          if (Comm && typeof Comm.get === 'function') getter = Comm.get(source.url, source.opts);
+          else if (typeof fetch === 'function') getter = fetch(source.url).then(function (r) { return r.json(); });
+          else return reject(new Error('no transport (BareMetal.Communications or fetch) for a rest data source'));
+          return Promise.resolve(getter).then(function (json) { resolve(flattenNumbers(json)); }, reject);
+        }
+        if (kind === 'workflow') {
+          var WP = BareMetal.WorkflowPico;
+          if (!WP || typeof WP.run !== 'function') return reject(new Error('BareMetal.WorkflowPico is not loaded'));
+          var wr = WP.run(source.steps || [], { pico: resolvePico(opts) });
+          return resolve(decodeVmInts(wr.output));
+        }
+        if (kind === 'pico' || kind === 'picoscript') {
+          var ps = resolvePico(opts);
+          if (!ps || typeof ps.compile !== 'function') return reject(new Error('BareMetal.PicoScript is not loaded'));
+          var compiled = ps.compile(source.source || '', source.lang || 'english');
+          var vm = new ps.VM();
+          vm.run(compiled.words);
+          return resolve(decodeVmInts(vm.output));
+        }
+      } catch (e) { return reject(e); }
+      reject(new Error('unknown data source kind: ' + kind));
+    });
+  }
+
   // ── visual designer (CREATE / edit a report or form template) ────────────────
   function applyStyle(el, s) { for (var k in s) if (Object.prototype.hasOwnProperty.call(s, k)) el.style[k] = s[k]; }
   function emit(el, name, detail) {
@@ -205,6 +287,7 @@ BareMetal.Report = (() => {
     if (!container || typeof document === 'undefined') return null;
     var template = opts.template || { title: 'Report', mode: 'report', columns: [{ label: 'A', field: 0, width: 6, format: 'int', editable: true }], aggregates: [] };
     var data = opts.data || [];
+    var source = opts.source || { kind: 'literal' };
 
     var root = document.createElement('div');
     root.className = 'bm-report-designer cd';
@@ -251,6 +334,40 @@ BareMetal.Report = (() => {
       dataIn.className = 'bt'; dataIn.value = data.join(', '); dataIn.placeholder = 'data (ints)';
       dataIn.oninput = function () { data = parseData(dataIn.value); scheduleRefresh(); };
       bar.appendChild(title); bar.appendChild(modeSel); bar.appendChild(addCol); bar.appendChild(addAgg); bar.appendChild(exp); bar.appendChild(dataIn);
+
+      // stage-1 data-source picker: choose where the report data comes from.
+      var srcSel = document.createElement('select');
+      srcSel.className = 'bt'; srcSel.title = 'stage-1 data source';
+      [['literal', 'literal'], ['rest', 'REST'], ['workflow', 'workflow'], ['pico', 'PicoScript']].forEach(function (o) {
+        var opt = document.createElement('option'); opt.value = o[0]; opt.textContent = o[1];
+        if ((source.kind || 'literal') === o[0]) opt.selected = true; srcSel.appendChild(opt);
+      });
+      var srcCfg = document.createElement('input');
+      srcCfg.className = 'bt'; applyStyle(srcCfg, { minWidth: '160px' });
+      function cfgPlaceholder() {
+        var k = srcSel.value;
+        srcCfg.placeholder = k === 'rest' ? 'url' : k === 'workflow' ? 'steps JSON' : k === 'pico' ? 'English source' : '(uses data box)';
+        srcCfg.value = source.url || (source.steps ? JSON.stringify(source.steps) : '') || source.source || '';
+      }
+      srcSel.onchange = function () { source = { kind: srcSel.value }; cfgPlaceholder(); };
+      srcCfg.oninput = function () {
+        var k = srcSel.value;
+        if (k === 'rest') source = { kind: 'rest', url: srcCfg.value };
+        else if (k === 'workflow') { try { source = { kind: 'workflow', steps: JSON.parse(srcCfg.value) }; } catch (e) { source = { kind: 'workflow', steps: [] }; } }
+        else if (k === 'pico') source = { kind: 'pico', source: srcCfg.value, lang: 'english' };
+      };
+      var loadBtn = document.createElement('button');
+      loadBtn.className = 'bt'; loadBtn.textContent = 'Load';
+      loadBtn.onclick = function () {
+        loadData(source, opts).then(function (rows) {
+          data = rows; refresh();
+          emit(root, 'bm:report-data', { source: source, data: rows.slice() });
+        }, function (err) {
+          emit(root, 'bm:report-error', { source: source, error: err });
+        });
+      };
+      cfgPlaceholder();
+      bar.appendChild(srcSel); bar.appendChild(srcCfg); bar.appendChild(loadBtn);
     }
 
     function renderColumns() {
@@ -309,6 +426,9 @@ BareMetal.Report = (() => {
       setTemplate: function (t) { template = (typeof t === 'string') ? JSON.parse(t) : t; refresh(); return this; },
       getData: function () { return data.slice(); },
       setData: function (d) { data = Array.isArray(d) ? d.slice() : parseData(d); refresh(); return this; },
+      getSource: function () { return JSON.parse(JSON.stringify(source)); },
+      setSource: function (s) { source = s || { kind: 'literal' }; renderBar(); return this; },
+      load: function () { return loadData(source, opts).then(function (rows) { data = rows; refresh(); return rows.slice(); }); },
       refresh: refresh,
       destroy: function () { if (root.parentNode) root.parentNode.removeChild(root); }
     };
@@ -322,6 +442,7 @@ BareMetal.Report = (() => {
     collect: collect,
     flatten: flatten,
     toWrites: toWrites,
+    loadData: loadData,
     designer: designer
   };
 })();

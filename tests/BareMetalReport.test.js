@@ -117,4 +117,60 @@ describe('BareMetal.Report – visual designer', () => {
     expect(d.getData()).toEqual([10, 20, 30]);
     expect(el.querySelector('.bm-report-text').textContent).toContain('sum=60');
   });
+
+  test('designer renders the stage-1 data-source picker', () => {
+    const el = document.createElement('div');
+    R.designer(el, { source: { kind: 'rest', url: '/api/x' }, template: { columns: [{ label: 'A', field: 0 }] } });
+    const sel = el.querySelector('.bm-report-bar select');
+    // two selects exist (mode + source); the source picker offers rest/workflow/pico
+    const opts = Array.from(el.querySelectorAll('.bm-report-bar select option')).map(o => o.value);
+    expect(opts).toEqual(expect.arrayContaining(['literal', 'rest', 'workflow', 'pico']));
+  });
+});
+
+describe('BareMetal.Report – loadData (stage-1 sources)', () => {
+  let R;
+  beforeEach(() => { R = loadReport(); });
+  afterEach(() => { delete global.fetch; });
+
+  test('literal source resolves to its values', async () => {
+    await expect(R.loadData({ kind: 'literal', values: [1, 2, 3] })).resolves.toEqual([1, 2, 3]);
+    await expect(R.loadData([4, 5, 6])).resolves.toEqual([4, 5, 6]);
+  });
+
+  test('function source resolves (sync or async)', async () => {
+    await expect(R.loadData({ kind: 'function', fn: () => [7, 8] })).resolves.toEqual([7, 8]);
+    await expect(R.loadData({ kind: 'function', fn: async () => [9] })).resolves.toEqual([9]);
+  });
+
+  test('rest source fetches JSON and flattens numbers in order', async () => {
+    global.fetch = jest.fn(() => Promise.resolve({ json: () => Promise.resolve({ a: [1, 2], b: 3, c: { d: 4 } }) }));
+    await expect(R.loadData({ kind: 'rest', url: '/api/x' })).resolves.toEqual([1, 2, 3, 4]);
+    expect(global.fetch).toHaveBeenCalledWith('/api/x');
+  });
+
+  test('unknown source kind rejects', async () => {
+    await expect(R.loadData({ kind: 'nonsense' })).rejects.toThrow(/unknown data source/);
+  });
+
+  test('workflow source runs a WorkflowPico program and decodes VM ints', () => {
+    // load PicoScript + WorkflowPico + Report into ONE shared BareMetal namespace
+    const fs = require('fs');
+    const shared = {};
+    for (const f of ['BareMetal.PicoScript.js', 'BareMetal.WorkflowPico.js', 'BareMetal.Report.js']) {
+      const code = fs.readFileSync(path.resolve(__dirname, '../src/' + f), 'utf8');
+      // eslint-disable-next-line no-new-func
+      new Function('BareMetal', 'module', 'window', 'document', code)(shared, { exports: {} }, undefined, undefined);
+    }
+    return shared.Report.loadData({
+      kind: 'workflow',
+      steps: [
+        { type: 'SET', name: 'sum', value: 0 },
+        { type: 'FOR', var: 'i', from: 1, to: 5 },
+        { type: 'SET', name: 'sum', expr: 'sum + i' },
+        { type: 'END' },
+        { type: 'LOG', message: 'sum' }
+      ]
+    }).then((rows) => { expect(rows).toEqual([15]); });
+  });
 });

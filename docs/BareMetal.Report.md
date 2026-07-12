@@ -84,6 +84,30 @@ d.element.addEventListener('bm:report-change', function (e) {
 });
 ```
 
+## Stage-1 data sources — `loadData(source, opts)` → `Promise<int[]>`
+
+Decouples the layout (stage 2) from where the data comes from (stage 1). Resolves a source descriptor to the flat int list the engine renders:
+
+| `source.kind` | Fields | Behaviour |
+|---------------|--------|-----------|
+| `literal` | `values` | Returns the array as-is (a plain array works too). |
+| `rest` | `url`, `opts?` | Fetches JSON via `BareMetal.Communications.get` (or `fetch`) and flattens every number in document order. |
+| `workflow` | `steps` | Runs the step list through `BareMetal.WorkflowPico` and decodes the VM output (`Print` = 4-byte big-endian ints). |
+| `pico` | `source`, `lang?` | Compiles + runs a PicoScript program via `BareMetal.PicoScript` and decodes the VM output. |
+| `function` | `fn` | Calls `fn()` (sync or async); numbers are extracted from the result. |
+
+```js
+// pull rows from an API
+BareMetal.Report.loadData({ kind: 'rest', url: '/api/orders' })
+  .then(data => BareMetal.Report.render(el, data, template));
+
+// or run a workflow as the data producer
+BareMetal.Report.loadData({ kind: 'workflow', steps: myWorkflowSteps })
+  .then(data => ...);
+```
+
+The **designer** exposes this as a picker: choose `literal` / `REST` / `workflow` / `PicoScript`, enter the config (URL, steps JSON, or source), and hit **Load** — the preview fills from the chosen source (`bm:report-data` / `bm:report-error` events). The designer controller also has `getSource()` / `setSource(s)` / `load()`.
+
 ### Form write-back — `collect(formEl)` · `flatten(rows)` · `toWrites(rows, opts)`
 
 The read-write path. `collect(form)` reads a rendered form's inputs back into rows of ints; `flatten(rows)` returns the flat list; `toWrites(rows, { base, stride })` produces a `{ key: value }` map keyed by `base + row*stride + field` for persisting through the data ABI (`Context`/`Memory` scratch, `Storage`) — the same store a stage-1 program reads.
