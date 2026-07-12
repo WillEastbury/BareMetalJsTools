@@ -21,6 +21,7 @@ BareMetal.Workflow = (function() {
     { type: 'LOG', params: ['level', 'message'], description: 'Write to console' },
     { type: 'WAIT', params: ['ms'], description: 'Pause execution' },
     { type: 'RAISE', params: ['event', 'target', 'result'], description: 'Emit/raise an event' },
+    { type: 'ON', params: ['event', 'var'], description: 'Subscribe: handle a raised event (block, closed by END)' },
     { type: 'CALL', params: ['workflow', 'args'], description: 'Call workflow' }
   ];
 
@@ -116,7 +117,7 @@ BareMetal.Workflow = (function() {
     var type;
     for (i = index + 1; i < steps.length; i++) {
       type = String(steps[i] && steps[i].type || '').toUpperCase();
-      if (type === 'IF' || type === 'FOR' || type === 'FOREACH' || type === 'FOREACHP') depth++;
+      if (type === 'IF' || type === 'FOR' || type === 'FOREACH' || type === 'FOREACHP' || type === 'ON') depth++;
       else if (type === 'END') {
         if (!depth) return { elseIndex: elseIndex, endIndex: i };
         depth--;
@@ -267,6 +268,18 @@ BareMetal.Workflow = (function() {
           await Promise.all(workers);
           context._results = results;
           i = info.endIndex;
+        } else if (type === 'ON' || type === 'SUBSCRIBE') {
+          info = blockInfo(steps, i);
+          (function(evName, bodyStart, bodyEnd, handlerVar) {
+            var bus = BareMetal.PubSub;
+            var sub = bus && (bus.subscribe || bus.on);
+            if (sub) sub.call(bus, String(evName), function(data) {
+              var local = clone(context);
+              if (handlerVar) local[handlerVar] = data;
+              execSteps(steps, local, bodyStart, bodyEnd, name);
+            });
+          })(interpolate(step.event, context), i + 1, info.endIndex, step.var);
+          i = info.endIndex;
         } else if (type === 'LOAD') {
           await doLoad(step, context);
         } else if (type === 'SAVE') {
@@ -342,6 +355,7 @@ BareMetal.Workflow = (function() {
     if (type === 'LOG') return step.message || '';
     if (type === 'WAIT') return String(step.ms || 0) + 'ms';
     if (type === 'RAISE' || type === 'EMIT') return String(step.event == null ? '' : step.event) + (step.target != null ? ' -> ' + step.target : '');
+    if (type === 'ON' || type === 'SUBSCRIBE') return 'on event ' + String(step.event == null ? '' : step.event);
     if (type === 'CALL') return step.workflow || '';
     return type;
   }
@@ -490,7 +504,7 @@ BareMetal.Workflow = (function() {
           changed('reorder');
         }; })(i));
         stepsEl.appendChild(row);
-        if (step.type === 'IF' || step.type === 'FOR' || step.type === 'FOREACH' || step.type === 'FOREACHP' || step.type === 'ELSE') indent++;
+        if (step.type === 'IF' || step.type === 'FOR' || step.type === 'FOREACH' || step.type === 'FOREACHP' || step.type === 'ON' || step.type === 'ELSE') indent++;
       }
       bindSortable();
     }

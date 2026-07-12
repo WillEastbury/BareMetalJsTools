@@ -252,6 +252,30 @@ describe('WorkflowPico – compile + run on the PicoScript VM', () => {
     ]);
     expect(tail(r.output)).toBe(2);
   });
+
+  test('ON/SUBSCRIBE drains the queue and dispatches by type', () => {
+    const r = run([
+      { type: 'RAISE', event: 7 },
+      { type: 'RAISE', event: 8 },
+      { type: 'RAISE', event: 7 },
+      { type: 'SET', name: 'hits', value: 0 },
+      { type: 'ON', event: 7 },
+      { type: 'SET', name: 'hits', expr: 'hits + 1' },
+      { type: 'END' },
+      { type: 'LOG', message: 'hits' }
+    ]);
+    expect(tail(r.output)).toBe(2);
+  });
+
+  test('ON lowers to an Event.* drain loop', () => {
+    const { source } = WP.compile([
+      { type: 'ON', event: 5 },
+      { type: 'LOG', message: '1' },
+      { type: 'END' }
+    ]);
+    expect(source).toContain('For each _on0 from 0 to (Event.Count() minus 1):');
+    expect(source).toContain('If Event.Type(_ev1) is 5:');
+  });
 });
 
 describe('WorkflowPico – designer integration', () => {

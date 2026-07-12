@@ -273,6 +273,11 @@ BareMetal.WorkflowPico = (() => {
         else out.push(pad(indent) + call + '.');
         break;
 
+      case 'ON':
+      case 'SUBSCRIBE':
+        emitOn(step, steps, pos, indent, ctx);
+        break;
+
       case 'LOAD':
         emitLoad(step, indent, ctx);
         break;
@@ -331,6 +336,23 @@ BareMetal.WorkflowPico = (() => {
     var lit = literalArray(inRaw);
     if (lit) return materializeArray(ctx, indent, lit, label);
     return null;
+  }
+
+  // ON/SUBSCRIBE <event>: drain the Event.* queue, running the handler body for
+  // each matching event (bounded by the pending count).
+  function emitOn(step, steps, pos, indent, ctx) {
+    var ev = emitOperand(step.event == null ? 0 : step.event, ctx.warnings, 'ON event');
+    var v = sanitizeId(step.var || 'event');
+    var loop = '_on' + (ctx.tempN++);
+    var evid = '_ev' + (ctx.tempN++);
+    ctx.out.push(pad(indent) + 'For each ' + loop + ' from 0 to (Event.Count() minus 1):');
+    ctx.out.push(pad(indent + 1) + 'Set ' + evid + ' to Event.Next().');
+    ctx.out.push(pad(indent + 1) + 'If Event.Type(' + evid + ') is ' + ev + ':');
+    ctx.out.push(pad(indent + 2) + 'Set ' + v + ' to ' + evid + '.');
+    var start = ctx.out.length;
+    var term = emitSeq(steps, pos, indent + 2, ctx);
+    if (ctx.out.length === start) ctx.out.push(pad(indent + 2) + 'Set _nop to 0.');
+    if (term === 'ELSE') { pos.i++; ctx.warnings.push('ELSE without a matching IF; ignored'); }
   }
 
   function emitForeach(step, type, steps, pos, indent, ctx) {

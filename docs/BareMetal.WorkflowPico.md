@@ -165,6 +165,7 @@ Emits `bm:workflow-pico-error` (`detail.error`) if compilation throws.
 | `LOG message` | `Print <value>.` | Numeric / identifier / `${expr}` messages print; free-text strings become a comment + warning. |
 | `WAIT ms` | `Timer.After(<ms>).` | Non-blocking on the VM (warns). |
 | `RAISE`/`EMIT` `event` `target?` `result?` | `[Set <result> to] Event.Post(<event>, <target>).` | Posts an event onto the reactive `Event.*` queue (subscribers drain via `Event.Next()`). |
+| `ON`/`SUBSCRIBE` `event` `var?` … `END` | drain loop: `For each … to (Event.Count() minus 1): Set _ev to Event.Next(). If Event.Type(_ev) is <event>: …` | Block step: runs the handler body for each pending event of `<event>`; binds `var` (default `event`) to the event id. |
 | `LOAD name from variable` | `Set <name> to <source>.` | Plain (array-aware) assignment. |
 | `LOAD`/`SAVE` `from`/`to` `memory` \| `scratch` | `Memory.Get/Set(key)` \| `Context.Get/SetScratchValue(key)` | Real VM host hooks (0x37/0x36, 0xeb/0xea). |
 | `LOAD`/`SAVE` (localStorage/sessionStorage/json/http) | `# …` comment | Require host storage/transport hooks; not executed by the integer VM (warns). |
