@@ -233,6 +233,25 @@ describe('WorkflowPico – compile + run on the PicoScript VM', () => {
     ]);
     expect(tail(r.output)).toBe(42);
   });
+
+  test('RAISE/EMIT lower to Event.Post', () => {
+    const { source, warnings } = WP.compile([
+      { type: 'RAISE', event: 7, target: 3, result: 'eid' },
+      { type: 'EMIT', event: 9 }
+    ]);
+    expect(source).toContain('Set eid to Event.Post(7, 3).');
+    expect(source).toContain('Event.Post(9, 0).');
+    expect(warnings).toHaveLength(0);
+  });
+
+  test('RAISE posts events onto the VM event queue', () => {
+    const r = run([
+      { type: 'RAISE', event: 7 },
+      { type: 'RAISE', event: 8, target: 3 },
+      { type: 'LOG', message: '${Event.Count()}' }
+    ]);
+    expect(tail(r.output)).toBe(2);
+  });
 });
 
 describe('WorkflowPico – designer integration', () => {

@@ -20,6 +20,7 @@ BareMetal.Workflow = (function() {
     { type: 'WEB', params: ['method', 'url', 'body', 'headers', 'result'], description: 'HTTP request' },
     { type: 'LOG', params: ['level', 'message'], description: 'Write to console' },
     { type: 'WAIT', params: ['ms'], description: 'Pause execution' },
+    { type: 'RAISE', params: ['event', 'target', 'result'], description: 'Emit/raise an event' },
     { type: 'CALL', params: ['workflow', 'args'], description: 'Call workflow' }
   ];
 
@@ -277,6 +278,12 @@ BareMetal.Workflow = (function() {
           console[level](interpolate(step.message, context));
         } else if (type === 'WAIT') {
           await sleep(numberValue(interpolate(step.ms, context), 0));
+        } else if (type === 'RAISE' || type === 'EMIT') {
+          var evName = interpolate(step.event, context);
+          var evData = step.data !== undefined ? interpolate(step.data, context) : interpolate(step.target, context);
+          if (BareMetal.PubSub && typeof BareMetal.PubSub.publish === 'function') BareMetal.PubSub.publish(String(evName), evData);
+          else if (BareMetal.PubSub && typeof BareMetal.PubSub.emit === 'function') BareMetal.PubSub.emit(String(evName), evData);
+          if (step.result) context[step.result] = evName;
         } else if (type === 'CALL') {
           var args = interpolate(step.args || {}, context);
           var key;
@@ -334,6 +341,7 @@ BareMetal.Workflow = (function() {
     if (type === 'WEB') return String(step.method || 'GET').toUpperCase() + ' ' + (step.url || '');
     if (type === 'LOG') return step.message || '';
     if (type === 'WAIT') return String(step.ms || 0) + 'ms';
+    if (type === 'RAISE' || type === 'EMIT') return String(step.event == null ? '' : step.event) + (step.target != null ? ' -> ' + step.target : '');
     if (type === 'CALL') return step.workflow || '';
     return type;
   }

@@ -120,6 +120,7 @@ BareMetal.WorkflowPico = (() => {
       .replace(/\(\s+/g, '(')
       .replace(/\s+\)/g, ')')
       .replace(/\s+,/g, ',')
+      .replace(/\s*\.\s*/g, '.')
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -261,6 +262,15 @@ BareMetal.WorkflowPico = (() => {
       case 'WAIT':
         out.push(pad(indent) + 'Timer.After(' + emitOperand(step.ms == null ? 0 : step.ms, warnings, 'WAIT ms') + ').');
         warnings.push('WAIT: Timer.After schedules but does not block the VM');
+        break;
+
+      case 'RAISE':
+      case 'EMIT':
+        var ev = emitOperand(step.event == null ? 0 : step.event, warnings, 'RAISE event');
+        var tgt = step.target != null ? emitOperand(step.target, warnings, 'RAISE target') : '0';
+        var call = 'Event.Post(' + ev + ', ' + tgt + ')';
+        if (step.result) out.push(pad(indent) + 'Set ' + sanitizeId(step.result) + ' to ' + call + '.');
+        else out.push(pad(indent) + call + '.');
         break;
 
       case 'LOAD':

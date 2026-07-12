@@ -164,6 +164,7 @@ Emits `bm:workflow-pico-error` (`detail.error`) if compilation throws.
 | `FOREACH` over an unresolvable runtime array | `For each <var> from 0 to 0:` | Single iteration + warning (can't size a runtime array on the VM). |
 | `LOG message` | `Print <value>.` | Numeric / identifier / `${expr}` messages print; free-text strings become a comment + warning. |
 | `WAIT ms` | `Timer.After(<ms>).` | Non-blocking on the VM (warns). |
+| `RAISE`/`EMIT` `event` `target?` `result?` | `[Set <result> to] Event.Post(<event>, <target>).` | Posts an event onto the reactive `Event.*` queue (subscribers drain via `Event.Next()`). |
 | `LOAD name from variable` | `Set <name> to <source>.` | Plain (array-aware) assignment. |
 | `LOAD`/`SAVE` `from`/`to` `memory` \| `scratch` | `Memory.Get/Set(key)` \| `Context.Get/SetScratchValue(key)` | Real VM host hooks (0x37/0x36, 0xeb/0xea). |
 | `LOAD`/`SAVE` (localStorage/sessionStorage/json/http) | `# …` comment | Require host storage/transport hooks; not executed by the integer VM (warns). |
