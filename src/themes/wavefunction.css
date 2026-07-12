@@ -8,7 +8,7 @@
   --bs-body-color: #f1f5f9;
   --bs-secondary-color: #94a3b8;
   --bs-primary: #6366f1; --bs-primary-rgb: 99,102,241;
-  --bs-secondary: #475569; --bs-secondary-rgb: 71,85,105;
+  --bs-secondary: #64748b; --bs-secondary-rgb: 100,116,139;
   --bs-success: #10b981; --bs-success-rgb: 16,185,129;
   --bs-danger: #ef4444; --bs-danger-rgb: 239,68,68;
   --bs-warning: #f59e0b; --bs-warning-rgb: 245,158,11;
@@ -17,4 +17,11 @@
   --bs-dark: #020617; --bs-dark-rgb: 2,6,23;
   --bs-border-color: #334155;
   --bs-focus-ring: 0 0 0 .25rem rgba(99,102,241,.3);
+
+  /* elevation & surfaces: lighter slate for lift over the deep-slate body */
+  --bs-surface: #1e293b;
+  --bs-surface-2: #273449;
+  --bs-hover-bg: rgba(148,163,184,.10);
+  --bs-shadow-sm: 0 1px 2px rgba(0,0,0,.35);
+  --bs-shadow: 0 2px 6px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.45);
 }

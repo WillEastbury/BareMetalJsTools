@@ -16,4 +16,11 @@
   --bs-dark: #212529; --bs-dark-rgb: 33,37,41;
   --bs-border-color: #dee2e6;
   --bs-focus-ring: 0 0 0 .25rem rgba(13,110,253,.25);
+
+  /* elevation & surfaces */
+  --bs-surface: #ffffff;
+  --bs-surface-2: #f1f3f5;
+  --bs-hover-bg: rgba(0,0,0,.04);
+  --bs-shadow-sm: 0 1px 2px rgba(0,0,0,.06);
+  --bs-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 18px rgba(0,0,0,.08);
 }

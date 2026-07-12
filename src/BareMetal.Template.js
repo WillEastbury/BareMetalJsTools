@@ -159,15 +159,15 @@ BareMetal.Template = (() => {
       const td = tr.insertCell(); td.className = 'te';
       const id = item.id || item.Id || '';
       if (cb.onView) {
-        const b = mk('button', { className: 'bt bt-s bt-op me1', textContent: '👁' });
+        const b = mk('button', { className: 'bt bt-s bt-op me1', textContent: 'View' });
         b.onclick = () => cb.onView(id, item); td.appendChild(b);
       }
       if (cb.onEdit) {
-        const b = mk('button', { className: 'bt bt-s bt-os me1', textContent: '✏' });
+        const b = mk('button', { className: 'bt bt-s bt-op me1', textContent: 'Edit' });
         b.onclick = () => cb.onEdit(id, item); td.appendChild(b);
       }
       if (cb.onDelete) {
-        const b = mk('button', { className: 'bt bt-s bt-oer', textContent: '🗑' });
+        const b = mk('button', { className: 'bt bt-s bt-oer', textContent: 'Delete' });
         b.onclick = () => cb.onDelete(id, item); td.appendChild(b);
       }
     });
