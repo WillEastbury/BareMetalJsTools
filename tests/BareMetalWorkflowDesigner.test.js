@@ -103,6 +103,42 @@ describe('BareMetal.Workflow.Designer', () => {
     fc.destroy();
   });
 
+  test('namespace toolbox: lists implemented methods grouped by namespace and inserts a CALLNS box on click', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const namespaces = {
+      Net: [{ method: 'Status', code: '0x1', impl: true }, { method: 'Planned', code: '0x2', impl: false }],
+      Storage: [{ method: 'Load', code: '0x3', impl: true }]
+    };
+    const fc = FC.create(host, { steps: [], namespaces });
+    // toolbox renders both namespaces, only implemented methods as chips
+    const groups = host.querySelectorAll('.fc-toolbox .fc-tb-group');
+    expect(groups.length).toBe(2);
+    const chips = host.querySelectorAll('.fc-toolbox .fc-tb-chip');
+    expect(chips.length).toBe(2);   // Net.Status + Storage.Load (Net.Planned is unimplemented, excluded)
+    // clicking a chip inserts a CALLNS box pre-filled with Namespace.Method()
+    const netStatusChip = Array.from(chips).find((c) => c.getAttribute('data-method') === 'Status');
+    netStatusChip.click();
+    expect(fc.getSteps()).toEqual([{ type: 'CALLNS', call: 'Net.Status()' }]);
+    fc.destroy();
+  });
+
+  test('namespace toolbox: filter narrows visible chips and groups without touching the model', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const namespaces = { Net: [{ method: 'Status', code: '0x1', impl: true }], Storage: [{ method: 'Load', code: '0x3', impl: true }] };
+    const fc = FC.create(host, { steps: [], namespaces });
+    const search = host.querySelector('.fc-tb-search');
+    search.value = 'stor';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    const netChip = host.querySelector('.fc-tb-group[data-ns="Net"] .fc-tb-chip');
+    const storageChip = host.querySelector('.fc-tb-group[data-ns="Storage"] .fc-tb-chip');
+    expect(netChip.style.display).toBe('none');
+    expect(storageChip.style.display).not.toBe('none');
+    expect(fc.getSteps()).toEqual([]);   // filtering never mutates the step model
+    fc.destroy();
+  });
+
   test('editing an input updates the model and fires onChange', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);

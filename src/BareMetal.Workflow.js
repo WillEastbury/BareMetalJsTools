@@ -742,7 +742,21 @@ BareMetal.Workflow.Designer = (function () {
     '.fc-branch-label{position:absolute;top:4px;left:50%;transform:translateX(-50%);background:var(--fc-bg);padding:0 6px;color:var(--fc-accent);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;z-index:1;white-space:nowrap;}',
     '.fc-addchild{align-self:center;background:none;border:1px dashed var(--fc-line);border-radius:6px;color:var(--fc-muted);cursor:pointer;font-size:11px;padding:2px 8px;margin-top:14px;}',
     '.fc-addchild:hover{border-color:var(--fc-accent);color:#e6e8ef;}',
-    '.fc-empty-root{color:var(--fc-muted);font-size:12px;font-style:italic;text-align:center;padding:14px;}'
+    '.fc-empty-root{color:var(--fc-muted);font-size:12px;font-style:italic;text-align:center;padding:14px;}',
+    '.fc-toolbox{background:var(--fc-panel);border:1px solid var(--fc-line);border-radius:8px;padding:8px;margin-bottom:8px;max-height:220px;overflow:auto;}',
+    '.fc-tb-search{width:100%;box-sizing:border-box;background:#0c0e14;border:1px solid var(--fc-line);border-radius:6px;color:#e6e8ef;font:12px/1.2 "SF Mono",Consolas,monospace;padding:5px 8px;margin-bottom:6px;}',
+    '.fc-tb-search:focus{outline:none;border-color:var(--fc-accent);}',
+    '.fc-tb-group{border-top:1px solid var(--fc-line);}',
+    '.fc-tb-group:first-child{border-top:none;}',
+    '.fc-tb-head{display:flex;align-items:center;gap:6px;padding:5px 2px;cursor:pointer;font-size:11.5px;color:#cdd3e0;user-select:none;}',
+    '.fc-tb-head:hover{color:#e6e8ef;}',
+    '.fc-tb-caret{font-size:9px;color:var(--fc-muted);width:9px;transition:transform .1s;}',
+    '.fc-tb-group.fc-tb-collapsed .fc-tb-caret{transform:rotate(-90deg);}',
+    '.fc-tb-count{margin-left:auto;color:var(--fc-muted);font-size:10px;background:#0c0e14;border-radius:8px;padding:0 6px;}',
+    '.fc-tb-chips{display:flex;flex-wrap:wrap;gap:4px;padding:2px 2px 8px 15px;}',
+    '.fc-tb-group.fc-tb-collapsed .fc-tb-chips{display:none;}',
+    '.fc-tb-chip{display:inline-flex;padding:2px 8px;border-radius:12px;background:#1d2230;border:1px solid var(--fc-line);color:#a0d0ff;font-size:11px;cursor:pointer;user-select:none;}',
+    '.fc-tb-chip:hover{border-color:var(--fc-accent);color:#e6e8ef;}'
   ].join('');
 
   function injectCss(docObj) {
@@ -874,10 +888,11 @@ BareMetal.Workflow.Designer = (function () {
       return !!findNode(ownerId, [hit.node]);
     }
 
-    function addNode(type, ownerId, slot, index) {
+    function addNode(type, ownerId, slot, index, propsOverride) {
       var arr = slotArray(ownerId || null, slot);
       if (!arr) return null;
       var node = makeNode(types, type);
+      if (propsOverride) { Object.keys(propsOverride).forEach(function (k) { node.props[k] = propsOverride[k]; }); }
       if (index == null || index > arr.length) index = arr.length;
       arr.splice(index, 0, node);
       render(); emit();
@@ -1089,6 +1104,69 @@ BareMetal.Workflow.Designer = (function () {
       return pal;
     }
 
+    // ── namespace toolbox (every language-surface method, grouped) ──────────────
+    // Optional opts.namespaces = {ns: [{method,code,impl}, ...]} (the same shape
+    // gen_site.py's NSDATA uses). Lists every *implemented* host method grouped by
+    // namespace, collapsible, with a filter box; clicking a method inserts a
+    // CALLNS box pre-filled with "Namespace.Method()" -- so the whole language
+    // surface is reachable natively from the designer's toolbox, not just the
+    // built-in step types.
+    var toolboxFilter = '', toolboxCollapsed = {};
+    function toolboxGroups() {
+      var ns = opts.namespaces; if (!ns) return null;
+      return Object.keys(ns).sort().map(function (n) {
+        var methods = (ns[n] || []).filter(function (m) { return m && m.impl; });
+        return { ns: n, methods: methods };
+      }).filter(function (g) { return g.methods.length; });
+    }
+    function applyToolboxFilter(box) {
+      var text = (toolboxFilter || '').toLowerCase();
+      Array.prototype.slice.call(box.querySelectorAll('.fc-tb-group')).forEach(function (grp) {
+        var ns = grp.getAttribute('data-ns'), anyVisible = false;
+        Array.prototype.slice.call(grp.querySelectorAll('.fc-tb-chip')).forEach(function (chip) {
+          var hay = (ns + '.' + chip.getAttribute('data-method')).toLowerCase();
+          var show = !text || hay.indexOf(text) >= 0;
+          chip.style.display = show ? '' : 'none';
+          if (show) anyVisible = true;
+        });
+        grp.classList.toggle('fc-tb-collapsed', text ? false : !!toolboxCollapsed[ns]);
+        grp.style.display = (text && !anyVisible) ? 'none' : '';
+      });
+    }
+    function renderToolbox() {
+      var groups = toolboxGroups();
+      if (!groups || !groups.length) return null;
+      var box = docObj.createElement('div'); box.className = 'fc-toolbox';
+      var search = docObj.createElement('input'); search.type = 'text'; search.className = 'fc-tb-search';
+      search.placeholder = 'filter namespaces / methods\u2026'; search.value = toolboxFilter;
+      search.addEventListener('input', function () { toolboxFilter = search.value; applyToolboxFilter(box); });
+      search.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+      box.appendChild(search);
+      var list = docObj.createElement('div'); list.className = 'fc-tb-list';
+      groups.forEach(function (g) {
+        var grp = docObj.createElement('div'); grp.className = 'fc-tb-group'; grp.setAttribute('data-ns', g.ns);
+        var head = docObj.createElement('div'); head.className = 'fc-tb-head';
+        head.innerHTML = '<span class="fc-tb-caret">\u25BE</span><b>' + esc(g.ns) + '</b><span class="fc-tb-count">' + g.methods.length + '</span>';
+        head.addEventListener('click', function () { toolboxCollapsed[g.ns] = !toolboxCollapsed[g.ns]; applyToolboxFilter(box); });
+        grp.appendChild(head);
+        var chips = docObj.createElement('div'); chips.className = 'fc-tb-chips';
+        g.methods.forEach(function (m) {
+          var chip = docObj.createElement('span'); chip.className = 'fc-tb-chip'; chip.setAttribute('data-method', m.method);
+          chip.textContent = m.method + '()';
+          chip.title = g.ns + '.' + m.method + '() \u2014 click to add as a box';
+          chip.addEventListener('click', function () {
+            addNode('CALLNS', null, null, roots.length, { call: g.ns + '.' + m.method + '()' });
+          });
+          chips.appendChild(chip);
+        });
+        grp.appendChild(chips);
+        list.appendChild(grp);
+      });
+      box.appendChild(list);
+      applyToolboxFilter(box);
+      return box;
+    }
+
     function render() {
       if (!host) return;
       clearHandles();
@@ -1096,6 +1174,8 @@ BareMetal.Workflow.Designer = (function () {
       host.innerHTML = '';
       var pal = renderPalette();
       host.appendChild(pal); host.__palette = pal;
+      var tb = renderToolbox();
+      if (tb) host.appendChild(tb);
       var canvas = docObj.createElement('div'); canvas.className = 'fc-canvas';
       if (!roots.length) {
         var empty = docObj.createElement('div'); empty.className = 'fc-empty-root';
