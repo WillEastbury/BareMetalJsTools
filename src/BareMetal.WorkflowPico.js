@@ -379,9 +379,27 @@ BareMetal.WorkflowPico = (() => {
 
   // LOAD name from <source>. `variable` clones another context value (a plain
   // assignment, array-aware); `memory`/`scratch` read a Memory/Context cell.
+  // Inbound HTTP request descriptor fields, as written by the kernel / WebIDE
+  // HTTP simulator into the low PicoWAL cards (0,0,K). Reading them lets a served
+  // workflow branch on method/length/body before it RESPONDs. See docs/MAP.md and
+  // the "HTTP responder" showcase.
+  var REQ_FIELDS = { length: 0, method: 1, bodylen: 2, sum: 3, pathlen: 4, querylen: 5 };
   function emitLoad(step, indent, ctx) {
     var name = sanitizeId(step.name);
     var from = String(step.from || '').toLowerCase();
+    if (from === 'request') {
+      var fld = String(step.field || step.key || 'method').toLowerCase();
+      var k = own(REQ_FIELDS, fld) ? REQ_FIELDS[fld] : null;
+      if (k == null) {
+        ctx.out.push(pad(indent) + '# LOAD ' + (step.name || '') + ' <- request.' + fld + ' (unknown field)');
+        ctx.warnings.push('LOAD from request: unknown field ' + JSON.stringify(fld) + ' (use method/length/bodylen/pathlen/querylen/sum)');
+        return;
+      }
+      ctx.out.push(pad(indent) + 'Set ' + name + ' to 0.');
+      ctx.out.push(pad(indent) + 'Storage.Load(0, 0, ' + k + ', ' + name + ').');
+      delete ctx.arrays[name];
+      return;
+    }
     if (from === 'variable') {
       var srcRaw = step.key || step.var || step.source || '';
       var srcId = sanitizeId(String(srcRaw).trim());

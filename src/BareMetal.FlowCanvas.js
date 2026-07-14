@@ -37,7 +37,8 @@ BareMetal.FlowCanvas = (function () {
   // ── type schema ─────────────────────────────────────────────────────────────
   // Each descriptor: { label, kind:'atom'|'block', color, slots:[{key,label}],
   //   fields:[{key,label,placeholder,kind:'text'|'num'|'select',choices,get,set}] }
-  var MEM = [{ v: 'memory', t: 'memory' }, { v: 'scratch', t: 'scratch' }, { v: 'field', t: 'field' }];
+  var MEM = [{ v: 'memory', t: 'memory' }, { v: 'scratch', t: 'scratch' }, { v: 'field', t: 'field' }, { v: 'request', t: 'request' }];
+  var REQFIELDS = [{ v: 'method' }, { v: 'length' }, { v: 'bodylen' }, { v: 'pathlen' }, { v: 'querylen' }, { v: 'sum' }];
   var METHODS = [{ v: 'GET' }, { v: 'POST' }, { v: 'PUT' }, { v: 'DELETE' }, { v: 'PATCH' }];
 
   function setValueField() {
@@ -81,6 +82,7 @@ BareMetal.FlowCanvas = (function () {
     LOAD: { label: 'Load', kind: 'atom', color: '#66e0cc', fields: [
       { key: 'name', label: '', placeholder: 'x', width: 70 },
       { key: 'from', label: 'from', kind: 'select', choices: MEM },
+      { key: 'field', label: 'req', kind: 'select', choices: REQFIELDS },
       { key: 'key', label: 'key', placeholder: '0', width: 60, kind: 'num' } ] },
     SAVE: { label: 'Save', kind: 'atom', color: '#66e0cc', fields: [
       { key: 'name', label: '', placeholder: 'x', width: 70 },
