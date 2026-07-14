@@ -225,6 +225,17 @@ BareMetal.WorkflowPico = (() => {
     if (term === 'ELSE') { pos.i++; ctx.warnings.push('ELSE without a matching IF; ignored'); }
   }
 
+  // Emit statements belonging to a SWITCH case, stopping (without consuming) at the
+  // next CASE / DEFAULT / END marker.
+  function emitCaseBody(steps, pos, indent, ctx) {
+    while (pos.i < steps.length) {
+      var t = String((steps[pos.i] || {}).type || '').toUpperCase();
+      if (t === 'CASE' || t === 'DEFAULT' || t === 'END') return;
+      var st = steps[pos.i]; pos.i++;
+      emitStep(st, t, steps, pos, indent, ctx);
+    }
+  }
+
   function emitStep(step, type, steps, pos, indent, ctx) {
     var out = ctx.out;
     var warnings = ctx.warnings;
@@ -297,6 +308,70 @@ BareMetal.WorkflowPico = (() => {
 
       case 'RESPOND':
         emitRespond(step, indent, ctx);
+        break;
+
+      case 'WHILE':
+        out.push(pad(indent) + 'While ' + translateExpr(step.condition || 'false') + ':');
+        closeLoop(steps, pos, indent, ctx);
+        break;
+
+      case 'DO': {
+        out.push(pad(indent) + 'Repeat:');
+        while (pos.i < steps.length && String((steps[pos.i] || {}).type || '').toUpperCase() !== 'LOOP') {
+          var dst = steps[pos.i]; pos.i++;
+          emitStep(dst, String(dst.type || '').toUpperCase(), steps, pos, indent + 1, ctx);
+        }
+        var loopStep = steps[pos.i]; if (loopStep) pos.i++;
+        var kw = (loopStep && loopStep.until) ? 'Until ' : 'While ';
+        out.push(pad(indent) + kw + translateExpr((loopStep && loopStep.condition) || 'true') + '.');
+        break;
+      }
+
+      case 'SWITCH':
+      case 'DISPATCH':
+        out.push(pad(indent) + 'Choose ' + translateExpr(step.expr == null ? '0' : step.expr) + ':');
+        while (pos.i < steps.length) {
+          var ct = String((steps[pos.i] || {}).type || '').toUpperCase();
+          if (ct === 'END') { pos.i++; break; }
+          if (ct === 'CASE') { var cv = steps[pos.i].value; pos.i++; out.push(pad(indent + 1) + 'When ' + translateExpr(cv == null ? '0' : cv) + ':'); emitCaseBody(steps, pos, indent + 2, ctx); }
+          else if (ct === 'DEFAULT') { pos.i++; out.push(pad(indent + 1) + 'Otherwise:'); emitCaseBody(steps, pos, indent + 2, ctx); }
+          else { pos.i++; warnings.push('unexpected ' + ct + ' inside SWITCH; ignored'); }
+        }
+        break;
+
+      case 'BREAK':
+        out.push(pad(indent) + 'Stop.');
+        break;
+
+      case 'SKIP':
+      case 'CONTINUE':
+        out.push(pad(indent) + 'Skip.');
+        break;
+
+      case 'RETURN':
+        out.push(pad(indent) + 'Return' + (step.value != null && step.value !== '' ? ' ' + translateExpr(step.value) : '') + '.');
+        break;
+
+      case 'GOTO':
+        out.push(pad(indent) + 'Go to ' + sanitizeId(step.label || 'L') + '.');
+        break;
+
+      case 'LABEL':
+        out.push(pad(indent) + 'Label ' + sanitizeId(step.name || 'L') + '.');
+        break;
+
+      case 'GOSUB':
+        out.push(pad(indent) + 'Call ' + sanitizeId(step.name || '') + '(' + (Array.isArray(step.args) ? step.args.map(function (a) { return translateExpr(a); }).join(', ') : '') + ').');
+        break;
+
+      case 'CALLNS':
+        // A generic namespace call (e.g. Net.Status(200)) carried verbatim in English.
+        out.push(pad(indent) + String(step.call || '').replace(/\.\s*$/, '') + '.');
+        break;
+
+      case 'RAW':
+        // Escape hatch: emit the carried English lines verbatim (full-fidelity round-trip).
+        String(step.code == null ? '' : step.code).split('\n').forEach(function (ln) { out.push(pad(indent) + ln); });
         break;
 
       case 'CALL':

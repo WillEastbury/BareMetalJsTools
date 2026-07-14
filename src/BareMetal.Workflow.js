@@ -666,7 +666,27 @@ BareMetal.Workflow.Designer = (function () {
       { key: 'contentType', label: '', placeholder: 'application/json', width: 130 },
       { key: 'body', label: 'body', placeholder: '{"ok":true}', width: 150 } ] },
     CALL: { label: 'Call', kind: 'atom', color: '#b0a0ff', fields: [
-      { key: 'workflow', label: '', placeholder: 'other', width: 140 } ] }
+      { key: 'workflow', label: '', placeholder: 'other', width: 140 } ] },
+    WHILE: { label: 'While', kind: 'block', color: '#ffd866', slots: [{ key: 'body', label: '' }],
+      fields: [{ key: 'condition', label: '', placeholder: 'n > 0', width: 180, suggest: 'condition' }] },
+    DO: { label: 'Do', kind: 'block', color: '#ffd866', slots: [{ key: 'body', label: '' }], fields: [] },
+    LOOP: { label: 'Loop', kind: 'atom', color: '#ffd866', fields: [
+      { key: 'until', label: 'until', kind: 'select', choices: [{ v: true, t: 'until' }, { v: false, t: 'while' }] },
+      { key: 'condition', label: '', placeholder: 'n >= 3', width: 160 } ] },
+    SWITCH: { label: 'Switch', kind: 'block', color: '#f0a3ff', slots: [{ key: 'body', label: '' }],
+      fields: [{ key: 'expr', label: '', placeholder: 'x', width: 120 }] },
+    DISPATCH: { label: 'Dispatch', kind: 'block', color: '#f0a3ff', slots: [{ key: 'body', label: '' }],
+      fields: [{ key: 'expr', label: '', placeholder: 'state', width: 120 }] },
+    CASE: { label: 'Case', kind: 'atom', color: '#f0a3ff', fields: [{ key: 'value', label: '', placeholder: '1', width: 80 }] },
+    DEFAULT: { label: 'Default', kind: 'atom', color: '#f0a3ff', fields: [] },
+    BREAK: { label: 'Break', kind: 'atom', color: '#ff9f7f', fields: [] },
+    SKIP: { label: 'Skip', kind: 'atom', color: '#ff9f7f', fields: [] },
+    RETURN: { label: 'Return', kind: 'atom', color: '#ff9f7f', fields: [{ key: 'value', label: '', placeholder: '(value)', width: 100 }] },
+    GOTO: { label: 'Goto', kind: 'atom', color: '#9aa0ad', fields: [{ key: 'label', label: '', placeholder: 'top', width: 100 }] },
+    LABEL: { label: 'Label', kind: 'atom', color: '#9aa0ad', fields: [{ key: 'name', label: '', placeholder: 'top', width: 100 }] },
+    GOSUB: { label: 'Gosub', kind: 'atom', color: '#b0a0ff', fields: [{ key: 'name', label: '', placeholder: 'sub', width: 120 }] },
+    CALLNS: { label: 'Invoke', kind: 'atom', color: '#a0d0ff', fields: [{ key: 'call', label: '', placeholder: 'Net.Status(200)', width: 220 }] },
+    RAW: { label: 'Code', kind: 'atom', color: '#8b93a7', fields: [{ key: 'code', label: '', placeholder: 'English statement', width: 300 }] }
   };
 
   // sensible defaults when a fresh box is created
@@ -675,7 +695,11 @@ BareMetal.Workflow.Designer = (function () {
     FOREACH: { 'var': 'item', 'in': 'data' }, FOREACHP: { 'var': 'item', 'in': 'data' }, LOG: { message: 'x' },
     WAIT: { ms: 100 }, RAISE: { event: 1, target: 0 }, ON: { event: 1 }, LOAD: { name: 'x', from: 'memory', key: 0 },
     SAVE: { name: 'x', to: 'memory', key: 0 }, WEB: { method: 'GET', url: '/api' }, CALL: { workflow: 'other' },
-    RESPOND: { status: 200, contentType: 'application/json', body: '{"ok":true}' }
+    RESPOND: { status: 200, contentType: 'application/json', body: '{"ok":true}' },
+    WHILE: { condition: 'n > 0' }, DO: {}, LOOP: { until: true, condition: 'n >= 3' },
+    SWITCH: { expr: 'x' }, DISPATCH: { expr: 'state' }, CASE: { value: 1 }, DEFAULT: {},
+    BREAK: {}, SKIP: {}, RETURN: {}, GOTO: { label: 'top' }, LABEL: { name: 'top' },
+    GOSUB: { name: 'sub' }, CALLNS: { call: 'Net.Status(200)' }, RAW: { code: 'Print 1.' }
   };
 
   var CSS = [
