@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BareMetal.FlowCanvas — drag-and-drop flow designer</title>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #0f1117; color: #e6e8ef; }
+  header { padding: 14px 20px; border-bottom: 1px solid #232734; }
+  h1 { font-size: 18px; margin: 0; }
+  p.sub { color: #8b93a7; font-size: 12.5px; margin: 6px 0 0; max-width: 820px; line-height: 1.5; }
+  .layout { display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; padding: 16px 20px; align-items: start; }
+  .col h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #8b93a7; margin: 0 0 8px; }
+  pre { background: #0c0e14; border: 1px solid #232734; border-radius: 8px; padding: 10px; font-size: 12px;
+        color: #9fb0c8; white-space: pre-wrap; margin: 0 0 14px; min-height: 40px; }
+  .out { color: #7ee787; }
+  .warn { color: #ffd866; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>BareMetal.FlowCanvas</h1>
+  <p class="sub">A component-based, drag-and-drop <b>nested flow designer</b>. Every atomic statement is a box; block
+  statements (<b>If</b>, <b>For&nbsp;each</b>, <b>On&nbsp;event</b>) are boxes that contain boxes, so code lives visually
+  inside loops and choices. Drag from the palette onto the canvas, grab a box by its <b>⠇</b> grip to move or re-nest it,
+  and edit fields inline. The step model is identical to <code>BareMetal.WorkflowPico</code>, so it compiles straight to
+  PicoScript and runs on the same VM.</p>
+</header>
+<div class="layout">
+  <div class="col">
+    <h2>Designer</h2>
+    <div id="canvas"></div>
+  </div>
+  <div class="col">
+    <h2>Compiled PicoScript (English dialect)</h2>
+    <pre id="src"></pre>
+    <h2>VM output</h2>
+    <pre id="out" class="out"></pre>
+    <h2>Warnings</h2>
+    <pre id="warn" class="warn"></pre>
+    <h2>Step model (JSON)</h2>
+    <pre id="json"></pre>
+  </div>
+</div>
+
+<script src="../src/BareMetal.DragDrop.js"></script>
+<script src="../src/BareMetal.PicoScript.js"></script>
+<script src="../src/BareMetal.WorkflowPico.js"></script>
+<script src="../src/BareMetal.FlowCanvas.js"></script>
+<script>
+  var START = [
+    { type: 'SET', name: 'data', value: [10, 20, 30, 40] },
+    { type: 'SET', name: 'sum', value: 0 },
+    { type: 'FOREACH', 'var': 'item', 'in': 'data' },
+    { type: 'SET', name: 'sum', expr: 'sum + item' },
+    { type: 'END' },
+    { type: 'IF', condition: 'sum >= 50' },
+    { type: 'LOG', message: 'sum' },
+    { type: 'END' }
+  ];
+
+  function decodeInts(bytes) {
+    var out = [];
+    for (var i = 0; i + 3 < bytes.length; i += 4) {
+      out.push(((bytes[i] << 24) | (bytes[i + 1] << 16) | (bytes[i + 2] << 8) | bytes[i + 3]) | 0);
+    }
+    return out;
+  }
+  function refresh(steps) {
+    document.getElementById('json').textContent = JSON.stringify(steps, null, 2);
+    try {
+      var res = BareMetal.WorkflowPico.run(steps);
+      document.getElementById('src').textContent = res.source;
+      document.getElementById('out').textContent = '[' + decodeInts(res.output || []).join(', ') + ']';
+      document.getElementById('warn').textContent = (res.warnings && res.warnings.length) ? res.warnings.join('\n') : '(none)';
+    } catch (e) {
+      document.getElementById('src').textContent = '';
+      document.getElementById('out').textContent = '';
+      document.getElementById('warn').textContent = String(e.message || e);
+    }
+  }
+
+  var fc = BareMetal.FlowCanvas.create(document.getElementById('canvas'), {
+    steps: START,
+    onChange: refresh
+  });
+  refresh(fc.getSteps());
+</script>
+</body>
+</html>

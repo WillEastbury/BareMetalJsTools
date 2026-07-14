@@ -45,6 +45,7 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 | `BareMetal.Animate.js` | `BareMetal.Animate` | CSS transition/animation helper (enter/leave, stagger, spring, reduced-motion) |
 | `BareMetal.TestRunner.js` | `BareMetal.TestRunner` | In-browser test runner (describe/it/expect, mocks, DOM helpers, TAP output) |
 | `BareMetal.DragDrop.js` | `BareMetal.DragDrop` | Pointer-event drag & drop (sortable, drop zones, constraints, touch) |
+| `BareMetal.FlowCanvas.js` | `BareMetal.FlowCanvas` | Drag-and-drop nested flow designer (boxes-in-boxes for loops/choices, flow connectors, inline edit; renders/serialises the WorkflowPico step model) |
 | `BareMetal.A11y.js` | `BareMetal.A11y` | Accessibility (focus traps, live regions, skip links, roving tabindex, keyboard nav) |
 | `BareMetal.Expressions.js` | `BareMetal.Expressions` | 50+ pre-built regex patterns (email, phone, URL, postal, credit card, UUID, etc.) |
 | `BareMetal.Tokens.js` | `BareMetal.Tokens` | JWT create/sign/verify/decode (HS256/384/512, RS256, ES256, Web Crypto) |
@@ -95,6 +96,7 @@ This is a collection of independent vanilla-JS IIFE modules under the `BareMetal
 - `BareMetal.Progressive` → soft deps on `BareMetal.Communications`, `BareMetal.LocalKVStore`
 - `BareMetal.WorkflowPico` → soft deps on `BareMetal.PicoScript` (for `toWords`/`run`), `BareMetal.Workflow` (compile-by-name + designer button)
 - `BareMetal.Report` → fully standalone (layout engine + designer); pairs with any data source (Communications/Workflow/Storage/PicoScript)
+- `BareMetal.FlowCanvas` → depends on `BareMetal.DragDrop`; soft dep on `BareMetal.WorkflowPico` (default step schema mirrors it)
 - All others → fully standalone
 
 ## Key Conventions
