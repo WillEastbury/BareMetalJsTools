@@ -101,14 +101,18 @@ describe('WorkflowPico – warnings for non-representable steps', () => {
   let WP;
   beforeEach(() => { WP = loadWP(); });
 
-  test('WEB/LOAD/SAVE/CALL lower to annotated comments with warnings', () => {
+  test('WEB lowers to a request Map + Http.Request; LOAD/SAVE/CALL to comments', () => {
     const { source, warnings } = WP.compile([
-      { type: 'WEB', method: 'get', url: '/api/x', result: 'resp' },
+      { type: 'WEB', method: 'get', url: '/api/x', headers: { Accept: 'application/json' }, result: 'resp' },
       { type: 'LOAD', name: 'cfg', from: 'localStorage', key: 'k' },
       { type: 'SAVE', name: 'n', to: 'localStorage', key: 'k' },
       { type: 'CALL', workflow: 'other' }
     ]);
-    expect(source).toContain('# WEB GET /api/x -> resp');
+    expect(source).toContain('Map.New()');
+    expect(source).toContain('Map.PutSI(":method", 1)');
+    expect(source).toContain('Map.PutSS(":path", "/api/x")');
+    expect(source).toContain('Map.PutSS("Accept", "application/json")');
+    expect(source).toContain('Set resp to Http.Request(_webreq0, 0).');
     expect(source).toContain('# LOAD cfg <- localStorage [k]');
     expect(source).toContain('# SAVE n -> localStorage [k]');
     expect(source).toContain('# CALL other');

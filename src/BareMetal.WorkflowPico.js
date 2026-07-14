@@ -287,9 +287,7 @@ BareMetal.WorkflowPico = (() => {
         break;
 
       case 'WEB':
-        out.push(pad(indent) + '# WEB ' + String(step.method || 'GET').toUpperCase() + ' ' + (step.url || '') +
-          (step.result ? ' -> ' + step.result : ''));
-        warnings.push('WEB: HTTP requests require a host transport hook and are not executed by the integer VM');
+        emitWeb(step, indent, ctx);
         break;
 
       case 'CALL':
@@ -416,6 +414,36 @@ BareMetal.WorkflowPico = (() => {
     }
     ctx.out.push(pad(indent) + '# SAVE ' + (step.name || '') + ' -> ' + (step.to || '') + (step.key ? ' [' + step.key + ']' : ''));
     ctx.warnings.push('SAVE to ' + JSON.stringify(step.to || '') + ' requires a host storage hook and is not executed by the integer VM');
+  }
+
+  // WEB: lower an HTTP request to a request Map + Http.Request. Request line +
+  // headers are carried as a Map<string,string> using HTTP/2-style pseudo-headers
+  // (:method as an int, :path as the URL), so everything fits the 2-arg host-call
+  // ABI. Http.Request(reqMap, body) -> response handle is a host transport hook:
+  // it runs on transport-capable hosts (browser/PIOS) and no-ops on the pure
+  // integer VM, but it compiles and round-trips through every dialect (unlike the
+  // old comment lowering). The response headers are readable as an enumerable Map
+  // via Http.RespHeaders(resp). See docs/MAP.md.
+  var WEB_METHODS = { GET: 1, POST: 2, PUT: 3, DELETE: 4, HEAD: 5, PATCH: 6, OPTIONS: 7 };
+  function strLit(v) { return JSON.stringify(String(v == null ? '' : v)); }
+  function emitWeb(step, indent, ctx) {
+    var out = ctx.out, p = pad(indent);
+    var req = '_webreq' + (ctx.tempN++);
+    var mc = WEB_METHODS[String(step.method || 'GET').toUpperCase()] || 1;
+    out.push(p + 'Set ' + req + ' to Map.New().');
+    out.push(p + 'Map.PutSI(":method", ' + numLit(mc) + ').');
+    out.push(p + 'Map.PutSS(":path", ' + strLit(step.url || '/') + ').');
+    var headers = step.headers;
+    if (headers && typeof headers === 'object') {
+      Object.keys(headers).forEach(function (k) {
+        out.push(p + 'Map.PutSS(' + strLit(k) + ', ' + strLit(headers[k]) + ').');
+      });
+    }
+    var body = step.body != null ? strLit(step.body) : '0';
+    var call = 'Http.Request(' + req + ', ' + body + ')';
+    if (step.result) out.push(p + 'Set ' + sanitizeId(step.result) + ' to ' + call + '.');
+    else out.push(p + call + '.');
+    ctx.warnings.push('WEB: Http.Request runs on a transport-capable host; the integer VM builds the request Map but does not perform network I/O');
   }
 
   function emitLog(step, indent, ctx) {

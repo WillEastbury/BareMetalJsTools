@@ -88,7 +88,15 @@ BareMetal.FlowCanvas = (function () {
       { key: 'key', label: 'key', placeholder: '0', width: 60, kind: 'num' } ] },
     WEB: { label: 'Web', kind: 'atom', color: '#a0d0ff', fields: [
       { key: 'method', label: '', kind: 'select', choices: METHODS },
-      { key: 'url', label: '', placeholder: '/api', width: 160 } ] },
+      { key: 'url', label: '', placeholder: '/api', width: 130 },
+      { key: 'headers', label: 'headers', placeholder: '{"Accept":"application/json"}', width: 180,
+        get: function (p) { return p.headers ? JSON.stringify(p.headers) : ''; },
+        set: function (p, raw) {
+          var t = String(raw == null ? '' : raw).trim();
+          if (!t) { delete p.headers; return; }
+          try { var o = JSON.parse(t); if (o && typeof o === 'object' && !Array.isArray(o)) p.headers = o; } catch (e) {}
+        } },
+      { key: 'result', label: '\u2192', placeholder: 'resp', width: 70 } ] },
     CALL: { label: 'Call', kind: 'atom', color: '#b0a0ff', fields: [
       { key: 'workflow', label: '', placeholder: 'other', width: 140 } ] }
   };
