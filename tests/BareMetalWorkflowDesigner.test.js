@@ -3,12 +3,14 @@
  */
 'use strict';
 
+// The christmas-tree workflow Designer canvas lives on BareMetal.Workflow.Designer
+// (merged from the former standalone BareMetal.FlowCanvas module).
 const path = require('path');
-const SRC = path.resolve(__dirname, '../src/BareMetal.FlowCanvas.js');
+const SRC = path.resolve(__dirname, '../src/BareMetal.Workflow.js');
 
 function load() {
   delete require.cache[SRC];
-  return require(SRC);
+  return require(SRC).Designer;
 }
 
 const SNIPPET = [
@@ -22,7 +24,7 @@ const SNIPPET = [
   { type: 'END' }
 ];
 
-describe('BareMetal.FlowCanvas', () => {
+describe('BareMetal.Workflow.Designer', () => {
   let FC;
   beforeEach(() => {
     document.head.innerHTML = '';
@@ -71,6 +73,36 @@ describe('BareMetal.FlowCanvas', () => {
     fc.destroy();
   });
 
+  test('block nodes render as fc-block (christmas-tree head + fan-out branches)', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const fc = FC.create(host, { steps: SNIPPET });
+    const iff = host.querySelector('.fc-node[data-type="IF"]');
+    expect(iff.classList.contains('fc-block')).toBe(true);
+    const setNode = host.querySelector('.fc-node[data-type="SET"]');
+    expect(setNode.classList.contains('fc-block')).toBe(false);
+    fc.destroy();
+  });
+
+  test('enum-aware suggestions: IF condition offers method options when a request method var is in scope', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const fc = FC.create(host, { steps: [
+      { type: 'LOAD', name: 'method', from: 'request', field: 'method' },
+      { type: 'IF', condition: 'method is 2' },
+      { type: 'RESPOND', status: 201 },
+      { type: 'END' }
+    ] });
+    const cond = host.querySelector('.fc-node[data-type="IF"] .fc-fields input');
+    const listId = cond.getAttribute('list');
+    expect(listId).toBeTruthy();
+    const dl = host.querySelector('datalist#' + listId);
+    const values = Array.from(dl.querySelectorAll('option')).map((o) => o.value);
+    expect(values).toContain('method is 2');   // POST
+    expect(values).toContain('method is 1');   // GET
+    fc.destroy();
+  });
+
   test('editing an input updates the model and fires onChange', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -87,8 +119,6 @@ describe('BareMetal.FlowCanvas', () => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const fc = FC.create(host, { steps: [{ type: 'SET', name: 'sum', value: 0 }] });
-    const input = host.querySelector('.fc-node[data-type="SET"] .fc-fields input:nth-child(1)') ||
-      host.querySelectorAll('.fc-node[data-type="SET"] .fc-fields input')[1];
     const valInput = host.querySelectorAll('.fc-node[data-type="SET"] .fc-fields input')[1];
     valInput.value = 'sum + item';
     valInput.dispatchEvent(new Event('input', { bubbles: true }));
