@@ -202,8 +202,13 @@ BareMetal.WorkflowPico = (() => {
       var type = String(step.type || '').toUpperCase();
       if (type === 'END') { pos.i++; return 'END'; }
       if (type === 'ELSE') return 'ELSE';
+      var si = pos.i;                    // flat index of this step (maps back to a designer box)
+      var startLine = ctx.out.length;
       pos.i++;
       emitStep(step, type, steps, pos, indent, ctx);
+      // Tag every line this step produced with its index; nested children were
+      // tagged first during recursion, so only the block's own lines fill here.
+      for (var L = startLine; L < ctx.out.length; L++) { if (ctx.lineStep[L] == null) ctx.lineStep[L] = si; }
     }
     return 'EOF';
   }
@@ -517,6 +522,7 @@ BareMetal.WorkflowPico = (() => {
     var steps = resolveSteps(stepsOrName);
     var ctx = {
       out: [],
+      lineStep: [],   // lineStep[outputLineIndex] = flat step index that produced it
       warnings: [],
       arrays: {},
       memNext: opts.arrayBase || DEFAULT_ARRAY_BASE,
@@ -530,7 +536,7 @@ BareMetal.WorkflowPico = (() => {
       else if (term === 'END') { ctx.warnings.push('END without a matching block; ignored'); }
       else break;
     }
-    return { source: ctx.out.join('\n') + '\n', warnings: ctx.warnings };
+    return { source: ctx.out.join('\n') + '\n', warnings: ctx.warnings, lineSteps: ctx.lineStep };
   }
 
   // ── PicoScript integration ──────────────────────────────────────────────────
