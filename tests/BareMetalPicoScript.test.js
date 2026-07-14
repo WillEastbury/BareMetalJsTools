@@ -34,13 +34,13 @@ describe('BareMetal.PicoScript', () => {
     expect(typeof ps.VM).toBe('function');
   });
 
-  test('has hook table with 465 entries', () => {
-    expect(Object.keys(ps.hooks.BY_CODE).length).toBe(465);
+  test('has hook table with 526 entries', () => {
+    expect(Object.keys(ps.hooks.BY_CODE).length).toBe(526);
   });
 
-  test('namespaces() returns 64 namespaces', () => {
+  test('namespaces() returns 68 namespaces', () => {
     const ns = ps.namespaces();
-    expect(ns.length).toBe(64);
+    expect(ns.length).toBe(68);
     expect(ns).toContain('Process');
     expect(ns).toContain('Timer');
     expect(ns).toContain('Error');
@@ -111,5 +111,16 @@ describe('BareMetal.PicoScript', () => {
 
   test('PicoBrotli sub-module available', () => {
     expect(ps.PicoBrotli).toBeDefined();
+  });
+
+  test('Map.* primitive: int + string keys, count', () => {
+    const src = 'Set h to Map.New().\nMap.PutII(1, 100).\nMap.PutII(1, 111).\n' +
+      'Map.PutSI("qty", 42).\nPrint Map.GetII(1).\nPrint Map.GetSI("qty").\nPrint Map.Count().\n';
+    const r = ps.compileDebug(src, 'english');
+    const vm = new ps.VM();
+    vm.run(r.words.map((w) => w >>> 0));
+    const out = vm.output, ints = [];
+    for (let i = 0; i + 3 < out.length; i += 4) ints.push(((out[i] << 24) | (out[i + 1] << 16) | (out[i + 2] << 8) | out[i + 3]) | 0);
+    expect(ints).toEqual([111, 42, 2]);
   });
 });
