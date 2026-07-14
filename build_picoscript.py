@@ -47,7 +47,7 @@ vm = vm.replace(
 header = """// BareMetal.PicoScript.js — PicoScript 16-opcode ISA compiler + VM bundle.
 //
 // Bundles the real PicoScript toolchain from github.com/WillEastbury/picoscript:
-//   - pico_hooks.js   (526 hook codes, auto-generated)
+//   - pico_hooks.js   (529 hook codes, auto-generated)
 //   - picocompress.js  (PicoCompress RLE codec)
 //   - picobrotli.js    (Brotli encoder/decoder)
 //   - picoc.js         (4-frontend compiler: C, BASIC, Python, English)

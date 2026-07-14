@@ -1,7 +1,7 @@
 // BareMetal.PicoScript.js — PicoScript 16-opcode ISA compiler + VM bundle.
 //
 // Bundles the real PicoScript toolchain from github.com/WillEastbury/picoscript:
-//   - pico_hooks.js   (526 hook codes, auto-generated)
+//   - pico_hooks.js   (529 hook codes, auto-generated)
 //   - picocompress.js  (PicoCompress RLE codec)
 //   - picobrotli.js    (Brotli encoder/decoder)
 //   - picoc.js         (4-frontend compiler: C, BASIC, Python, English)
@@ -560,6 +560,9 @@ BareMetal.PicoScript = (function () {
       0x338: "Map.ValSpanAt",
       0x339: "Map.ValIsSpan",
       0x33A: "Map.Use",
+      0x340: "Json.Parse",
+      0x341: "Binary.ParseCard",
+      0x342: "Binary.SerializeCard",
     }
   };
   function _canonConstant(name) {
@@ -5967,6 +5970,8 @@ function compressBound(inputLen) {
     if (name === "Arena.Reset") { this.arenaTop = 0x8000; this.spans = [null]; return; }
     // ---- Map.* first-class dictionary (active-handle model; see docs/MAP.md) ---
     if (name.indexOf("Map.") === 0) { if (this._mapHook(name.slice(4), rd, rs1, rs2)) return; }
+    // ---- parsers: Json.Parse / Binary.ParseCard|SerializeCard -> Map -----------
+    if (name === "Json.Parse" || name === "Binary.ParseCard" || name === "Binary.SerializeCard") { if (this._parseHook(name, rd, rs1, rs2)) return; }
     // ---- EL0-facing PIOS request/response hooks ---------------------------
     if (name.indexOf("Req.") === 0) {
       if (this._req(name.slice(4), rd, rs1, rs2)) return;
@@ -6148,6 +6153,101 @@ function compressBound(inputLen) {
   function _ws(c) { return c === 32 || c === 9 || c === 10 || c === 13; }
   function _keystr(arr) { var s = ""; for (var i = 0; i < arr.length; i++) s += String.fromCharCode(arr[i]); return s; }
 
+  // ---- shared deserializers: string/bytes -> Map entries (see docs/MAP.md) -----
+  // Byte-array parsers replicated identically in picovm.py + picovm.c so a parsed
+  // Map is bit-identical on every VM. Values are pushed via the caller's put*
+  // callbacks (which write into the active Map entry structure).
+  function _hexv(c) { if (c >= 48 && c <= 57) return c - 48; if (c >= 97 && c <= 102) return c - 87; if (c >= 65 && c <= 70) return c - 55; return 0; }
+  function _pushUtf8(out, cp) {
+    if (cp < 0x80) out.push(cp);
+    else if (cp < 0x800) { out.push(0xC0 | (cp >> 6), 0x80 | (cp & 0x3F)); }
+    else { out.push(0xE0 | (cp >> 12), 0x80 | ((cp >> 6) & 0x3F), 0x80 | (cp & 0x3F)); }
+  }
+  function _cmpBytes(a, b) { var n = Math.min(a.length, b.length), i; for (i = 0; i < n; i++) { if (a[i] !== b[i]) return a[i] - b[i]; } return a.length - b.length; }
+  // Parse a flat JSON object. Scalar values are decoded (string/int/bool/null);
+  // nested object/array values are captured as their raw source substring (a
+  // string value), so the scan is deterministic and identical across VMs.
+  function _jsonParseObject(b, putSI, putSS, putNS) {
+    var i = 0, n = b.length;
+    function skip() { while (i < n && _ws(b[i])) i++; }
+    function pstr() {
+      i++; var out = [];
+      while (i < n) {
+        var c = b[i++];
+        if (c === 34) break;
+        if (c === 92) {
+          var e = b[i++];
+          if (e === 34) out.push(34); else if (e === 92) out.push(92); else if (e === 47) out.push(47);
+          else if (e === 110) out.push(10); else if (e === 116) out.push(9); else if (e === 114) out.push(13);
+          else if (e === 98) out.push(8); else if (e === 102) out.push(12);
+          else if (e === 117) { var cp = 0, k; for (k = 0; k < 4; k++) cp = (cp << 4) | _hexv(b[i++]); _pushUtf8(out, cp); }
+          else out.push(e);
+        } else out.push(c);
+      }
+      return out;
+    }
+    function praw() {
+      var start = i, depth = 0, instr = false;
+      while (i < n) {
+        var c = b[i];
+        if (instr) { if (c === 92) { i += 2; continue; } if (c === 34) instr = false; i++; continue; }
+        if (c === 34) { instr = true; i++; continue; }
+        if (c === 123 || c === 91) depth++;
+        else if (c === 125 || c === 93) { depth--; if (depth === 0) { i++; break; } }
+        i++;
+      }
+      return b.slice(start, i);
+    }
+    skip(); if (b[i] !== 123) return; i++;
+    while (i < n) {
+      skip(); if (b[i] === 125) { i++; break; }
+      if (b[i] !== 34) break;
+      var key = pstr(); skip(); if (b[i] !== 58) break; i++; skip();
+      var c = b[i];
+      if (c === 34) putSS(key, pstr());
+      else if (c === 123 || c === 91) putSS(key, praw());
+      else if (c === 116) { i += 4; putSI(key, 1); }
+      else if (c === 102) { i += 5; putSI(key, 0); }
+      else if (c === 110) { i += 4; putNS(key); }
+      else {
+        var neg = (b[i] === 45); if (b[i] === 45 || b[i] === 43) i++;
+        var val = 0;
+        while (i < n && b[i] >= 48 && b[i] <= 57) { val = val * 10 + (b[i] - 48); i++; }
+        if (i < n && (b[i] === 46 || b[i] === 101 || b[i] === 69)) { i++; while (i < n && ((b[i] >= 48 && b[i] <= 57) || b[i] === 46 || b[i] === 101 || b[i] === 69 || b[i] === 45 || b[i] === 43)) i++; }
+        putSI(key, (neg ? -val : val) | 0);
+      }
+      skip(); if (b[i] === 44) { i++; continue; } if (b[i] === 125) { i++; break; } break;
+    }
+  }
+  // Parse a PicoBinarySerializer PSC1 card (magic 0x50534331): [magic][u16 count]
+  // then per field [u8 nameLen][name][u8 type: 1=int(4 BE), 2=str(u16 len + bytes)].
+  function _psc1Parse(b, putSI, putSS) {
+    if (b.length < 6) return;
+    var magic = ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]) >>> 0;
+    if (magic !== 0x50534331) return;
+    var count = (b[4] << 8) | b[5], pos = 6, k;
+    for (k = 0; k < count; k++) {
+      var nlen = b[pos++]; var key = b.slice(pos, pos + nlen); pos += nlen;
+      var t = b[pos++];
+      if (t === 1) { var x = ((b[pos] << 24) | (b[pos + 1] << 16) | (b[pos + 2] << 8) | b[pos + 3]) | 0; pos += 4; putSI(key, x); }
+      else if (t === 2) { var vlen = (b[pos] << 8) | b[pos + 1]; pos += 2; putSS(key, b.slice(pos, pos + vlen)); pos += vlen; }
+      else break;
+    }
+  }
+  // Serialize an ordered [{kb,vk,vi,vb}] entry list to a PSC1 card (keys sorted by
+  // UTF-8 bytes, matching picoserializer). Null values serialize as int 0.
+  function _psc1Serialize(entries) {
+    var es = entries.filter(function (e) { return e.kk === 's'; }).slice();
+    es.sort(function (a, b) { return _cmpBytes(a.kb, b.kb); });
+    var out = [0x50, 0x53, 0x43, 0x31, (es.length >> 8) & 255, es.length & 255];
+    es.forEach(function (e) {
+      out.push(e.kb.length & 255); for (var i = 0; i < e.kb.length; i++) out.push(e.kb[i] & 255);
+      if (e.vk === 's') { out.push(2); var v = e.vb || []; out.push((v.length >> 8) & 255, v.length & 255); for (var j = 0; j < v.length; j++) out.push(v[j] & 255); }
+      else { out.push(1); var x = (e.vk === 'i' ? e.vi : 0) | 0; out.push((x >> 24) & 255, (x >> 16) & 255, (x >> 8) & 255, x & 255); }
+    });
+    return out;
+  }
+
   PicoVM.prototype._spanBytes = function (h) {
     if (h <= 0 || h >= this.spans.length || !this.spans[h]) return [];
     var s = this.spans[h], out = new Array(s.len);
@@ -6201,6 +6301,27 @@ function compressBound(inputLen) {
       case "ValAt": { var ej = vals(m)[R[rs1] | 0]; R[rd] = ej && ej.vk === 'i' ? ej.vi : 0; return true; }
       case "ValSpanAt": { var ek = vals(m)[R[rs1] | 0]; R[rd] = this._newSpanBytes(ek && ek.vk === 's' ? ek.vb : []); return true; }
       case "ValIsSpan": { var el = vals(m)[R[rs1] | 0]; R[rd] = el && el.vk === 's' ? 1 : 0; return true; }
+    }
+    return false;
+  };
+  PicoVM.prototype._parseHook = function (name, rd, rs1, rs2) {
+    var R = this.regs, self = this;
+    if (!this.maps) { this.maps = [null]; this.activeMap = 0; }
+    function newMap() { self.maps.push(new Map()); self.activeMap = self.maps.length - 1; return self.activeMap; }
+    if (name === "Json.Parse" || name === "Binary.ParseCard") {
+      var bytes = this._spanBytes(R[rs1]);
+      var h = newMap(), m = this.maps[h];
+      var putSI = function (kb, v) { m.set('s' + _keystr(kb), { kk: 's', ki: 0, kb: kb, vk: 'i', vi: v | 0, vb: null }); };
+      var putSS = function (kb, vb) { m.set('s' + _keystr(kb), { kk: 's', ki: 0, kb: kb, vk: 's', vi: 0, vb: vb }); };
+      var putNS = function (kb) { m.set('s' + _keystr(kb), { kk: 's', ki: 0, kb: kb, vk: 'n', vi: 0, vb: null }); };
+      if (name === "Json.Parse") _jsonParseObject(bytes, putSI, putSS, putNS);
+      else _psc1Parse(bytes, putSI, putSS);
+      R[rd] = h; return true;
+    }
+    if (name === "Binary.SerializeCard") {
+      var mm = this.maps[this.activeMap];
+      var entries = mm ? Array.from(mm.values()) : [];
+      R[rd] = this._newSpanBytes(_psc1Serialize(entries)); return true;
     }
     return false;
   };

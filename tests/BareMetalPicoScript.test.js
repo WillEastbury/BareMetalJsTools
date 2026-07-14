@@ -34,13 +34,13 @@ describe('BareMetal.PicoScript', () => {
     expect(typeof ps.VM).toBe('function');
   });
 
-  test('has hook table with 526 entries', () => {
-    expect(Object.keys(ps.hooks.BY_CODE).length).toBe(526);
+  test('has hook table with 529 entries', () => {
+    expect(Object.keys(ps.hooks.BY_CODE).length).toBe(529);
   });
 
-  test('namespaces() returns 68 namespaces', () => {
+  test('namespaces() returns 69 namespaces', () => {
     const ns = ps.namespaces();
-    expect(ns.length).toBe(68);
+    expect(ns.length).toBe(69);
     expect(ns).toContain('Process');
     expect(ns).toContain('Timer');
     expect(ns).toContain('Error');
@@ -122,5 +122,16 @@ describe('BareMetal.PicoScript', () => {
     const out = vm.output, ints = [];
     for (let i = 0; i + 3 < out.length; i += 4) ints.push(((out[i] << 24) | (out[i + 1] << 16) | (out[i + 2] << 8) | out[i + 3]) | 0);
     expect(ints).toEqual([111, 42, 2]);
+  });
+
+  test('Json.Parse: string -> structured Map', () => {
+    const src = 'Set m to Json.Parse("{\\"qty\\":42,\\"ok\\":true,\\"z\\":null}").\n' +
+      'Print Map.GetSI("qty").\nPrint Map.GetSI("ok").\nPrint Map.IsNullS("z").\nPrint Map.Count().\n';
+    const r = ps.compileDebug(src, 'english');
+    const vm = new ps.VM();
+    vm.run(r.words.map((w) => w >>> 0));
+    const out = vm.output, ints = [];
+    for (let i = 0; i + 3 < out.length; i += 4) ints.push(((out[i] << 24) | (out[i + 1] << 16) | (out[i + 2] << 8) | out[i + 3]) | 0);
+    expect(ints).toEqual([42, 1, 1, 3]);
   });
 });
