@@ -290,6 +290,10 @@ BareMetal.WorkflowPico = (() => {
         emitWeb(step, indent, ctx);
         break;
 
+      case 'RESPOND':
+        emitRespond(step, indent, ctx);
+        break;
+
       case 'CALL':
         out.push(pad(indent) + '# CALL ' + (step.workflow || ''));
         warnings.push('CALL: nested workflow ' + JSON.stringify(step.workflow || '') + ' must be compiled separately and is not linked');
@@ -444,6 +448,23 @@ BareMetal.WorkflowPico = (() => {
     if (step.result) out.push(p + 'Set ' + sanitizeId(step.result) + ' to ' + call + '.');
     else out.push(p + call + '.');
     ctx.warnings.push('WEB: Http.Request runs on a transport-capable host; the integer VM builds the request Map but does not perform network I/O');
+  }
+
+  // RESPOND: emit an HTTP response (Net.Status + optional Net.Type + body). This
+  // is what makes a workflow *serve* HTTP -- the kernel (or the WebIDE HTTP
+  // simulator) renders Net.* output as the response. body may be a string
+  // (text/JSON), a number, or {var:'x'} to print a variable's value.
+  function emitRespond(step, indent, ctx) {
+    var out = ctx.out, p = pad(indent);
+    var status = (step.status == null) ? 200 : step.status;
+    out.push(p + 'Net.Status(' + emitOperand(status, ctx.warnings, 'RESPOND status') + ').');
+    if (step.contentType) out.push(p + 'Net.Type(' + strLit(step.contentType) + ').');
+    if (step.body != null && step.body !== '') {
+      if (typeof step.body === 'number') out.push(p + 'Print ' + numLit(step.body) + '.');
+      else out.push(p + 'Print ' + strLit(step.body) + '.');
+    } else if (step.bodyVar) {
+      out.push(p + 'Print ' + sanitizeId(step.bodyVar) + '.');
+    }
   }
 
   function emitLog(step, indent, ctx) {

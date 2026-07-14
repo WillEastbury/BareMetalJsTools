@@ -97,6 +97,10 @@ BareMetal.FlowCanvas = (function () {
           try { var o = JSON.parse(t); if (o && typeof o === 'object' && !Array.isArray(o)) p.headers = o; } catch (e) {}
         } },
       { key: 'result', label: '\u2192', placeholder: 'resp', width: 70 } ] },
+    RESPOND: { label: 'Respond', kind: 'atom', color: '#7ee787', fields: [
+      { key: 'status', label: '', placeholder: '200', width: 55, kind: 'num' },
+      { key: 'contentType', label: '', placeholder: 'application/json', width: 130 },
+      { key: 'body', label: 'body', placeholder: '{"ok":true}', width: 150 } ] },
     CALL: { label: 'Call', kind: 'atom', color: '#b0a0ff', fields: [
       { key: 'workflow', label: '', placeholder: 'other', width: 140 } ] }
   };
@@ -106,7 +110,8 @@ BareMetal.FlowCanvas = (function () {
     SET: { name: 'x', value: 0 }, IF: { condition: 'x >= 1' }, FOR: { 'var': 'i', from: 1, to: 5 },
     FOREACH: { 'var': 'item', 'in': 'data' }, FOREACHP: { 'var': 'item', 'in': 'data' }, LOG: { message: 'x' },
     WAIT: { ms: 100 }, RAISE: { event: 1, target: 0 }, ON: { event: 1 }, LOAD: { name: 'x', from: 'memory', key: 0 },
-    SAVE: { name: 'x', to: 'memory', key: 0 }, WEB: { method: 'GET', url: '/api' }, CALL: { workflow: 'other' }
+    SAVE: { name: 'x', to: 'memory', key: 0 }, WEB: { method: 'GET', url: '/api' }, CALL: { workflow: 'other' },
+    RESPOND: { status: 200, contentType: 'application/json', body: '{"ok":true}' }
   };
 
   var CSS = [
