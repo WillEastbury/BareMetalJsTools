@@ -1,7 +1,7 @@
 // BareMetal.PicoScript.js — PicoScript 16-opcode ISA compiler + VM bundle.
 //
 // Bundles the real PicoScript toolchain from github.com/WillEastbury/picoscript:
-//   - pico_hooks.js   (529 hook codes, auto-generated)
+//   - pico_hooks.js   (533 hook codes, auto-generated)
 //   - picocompress.js  (PicoCompress RLE codec)
 //   - picobrotli.js    (Brotli encoder/decoder)
 //   - picoc.js         (4-frontend compiler: C, BASIC, Python, English)
@@ -563,6 +563,10 @@ BareMetal.PicoScript = (function () {
       0x340: "Json.Parse",
       0x341: "Binary.ParseCard",
       0x342: "Binary.SerializeCard",
+      0x343: "Binary.ParseEntity",
+      0x344: "Binary.SerializeEntity",
+      0x345: "Binary.SetKey",
+      0x346: "Binary.Verify",
     }
   };
   function _canonConstant(name) {
@@ -5971,7 +5975,7 @@ function compressBound(inputLen) {
     // ---- Map.* first-class dictionary (active-handle model; see docs/MAP.md) ---
     if (name.indexOf("Map.") === 0) { if (this._mapHook(name.slice(4), rd, rs1, rs2)) return; }
     // ---- parsers: Json.Parse / Binary.ParseCard|SerializeCard -> Map -----------
-    if (name === "Json.Parse" || name === "Binary.ParseCard" || name === "Binary.SerializeCard") { if (this._parseHook(name, rd, rs1, rs2)) return; }
+    if (name === "Json.Parse" || name.indexOf("Binary.") === 0) { if (this._parseHook(name, rd, rs1, rs2)) return; }
     // ---- EL0-facing PIOS request/response hooks ---------------------------
     if (name.indexOf("Req.") === 0) {
       if (this._req(name.slice(4), rd, rs1, rs2)) return;
@@ -6247,6 +6251,81 @@ function compressBound(inputLen) {
     });
     return out;
   }
+  // ---- BSO1 (BareMetal.Binary): schema-driven, little-endian, HMAC-SHA256 signed.
+  // HDR: MAGIC(i32) VERSION(i32) schemaVer(i32) byte(0) + 32-byte sig = 45 bytes,
+  // then a presence byte, then fields in schema order. 64-bit/float/temporal values
+  // are stored as their raw LE bytes (string) in the Map. Wire-compatible with
+  // BareMetalJsTools/src/BareMetal.Binary.js. See docs/MAP.md.
+  var BSO1_HDR = 45, BSO1_SIG_AT = 13;
+  var BSO1_SZ = { 1: 1, 2: 1, 3: 1, 4: 2, 5: 2, 6: 4, 7: 4, 8: 8, 9: 8, 10: 4, 11: 8, 12: 16, 13: 2, 14: 0, 15: 16, 16: 9, 17: 4, 18: 8, 19: 10, 20: 8, 21: 16, 22: 4 };
+  var BSO1_INT = { 1: 'u', 2: 'u', 3: 's', 4: 's', 5: 'u', 6: 's', 7: 'u', 13: 'u', 17: 's', 22: 's' };
+  function _leInt(b, pos, size, signed) {
+    var v = 0, i; for (i = 0; i < size; i++) v += (b[pos + i] || 0) * Math.pow(256, i);
+    if (signed) { var lim = Math.pow(2, size * 8 - 1); if (v >= lim) v -= lim * 2; }
+    return v | 0;
+  }
+  function _bso1Schema(mapObj) {
+    var members = [], version = 1;
+    if (mapObj) mapObj.forEach(function (e) {
+      var nm = e.kb;
+      if (nm.length && nm[0] === 58) { if (_keystr(nm) === ':version' && e.vk === 'i') version = e.vi; return; }
+      var code = (e.vk === 'i') ? e.vi : 0;
+      members.push({ name: nm, wt: code & 255, nullable: (code & 256) !== 0 });
+    });
+    return { members: members, version: version };
+  }
+  function _bso1Read(b, sch, putSI, putSS, putNS) {
+    var pos = BSO1_HDR, i;
+    if (pos >= b.length) return;
+    if (b[pos++] === 0) return;   // null object
+    for (i = 0; i < sch.members.length; i++) {
+      var m = sch.members[i], wt = m.wt;
+      if (m.nullable) { if ((b[pos++] || 0) === 0) { putNS(m.name); continue; } }
+      if (wt === 14) {
+        var len = _leInt(b, pos, 4, true); pos += 4;
+        if (len < 0) putNS(m.name);
+        else { putSS(m.name, b.slice(pos, pos + len)); pos += len; }
+      } else if (BSO1_INT[wt]) {
+        var sz = BSO1_SZ[wt]; putSI(m.name, _leInt(b, pos, sz, BSO1_INT[wt] === 's')); pos += sz;
+      } else {
+        var sz2 = BSO1_SZ[wt]; putSS(m.name, b.slice(pos, pos + sz2)); pos += sz2;
+      }
+    }
+  }
+  function _bso1Write(dataMap, sch, hmacKey) {
+    var out = [], i, k;
+    function wI32(v) { out.push(v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >>> 24) & 255); }
+    wI32(0x314F5342); wI32(3); wI32(sch.version | 0); out.push(0);
+    for (i = 0; i < 32; i++) out.push(0);
+    out.push(1);
+    for (i = 0; i < sch.members.length; i++) {
+      var m = sch.members[i], wt = m.wt;
+      var e = dataMap ? dataMap.get('s' + _keystr(m.name)) : null;
+      var isNull = !e || e.vk === 'n';
+      if (m.nullable) { if (isNull) { out.push(0); continue; } out.push(1); }
+      if (wt === 14) {
+        if (isNull) wI32(-1);
+        else { var sb = (e && e.vk === 's') ? e.vb : []; wI32(sb.length); for (k = 0; k < sb.length; k++) out.push(sb[k] & 255); }
+      } else if (BSO1_INT[wt]) {
+        var sz = BSO1_SZ[wt], val = (e && e.vk === 'i') ? e.vi : 0; for (k = 0; k < sz; k++) out.push((val >> (8 * k)) & 255);
+      } else {
+        var sz2 = BSO1_SZ[wt], rb = (e && e.vk === 's') ? e.vb : []; for (k = 0; k < sz2; k++) out.push((k < rb.length ? rb[k] : 0) & 255);
+      }
+    }
+    if (hmacKey && hmacKey.length) {
+      var parts = out.slice(0, BSO1_SIG_AT).concat(out.slice(BSO1_HDR));
+      var sig = _hmacSha256(hmacKey, parts);
+      for (k = 0; k < 32; k++) out[BSO1_SIG_AT + k] = sig[k];
+    }
+    return out;
+  }
+  function _bso1Verify(b, key) {
+    if (!key || !key.length || b.length < BSO1_HDR) return 0;
+    var parts = b.slice(0, BSO1_SIG_AT).concat(b.slice(BSO1_HDR));
+    var sig = _hmacSha256(key, parts), i;
+    for (i = 0; i < 32; i++) if ((b[BSO1_SIG_AT + i] || 0) !== (sig[i] || 0)) return 0;
+    return 1;
+  }
 
   PicoVM.prototype._spanBytes = function (h) {
     if (h <= 0 || h >= this.spans.length || !this.spans[h]) return [];
@@ -6318,6 +6397,21 @@ function compressBound(inputLen) {
       else _psc1Parse(bytes, putSI, putSS);
       R[rd] = h; return true;
     }
+    if (name === "Binary.SetKey") { var kb = this._spanBytes(R[rs1]); this.bso1Key = kb.length ? kb : null; return true; }
+    if (name === "Binary.ParseEntity") {
+      var blob = this._spanBytes(R[rs1]), sch = _bso1Schema(this.maps[R[rs2]]);
+      var hh = newMap(), mm = this.maps[hh];
+      var pSI = function (kb2, v) { mm.set('s' + _keystr(kb2), { kk: 's', ki: 0, kb: kb2, vk: 'i', vi: v | 0, vb: null }); };
+      var pSS = function (kb2, vb) { mm.set('s' + _keystr(kb2), { kk: 's', ki: 0, kb: kb2, vk: 's', vi: 0, vb: vb }); };
+      var pNS = function (kb2) { mm.set('s' + _keystr(kb2), { kk: 's', ki: 0, kb: kb2, vk: 'n', vi: 0, vb: null }); };
+      _bso1Read(blob, sch, pSI, pSS, pNS);
+      R[rd] = hh; return true;
+    }
+    if (name === "Binary.SerializeEntity") {
+      var dm = this.maps[R[rs1]], sch2 = _bso1Schema(this.maps[R[rs2]]);
+      R[rd] = this._newSpanBytes(_bso1Write(dm, sch2, this.bso1Key || null)); return true;
+    }
+    if (name === "Binary.Verify") { R[rd] = _bso1Verify(this._spanBytes(R[rs1]), this.bso1Key || null); return true; }
     if (name === "Binary.SerializeCard") {
       var mm = this.maps[this.activeMap];
       var entries = mm ? Array.from(mm.values()) : [];

@@ -34,8 +34,8 @@ describe('BareMetal.PicoScript', () => {
     expect(typeof ps.VM).toBe('function');
   });
 
-  test('has hook table with 529 entries', () => {
-    expect(Object.keys(ps.hooks.BY_CODE).length).toBe(529);
+  test('has hook table with 533 entries', () => {
+    expect(Object.keys(ps.hooks.BY_CODE).length).toBe(533);
   });
 
   test('namespaces() returns 69 namespaces', () => {
