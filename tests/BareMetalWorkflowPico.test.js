@@ -27,6 +27,31 @@ describe('WorkflowPico – source generation', () => {
   let WP;
   beforeEach(() => { WP = loadWP(); });
 
+  test('lineSteps maps each output line back to its producing flat step index', () => {
+    const steps = [
+      { type: 'LOAD', name: 'method', from: 'request', field: 'method' }, // 0
+      { type: 'IF', condition: 'method is 2' },                            // 1
+      { type: 'RESPOND', status: 201 },                                    // 2 (then)
+      { type: 'ELSE' },                                                    // 3 (marker)
+      { type: 'RESPOND', status: 200 },                                    // 4 (else)
+      { type: 'END' }                                                      // 5 (marker)
+    ];
+    const { source, lineSteps } = WP.compile(steps);
+    const lines = source.split('\n');
+    expect(Array.isArray(lineSteps)).toBe(true);
+    // the LOAD line maps to step 0
+    const loadLine = lines.findIndex((l) => /Storage\.Load\(0, 0, 1, method\)/.test(l));
+    expect(lineSteps[loadLine]).toBe(0);
+    // the If header maps to the IF step (1)
+    const ifLine = lines.findIndex((l) => /^If /.test(l));
+    expect(lineSteps[ifLine]).toBe(1);
+    // the then RESPOND (Net.Status(201)) maps to step 2, the else one to step 4
+    const thenLine = lines.findIndex((l) => /Net\.Status\(201\)/.test(l));
+    const elseLine = lines.findIndex((l) => /Net\.Status\(200\)/.test(l));
+    expect(lineSteps[thenLine]).toBe(2);
+    expect(lineSteps[elseLine]).toBe(4);
+  });
+
   test('lowers SET/FOR/IF/ELSE/LOG to indented English', () => {
     const { source } = WP.compile([
       { type: 'SET', name: 'sum', value: 0 },
