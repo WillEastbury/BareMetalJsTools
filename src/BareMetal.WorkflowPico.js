@@ -282,6 +282,10 @@ BareMetal.WorkflowPico = (() => {
 
       case 'RAISE':
       case 'EMIT':
+        if (step.schema && Array.isArray(step.schema.fields) && step.schema.fields.length) {
+          emitRaiseTyped(step, indent, ctx);
+          break;
+        }
         var ev = emitOperand(step.event == null ? 0 : step.event, warnings, 'RAISE event');
         var tgt = step.target != null ? emitOperand(step.target, warnings, 'RAISE target') : '0';
         var call = 'Event.Post(' + ev + ', ' + tgt + ')';
@@ -422,6 +426,37 @@ BareMetal.WorkflowPico = (() => {
 
   // ON/SUBSCRIBE <event>: drain the Event.* queue, running the handler body for
   // each matching event (bounded by the pending count).
+  // Event schemas ({mode:'sync'|'async', fields:[{name,type}], returns}) give
+  // RAISE ("program exit") and ON ("event handler") steps a fixed, typed
+  // payload without any new VM hooks: the payload is a Map serialised through
+  // the existing PSC1 card codec (Binary.SerializeCard/ParseCard) and carried
+  // as raw bytes on the event record via Event.SetData/Event.Data. `mode` is
+  // designer-level metadata (sync exits vs async handlers use identical
+  // plumbing on this single-threaded, queue-based Event.* primitive).
+  function isStrFieldType(t) { return t === 'str' || t === 'utf8' || t === 'latin1' || t === 'blob'; }
+
+  function emitRaiseTyped(step, indent, ctx) {
+    var out = ctx.out, p = pad(indent), warnings = ctx.warnings;
+    var ev = emitOperand(step.event == null ? 0 : step.event, warnings, 'RAISE event');
+    var tgt = step.target != null ? emitOperand(step.target, warnings, 'RAISE target') : '0';
+    out.push(p + 'Map.New().');
+    var args = step.args || {};
+    step.schema.fields.forEach(function (f) {
+      var val = args[f.name];
+      if (val === undefined || val === null) {
+        warnings.push('RAISE: missing arg for schema field "' + f.name + '"; omitted from payload');
+        return;
+      }
+      if (isStrFieldType(f.type)) out.push(p + 'Map.PutSS(' + strLit(f.name) + ', ' + emitStringValue(String(val), warnings, 'RAISE field ' + f.name) + ').');
+      else out.push(p + 'Map.PutSI(' + strLit(f.name) + ', ' + emitOperand(val, warnings, 'RAISE field ' + f.name) + ').');
+    });
+    var body = '_evbody' + (ctx.tempN++);
+    out.push(p + 'Set ' + body + ' to Binary.SerializeCard().');
+    var resultVar = step.result ? sanitizeId(step.result) : ('_evid' + (ctx.tempN++));
+    out.push(p + 'Set ' + resultVar + ' to Event.Post(' + ev + ', ' + tgt + ').');
+    out.push(p + 'Event.SetData(' + resultVar + ', ' + body + ').');
+  }
+
   function emitOn(step, steps, pos, indent, ctx) {
     var ev = emitOperand(step.event == null ? 0 : step.event, ctx.warnings, 'ON event');
     var v = sanitizeId(step.var || 'event');
@@ -431,6 +466,16 @@ BareMetal.WorkflowPico = (() => {
     ctx.out.push(pad(indent + 1) + 'Set ' + evid + ' to Event.Next().');
     ctx.out.push(pad(indent + 1) + 'If Event.Type(' + evid + ') is ' + ev + ':');
     ctx.out.push(pad(indent + 2) + 'Set ' + v + ' to ' + evid + '.');
+    if (step.schema && Array.isArray(step.schema.fields) && step.schema.fields.length) {
+      var body = '_evbody' + (ctx.tempN++);
+      ctx.out.push(pad(indent + 2) + 'Set ' + body + ' to Event.Data(' + evid + ').');
+      ctx.out.push(pad(indent + 2) + 'Binary.ParseCard(' + body + ').');
+      step.schema.fields.forEach(function (f) {
+        var fv = sanitizeId(f.name);
+        if (isStrFieldType(f.type)) ctx.out.push(pad(indent + 2) + 'Set ' + fv + ' to Map.GetSS(' + strLit(f.name) + ').');
+        else ctx.out.push(pad(indent + 2) + 'Set ' + fv + ' to Map.GetSI(' + strLit(f.name) + ').');
+      });
+    }
     var start = ctx.out.length;
     var term = emitSeq(steps, pos, indent + 2, ctx);
     if (ctx.out.length === start) ctx.out.push(pad(indent + 2) + 'Set _nop to 0.');

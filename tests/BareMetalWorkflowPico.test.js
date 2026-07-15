@@ -305,6 +305,30 @@ describe('WorkflowPico – compile + run on the PicoScript VM', () => {
     expect(source).toContain('For each _on0 from 0 to (Event.Count() minus 1):');
     expect(source).toContain('If Event.Type(_ev1) is 5:');
   });
+
+  test('schema-typed RAISE ("program exit") builds a Map payload via Binary.SerializeCard', () => {
+    const schema = { mode: 'sync', fields: [{ name: 'qty', type: 'int' }, { name: 'note', type: 'str' }] };
+    const { source, warnings } = WP.compile([
+      { type: 'RAISE', event: 42, result: 'eid', schema, args: { qty: 3, note: 'hi' } }
+    ]);
+    expect(source).toContain('Map.New().');
+    expect(source).toContain('Map.PutSI("qty", 3).');
+    expect(source).toContain('Map.PutSS("note", "hi").');
+    expect(source).toContain('Set eid to Event.Post(42, 0).');
+    expect(source).toContain('Event.SetData(eid,');
+    expect(warnings).toHaveLength(0);
+  });
+
+  test('schema-typed ON ("event handler") decodes the payload back into typed vars', () => {
+    const schema = { mode: 'async', fields: [{ name: 'qty', type: 'int' }, { name: 'note', type: 'str' }] };
+    const r = run([
+      { type: 'RAISE', event: 42, schema, args: { qty: 5, note: 'ignored' } },
+      { type: 'ON', event: 42, schema },
+      { type: 'LOG', message: 'qty' },
+      { type: 'END' }
+    ]);
+    expect(tail(r.output)).toBe(5);
+  });
 });
 
 describe('WorkflowPico – designer integration', () => {

@@ -638,9 +638,19 @@ BareMetal.Workflow.Designer = (function () {
       { key: 'ms', label: '', placeholder: '100', width: 70, kind: 'num' }, { key: '_ms', label: 'ms', kind: 'static' } ] },
     RAISE: { label: 'Raise', kind: 'atom', color: '#ff9f7f', fields: [
       { key: 'event', label: 'event', placeholder: '1', width: 60, kind: 'num' },
-      { key: 'target', label: '→', placeholder: '0', width: 60, kind: 'num' } ] },
+      { key: 'target', label: '\u2192', placeholder: '0', width: 60, kind: 'num' },
+      { key: 'eventFile', label: 'schema', placeholder: 'events/order.created.event.json', width: 180 },
+      { key: 'args', label: 'args', placeholder: '{"qty":3}', width: 140,
+        get: function (p) { return p.args ? JSON.stringify(p.args) : ''; },
+        set: function (p, raw) {
+          var t = String(raw == null ? '' : raw).trim();
+          if (!t) { delete p.args; return; }
+          try { var o = JSON.parse(t); if (o && typeof o === 'object' && !Array.isArray(o)) p.args = o; } catch (e) {}
+        } },
+      { key: 'result', label: '=', placeholder: 'eid', width: 60 } ] },
     ON: { label: 'On event', kind: 'block', color: '#ff9f7f', slots: [{ key: 'body', label: '' }], fields: [
-      { key: 'event', label: '', placeholder: '1', width: 60, kind: 'num' } ] },
+      { key: 'event', label: '', placeholder: '1', width: 60, kind: 'num' },
+      { key: 'eventFile', label: 'schema', placeholder: 'events/order.created.event.json', width: 180 } ] },
     LOAD: { label: 'Load', kind: 'atom', color: '#66e0cc', fields: [
       { key: 'name', label: '', placeholder: 'x', width: 70 },
       { key: 'from', label: 'from', kind: 'select', choices: MEM },
