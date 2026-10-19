@@ -113,6 +113,13 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.Markdown`](docs/BareMetal.Markdown.md) | GFM Markdown-to-HTML renderer. Headings, lists, tables, code blocks, inline formatting, TOC, front matter, custom renderers, sanitize mode. | [18 KB](src/BareMetal.Markdown.js) | [11 KB](src/BareMetal.Markdown.min.js) | *marked.js (≈39 KB)*, markdown-it (≈100 KB), showdown (≈70 KB) |
 | [`BareMetal.Play`](docs/BareMetal.Play.md) | Interactive story reader over PicoWAL packs. Gated choices, effects, persona-filled Markdown, in-page letters and notes. | [27 KB](src/BareMetal.Play.js) | [14 KB](src/BareMetal.Play.min.js) | Twine (huge), custom CYOA shells |
 | [`BareMetal.Story`](docs/BareMetal.Story.md) | Story authoring editor. Interactions, options, personas, templates, and a graph map over the same packs. | [46 KB](src/BareMetal.Story.js) | [27 KB](src/BareMetal.Story.min.js) | Twine, custom CMS |
+| [`BareMetal.Sheet`](docs/BareMetal.Sheet.md) | Spreadsheet cell view. A1 grid, formula bar, selection, in-cell edit, per-cell style. | [10 KB](src/BareMetal.Sheet.js) | [6 KB](src/BareMetal.Sheet.min.js) | Handsontable, Luckysheet |
+| [`BareMetal.Document`](docs/BareMetal.Document.md) | Semantic HTML editor (not RTF). Headings, lists, colour, font. | [4 KB](src/BareMetal.Document.js) | [3 KB](src/BareMetal.Document.min.js) | contenteditable, Quill, Tiptap |
+| [`BareMetal.Ribbon`](docs/BareMetal.Ribbon.md) | Compact command bar — a ribbon alternative with groups, toggles, colour and font slots. | [5 KB](src/BareMetal.Ribbon.js) | [3 KB](src/BareMetal.Ribbon.min.js) | Office ribbon, custom toolbars |
+| [`BareMetal.FooterBar`](docs/BareMetal.FooterBar.md) | Footer strip: status, sheet tabs, zoom. | [4 KB](src/BareMetal.FooterBar.js) | [3 KB](src/BareMetal.FooterBar.min.js) | Spreadsheet status bar |
+| [`BareMetal.Colour`](docs/BareMetal.Colour.md) | Swatch + hex colour picker. | [5 KB](src/BareMetal.Colour.js) | [3 KB](src/BareMetal.Colour.min.js) | `<input type=color>` |
+| [`BareMetal.Font`](docs/BareMetal.Font.md) | Font family and size picker with live preview. | [4 KB](src/BareMetal.Font.js) | [3 KB](src/BareMetal.Font.min.js) | OS font dialogs |
+| [`BareMetal.DocumentWAL`](docs/BareMetal.DocumentWAL.md) | Change log, merge, compact snapshot, undo/redo, downloadable op stream. PicoScript host in `picoscript/docwal.pc`. | [9 KB](src/BareMetal.DocumentWAL.js) | [5 KB](src/BareMetal.DocumentWAL.min.js) | Yjs, Automerge, OT |
 | [`BareMetal.PicoScript`](docs/BareMetal.PicoScript.md) | Real PicoScript 16-opcode ISA: 4-frontend compiler (C/BASIC/Python/English) + deterministic VM + 456 host hooks across 63 namespaces (OS-worker, AI, storage, crypto, UI, capsules). Runs the same bytecode as PIOS bare metal. | [322 KB](src/BareMetal.PicoScript.js) | — | *No equivalent* — complete language VM + compiler in one file |
 | [`BareMetal.WorkflowPico`](docs/BareMetal.WorkflowPico.md) | Compiles `BareMetal.Workflow` step lists to PicoScript (English dialect) — the visual workflow designer becomes a PicoScript frontend that runs on the browser/RP2350/PIOS/C# VM. Adds a "Compile to PicoScript" designer button. | [16 KB](src/BareMetal.WorkflowPico.js) | [8 KB](src/BareMetal.WorkflowPico.min.js) | *No equivalent* — visual workflow → deterministic bytecode |
 | [`BareMetal.Report`](docs/BareMetal.Report.md) | Report & form builder. One templated layout engine, two modes: report (read-only table + aggregate footer) and form (read-write inputs + write-back). Visual designer to create/edit templates. Byte-aligned with PicoScript's picolayout. | [18 KB](src/BareMetal.Report.js) | [10 KB](src/BareMetal.Report.min.js) | *JasperReports (huge)*, hand-rolled table/form code |
@@ -301,6 +308,10 @@ const customer = BareMetal.Communications.entity('customer');
 const all      = await customer.list();
 await customer.update(42, { name: 'Acme' });
 ```
+
+### Spreadsheet desk
+
+Ribbon + sheet + footer + colour + font + DocumentWAL: [`examples/sheet-app.html`](examples/sheet-app.html). Rich HTML notes: [`examples/document-app.html`](examples/document-app.html). PicoScript document server: [`picoscript/docwal.pc`](picoscript/docwal.pc).
 
 ### Interactive stories
 

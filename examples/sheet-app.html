@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spreadsheet desk — BareMetalJsTools</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../src/themes/candy.css">
+  <style>
+    html, body { height: 100%; margin: 0; }
+    .desk { height: 100%; display: flex; flex-direction: column; }
+    .desk-head { padding: .6rem 1rem 0; }
+    .desk-head a { color: var(--bs-secondary-color); text-decoration: none; font-size: .9rem; }
+    #ribbon, #sheet, #footer { flex: 0 0 auto; }
+    #sheet { flex: 1; min-height: 0; }
+  </style>
+</head>
+<body>
+  <div class="desk">
+    <div class="desk-head">
+      <a href="index.html">Examples</a>
+      · ribbon, sheet, footer, colour, font, DocumentWAL
+    </div>
+    <div id="ribbon"></div>
+    <div id="sheet"></div>
+    <div id="footer"></div>
+  </div>
+  <script src="../src/BareMetal.Colour.js"></script>
+  <script src="../src/BareMetal.Font.js"></script>
+  <script src="../src/BareMetal.Ribbon.js"></script>
+  <script src="../src/BareMetal.FooterBar.js"></script>
+  <script src="../src/BareMetal.Sheet.js"></script>
+  <script src="../src/BareMetal.DocumentWAL.js"></script>
+  <script>
+    var applying = false;
+    var wal;
+    var footer;
+    var sheet = BareMetal.Sheet.create("#sheet", {
+      rows: 16,
+      cols: 8,
+      cells: { A1: { v: "Sample sheet" }, B1: { v: "fiction only" } },
+      onChange: function (addr, cell) {
+        if (applying || !wal) return;
+        wal.set("cells." + addr, cell);
+        if (footer) footer.setStatus(addr);
+        wal.push();
+      },
+      onSelect: function (addr) { footer.setStatus(addr); }
+    });
+    wal = BareMetal.DocumentWAL.create({
+      docId: "sheet-demo",
+      snapshot: sheet.getData(),
+      transport: BareMetal.DocumentWAL.memoryTransport(),
+      onChange: function (snap) {
+        if (applying) return;
+        applying = true;
+        sheet.setData(snap);
+        applying = false;
+      }
+    });
+    var ribbon = BareMetal.Ribbon.create("#ribbon", {
+      groups: [
+        { label: "History", items: [
+          { id: "undo", label: "Undo", title: "Undo last cell" },
+          { id: "redo", label: "Redo" }
+        ]},
+        { label: "Style", items: [
+          { id: "bold", label: "B", toggle: true, title: "Bold" },
+          { id: "italic", label: "I", toggle: true, title: "Italic" },
+          { id: "fill", type: "colour", value: "#ffffff", label: "Fill" },
+          { id: "color", type: "colour", value: "#4a2040", label: "Text" },
+          { id: "font", type: "font", family: "BareMetalSans", size: 13 }
+        ]}
+      ],
+      onCommand: function (id, item, extra) {
+        if (id === "undo") { wal.undo(); return; }
+        if (id === "redo") { wal.redo(); return; }
+        if (id === "bold") sheet.styleSelected({ bold: !!(item && item.active) });
+        if (id === "italic") sheet.styleSelected({ italic: !!(item && item.active) });
+        if (id === "fill" && extra && extra.value) sheet.styleSelected({ bg: extra.value });
+        if (id === "color" && extra && extra.value) sheet.styleSelected({ color: extra.value });
+        if (id === "font" && extra) sheet.styleSelected({ font: extra.family, size: extra.size });
+      }
+    });
+    footer = BareMetal.FooterBar.create("#footer", {
+      status: "A1",
+      zoom: 100,
+      tabs: [
+        { id: "s1", label: "Sheet1", active: true },
+        { id: "s2", label: "Notes" }
+      ],
+      onZoom: function (n) {
+        document.getElementById("sheet").style.fontSize = (13 * n / 100) + "px";
+      },
+      onTab: function (id) {
+        footer.setStatus(id === "s2" ? "Notes tab (same WAL)" : sheet.selected());
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rich document — BareMetalJsTools</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../src/themes/candy.css">
+  <style>
+    html, body { height: 100%; margin: 0; }
+    .desk { height: 100%; display: flex; flex-direction: column; }
+    .desk-head { padding: .6rem 1rem 0; }
+    .desk-head a { color: var(--bs-secondary-color); text-decoration: none; }
+    #doc { flex: 1; min-height: 0; padding: .6rem 1rem 1rem; }
+  </style>
+</head>
+<body>
+  <div class="desk">
+    <div class="desk-head"><a href="index.html">Examples</a> · semantic HTML editor + ribbon + DocumentWAL</div>
+    <div id="ribbon"></div>
+    <div id="doc"></div>
+  </div>
+  <script src="../src/BareMetal.Colour.js"></script>
+  <script src="../src/BareMetal.Font.js"></script>
+  <script src="../src/BareMetal.Ribbon.js"></script>
+  <script src="../src/BareMetal.Document.js"></script>
+  <script src="../src/BareMetal.DocumentWAL.js"></script>
+  <script>
+    var applying = false;
+    var doc = BareMetal.Document.create("#doc", {
+      html: "<h1>Sample notes</h1><p>This editor stores semantic HTML, not RTF. It exists only as a demo.</p>",
+      onChange: function (html) {
+        if (applying) return;
+        wal.set("html", html);
+        wal.push();
+      }
+    });
+    var wal = BareMetal.DocumentWAL.create({
+      docId: "notes-demo",
+      snapshot: { html: doc.getHTML() },
+      transport: BareMetal.DocumentWAL.memoryTransport(),
+      onChange: function (snap, op) {
+        if (applying || !op) return;
+        applying = true;
+        doc.setHTML(snap.html || "", true);
+        applying = false;
+      }
+    });
+    BareMetal.Ribbon.create("#ribbon", {
+      groups: [
+        { label: "History", items: [{ id: "undo", label: "Undo" }, { id: "redo", label: "Redo" }] },
+        { label: "Blocks", items: [
+          { id: "p", label: "P" }, { id: "h1", label: "H1" }, { id: "h2", label: "H2" },
+          { id: "ul", label: "List" }
+        ]},
+        { label: "Style", items: [
+          { id: "bold", label: "B", toggle: true },
+          { id: "italic", label: "I", toggle: true },
+          { id: "color", type: "colour", value: "#4a2040" },
+          { id: "font", type: "font", family: "Georgia, serif", size: 16 }
+        ]}
+      ],
+      onCommand: function (id, item, extra) {
+        if (id === "undo") wal.undo();
+        else if (id === "redo") wal.redo();
+        else if (id === "bold") doc.bold();
+        else if (id === "italic") doc.italic();
+        else if (id === "p") doc.paragraph();
+        else if (id === "h1") doc.heading(1);
+        else if (id === "h2") doc.heading(2);
+        else if (id === "ul") doc.list(false);
+        else if (id === "color" && extra && extra.value) doc.color(extra.value);
+        else if (id === "font" && extra) doc.font(extra.family);
+      }
+    });
+  </script>
+</body>
+</html>
