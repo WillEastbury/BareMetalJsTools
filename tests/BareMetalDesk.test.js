@@ -72,6 +72,10 @@ describe('desk controls', () => {
     expect(seen[0]).toEqual(['A1', 'Hi']);
     sheet.select('B2');
     expect(sheet.selected()).toBe('B2');
+    sheet.select('C3', false, true);
+    expect(sheet.selectedRange()).toEqual({ c0: 1, r0: 1, c1: 2, r1: 2 });
+    sheet.mergeSelected();
+    expect(sheet.getCell('B2').s.merge).toEqual({ cols: 2, rows: 2 });
   });
 
   test('Document sanitizes scripts', () => {

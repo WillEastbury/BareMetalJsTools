@@ -16,6 +16,7 @@ BareMetal.Sheet = (function () {
     ".bm-sheet thead th{top:0}",
     ".bm-sheet .bm-sheet-rn{left:0;min-width:2.4rem;width:2.4rem}",
     ".bm-sheet td.sel{outline:2px solid var(--bs-primary,#e91e8c);outline-offset:-2px;background:#fff0f7}",
+    ".bm-sheet td.rng{background:#ffe3f0}",
     ".bm-sheet td.edit{padding:0}",
     ".bm-sheet td.edit input{width:100%;height:100%;border:0;padding:.05rem .3rem;font:inherit;box-sizing:border-box}"
   ].join("");
@@ -74,6 +75,8 @@ BareMetal.Sheet = (function () {
     var cells = {};
     Object.keys(options.cells || {}).forEach(function (k) { cells[k.toUpperCase()] = cloneCell(options.cells[k]); });
     var sel = parseAddr(options.select) || { c: 0, r: 0, addr: "A1" };
+    var selEnd = { c: sel.c, r: sel.r, addr: sel.addr };
+    var dragging = false;
     var editing = false;
     var wrap = el("div", "bm-sheet");
     var formula = el("div", "bm-sheet-formula");
@@ -90,15 +93,50 @@ BareMetal.Sheet = (function () {
     wrap.tabIndex = 0;
     root.appendChild(wrap);
 
+    function box() {
+      return {
+        c0: Math.min(sel.c, selEnd.c),
+        r0: Math.min(sel.r, selEnd.r),
+        c1: Math.max(sel.c, selEnd.c),
+        r1: Math.max(sel.r, selEnd.r)
+      };
+    }
+
+    function inBox(c, r) {
+      var b = box();
+      return c >= b.c0 && c <= b.c1 && r >= b.r0 && r <= b.r1;
+    }
+
+    function coverMap() {
+      var skip = {}, k, m, p, dc, dr;
+      Object.keys(cells).forEach(function (key) {
+        m = cells[key] && cells[key].s && cells[key].s.merge;
+        if (!m) return;
+        p = parseAddr(key);
+        if (!p) return;
+        for (dr = 0; dr < (m.rows || 1); dr++) {
+          for (dc = 0; dc < (m.cols || 1); dc++) {
+            if (!dc && !dr) continue;
+            skip[makeAddr(p.c + dc, p.r + dr)] = key;
+          }
+        }
+      });
+      return skip;
+    }
+
     function styleTd(td, cell) {
       var s = cell && cell.s ? cell.s : {};
       td.style.fontWeight = s.bold ? "700" : "";
       td.style.fontStyle = s.italic ? "italic" : "";
+      td.style.textDecoration = s.underline ? "underline" : "";
       td.style.color = s.color || "";
       td.style.background = s.bg || "";
       td.style.fontFamily = s.font || "";
       td.style.fontSize = s.size ? s.size + "px" : "";
       td.style.textAlign = s.align || "";
+      if (s.border === "none") td.style.border = "1px solid transparent";
+      else if (s.border === "thin") td.style.border = "1px solid #4a2040";
+      else if (s.border === "thick") td.style.border = "2px solid #4a2040";
     }
 
     function getCell(addr) { return cells[String(addr).toUpperCase()] || null; }
@@ -138,7 +176,8 @@ BareMetal.Sheet = (function () {
       table.innerHTML = "";
       table.appendChild(renderHead());
       var tbody = document.createElement("tbody");
-      var r, c, tr, th, td, addr, cell;
+      var r, c, tr, th, td, addr, cell, skip, merge, cls;
+      skip = coverMap();
       for (r = 0; r < rows; r++) {
         tr = document.createElement("tr");
         th = document.createElement("th");
@@ -147,33 +186,49 @@ BareMetal.Sheet = (function () {
         tr.appendChild(th);
         for (c = 0; c < cols; c++) {
           addr = makeAddr(c, r);
+          if (skip[addr]) continue;
           cell = getCell(addr);
           td = document.createElement("td");
           td.setAttribute("data-addr", addr);
           td.textContent = cellText(cell);
           styleTd(td, cell);
-          if (addr === sel.addr) td.className += (td.className ? " " : "") + "sel";
+          merge = cell && cell.s && cell.s.merge;
+          if (merge) {
+            if ((merge.cols || 1) > 1) td.colSpan = merge.cols;
+            if ((merge.rows || 1) > 1) td.rowSpan = merge.rows;
+          }
+          cls = [];
+          if (addr === sel.addr) cls.push("sel");
+          else if (inBox(c, r)) cls.push("rng");
+          if (cls.length) td.className = cls.join(" ");
           tr.appendChild(td);
         }
         tbody.appendChild(tr);
       }
       table.appendChild(tbody);
-      addrEl.textContent = sel.addr;
+      var b = box();
+      addrEl.textContent = b.c0 === b.c1 && b.r0 === b.r1 ? sel.addr : makeAddr(b.c0, b.r0) + ":" + makeAddr(b.c1, b.r1);
       if (!editing) input.value = cellText(getCell(sel.addr));
     }
 
-    function select(addr, keepEdit) {
-      var parsed = typeof addr === "string" ? parseAddr(addr) : addr;
-      if (!parsed) return;
+    function clampPos(parsed) {
       if (parsed.c < 0) parsed.c = 0;
       if (parsed.r < 0) parsed.r = 0;
       if (parsed.c >= cols) parsed.c = cols - 1;
       if (parsed.r >= rows) parsed.r = rows - 1;
       parsed.addr = makeAddr(parsed.c, parsed.r);
-      sel = parsed;
+      return parsed;
+    }
+
+    function select(addr, keepEdit, extend) {
+      var parsed = typeof addr === "string" ? parseAddr(addr) : addr;
+      if (!parsed) return;
+      parsed = clampPos(parsed);
+      if (extend) selEnd = parsed;
+      else { sel = parsed; selEnd = { c: parsed.c, r: parsed.r, addr: parsed.addr }; }
       if (!keepEdit) editing = false;
       renderBody();
-      if (options.onSelect) options.onSelect(sel.addr, getCell(sel.addr));
+      if (options.onSelect) options.onSelect(sel.addr, getCell(sel.addr), box());
     }
 
     function startEdit() {
@@ -201,8 +256,15 @@ BareMetal.Sheet = (function () {
       var td = ev.target.closest("td");
       if (!td) return;
       wrap.focus();
-      select(td.getAttribute("data-addr"));
+      dragging = true;
+      select(td.getAttribute("data-addr"), false, ev.shiftKey);
     });
+    table.addEventListener("mouseover", function (ev) {
+      var td = ev.target.closest("td");
+      if (!dragging || !td) return;
+      select(td.getAttribute("data-addr"), true, true);
+    });
+    document.addEventListener("mouseup", function () { dragging = false; });
     table.addEventListener("dblclick", function (ev) {
       if (ev.target.closest("td")) startEdit();
     });
@@ -213,10 +275,10 @@ BareMetal.Sheet = (function () {
     wrap.addEventListener("keydown", function (ev) {
       if (editing) return;
       if (ev.key === "Enter") { ev.preventDefault(); startEdit(); return; }
-      if (ev.key === "ArrowRight") { ev.preventDefault(); select({ c: sel.c + 1, r: sel.r }); }
-      if (ev.key === "ArrowLeft") { ev.preventDefault(); select({ c: sel.c - 1, r: sel.r }); }
-      if (ev.key === "ArrowDown") { ev.preventDefault(); select({ c: sel.c, r: sel.r + 1 }); }
-      if (ev.key === "ArrowUp") { ev.preventDefault(); select({ c: sel.c, r: sel.r - 1 }); }
+      if (ev.key === "ArrowRight") { ev.preventDefault(); select({ c: sel.c + 1, r: sel.r }, false, ev.shiftKey); }
+      if (ev.key === "ArrowLeft") { ev.preventDefault(); select({ c: sel.c - 1, r: sel.r }, false, ev.shiftKey); }
+      if (ev.key === "ArrowDown") { ev.preventDefault(); select({ c: sel.c, r: sel.r + 1 }, false, ev.shiftKey); }
+      if (ev.key === "ArrowUp") { ev.preventDefault(); select({ c: sel.c, r: sel.r - 1 }, false, ev.shiftKey); }
       if (ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey) {
         startEdit();
       }
@@ -241,10 +303,63 @@ BareMetal.Sheet = (function () {
       setCell: setCell,
       select: select,
       selected: function () { return sel.addr; },
+      selectedRange: function () { return box(); },
       styleSelected: function (patch) {
         var cur = cloneCell(getCell(sel.addr) || { v: "" });
         cur.s = Object.assign({}, cur.s || {}, patch || {});
-        setCell(sel.addr, cur);
+        setCell(sel.addr, cur, true);
+        if (options.onStyle) options.onStyle(sel.addr, cur);
+        else renderBody();
+      },
+      styleRange: function (patch) {
+        var b = box(), c, r, addr, cur;
+        for (r = b.r0; r <= b.r1; r++) {
+          for (c = b.c0; c <= b.c1; c++) {
+            addr = makeAddr(c, r);
+            cur = cloneCell(getCell(addr) || { v: "" });
+            cur.s = Object.assign({}, cur.s || {}, patch || {});
+            cells[addr] = cur;
+          }
+        }
+        renderBody();
+        if (options.onStyle) options.onStyle(sel.addr, getCell(sel.addr));
+      },
+      mergeSelected: function () {
+        var b = box(), origin, r, c, addr, cur;
+        origin = makeAddr(b.c0, b.r0);
+        cur = cloneCell(getCell(origin) || { v: "" });
+        cur.s = Object.assign({}, cur.s || {}, { merge: { cols: b.c1 - b.c0 + 1, rows: b.r1 - b.r0 + 1 } });
+        cells[origin] = cur;
+        for (r = b.r0; r <= b.r1; r++) {
+          for (c = b.c0; c <= b.c1; c++) {
+            addr = makeAddr(c, r);
+            if (addr === origin) continue;
+            if (cells[addr] && cells[addr].s) {
+              cells[addr].s = Object.assign({}, cells[addr].s);
+              delete cells[addr].s.merge;
+            }
+          }
+        }
+        sel = clampPos({ c: b.c0, r: b.r0 });
+        selEnd = { c: sel.c, r: sel.r, addr: sel.addr };
+        renderBody();
+        if (options.onStyle) options.onStyle(origin, getCell(origin));
+      },
+      unmergeSelected: function () {
+        var b = box(), c, r, addr, cur;
+        for (r = b.r0; r <= b.r1; r++) {
+          for (c = b.c0; c <= b.c1; c++) {
+            addr = makeAddr(c, r);
+            cur = getCell(addr);
+            if (cur && cur.s && cur.s.merge) {
+              cur = cloneCell(cur);
+              delete cur.s.merge;
+              cells[addr] = cur;
+            }
+          }
+        }
+        renderBody();
+        if (options.onStyle) options.onStyle(sel.addr, getCell(sel.addr));
       },
       startEdit: startEdit
     };

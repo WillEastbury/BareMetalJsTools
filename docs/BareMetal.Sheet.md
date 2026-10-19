@@ -32,4 +32,8 @@ Demo: [`examples/sheet-app.html`](../examples/sheet-app.html).
 
 `create(target, options)` → `{ el, getData, setData, getCell, setCell, select, selected, styleSelected, startEdit, addr, parseAddr }`.
 
-Arrow keys move. Enter or a character starts edit. `colName(0)` is `A`. `parseAddr('B3')` is `{ c:1, r:2, addr:'B3' }`.
+Arrow keys move. Shift+arrows or drag selects a range. Enter or a character starts edit. `colName(0)` is `A`. `parseAddr('B3')` is `{ c:1, r:2, addr:'B3' }`.
+
+Style on `cell.s`: `bold`, `italic`, `underline`, `color`, `bg`, `font`, `size`, `align`, `border` (`thin` / `thick` / `none`), `merge` (`{ cols, rows }` on the origin cell).
+
+`selectedRange()`, `styleRange(patch)`, `mergeSelected()`, `unmergeSelected()`.
