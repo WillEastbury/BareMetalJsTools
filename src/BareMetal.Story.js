@@ -318,20 +318,81 @@ BareMetal.Story = (function () {
     };
   }
 
-  function mount(target) {
+  function memoryClient(seed) {
+    var store = {};
+    var nextId = {};
+    function packNo(key) {
+      if (Object.prototype.hasOwnProperty.call(PACKS, key)) return PACKS[key];
+      return Number(key);
+    }
+    function ensure(pack) {
+      if (!store[pack]) store[pack] = {};
+      if (!nextId[pack]) nextId[pack] = 1;
+    }
+    if (seed && typeof seed === "object") {
+      Object.keys(seed).forEach(function (key) {
+        var pack = packNo(key);
+        var rows = seed[key];
+        if (!Array.isArray(rows)) return;
+        ensure(pack);
+        rows.forEach(function (row) {
+          var copy = JSON.parse(JSON.stringify(row));
+          var id = copy.id != null ? Number(copy.id) : nextId[pack];
+          copy.id = id;
+          store[pack][id] = copy;
+          if (id + 1 > nextId[pack]) nextId[pack] = id + 1;
+        });
+      });
+    }
+    return {
+      list: function (pack) {
+        ensure(pack);
+        return Promise.resolve(Object.keys(store[pack]).map(function (id) {
+          return JSON.parse(JSON.stringify(store[pack][id]));
+        }).sort(function (a, b) { return Number(a.id) - Number(b.id); }));
+      },
+      create: function (pack, row) {
+        ensure(pack);
+        var copy = JSON.parse(JSON.stringify(row || {}));
+        var id = nextId[pack]++;
+        copy.id = id;
+        store[pack][id] = copy;
+        return Promise.resolve(id);
+      },
+      put: function (pack, id, row) {
+        ensure(pack);
+        var copy = JSON.parse(JSON.stringify(row || {}));
+        copy.id = Number(id);
+        store[pack][id] = copy;
+        if (copy.id + 1 > nextId[pack]) nextId[pack] = copy.id + 1;
+        return Promise.resolve(copy);
+      },
+      remove: function (pack, id) {
+        ensure(pack);
+        delete store[pack][id];
+        return Promise.resolve(null);
+      },
+      ping: function () {
+        return Promise.resolve({ ok: true });
+      }
+    };
+  }
+
+  function mount(target, options) {
+    options = options || {};
     registerSchemas();
     if (!BareMetal.Metadata || !BareMetal.Bind || !BareMetal.Graph || !BareMetal.UndoRedo) {
       throw new Error("BareMetal Story needs Metadata, Bind, Graph, and UndoRedo.");
     }
     var root = typeof target === "string" ? document.querySelector(target) : target;
     if (!root) throw new Error("Story editor target not found.");
-    if (location.protocol === "file:" || (location.hostname !== "127.0.0.1" && location.hostname !== "localhost" && location.hostname !== "::1")) {
-      root.textContent = "Open this editor from the story server at http://127.0.0.1:8090/.";
+    if (!options.client && (location.protocol === "file:" || (location.hostname !== "127.0.0.1" && location.hostname !== "localhost" && location.hostname !== "::1"))) {
+      root.textContent = "Open this editor from loopback, or pass mount(target, { client: BareMetal.Story.memoryClient(seed) }).";
       return;
     }
     if (BareMetal.Notify && BareMetal.Notify.configure) BareMetal.Notify.configure({ theme: "dark" });
 
-    var api = client();
+    var api = options.client || client();
     var doc = emptyDoc();
     var busy = false;
     var ui = { view: "map", storyId: null, nodeId: null, choiceId: null, personaId: null, templateId: null, draft: null, pos: {}, graph: null, arm: null };
@@ -1138,6 +1199,7 @@ BareMetal.Story = (function () {
     validateTriggers: validateTriggers,
     validateBaseFacts: validateBaseFacts,
     graphData: graphData,
+    memoryClient: memoryClient,
     mount: mount
   };
 })();

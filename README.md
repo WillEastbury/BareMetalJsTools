@@ -111,8 +111,8 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.RBAC`](docs/BareMetal.RBAC.md) | Client-side role/permission UI hints. Reads JWT from storage/cookie, checks roles, groups, permissions, scopes. DOM attribute processing. **UI hints only — enforce server-side.** | [19 KB](src/BareMetal.RBAC.js) | [9 KB](src/BareMetal.RBAC.min.js) | *CASL (≈30 KB)*, casbin.js (≈50 KB), custom middleware |
 | [`BareMetal.Workflow`](docs/BareMetal.Workflow.md) | Minimal workflow engine. SET/IF/ELSE/FOR/FOREACH/FOREACHP/WEB/LOAD/SAVE/LOG/WAIT/CALL. Registry, JSON serialization, visual designer component. | [23 KB](src/BareMetal.Workflow.js) | [12 KB](src/BareMetal.Workflow.min.js) | *n8n (massive)*, Camunda (enterprise), custom state machines |
 | [`BareMetal.Markdown`](docs/BareMetal.Markdown.md) | GFM Markdown-to-HTML renderer. Headings, lists, tables, code blocks, inline formatting, TOC, front matter, custom renderers, sanitize mode. | [18 KB](src/BareMetal.Markdown.js) | [11 KB](src/BareMetal.Markdown.min.js) | *marked.js (≈39 KB)*, markdown-it (≈100 KB), showdown (≈70 KB) |
-| [`BareMetal.Play`](docs/BareMetal.Play.md) | Interactive story reader over PicoWAL packs. Gated choices, effects, persona-filled Markdown, in-page letters and notes. | [25 KB](src/BareMetal.Play.js) | [13 KB](src/BareMetal.Play.min.js) | Twine (huge), custom CYOA shells |
-| [`BareMetal.Story`](docs/BareMetal.Story.md) | Story authoring editor. Interactions, options, personas, templates, and a graph map over the same packs. | [44 KB](src/BareMetal.Story.js) | [25 KB](src/BareMetal.Story.min.js) | Twine, custom CMS |
+| [`BareMetal.Play`](docs/BareMetal.Play.md) | Interactive story reader over PicoWAL packs. Gated choices, effects, persona-filled Markdown, in-page letters and notes. | [27 KB](src/BareMetal.Play.js) | [14 KB](src/BareMetal.Play.min.js) | Twine (huge), custom CYOA shells |
+| [`BareMetal.Story`](docs/BareMetal.Story.md) | Story authoring editor. Interactions, options, personas, templates, and a graph map over the same packs. | [46 KB](src/BareMetal.Story.js) | [27 KB](src/BareMetal.Story.min.js) | Twine, custom CMS |
 | [`BareMetal.PicoScript`](docs/BareMetal.PicoScript.md) | Real PicoScript 16-opcode ISA: 4-frontend compiler (C/BASIC/Python/English) + deterministic VM + 456 host hooks across 63 namespaces (OS-worker, AI, storage, crypto, UI, capsules). Runs the same bytecode as PIOS bare metal. | [322 KB](src/BareMetal.PicoScript.js) | — | *No equivalent* — complete language VM + compiler in one file |
 | [`BareMetal.WorkflowPico`](docs/BareMetal.WorkflowPico.md) | Compiles `BareMetal.Workflow` step lists to PicoScript (English dialect) — the visual workflow designer becomes a PicoScript frontend that runs on the browser/RP2350/PIOS/C# VM. Adds a "Compile to PicoScript" designer button. | [16 KB](src/BareMetal.WorkflowPico.js) | [8 KB](src/BareMetal.WorkflowPico.min.js) | *No equivalent* — visual workflow → deterministic bytecode |
 | [`BareMetal.Report`](docs/BareMetal.Report.md) | Report & form builder. One templated layout engine, two modes: report (read-only table + aggregate footer) and form (read-write inputs + write-back). Visual designer to create/edit templates. Byte-aligned with PicoScript's picolayout. | [18 KB](src/BareMetal.Report.js) | [10 KB](src/BareMetal.Report.min.js) | *JasperReports (huge)*, hand-rolled table/form code |
@@ -162,6 +162,7 @@ graph TB
     Styles["🎨 Styles<br/><i>Grid · Buttons · Cards<br/>Modals · Toasts · Layout</i>"]
     Charts["📊 Charts<br/><i>Bar · Line · Sparkline<br/>Donut · Gauge</i>"]
     Graph["🕸️ Graph<br/><i>Force-directed<br/>Drag · Zoom</i>"]
+    Play["📖 Play + Story<br/><i>Reader · Editor<br/>PicoWAL packs</i>"]
   end
 
   subgraph "Reactive Binding"
@@ -299,6 +300,28 @@ BareMetal.Communications.setRoot('/api/');
 const customer = BareMetal.Communications.entity('customer');
 const all      = await customer.list();
 await customer.update(42, { name: 'Acme' });
+```
+
+### Interactive stories
+
+Reader and editor over PicoWAL JSON packs. Full walkthrough: [`BareMetal.Play`](docs/BareMetal.Play.md) and [`BareMetal.Story`](docs/BareMetal.Story.md). Demos: [`examples/story-play.html`](examples/story-play.html), [`examples/story-editor.html`](examples/story-editor.html).
+
+```html
+<link rel="stylesheet" href="src/BareMetalStyles.css">
+<link rel="stylesheet" href="src/themes/candy.css">
+<link rel="stylesheet" href="src/BareMetal.Play.css">
+<script src="src/BareMetal.Markdown.js"></script>
+<script src="src/BareMetal.Play.js"></script>
+<div id="app"></div>
+<script>
+  BareMetal.Play.mount("#app", {
+    client: BareMetal.Play.memoryClient({
+      stories: [{ id: 1, title: "The Paper Lantern", tags: ["fiction"] }],
+      nodes: [{ id: 1, story_id: 1, key: "yard", text: "A lantern on warm stones." }],
+      choices: []
+    })
+  });
+</script>
 ```
 
 ### Metadata-driven forms

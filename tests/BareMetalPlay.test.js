@@ -107,6 +107,19 @@ describe('BareMetal.Play', () => {
     expect(slips[0].body).toBe('For the courtyard. You hold nothing.');
   });
 
+  test('memoryClient seeds rows and allocates the next id', async () => {
+    const client = Play.memoryClient({
+      stories: [{ id: 1, title: 'The Paper Lantern' }]
+    });
+    const listed = await client.list(Play.PACKS.stories);
+    expect(listed[0].title).toBe('The Paper Lantern');
+    const id = await client.create(Play.PACKS.stories, { title: 'Saltglass Station' });
+    expect(id).toBe(2);
+    await client.put(Play.PACKS.stories, 2, { title: 'Saltglass' });
+    const again = await client.list(Play.PACKS.stories);
+    expect(again.map(function (row) { return row.title; })).toEqual(['The Paper Lantern', 'Saltglass']);
+  });
+
   test('withPersonaFacts copies protagonist facts once', () => {
     const personas = [
       { story_id: 1, role: 'narrator', base_facts: { sign: 'Told by the yard.' } },

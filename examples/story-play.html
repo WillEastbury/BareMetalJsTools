@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Story reader — BareMetalJsTools</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../src/themes/candy.css">
+  <link rel="stylesheet" href="../src/BareMetal.Play.css">
+</head>
+<body>
+  <div class="play-wrap" style="padding-bottom:0">
+    <p class="play-note" style="margin:0 0 1rem">
+      <a href="index.html">Examples</a>
+      · <a href="story-editor.html">Editor demo</a>
+      · <a href="../docs/BareMetal.Play.md">Play docs</a>
+    </p>
+  </div>
+  <div id="app"></div>
+  <script src="../src/BareMetal.Markdown.js"></script>
+  <script src="../src/BareMetal.Play.js"></script>
+  <script src="story-seed.js"></script>
+  <script>
+    BareMetal.Play.mount("#app", { client: BareMetal.Play.memoryClient(STORY_DEMO_SEED) });
+  </script>
+</body>
+</html>
