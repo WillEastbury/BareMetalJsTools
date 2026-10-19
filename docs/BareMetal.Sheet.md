@@ -36,4 +36,6 @@ Arrow keys move. Shift+arrows or drag selects a range. Enter or a character star
 
 Style on `cell.s`: `bold`, `italic`, `underline`, `color`, `bg`, `font`, `size`, `align`, `border` (`thin` / `thick` / `none`), `merge` (`{ cols, rows }` on the origin cell).
 
-`selectedRange()`, `styleRange(patch)`, `mergeSelected()`, `unmergeSelected()`.
+`selectedRange()`, `styleRange(patch)`, `mergeSelected()`, `unmergeSelected()`, `insertRow(at?)`, `deleteRow(at?)`, `insertCol(at?)`, `deleteCol(at?)`, `setRowFilter(fn)`.
+
+Empty cells are not stored. The grid grows as you arrow or scroll toward the edge (capped). `getData().cells` is sparse.

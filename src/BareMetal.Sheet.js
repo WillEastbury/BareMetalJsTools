@@ -59,6 +59,16 @@ BareMetal.Sheet = (function () {
     return String(cell);
   }
 
+  function occupied(cell) {
+    if (!cell || typeof cell !== "object") return !!(cell != null && String(cell) !== "");
+    if (cell.f) return true;
+    if (cell.v != null && String(cell.v) !== "") return true;
+    if (cell.s && typeof cell.s === "object") {
+      return Object.keys(cell.s).some(function (k) { return cell.s[k] != null && cell.s[k] !== ""; });
+    }
+    return false;
+  }
+
   function el(tag, cls) {
     var node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -78,6 +88,7 @@ BareMetal.Sheet = (function () {
     var selEnd = { c: sel.c, r: sel.r, addr: sel.addr };
     var dragging = false;
     var editing = false;
+    var rowFilter = null;
     var wrap = el("div", "bm-sheet");
     var formula = el("div", "bm-sheet-formula");
     var addrEl = el("div", "bm-sheet-addr");
@@ -144,10 +155,30 @@ BareMetal.Sheet = (function () {
     function setCell(addr, cell, silent) {
       var key = String(addr).toUpperCase();
       var prev = getCell(key);
-      if (cell == null || (typeof cell === "object" && !cellText(cell) && !cell.s)) delete cells[key];
+      if (cell == null || !occupied(cell)) delete cells[key];
       else cells[key] = cloneCell(cell);
       if (!silent && options.onChange) options.onChange(key, getCell(key), prev);
       renderBody();
+    }
+
+    function growTo(c, r) {
+      var grown = false;
+      if (r + 1 > rows - 3 && rows < 500) { rows = Math.min(500, Math.max(rows, r + 12)); grown = true; }
+      if (c + 1 > cols - 2 && cols < 80) { cols = Math.min(80, Math.max(cols, c + 8)); grown = true; }
+      return grown;
+    }
+
+    function remap(shift) {
+      var next = {}, k, p, dest, cell, m;
+      Object.keys(cells).forEach(function (key) {
+        p = parseAddr(key);
+        if (!p) return;
+        cell = cloneCell(cells[key]);
+        dest = shift(p, cell);
+        if (!dest) return;
+        next[makeAddr(dest.c, dest.r)] = cell;
+      });
+      cells = next;
     }
 
     function commitInput() {
@@ -179,6 +210,7 @@ BareMetal.Sheet = (function () {
       var r, c, tr, th, td, addr, cell, skip, merge, cls;
       skip = coverMap();
       for (r = 0; r < rows; r++) {
+        if (rowFilter && r > 0 && !rowFilter(r, cells)) continue;
         tr = document.createElement("tr");
         th = document.createElement("th");
         th.className = "bm-sheet-rn";
@@ -214,6 +246,7 @@ BareMetal.Sheet = (function () {
     function clampPos(parsed) {
       if (parsed.c < 0) parsed.c = 0;
       if (parsed.r < 0) parsed.r = 0;
+      growTo(parsed.c, parsed.r);
       if (parsed.c >= cols) parsed.c = cols - 1;
       if (parsed.r >= rows) parsed.r = rows - 1;
       parsed.addr = makeAddr(parsed.c, parsed.r);
@@ -272,6 +305,14 @@ BareMetal.Sheet = (function () {
     input.addEventListener("keydown", function (ev) {
       if (ev.key === "Enter") { commitInput(); select({ c: sel.c, r: sel.r + 1 }); }
     });
+    scroller.addEventListener("scroll", function () {
+      var nearBottom = scroller.scrollTop + scroller.clientHeight > scroller.scrollHeight - 64;
+      var nearRight = scroller.scrollLeft + scroller.clientWidth > scroller.scrollWidth - 64;
+      var grown = false;
+      if (nearBottom && rows < 500) { rows = Math.min(500, rows + 12); grown = true; }
+      if (nearRight && cols < 80) { cols = Math.min(80, cols + 8); grown = true; }
+      if (grown) renderBody();
+    });
     wrap.addEventListener("keydown", function (ev) {
       if (editing) return;
       if (ev.key === "Enter") { ev.preventDefault(); startEdit(); return; }
@@ -289,7 +330,13 @@ BareMetal.Sheet = (function () {
       el: wrap,
       addr: makeAddr,
       parseAddr: parseAddr,
-      getData: function () { return { rows: rows, cols: cols, cells: JSON.parse(JSON.stringify(cells)) }; },
+      getData: function () {
+        var sparse = {}, k;
+        Object.keys(cells).forEach(function (key) {
+          if (occupied(cells[key])) sparse[key] = cloneCell(cells[key]);
+        });
+        return { rows: rows, cols: cols, cells: sparse };
+      },
       setData: function (data, silent) {
         if (!data) return;
         if (data.rows) rows = data.rows;
@@ -344,6 +391,56 @@ BareMetal.Sheet = (function () {
         selEnd = { c: sel.c, r: sel.r, addr: sel.addr };
         renderBody();
         if (options.onStyle) options.onStyle(origin, getCell(origin));
+      },
+      insertRow: function (at) {
+        if (at == null) at = sel.r;
+        remap(function (p, cell) {
+          var m = cell.s && cell.s.merge;
+          if (m && p.r < at && p.r + (m.rows || 1) > at) cell.s.merge.rows = (m.rows || 1) + 1;
+          if (p.r >= at) p.r += 1;
+          return p;
+        });
+        rows += 1;
+        renderBody();
+        if (options.onGrid) options.onGrid();
+      },
+      deleteRow: function (at) {
+        if (at == null) at = sel.r;
+        remap(function (p) {
+          if (p.r === at) return null;
+          if (p.r > at) p.r -= 1;
+          return p;
+        });
+        if (rows > 1) rows -= 1;
+        renderBody();
+        if (options.onGrid) options.onGrid();
+      },
+      insertCol: function (at) {
+        if (at == null) at = sel.c;
+        remap(function (p, cell) {
+          var m = cell.s && cell.s.merge;
+          if (m && p.c < at && p.c + (m.cols || 1) > at) cell.s.merge.cols = (m.cols || 1) + 1;
+          if (p.c >= at) p.c += 1;
+          return p;
+        });
+        cols += 1;
+        renderBody();
+        if (options.onGrid) options.onGrid();
+      },
+      deleteCol: function (at) {
+        if (at == null) at = sel.c;
+        remap(function (p) {
+          if (p.c === at) return null;
+          if (p.c > at) p.c -= 1;
+          return p;
+        });
+        if (cols > 1) cols -= 1;
+        renderBody();
+        if (options.onGrid) options.onGrid();
+      },
+      setRowFilter: function (fn) {
+        rowFilter = typeof fn === "function" ? fn : null;
+        renderBody();
       },
       unmergeSelected: function () {
         var b = box(), c, r, addr, cur;

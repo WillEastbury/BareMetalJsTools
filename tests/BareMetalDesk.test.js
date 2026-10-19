@@ -76,6 +76,9 @@ describe('desk controls', () => {
     expect(sheet.selectedRange()).toEqual({ c0: 1, r0: 1, c1: 2, r1: 2 });
     sheet.mergeSelected();
     expect(sheet.getCell('B2').s.merge).toEqual({ cols: 2, rows: 2 });
+    sheet.insertCol(0);
+    expect(sheet.getCell('C2').s.merge.cols).toBe(2);
+    expect(sheet.getData().cells.A1).toBeUndefined();
   });
 
   test('Document sanitizes scripts', () => {
