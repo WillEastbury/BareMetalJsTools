@@ -364,6 +364,16 @@ Tests run under Node + jsdom. Each module is loaded in isolation via `new Functi
 
 ---
 
+## Shared control surfaces
+
+`BareMetal.ControlSurface` builds accessible settings panels from a schema;
+`BareMetal.Timeline` provides a media and animation scrubber;
+`BareMetal.AudioMixer` provides track level, pan, mute, solo and optional Web
+Audio routing; `BareMetal.SceneInspector` edits renderer-neutral scene values;
+and `BareMetal.InputRouter` maps keyboard, pointer, gamepad and XR actions.
+They are framework-free and load as plain scripts or through package exports.
+See [ControlSurfaces](docs/ControlSurfaces.md) for API examples.
+
 ## Why this exists
 
 Web development got complicated for no good reason. Somewhere along the way, "make a web page" turned into "configure a seventeen-stage build pipeline, wait for it to compile, debug the bundler, then discover your CSS got tree-shaken into oblivion."

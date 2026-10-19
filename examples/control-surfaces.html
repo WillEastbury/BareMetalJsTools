@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BareMetal control surfaces</title>
+<link rel="stylesheet" href="../src/BareMetal.ControlSurface.css">
+<style>body{font:16px system-ui;max-width:70rem;margin:2rem auto;padding:0 1rem;background:#10151d;color:#eef3fa}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:1rem}article{padding:1rem;border:1px solid #64748b;border-radius:.8rem}.status{min-height:1.5rem}.preview-stage{height:12rem;display:grid;place-items:center;perspective:36rem}.preview-object{width:8rem;height:8rem;display:grid;place-items:center;border:1px solid #91c9ff;border-radius:1rem;background:linear-gradient(135deg,#3f6f9c,#162b46);box-shadow:0 1rem 3rem #0008;transition:transform .15s,opacity .15s}</style>
+<main>
+  <article><div id="settings"></div><p class="status" id="settings-status" role="status"></p></article>
+  <article><div id="timeline"></div><p class="status" id="time-status" role="status"></p></article>
+  <article><div id="mixer"></div></article>
+  <article><div class="preview-stage"><div class="preview-object" id="preview-object">Preview</div></div><div id="inspector"></div></article>
+</main>
+<script src="../src/BareMetal.ControlSurface.js"></script>
+<script src="../src/BareMetal.Timeline.js"></script>
+<script src="../src/BareMetal.AudioMixer.js"></script>
+<script src="../src/BareMetal.SceneInspector.js"></script>
+<script src="../src/BareMetal.Gamepad.js"></script>
+<script src="../src/BareMetal.InputRouter.js"></script>
+<script>
+const panel=BareMetal.ControlSurface.create({title:'Preview settings',fields:[{name:'quality',label:'Quality',type:'select',options:['low','balanced','high'],defaultValue:'balanced'},{name:'exposure',label:'Exposure',type:'range',min:.25,max:2,step:.05,defaultValue:1,group:'Rendering'},{name:'loop',label:'Loop playback',type:'toggle',defaultValue:true,group:'Playback'}],presets:[{label:'Battery saver',values:{quality:'low',exposure:1}}],onChange:e=>document.querySelector('#settings-status').textContent=e.name+': '+e.value});document.querySelector('#settings').append(panel.element);
+const timeline=BareMetal.Timeline.create({duration:245,currentTime:38,markers:[{time:72,label:'Intro ends'},{time:191,label:'Final section'}],onSeek:t=>document.querySelector('#time-status').textContent='Seek to '+BareMetal.Timeline.formatTime(t)});document.querySelector('#timeline').append(timeline.element);
+const mixer=BareMetal.AudioMixer.create({tracks:[{id:'music',label:'Music',gain:.65,pan:0},{id:'voice',label:'Voice',gain:.9,pan:0}]});document.querySelector('#mixer').append(mixer.element);
+const targets=[{id:'preview',label:'Preview object',values:{position:{x:0,y:1,z:-2},rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1},material:{color:'#78b7ff',opacity:1,roughness:.4,metalness:0}}}];const cube=document.querySelector('#preview-object');const inspector=BareMetal.SceneInspector.create({targets,onChange:()=>{const v=targets[0].values;cube.style.transform=`translate3d(${v.position.x*12}px,${-v.position.y*12}px,${v.position.z*8}px) rotateX(${v.rotation.x}deg) rotateY(${v.rotation.y}deg) rotateZ(${v.rotation.z}deg) scale3d(${v.scale.x},${v.scale.y},${v.scale.z})`;cube.style.background=v.material.color;cube.style.opacity=v.material.opacity;}});document.querySelector('#inspector').append(inspector.element);
+const router=BareMetal.InputRouter.create({element:document,keyboard:{toggle:['Space']},onAction:event=>{if(event.action==='toggle'&&(event.phase==='activate'||(event.phase==='down'&&event.source==='keyboard')))timeline.setPlaying(!timeline.getState().playing)}});window.addEventListener('beforeunload',()=>{router.destroy();mixer.destroy()},{once:true});
+</script>
