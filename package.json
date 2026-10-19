@@ -65,6 +65,7 @@
     "./observe": "./src/BareMetal.Observe.js",
     "./media": "./src/BareMetal.Media.js",
     "./pay": "./src/BareMetal.Pay.js",
+    "./pivot": "./src/BareMetal.Pivot.js",
     "./play": "./src/BareMetal.Play.js",
     "./play/css": "./src/BareMetal.Play.css",
     "./speech": "./src/BareMetal.Speech.js",

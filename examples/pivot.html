@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pivot — BareMetalJsTools</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../src/themes/candy.css">
+</head>
+<body style="padding:1.2rem">
+  <p><a href="index.html">Examples</a></p>
+  <h1>Pivot</h1>
+  <div id="pivot"></div>
+  <script src="../src/BareMetal.Charts.js"></script>
+  <script src="../src/BareMetal.Pivot.js"></script>
+  <script>
+    BareMetal.Pivot.create("#pivot", {
+      fields: ["Item", "Qty"],
+      records: [
+        { Item: "Paper", Qty: 12 },
+        { Item: "Ink", Qty: 4 },
+        { Item: "Paper", Qty: 3 },
+        { Item: "Ink", Qty: 2 }
+      ],
+      groupBy: "Item",
+      valueField: "Qty",
+      op: "sum"
+    });
+  </script>
+</body>
+</html>
