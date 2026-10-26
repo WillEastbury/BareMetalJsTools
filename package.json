@@ -80,6 +80,8 @@
     "./workers": "./src/BareMetal.Workers.js",
     "./logger": "./src/BareMetal.Logger.js",
     "./markdown": "./src/BareMetal.Markdown.js",
+    "./mermaid-diagram-renderer": "./src/BareMetal.MermaidDiagramRenderer.js",
+    "./mermaid-diagram-renderer.css": "./src/BareMetal.MermaidDiagramRenderer.css",
     "./tokens": "./src/BareMetal.Tokens.js",
     "./rbac": "./src/BareMetal.RBAC.js",
     "./types": "./src/BareMetal.Types.js",

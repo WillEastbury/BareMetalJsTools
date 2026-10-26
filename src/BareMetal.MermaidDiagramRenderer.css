@@ -1,0 +1,7 @@
+.bm-mermaid-diagram { display: block; max-width: 100%; margin: 1rem auto; overflow: visible; color: var(--bm-mermaid-ink, currentColor); }
+.bm-mermaid-edge { fill: none; stroke: var(--bm-mermaid-line, currentColor); stroke-width: 2; }
+.bm-mermaid-dashed { stroke-dasharray: 6 5; }
+.bm-mermaid-lifeline { stroke: var(--bm-mermaid-line, currentColor); stroke-width: 1.5; stroke-dasharray: 5 5; opacity: .65; }
+.bm-mermaid-shape { fill: var(--bm-mermaid-surface, Canvas); stroke: var(--bm-mermaid-line, currentColor); stroke-width: 1.6; }
+.bm-mermaid-label, .bm-mermaid-edge-label { fill: var(--bm-mermaid-ink, currentColor); font: 14px/1.4 system-ui, sans-serif; }
+.bm-mermaid-edge-label { font-size: 12px; }
