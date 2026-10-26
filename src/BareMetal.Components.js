@@ -530,8 +530,14 @@ BareMetal.Components = (() => {
         const toast = el('div', 'to to-au ' + durClass + (dark ? ' to-dk' : ' to-' + type));
         if (t.title) {
           const header = el('div', 'to-h');
-          header.innerHTML = '<span class="to-t">' + (t.title || '') + '</span>' +
-            (t.time ? '<span class="to-tm">' + t.time + '</span>' : '');
+          const title = el('span', 'to-t');
+          title.textContent = String(t.title || '');
+          header.appendChild(title);
+          if (t.time) {
+            const time = el('span', 'to-tm');
+            time.textContent = String(t.time);
+            header.appendChild(time);
+          }
           const closeBtn = el('button', 'bt-x' + (dark ? ' bt-xw' : ''));
           closeBtn.addEventListener('click', () => toast.remove());
           header.appendChild(closeBtn);
