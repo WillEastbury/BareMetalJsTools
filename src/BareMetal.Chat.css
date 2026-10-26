@@ -1,7 +1,9 @@
 /* Reusable chat layout primitives. Load after BareMetalStyles and the theme. */
 .bm-chat-layout {
   display: flex;
+  height: 100dvh;
   min-height: 100dvh;
+  overflow: hidden;
   margin: 0;
 }
 
@@ -146,6 +148,3 @@
   .bm-chat-response-controls > input[type=range] { width: 6.875rem; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .bm-chat-layout *, .bm-chat-layout *::before, .bm-chat-layout *::after { scroll-behavior: auto !important; }
-}
