@@ -113,7 +113,8 @@
     "./themes/wavefunction": "./src/themes/wavefunction.css",
     "./themes/lava": "./src/themes/lava.css",
     "./themes/candy": "./src/themes/candy.css",
-    "./fonts": "./src/fonts/fonts.css"
+    "./fonts": "./src/fonts/fonts.css",
+    "./chat.css": "./src/BareMetal.Chat.css"
   },
   "scripts": {
     "test": "jest",
