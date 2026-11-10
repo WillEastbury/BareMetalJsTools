@@ -1,6 +1,6 @@
 # BareMetalJsTools
 
-> *1 MB for a complete reactive UI framework, CSS toolkit, binary serialisation, schema validation, compression, transport layer (retry/circuit-breaker/cache), OAuth/OIDC auth, session management, crypto, offline-first PWA, routing, charting, graph visualisation, validation, i18n, state machines, animation, drag-and-drop, accessibility, structured logging, JWT handling, 50+ regex patterns, ISO reference data, RBAC, a workflow engine, Markdown renderer, PicoScript 16-opcode ISA compiler + VM, clipboard, file I/O, notifications, pub/sub, undo/redo, IndexedDB, worker pool, forms, geolocation, camera/media, payments, observers, speech, gamepad, sync/CRDTs, URL utilities, capability detection, caching, async pipelines, diagnostics, config management, runtime types, document chains, schema-driven printing, barcode/QR scanning, TOTP authenticator, full-text search, job scheduling, notification inbox, blob lifecycle management, and multi-tenancy. Most people pull in more than that just for a toast notification library.*
+> A complete browser toolkit: reactive UI, CSS primitives, binary serialisation, schema validation, compression, transport, authentication, crypto, offline-first storage, routing, charts, workflows, structured logging, accessibility, media, forms, and more — all as plain dependency-free JavaScript.
 
 Modern web development has become absurdly complicated. You need a bundler, a transpiler, a framework, a meta-framework, a state manager, a CSS-in-JS solution, and forty-seven config files before you can render "Hello World". Then you wait for it to compile.
 
@@ -10,34 +10,7 @@ BareMetalJsTools is a collection of tiny, zero-dependency vanilla-JS modules tha
 
 Every module follows the same pattern: small, obvious, fast. You can read the source in one sitting. You can understand what it does without a tutorial series. And because there's nothing to build, your deploy is just... serving files. *How* you serve them matters — cache headers, compression, CDN — but the point is your toolchain stays out of your way.
 
-> [**The hard part is serving your files well**](https://github.com/willeastbury/picoweb)
-
-> Extracted from [BareMetalWeb](https://github.com/WillEastbury/BareMetalWeb) and maintained separately so each piece can be reused, evolved, and tested in isolation.
-
----
-
-## The BareMetal family
-
-### Responsive media gallery
-
-`BareMetal.Gallery` provides image, video and audio cards with search, category
-and tag filters, favourites, sorting, grid/list views and larger previews.
-It follows the selected theme and adapts to narrow panels. See
-[Gallery usage and API](docs/BareMetal.Gallery.md).
-
-This toolkit doesn't exist in isolation. The same "strip away the nonsense" philosophy runs through the entire stack:
-
-| Project | What it is |
-|---|---|
-| [**BareMetalJsTools**](https://github.com/WillEastbury/BareMetalJsTools) | This repo. Reactive UI, REST transport, SPA routing, charts, CSS framework — all as plain `<script>` tags. This is what happens when you apply the philosophy to *the browser*. |
-| [**BareMetalWeb**](https://github.com/WillEastbury/BareMetalWeb) | The web server and application framework this toolkit was extracted from. A minimal, metadata-driven .NET web host that serves these JS modules and renders server-driven UI — absolute lightning, but it's the only component in the stack that won't run on a tiny RPi Pico 2W. C port incoming. |
-| [**PicoWeb**](https://github.com/willeastbury/picoweb) | The hard part is serving your files well. A tiny, fast web server that does exactly that — static files, cache headers, compression, and nothing else. This is what happens when you apply it to *the web server*. |
-| [**PicoWAL**](https://github.com/WillEastbury/PicoWAL) | A write-ahead-log database engine built from scratch. Binary schema cards, Pack-0 wire format, embedded storage — no ORM, no query planner committee meetings. This is what happens when you apply it to the *database*. |
-| [**picocompress**](https://github.com/WillEastbury/picocompress) | Block-based LZ compression in pure C and JS (byte-identical output). Integrated into `BareMetal.Rest` for opt-in wire compression. This is what happens when you apply it to *data on the wire*. |
-| [**RP2350B_Bitnet**](https://github.com/WillEastbury/RP2350B_Bitnet) | A 1-bit quantised SLM that runs on a Raspberry Pi Pico 2 with 512 KB of RAM. This is what happens when you apply it to *machine learning* — and refuse to accept that "AI" requires a data centre, or a GPU, or even a proper desktop or laptop computer. |
-| [**PiOS**](https://github.com/WillEastbury/PiOS) | A bare-metal operating system for the Pi 5. This is what happens when you apply it to *the OS itself*. Requires Pi 5 for now — but if we can get it small enough, who knows. |
-
-The whole point is the same everywhere: understand what the machine actually needs to do, throw away everything that doesn't serve that goal, and keep the result small enough that one person can hold the entire system in their head.
+> [Explore the interactive library showcase](https://willeastbury.github.io/BareMetalJsTools/)
 
 ---
 
@@ -93,11 +66,11 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.Controls`](docs/BareMetal.Controls.md) | Shared accessible range, disclosure, and help controls. | [source](src/BareMetal.Controls.js) | [CSS](src/BareMetal.Controls.css) | No equivalent |
 | [`BareMetal.Modal`](docs/BareMetal.Modal.md) | Native dialog wrapper with focus restoration and busy state. | [source](src/BareMetal.Modal.js) | [CSS](src/BareMetal.Modal.css) | Bootstrap modal JS |
 | [`BareMetal.Gallery`](docs/BareMetal.Gallery.md) | Responsive media catalogue with filters, favourites, sorting, list/grid views, and preview. | [source](src/BareMetal.Gallery.js) | [CSS](src/BareMetal.Gallery.css) | Media gallery libraries |
-| [`BareMetal.Metadata`](docs/BareMetal.Metadata.md) | Client-side entity schema registry. Inline JSON, server fetch, or PicoWAL binary — declare your entities and render them automatically. | [8 KB](src/BareMetal.Metadata.js) | [4 KB](src/BareMetal.Metadata.min.js) | *GraphQL schema* + codegen toolchain |
+| [`BareMetal.Metadata`](docs/BareMetal.Metadata.md) | Client-side entity schema registry. Inline JSON or server fetch — declare your entities and render them automatically. | [8 KB](src/BareMetal.Metadata.js) | [4 KB](src/BareMetal.Metadata.min.js) | *GraphQL schema* + codegen toolchain |
 | [`BareMetal.Communications`](docs/BareMetal.Communications.md) | REST + WebSocket transport. Negotiates WS binary frames → BSO1 → JSON fallback. CSRF, 401-redirect, request multiplexing. | [19 KB](src/BareMetal.Communications.js) | [8 KB](src/BareMetal.Communications.min.js) | Axios (≈14 KB) + *socket.io-client* (≈45 KB) |
 | [`BareMetal.Launcher`](docs/BareMetal.Launcher.md) | Hosted terminal/session launcher helpers. API wrapper, tiny store, session cards, idle display, reconnecting WebSocket attach, optional xterm bridge. | [15 KB](src/BareMetal.Launcher.js) | [8 KB](src/BareMetal.Launcher.min.js) | *React shell* + socket.io-client + state library |
 | [`BareMetal.Binary`](docs/BareMetal.Binary.md) | BSO1 binary wire serialiser. Zero-copy `DataView` reads, HMAC-SHA256 signing via Web Crypto. | [23 KB](src/BareMetal.Binary.js) | [14 KB](src/BareMetal.Binary.min.js) | Protocol Buffers JS (≈230 KB), *MessagePack (≈25 KB)* |
-| [`BareMetal.Compress`](docs/BareMetal.Compress.md) | Block-based LZ compressor. Byte-identical to the [C reference](https://github.com/WillEastbury/picocompress). Opt-in wire compression for Rest. | [19 KB](src/BareMetal.Compress.js) | [8 KB](src/BareMetal.Compress.min.js) | Brotli.js (≈300 KB), *HeatShrink (≈8 KB)* |
+| [`BareMetal.Compress`](docs/BareMetal.Compress.md) | Block-based LZ compressor for byte-efficient wire and storage formats. Opt-in wire compression for Communications. | [19 KB](src/BareMetal.Compress.js) | [8 KB](src/BareMetal.Compress.min.js) | Brotli.js (≈300 KB), *HeatShrink (≈8 KB)* |
 | [`BareMetal.Rendering`](docs/BareMetal.Rendering.md) | Glue layer — wires Rest + Bind + Template into an entity lifecycle (`createEntity`, `listEntities`). | [4 KB](src/BareMetal.Rendering.js) | [1 KB](src/BareMetal.Rendering.min.js) | *Custom Redux middleware* + React container layer |
 | [`BareMetal.Routing`](docs/BareMetal.Routing.md) | History-API SPA router. Named segments (`:param`), catch-all (`*`), query parsing. | [7 KB](src/BareMetal.Routing.js) | [2 KB](src/BareMetal.Routing.min.js) | *vue-router (≈18 KB)*, react-router (≈30 KB) |
 | [`BareMetal.Charts`](docs/BareMetal.Charts.md) | SVG charts — bar, line, sparkline, donut, gauge. Animated, themeable via CSS custom properties. | [16 KB](src/BareMetal.Charts.js) | [8 KB](src/BareMetal.Charts.min.js) | *Chart.js (≈200 KB)*, D3 (≈250 KB) |
@@ -126,7 +99,7 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.RBAC`](docs/BareMetal.RBAC.md) | Client-side role/permission UI hints. Reads JWT from storage/cookie, checks roles, groups, permissions, scopes. DOM attribute processing. **UI hints only — enforce server-side.** | [19 KB](src/BareMetal.RBAC.js) | [9 KB](src/BareMetal.RBAC.min.js) | *CASL (≈30 KB)*, casbin.js (≈50 KB), custom middleware |
 | [`BareMetal.Workflow`](docs/BareMetal.Workflow.md) | Minimal workflow engine. SET/IF/ELSE/FOR/FOREACH/FOREACHP/WEB/LOAD/SAVE/LOG/WAIT/CALL. Registry, JSON serialization, visual designer component. | [23 KB](src/BareMetal.Workflow.js) | [12 KB](src/BareMetal.Workflow.min.js) | *n8n (massive)*, Camunda (enterprise), custom state machines |
 | [`BareMetal.Markdown`](docs/BareMetal.Markdown.md) | GFM Markdown-to-HTML renderer. Headings, lists, tables, code blocks, inline formatting, TOC, front matter, custom renderers, sanitize mode. | [18 KB](src/BareMetal.Markdown.js) | [11 KB](src/BareMetal.Markdown.min.js) | *marked.js (≈39 KB)*, markdown-it (≈100 KB), showdown (≈70 KB) |
-| [`BareMetal.Play`](docs/BareMetal.Play.md) | Interactive story reader over PicoWAL packs. Gated choices, effects, persona-filled Markdown, in-page letters and notes. | [27 KB](src/BareMetal.Play.js) | [14 KB](src/BareMetal.Play.min.js) | Twine (huge), custom CYOA shells |
+| [`BareMetal.Play`](docs/BareMetal.Play.md) | Interactive story reader over JSON packs. Gated choices, effects, persona-filled Markdown, in-page letters and notes. | [27 KB](src/BareMetal.Play.js) | [14 KB](src/BareMetal.Play.min.js) | Twine (huge), custom CYOA shells |
 | [`BareMetal.Story`](docs/BareMetal.Story.md) | Story authoring editor. Interactions, options, personas, templates, and a graph map over the same packs. | [46 KB](src/BareMetal.Story.js) | [27 KB](src/BareMetal.Story.min.js) | Twine, custom CMS |
 | [`BareMetal.Sheet`](docs/BareMetal.Sheet.md) | Spreadsheet cell view. A1 grid, formula bar, selection, in-cell edit, per-cell style. | [10 KB](src/BareMetal.Sheet.js) | [6 KB](src/BareMetal.Sheet.min.js) | Handsontable, Luckysheet |
 | [`BareMetal.Document`](docs/BareMetal.Document.md) | Semantic HTML editor (not RTF). Headings, lists, colour, font. | [4 KB](src/BareMetal.Document.js) | [3 KB](src/BareMetal.Document.min.js) | contenteditable, Quill, Tiptap |
@@ -134,7 +107,7 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.FooterBar`](docs/BareMetal.FooterBar.md) | Footer strip: status, sheet tabs, zoom. | [4 KB](src/BareMetal.FooterBar.js) | [3 KB](src/BareMetal.FooterBar.min.js) | Spreadsheet status bar |
 | [`BareMetal.Colour`](docs/BareMetal.Colour.md) | Swatch + hex colour picker. | [5 KB](src/BareMetal.Colour.js) | [3 KB](src/BareMetal.Colour.min.js) | `<input type=color>` |
 | [`BareMetal.Font`](docs/BareMetal.Font.md) | Font family and size picker with live preview. | [4 KB](src/BareMetal.Font.js) | [3 KB](src/BareMetal.Font.min.js) | OS font dialogs |
-| [`BareMetal.DocumentWAL`](docs/BareMetal.DocumentWAL.md) | Change log, merge, compact snapshot, undo/redo, downloadable op stream. PicoScript host in `picoscript/docwal.pc`. | [9 KB](src/BareMetal.DocumentWAL.js) | [5 KB](src/BareMetal.DocumentWAL.min.js) | Yjs, Automerge, OT |
+| [`BareMetal.DocumentWAL`](docs/BareMetal.DocumentWAL.md) | Change log, merge, compact snapshot, undo/redo, and downloadable operation streams. | [9 KB](src/BareMetal.DocumentWAL.js) | [5 KB](src/BareMetal.DocumentWAL.min.js) | Yjs, Automerge, OT |
 | [`BareMetal.MermaidDiagramRenderer`](docs/BareMetal.MermaidDiagramRenderer.md) | Safe, dependency-free SVG rendering for a documented Mermaid flowchart and sequence diagram subset. | [JS](src/BareMetal.MermaidDiagramRenderer.js) · [CSS](src/BareMetal.MermaidDiagramRenderer.css) | | mermaid.js (≈2 MB) |
 | [`BareMetal.PicoScript`](docs/BareMetal.PicoScript.md) | Real PicoScript 16-opcode ISA: 4-frontend compiler (C/BASIC/Python/English) + deterministic VM + 456 host hooks across 63 namespaces (OS-worker, AI, storage, crypto, UI, capsules). Runs the same bytecode as PIOS bare metal. | [322 KB](src/BareMetal.PicoScript.js) | — | *No equivalent* — complete language VM + compiler in one file |
 | [`BareMetal.WorkflowPico`](docs/BareMetal.WorkflowPico.md) | Compiles `BareMetal.Workflow` step lists to PicoScript (English dialect) — the visual workflow designer becomes a PicoScript frontend that runs on the browser/RP2350/PIOS/C# VM. Adds a "Compile to PicoScript" designer button. | [16 KB](src/BareMetal.WorkflowPico.js) | [8 KB](src/BareMetal.WorkflowPico.min.js) | *No equivalent* — visual workflow → deterministic bytecode |
@@ -185,7 +158,7 @@ graph TB
     Styles["🎨 Styles<br/><i>Grid · Buttons · Cards<br/>Modals · Toasts · Layout</i>"]
     Charts["📊 Charts<br/><i>Bar · Line · Sparkline<br/>Donut · Gauge</i>"]
     Graph["🕸️ Graph<br/><i>Force-directed<br/>Drag · Zoom</i>"]
-    Play["📖 Play + Story<br/><i>Reader · Editor<br/>PicoWAL packs</i>"]
+    Play["📖 Play + Story<br/><i>Reader · Editor<br/>JSON packs</i>"]
   end
 
   subgraph "Reactive Binding"
@@ -327,11 +300,11 @@ await customer.update(42, { name: 'Acme' });
 
 ### Spreadsheet desk
 
-Ribbon + sheet + footer + colour + font + DocumentWAL: [`examples/sheet-app.html`](examples/sheet-app.html). Rich HTML notes: [`examples/document-app.html`](examples/document-app.html). PicoScript document server: [`picoscript/docwal.pc`](picoscript/docwal.pc).
+Ribbon + sheet + footer + colour + font + DocumentWAL: [`examples/sheet-app.html`](examples/sheet-app.html). Rich HTML notes: [`examples/document-app.html`](examples/document-app.html).
 
 ### Interactive stories
 
-Reader and editor over PicoWAL JSON packs. Full walkthrough: [`BareMetal.Play`](docs/BareMetal.Play.md) and [`BareMetal.Story`](docs/BareMetal.Story.md). Demos: [`examples/story-play.html`](examples/story-play.html), [`examples/story-editor.html`](examples/story-editor.html).
+Reader and editor over JSON packs. Full walkthrough: [`BareMetal.Play`](docs/BareMetal.Play.md) and [`BareMetal.Story`](docs/BareMetal.Story.md). Demos: [`examples/story-play.html`](examples/story-play.html), [`examples/story-editor.html`](examples/story-editor.html).
 
 ```html
 <link rel="stylesheet" href="src/BareMetalStyles.css">
@@ -424,5 +397,3 @@ The hard part isn't the JavaScript. The hard part is serving your files well —
 ## License
 
 MIT — see [LICENSE](./LICENSE).
-
-Extracted from [BareMetalWeb](https://github.com/WillEastbury/BareMetalWeb) and maintained here for independent reuse.
