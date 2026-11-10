@@ -58,7 +58,7 @@ Every module follows the same pattern: small, obvious, fast. You can read the so
 
 | Module | What it does | Source | Min | Nearest equivalent for the not-quite-insane |
 |---|---|---|---|---|
-| [`BareMetal.Bind`](docs/BareMetal.Bind.md) | Reactive `Proxy` state + `m-*` directives, keyed lists, JSON arrays and many-to-many bindings. | [18.2 KB raw / 4.7 KB gzip](src/BareMetal.Bind.js) | [12.3 KB raw / 3.8 KB gzip](src/BareMetal.Bind.min.js) | Vue.js (≈40 KB min), Alpine.js (≈15 KB), Rivets.js ❤️, *Knockout.js ❤️*, TinyBind 💕 |
+| [`BareMetal.Bind`](docs/BareMetal.Bind.md) | Reactive `Proxy` state + two-way native controls, keyed lists, add/remove rows, JSON arrays and many-to-many bindings. | [25.5 KB raw / 5.9 KB gzip](src/BareMetal.Bind.js) | [17.5 KB raw / 4.8 KB gzip](src/BareMetal.Bind.min.js) | Vue.js (≈40 KB min), Alpine.js (≈15 KB), Rivets.js ❤️, *Knockout.js ❤️*, TinyBind 💕 |
 | [`BareMetal.Components`](docs/BareMetal.Components.md) | Widget directives including fast dotted-field tables, nested tables and many-valued relation cells. | [28.3 KB raw / 7.0 KB gzip](src/BareMetal.Components.js) | [19.3 KB raw / 6.0 KB gzip](src/BareMetal.Components.min.js) | PrimeVue, Vuetify, Material UI (hundreds of KB each) |
 | [`BareMetal.ComponentFactories`](docs/BareMetal.ComponentFactories.md) | `create.*` helpers and `chatEndpoint()` auto-wire for REST-backed chatbots. | [2.6 KB raw / 1.0 KB gzip](src/BareMetal.ComponentFactories.js) | [1.5 KB raw / 0.7 KB gzip](src/BareMetal.ComponentFactories.min.js) | *Hand-rolled boilerplate* |
 | [`BareMetal.Template`](docs/BareMetal.Template.md) | Schema-driven DOM builder for forms, flat tables, nested tables and many-relations. | [9.9 KB raw / 3.2 KB gzip](src/BareMetal.Template.js) | [7.2 KB raw / 2.7 KB gzip](src/BareMetal.Template.min.js) | Formly (≈80 KB), *JSON Forms (≈200 KB)* |
@@ -160,7 +160,7 @@ Every module follows the same pattern: small, obvious, fast. You can read the so
 | [`BareMetal.Inbox`](docs/BareMetal.Inbox.md) | Persistent notification center: channels, preferences, read/unread, grouping, priority, retention, search. | [22.5 KB raw / 5.2 KB gzip](src/BareMetal.Inbox.js) | [10.1 KB raw / 3.6 KB gzip](src/BareMetal.Inbox.min.js) | *Custom implementations* |
 | [`BareMetal.Blob`](docs/BareMetal.Blob.md) | File/blob lifecycle: chunked upload, resumable, hash/checksum, encrypt, store adapters, lifecycle policies. | [38.3 KB raw / 9.3 KB gzip](src/BareMetal.Blob.js) | [20.0 KB raw / 6.9 KB gzip](src/BareMetal.Blob.min.js) | *tus-js-client (≈30 KB)*, uppy (≈200 KB) |
 | [`BareMetal.Tenant`](docs/BareMetal.Tenant.md) | Multi-tenancy: isolation, context propagation, partitioning, hierarchy, limits, feature flags, suspend/activate. | [26.1 KB raw / 5.7 KB gzip](src/BareMetal.Tenant.js) | [10.6 KB raw / 3.8 KB gzip](src/BareMetal.Tenant.min.js) | *Custom implementations* |
-| **Total** | **The whole toolkit** | **≈2,328.5 KB raw / 592.4 KB gzip** | **≈994.8 KB raw / 334.6 KB gzip** | **≈6,000+ KB** (picking the smaller option from each row) |
+| **Total** | **The whole toolkit** | **≈2,335.7 KB raw / 593.7 KB gzip** | **≈1,000 KB raw / 335.6 KB gzip** | **≈6,000+ KB** (picking the smaller option from each row) |
 
 ### Architecture
 

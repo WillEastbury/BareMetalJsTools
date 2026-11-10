@@ -81,6 +81,83 @@ BareMetal.Bind = (() => {
     });
   }
 
+  function cloneListValue(value) {
+    if (value == null) return value;
+    if (typeof structuredClone === 'function') {
+      try { return structuredClone(value); } catch (_) {}
+    }
+    if (Array.isArray(value)) return value.map(cloneListValue);
+    if (typeof value === 'object') {
+      const copy = {};
+      Object.keys(value).forEach(k => { copy[k] = cloneListValue(value[k]); });
+      return copy;
+    }
+    return value;
+  }
+
+  function resolveArrayPath(path, state, scope) {
+    if (!path) return null;
+    if (scope && path.startsWith('.root.')) return resolveInScope(path, state, scope);
+    if (scope && path.startsWith('.parent.')) return resolveInScope(path, state, scope);
+    if (scope && path.startsWith('.')) return resolveInScope(path, state, scope);
+    return getPath(state, path);
+  }
+
+  function setArrayPath(path, state, scope, next) {
+    if (!path) return false;
+    if (scope && path.startsWith('.root.')) {
+      setPath(state, path.slice(6), next);
+      return true;
+    }
+    if (scope && path.startsWith('.parent.')) {
+      setPath(scope.parent, path.slice(8), next);
+      return true;
+    }
+    if (scope && path.startsWith('.')) {
+      setPath(scope.item, path.slice(1), next);
+      return true;
+    }
+    setPath(state, path, next);
+    return true;
+  }
+
+  function appendList(state, path, value, scope) {
+    const arr = resolveArrayPath(path, state, scope);
+    if (!Array.isArray(arr) || value === undefined) return false;
+    arr.push(cloneListValue(value));
+    if (!Array.isArray(state[path])) setArrayPath(path, state, scope, arr);
+    return true;
+  }
+
+  function removeList(state, path, value, options, scope) {
+    const arr = resolveArrayPath(path, state, scope);
+    if (!Array.isArray(arr)) return false;
+    options = options || {};
+    let index = -1;
+    if (typeof options.index === 'number') index = options.index;
+    else if (value !== undefined) {
+      if (options.key) {
+        index = arr.findIndex(item =>
+          typeof item === 'object' && item
+            ? item[options.key] === value[options.key]
+            : item === value
+        );
+      } else {
+        index = arr.indexOf(value);
+        if (index < 0 && typeof value === 'object' && value) {
+          index = arr.findIndex(item => {
+            if (typeof item !== 'object' || !item) return false;
+            return Object.keys(value).every(k => item[k] === value[k]);
+          });
+        }
+      }
+    }
+    if (index < 0) return false;
+    arr.splice(index, 1);
+    if (arr !== state[path]) setArrayPath(path, state, scope, arr);
+    return true;
+  }
+
   // Parse "name:stateKey,name2:stateKey2" pairs
   function parsePairs(attr) {
     return attr.split(',').map(p => {
@@ -132,8 +209,74 @@ BareMetal.Bind = (() => {
     });
   }
 
+  function parseAddedValue(raw, state, scope) {
+    if (raw == null || raw === '') return undefined;
+    const trim = raw.trim();
+    if (trim.charAt(0) === '{' || trim.charAt(0) === '[') {
+      try { return JSON.parse(trim); } catch (_) { return undefined; }
+    }
+    if (scope) {
+      if (trim.startsWith('.root.')) return resolveInScope(trim, state, scope);
+      if (trim.startsWith('.parent.')) return resolveInScope(trim, state, scope);
+      if (trim.startsWith('.')) return resolveInScope(trim, state, scope);
+    }
+    return getPath(state, trim);
+  }
+
+  function bindMutationControls(root, state, scope) {
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+
+    root.querySelectorAll('[m-add]').forEach(n => {
+      n.__bmMutationState = state;
+      n.__bmMutationScope = scope;
+      if (n.__bmAddBound) return;
+      n.__bmAddBound = true;
+      n.addEventListener('click', event => {
+        event.preventDefault();
+        const path = n.getAttribute('m-add');
+        const valueAttr = n.getAttribute('m-add-value');
+        const defaultAttr = n.getAttribute('m-add-default');
+        const currentState = n.__bmMutationState || state;
+        const currentScope = n.__bmMutationScope || scope;
+        let value = parseAddedValue(valueAttr || defaultAttr, currentState, currentScope);
+        if (value === undefined && defaultAttr) value = parseAddedValue(defaultAttr, currentState, currentScope);
+        appendList(currentState, path, value, currentScope);
+      });
+    });
+
+    root.querySelectorAll('[m-remove]').forEach(n => {
+      n.__bmMutationState = state;
+      n.__bmMutationScope = scope;
+      if (n.__bmRemoveBound) return;
+      n.__bmRemoveBound = true;
+      n.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const path = n.getAttribute('m-remove');
+        const currentState = n.__bmMutationState || state;
+        const currentScope = n.__bmMutationScope || scope;
+        let value;
+        const valueAttr = n.getAttribute('m-remove-value');
+        if (valueAttr) value = parseAddedValue(valueAttr, currentState, currentScope);
+        else if (currentScope) value = currentScope.item;
+        const key = n.getAttribute('m-remove-key') || null;
+        const indexAttr = n.getAttribute('m-remove-index');
+        const options = {};
+        if (indexAttr) {
+          const indexValue = parseAddedValue(indexAttr, currentState, currentScope);
+          if (typeof indexValue === 'number') options.index = indexValue;
+        } else if (currentScope && typeof currentScope.index === 'number' && n.hasAttribute('m-remove-index-only')) {
+          options.index = currentScope.index;
+        }
+        if (key) options.key = key;
+        removeList(currentState, path, value, options, currentScope);
+      });
+    });
+  }
+
   // Apply directives to a row (non-reactive, for m-each)
   function applyRow(el, state, scope) {
+    bindMutationControls(el, state, scope);
     el.querySelectorAll('[m-text]').forEach(n => {
       n.textContent = resolveBinding(n.getAttribute('m-text'), state, scope) ?? '';
     });
@@ -199,9 +342,33 @@ BareMetal.Bind = (() => {
 
     // m-value (two-way, no formatters)
     root.querySelectorAll('[m-value]').forEach(n => {
-      const path = n.getAttribute('m-value'), chk = n.type === 'checkbox';
-      const isDate = n.type === 'date', isDtLocal = n.type === 'datetime-local';
+      const path = n.getAttribute('m-value');
+      const chk = n.type === 'checkbox';
+      const radio = n.type === 'radio';
+      const select = n.tagName === 'SELECT';
+      const isDate = n.type === 'date';
+      const isDtLocal = n.type === 'datetime-local';
+      const isNumber = n.type === 'number' || n.type === 'range';
       const wk = topKey(path);
+      const coerce = v => {
+        if (radio || select) {
+          if (v === 'true') return true;
+          if (v === 'false') return false;
+        }
+        if (radio) {
+          const current = getPath(state, path);
+          if (typeof current === 'number') {
+            const number = Number(v);
+            if (Number.isFinite(number)) return number;
+          }
+        }
+        if (isNumber) {
+          if (v === '' || v == null) return '';
+          const number = Number(v);
+          return Number.isFinite(number) ? number : v;
+        }
+        return v;
+      };
       const fmt = v => {
         if (v == null || v === '') return '';
         if (isDate) return String(v).slice(0, 10);
@@ -210,13 +377,35 @@ BareMetal.Bind = (() => {
       };
       const sync = () => {
         const v = getPath(state, path);
-        if (chk) { n.checked = !!v; }
+        if (chk) n.checked = !!v;
+        else if (radio) n.checked = String(v) === n.value;
+        else if (select) {
+          if (n.multiple) {
+            const selected = Array.isArray(v) ? v.map(item => String(item)) : [];
+            Array.from(n.options).forEach(option => {
+              option.selected = selected.includes(option.value);
+            });
+          } else {
+            const value = fmt(v);
+            if (n.value !== value) n.value = value;
+          }
+        }
         else { const s = fmt(v); if (n.value !== s) n.value = s; }
       };
       sync(); watch(wk, sync);
-      n.addEventListener(chk ? 'change' : 'input', () => {
-        setPath(state, path, chk ? n.checked : n.value);
-      });
+      if (radio) {
+        n.addEventListener('change', () => {
+          if (n.checked) setPath(state, path, coerce(n.value));
+        });
+      } else if (select && n.multiple) {
+        n.addEventListener('change', () => {
+          setPath(state, path, Array.from(n.selectedOptions).map(option => coerce(option.value)));
+        });
+      } else {
+        n.addEventListener(select ? 'change' : (chk ? 'change' : 'input'), () => {
+          setPath(state, path, chk ? n.checked : coerce(n.value));
+        });
+      }
     });
 
     // m-many-select / m-many-checklist
@@ -441,6 +630,9 @@ BareMetal.Bind = (() => {
       render(); watch(wk, render);
     });
 
+    // m-add / m-remove (standalone and outside m-each)
+    bindMutationControls(root, state, undefined);
+
     // m-click / m-submit
     root.querySelectorAll('[m-click],[m-submit]').forEach(n => {
       const sub = n.hasAttribute('m-submit');
@@ -457,7 +649,8 @@ BareMetal.Bind = (() => {
     reactive, bind, formatters,
     // Exposed helpers for Components module
     getPath, setPath, topKey, parseBinding, applyPipes,
-    resolveInScope, resolveBinding, parsePairs, applyRow, el
+    resolveInScope, resolveBinding, parsePairs, applyRow, el,
+    appendList, removeList
   };
 })();
 

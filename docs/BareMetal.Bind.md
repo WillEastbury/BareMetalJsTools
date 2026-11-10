@@ -2,6 +2,12 @@
 
 > Reactive state, DOM binding, and core `m-*` directives.
 
+BareMetal.Bind uses an integrated, Rivets-style model: plain state paths such
+as `m-value="track.title"` or `m-text="tracks.length"` have no Knockout-style
+`()`, getters or setters. Reactive state is created with `reactive()`, changes
+are delivered through `watch()`, and state mutations immediately synchronize
+back to matching DOM directives.
+
 **Size:** 13.2 KB source / 6.6 KB minified  
 **Dependencies:** None
 
@@ -28,6 +34,25 @@
   BareMetal.Bind.bind(document.getElementById('cart'), state, watch);
 </script>
 ```
+
+### Example 3: Add and remove m-each rows
+```html
+<button m-add="tasks" m-add-default='{"id":3,"title":"New task"}'>Add</button>
+<ul m-each="tasks key:id">
+  <template>
+    <li>
+      <span m-text=".title"></span>
+      <button m-remove="tasks" m-remove-key="id">Remove</button>
+    </li>
+  </template>
+</ul>
+```
+
+`m-add-value="draft"` reads an object or primitive from the reactive state.
+Without `m-add-value`, use `m-add-default` as JSON or a state path.
+Inside an `m-each` row, `m-remove="tasks"` removes the current scoped item.
+Use `m-remove-key="id"` for identity matching or `m-remove-value="path"`
+for an explicit value.
 
 ## API Reference
 
@@ -242,8 +267,23 @@ badge.textContent = 'New';
 | `m-each` | `items` or `items key:id` | Repeats a `<template>` over an array, optionally with keyed diffing. |
 | `m-click` | `handlerName` | Calls `state[handlerName](event)` on click. |
 | `m-submit` | `handlerName` | Calls `state[handlerName](event)` on form submit. |
+| `m-add="path"` | `m-add-value`, `m-add-default` | Appends a state value or JSON default to an array. |
+| `m-remove="path"` | `m-remove-key`, `m-remove-value`, `m-remove-index-only` | Removes the current row or matching value from an array. |
 | `m-many-select="path"` | State path + `m-options`/`m-options-json` | Native multi-select or toggle-list binding. |
 | `m-many-checklist="path"` | State path + `m-options`/`m-options-json` | Checkbox binding for many-to-many relations. |
+
+`m-value` supports:
+
+- text, password, number, range, date and datetime-local inputs
+- checkbox inputs
+- radio groups (the state value is matched against each radio's `value`)
+- single `<select>` elements
+- multi-select `<select>` elements
+
+Number/range values are stored as numbers. Checkbox values are stored as
+booleans. Radio values use the current state type: numeric radio values remain
+numbers, boolean `"true"`/`"false"` values become booleans, and string values
+remain strings.
 
 Both many-to-many directives accept `m-value-field="id"` and
 `m-label-field="name"`. They preserve selected objects or primitive values
