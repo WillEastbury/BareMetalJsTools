@@ -1,0 +1,639 @@
+var __bmDataGridRoot = typeof window !== 'undefined' ? window :
+  (typeof globalThis !== 'undefined' ? globalThis : this);
+__bmDataGridRoot.BareMetal = __bmDataGridRoot.BareMetal ||
+  ((typeof BareMetal !== 'undefined' && BareMetal) ? BareMetal : {});
+var BareMetal = __bmDataGridRoot.BareMetal;
+
+BareMetal.DataGrid = (function () {
+  'use strict';
+
+  var styleId = 'bm-data-grid-styles';
+  var gridSequence = 0;
+
+  function clone(value) {
+    var out;
+    var key;
+    var index;
+    if (value == null || typeof value !== 'object') return value;
+    if (value instanceof Date) return new Date(value.getTime());
+    if (Array.isArray(value)) {
+      out = [];
+      for (index = 0; index < value.length; index++) out.push(clone(value[index]));
+      return out;
+    }
+    out = {};
+    for (key in value) if (Object.prototype.hasOwnProperty.call(value, key)) out[key] = clone(value[key]);
+    return out;
+  }
+
+  function getValue(target, path) {
+    return String(path || '').split('.').reduce(function (value, key) {
+      return value == null ? undefined : value[key];
+    }, target);
+  }
+
+  function setValue(target, path, value) {
+    var keys = String(path || '').split('.');
+    var node = target;
+    var index;
+    if (!keys[0]) throw new TypeError('Bulk edit field path is required');
+    for (index = 0; index < keys.length - 1; index++) {
+      if (!node[keys[index]] || typeof node[keys[index]] !== 'object') node[keys[index]] = {};
+      node = node[keys[index]];
+    }
+    node[keys[keys.length - 1]] = clone(value);
+  }
+
+  function normalizeColumn(column) {
+    var key;
+    var label;
+    if (typeof column === 'string') {
+      var separator = column.indexOf(':');
+      key = separator < 0 ? column.trim() : column.slice(separator + 1).trim();
+      label = separator < 0 ? key.charAt(0).toUpperCase() + key.slice(1) : column.slice(0, separator).trim();
+      return { key: key, label: label, type: 'text', editable: false };
+    }
+    if (!column || typeof column.key !== 'string' || !column.key) throw new TypeError('Each data-grid column requires a key');
+    return {
+      key: column.key,
+      label: column.label || column.key.charAt(0).toUpperCase() + column.key.slice(1),
+      type: column.type || 'text',
+      editable: column.editable === true || column.bulkEditable === true,
+      render: typeof column.render === 'function' ? column.render : null,
+      sort: column.sort !== false
+    };
+  }
+
+  function injectStyles(doc) {
+    if (doc.getElementById(styleId)) return;
+    var style = doc.createElement('style');
+    style.id = styleId;
+    style.textContent =
+      '.bm-data-grid{display:flex;flex-direction:column;gap:.5rem;min-width:0}' +
+      '.bm-data-grid-scroll{overflow:auto;max-height:var(--bm-data-grid-height,24rem);border:1px solid var(--bs-border,#cbd5e1);border-radius:.5rem}' +
+      '.bm-data-grid table{width:100%;border-collapse:collapse;margin:0}' +
+      '.bm-data-grid thead th{position:sticky;top:0;z-index:1;background:var(--bs-surface,#fff)}' +
+      '.bm-data-grid-row{height:var(--bm-data-grid-row-height,36px)}' +
+      '.bm-data-grid-row td{height:var(--bm-data-grid-row-height,36px);max-height:var(--bm-data-grid-row-height,36px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}' +
+      '.bm-data-grid-spacer td{padding:0!important;border:0!important;line-height:0;font-size:0}' +
+      '.bm-data-grid-toolbar,.bm-data-grid-pager{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}' +
+      '.bm-data-grid-status{min-height:1.25em}' +
+      '.bm-data-grid-bulk{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}';
+    (doc.head || doc.documentElement).appendChild(style);
+  }
+
+  function create(target, options) {
+    var cfg = options || {};
+    var host = typeof target === 'string' ? document.querySelector(target) : target;
+    var doc = host && host.ownerDocument ? host.ownerDocument : document;
+    var localMode = typeof cfg.fetchPage !== 'function';
+    var pageSize = Math.max(1, Math.floor(Number(cfg.pageSize) || 100));
+    var rowHeight = Math.max(16, Math.floor(Number(cfg.rowHeight) || 36));
+    var overscan = Math.max(0, Math.floor(Number(cfg.overscan) || 4));
+    var viewportHeight = Math.max(rowHeight, Number(cfg.viewportHeight) || 360);
+    var keyField = cfg.keyField || 'id';
+    var columns = (cfg.columns || (Array.isArray(cfg.rows) && cfg.rows.length ? Object.keys(cfg.rows[0]) : []))
+      .map(normalizeColumn);
+    if (!host) throw new Error('DataGrid target not found');
+    if (!columns.length) throw new TypeError('DataGrid requires columns or at least one initial row');
+    var localRows = Array.isArray(cfg.rows) ? cfg.rows.map(clone) : [];
+    var pageRows = [];
+    var total = localRows.length;
+    var page = 0;
+    var sort = { key: null, direction: 'asc' };
+    var filters = clone(cfg.filters || {});
+    var selectedIds = new Set();
+    var rowCache = new Map();
+    var rowIdentity = new WeakMap();
+    var fallbackRowId = 0;
+    var requestId = 0;
+    var controller = null;
+    var loading = false;
+    var destroyed = false;
+    var ready = Promise.resolve();
+    var instanceId = 'bm-data-grid-' + (++gridSequence);
+    var api;
+
+    injectStyles(doc);
+    var root = doc.createElement('section');
+    root.className = 'bm-data-grid';
+    root.dataset.gridId = instanceId;
+    root.style.setProperty('--bm-data-grid-row-height', rowHeight + 'px');
+    root.style.setProperty('--bm-data-grid-height', viewportHeight + 'px');
+
+    var toolbar = doc.createElement('div');
+    toolbar.className = 'bm-data-grid-toolbar';
+    var selectedLabel = doc.createElement('span');
+    selectedLabel.className = 'sm fg-m';
+    selectedLabel.setAttribute('aria-live', 'polite');
+    toolbar.appendChild(selectedLabel);
+
+    var bulkControls = doc.createElement('div');
+    bulkControls.className = 'bm-data-grid-bulk';
+    var editableColumns = columns.filter(function (column) { return column.editable; });
+    var bulkField = doc.createElement('select');
+    bulkField.className = 'fc';
+    bulkField.setAttribute('aria-label', 'Bulk edit field');
+    editableColumns.forEach(function (column) {
+      var option = doc.createElement('option');
+      option.value = column.key;
+      option.textContent = column.label;
+      bulkField.appendChild(option);
+    });
+    var bulkValue = doc.createElement('input');
+    bulkValue.className = 'fc';
+    bulkValue.setAttribute('aria-label', 'Bulk edit value');
+    var bulkApply = doc.createElement('button');
+    bulkApply.className = 'bt bt-op bt-s';
+    bulkApply.type = 'button';
+    bulkApply.textContent = 'Apply to selected';
+    bulkApply.disabled = true;
+    if (editableColumns.length) {
+      bulkValue.type = editableColumns[0].type === 'number' ? 'number' : 'text';
+      bulkControls.appendChild(bulkField);
+      bulkControls.appendChild(bulkValue);
+      bulkControls.appendChild(bulkApply);
+      toolbar.appendChild(bulkControls);
+      bulkField.addEventListener('change', function () {
+        var column = columns.find(function (item) { return item.key === bulkField.value; });
+        bulkValue.type = column && column.type === 'number' ? 'number' : 'text';
+        bulkValue.value = '';
+      });
+    } else {
+      bulkControls.hidden = true;
+    }
+
+    var status = doc.createElement('div');
+    status.className = 'bm-data-grid-status sm fg-m';
+    status.setAttribute('role', 'status');
+    status.textContent = localMode ? localRows.length + ' records' : 'Ready to load records';
+
+    var scroller = doc.createElement('div');
+    scroller.className = 'bm-data-grid-scroll';
+    scroller.tabIndex = 0;
+    scroller.setAttribute('role', 'region');
+    scroller.setAttribute('aria-label', cfg.label || 'Data table');
+    var table = doc.createElement('table');
+    table.className = 'table';
+    var thead = doc.createElement('thead');
+    var tbody = doc.createElement('tbody');
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    scroller.appendChild(table);
+
+    var pager = doc.createElement('div');
+    pager.className = 'bm-data-grid-pager';
+    var previousButton = doc.createElement('button');
+    previousButton.className = 'bt bt-os bt-s';
+    previousButton.type = 'button';
+    previousButton.textContent = 'Previous';
+    var pageLabel = doc.createElement('span');
+    pageLabel.className = 'sm fg-m';
+    pageLabel.setAttribute('aria-live', 'polite');
+    var nextButton = doc.createElement('button');
+    nextButton.className = 'bt bt-os bt-s';
+    nextButton.type = 'button';
+    nextButton.textContent = 'Next';
+    pager.appendChild(previousButton);
+    pager.appendChild(pageLabel);
+    pager.appendChild(nextButton);
+
+    root.appendChild(toolbar);
+    root.appendChild(status);
+    root.appendChild(scroller);
+    root.appendChild(pager);
+    host.appendChild(root);
+
+    function rowId(row, index) {
+      var value = getValue(row, keyField);
+      if (value != null) return String(value);
+      if (!localMode) throw new Error('Server-paged rows require a stable keyField');
+      if (!row || typeof row !== 'object') throw new TypeError('DataGrid rows must be objects');
+      if (!rowIdentity.has(row)) rowIdentity.set(row, 'row-' + (++fallbackRowId));
+      return rowIdentity.get(row);
+    }
+
+    function sortedRows(rows) {
+      var output = rows.slice();
+      if (!sort.key) return output;
+      output.sort(function (a, b) {
+        var left = getValue(a, sort.key);
+        var right = getValue(b, sort.key);
+        var result;
+        if (left == null) left = '';
+        if (right == null) right = '';
+        if (typeof left === 'number' && typeof right === 'number') result = left - right;
+        else result = String(left).localeCompare(String(right), undefined, { numeric: true, sensitivity: 'base' });
+        return sort.direction === 'asc' ? result : -result;
+      });
+      return output;
+    }
+
+    function activeLocalRows() {
+      var rows = sortedRows(filteredLocalRows());
+      return rows.slice(page * pageSize, (page + 1) * pageSize);
+    }
+
+    function filteredLocalRows() {
+      var keys = Object.keys(filters || {});
+      if (!keys.length) return localRows.slice();
+      return localRows.filter(function (row) {
+        return keys.every(function (key) {
+          var expected = filters[key];
+          var actual = getValue(row, key);
+          if (expected == null || expected === '') return true;
+          if (typeof expected === 'function') return !!expected(actual, row);
+          if (Array.isArray(expected)) return expected.indexOf(actual) >= 0;
+          if (typeof expected === 'string') return String(actual == null ? '' : actual).toLowerCase().indexOf(expected.toLowerCase()) >= 0;
+          return actual === expected;
+        });
+      });
+    }
+
+    function updateLocalTotal() {
+      if (localMode) total = filteredLocalRows().length;
+    }
+
+    function notifySelection() {
+      var ids = Array.from(selectedIds);
+      selectedLabel.textContent = ids.length ? ids.length + ' selected' : 'No rows selected';
+      bulkApply.disabled = !ids.length;
+      if (typeof cfg.onSelectionChange === 'function') {
+        cfg.onSelectionChange(ids, ids.map(function (id) { return rowCache.get(id); }).filter(Boolean));
+      }
+    }
+
+    function visibleWindow() {
+      var count = pageRows.length;
+      var viewport = scroller.clientHeight || viewportHeight;
+      var visible = Math.ceil(viewport / rowHeight);
+      var start = Math.max(0, Math.floor(scroller.scrollTop / rowHeight) - overscan);
+      var end = Math.min(count, start + visible + overscan * 2);
+      return { start: start, end: end };
+    }
+
+    function spacerRow(height) {
+      if (height <= 0) return null;
+      var row = doc.createElement('tr');
+      row.className = 'bm-data-grid-spacer';
+      row.setAttribute('aria-hidden', 'true');
+      var cell = doc.createElement('td');
+      cell.colSpan = columns.length + 1;
+      cell.style.height = height + 'px';
+      row.appendChild(cell);
+      return row;
+    }
+
+    function renderRows() {
+      var windowRange = visibleWindow();
+      var fragment = doc.createDocumentFragment();
+      var index;
+      var row;
+      var tr;
+      var selectionCell;
+      var checkbox;
+      var cell;
+      var column;
+      var value;
+      var rendered;
+      if (!pageRows.length) {
+        var empty = doc.createElement('tr');
+        var emptyCell = doc.createElement('td');
+        emptyCell.colSpan = columns.length + 1;
+        emptyCell.textContent = cfg.emptyText || 'No records';
+        empty.appendChild(emptyCell);
+        fragment.appendChild(empty);
+        tbody.replaceChildren(fragment);
+        return;
+      }
+      var topSpacer = spacerRow(windowRange.start * rowHeight);
+      if (topSpacer) fragment.appendChild(topSpacer);
+      for (index = windowRange.start; index < windowRange.end; index++) {
+        row = pageRows[index];
+        if (!row || typeof row !== 'object') throw new TypeError('DataGrid rows must be objects');
+        tr = doc.createElement('tr');
+        tr.className = 'bm-data-grid-row';
+        tr.dataset.rowId = rowId(row, index);
+        selectionCell = doc.createElement('td');
+        checkbox = doc.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = selectedIds.has(tr.dataset.rowId);
+        checkbox.setAttribute('aria-label', 'Select row ' + tr.dataset.rowId);
+        checkbox.addEventListener('change', function (event) {
+          var selectedId = event.currentTarget.closest('tr').dataset.rowId;
+          if (event.currentTarget.checked) selectedIds.add(selectedId);
+          else selectedIds.delete(selectedId);
+          notifySelection();
+        });
+        selectionCell.appendChild(checkbox);
+        tr.appendChild(selectionCell);
+        for (var columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+          column = columns[columnIndex];
+          cell = doc.createElement('td');
+          value = getValue(row, column.key);
+          rendered = column.render ? column.render(value, row) : value;
+          cell.textContent = rendered == null ? '' : String(rendered);
+          tr.appendChild(cell);
+        }
+        if (typeof cfg.onRowSelect === 'function') {
+          (function (selectedRecord) {
+            tr.addEventListener('click', function (event) {
+              if (event.target.closest('input,button,a,select')) return;
+              cfg.onRowSelect(clone(selectedRecord), event);
+            });
+          })(row);
+        }
+        fragment.appendChild(tr);
+      }
+      var bottomSpacer = spacerRow((pageRows.length - windowRange.end) * rowHeight);
+      if (bottomSpacer) fragment.appendChild(bottomSpacer);
+      tbody.replaceChildren(fragment);
+    }
+
+    function renderHeader() {
+      thead.textContent = '';
+      var row = doc.createElement('tr');
+      var selectCell = doc.createElement('th');
+      var selectAll = doc.createElement('input');
+      selectAll.type = 'checkbox';
+      selectAll.setAttribute('aria-label', 'Select all rows on this page');
+      selectAll.checked = pageRows.length > 0 && pageRows.every(function (item, index) {
+        return selectedIds.has(rowId(item, index));
+      });
+      selectAll.addEventListener('change', function () {
+        pageRows.forEach(function (item, index) {
+          var id = rowId(item, index);
+          if (selectAll.checked) selectedIds.add(id);
+          else selectedIds.delete(id);
+        });
+        notifySelection();
+        renderRows();
+      });
+      selectCell.appendChild(selectAll);
+      row.appendChild(selectCell);
+      columns.forEach(function (column) {
+        var th = doc.createElement('th');
+        if (column.sort === false) {
+          th.textContent = column.label;
+        } else {
+          var button = doc.createElement('button');
+          button.type = 'button';
+          button.className = 'bt bt-os bt-s';
+          button.textContent = column.label + (sort.key === column.key ? (sort.direction === 'asc' ? ' ▲' : ' ▼') : '');
+          button.addEventListener('click', function () {
+            if (sort.key === column.key) sort.direction = sort.direction === 'asc' ? 'desc' : 'asc';
+            else sort = { key: column.key, direction: 'asc' };
+            page = 0;
+            scroller.scrollTop = 0;
+            if (localMode) {
+              pageRows = activeLocalRows();
+              render();
+            } else {
+              loadPage(0).catch(function () {});
+            }
+          });
+          th.appendChild(button);
+        }
+        row.appendChild(th);
+      });
+      thead.appendChild(row);
+    }
+
+    function render() {
+      var pages = Math.max(1, Math.ceil(total / pageSize));
+      if (page >= pages) page = pages - 1;
+      renderHeader();
+      renderRows();
+      pageLabel.textContent = 'Page ' + (page + 1) + ' of ' + pages + ' · ' + total + ' records';
+      previousButton.disabled = loading || page <= 0;
+      nextButton.disabled = loading || page >= pages - 1;
+      notifySelection();
+    }
+
+    function cachePageRows() {
+      var seen = new Set();
+      pageRows.forEach(function (row, index) {
+        var id = rowId(row, index);
+        if (seen.has(id)) throw new Error('DataGrid rows must have unique keyField values');
+        seen.add(id);
+        rowCache.set(id, row);
+      });
+    }
+
+    async function loadPage(nextPage) {
+      if (destroyed) throw new Error('DataGrid has been destroyed');
+      var pageCount = Math.max(1, Math.ceil(total / pageSize));
+      var requestedPage = Math.max(0, Math.min(Math.floor(Number(nextPage) || 0), pageCount - 1));
+      if (localMode) {
+        page = requestedPage;
+        pageRows = activeLocalRows();
+        cachePageRows();
+        status.textContent = total + ' records';
+        render();
+        return { rows: pageRows.slice(), total: total, page: page };
+      }
+      var currentRequest = ++requestId;
+      if (controller) controller.abort();
+      controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      loading = true;
+      status.textContent = 'Loading page ' + (requestedPage + 1) + '…';
+      render();
+      try {
+        var result = await cfg.fetchPage({
+          page: requestedPage,
+          pageSize: pageSize,
+          sort: clone(sort),
+          filters: clone(filters),
+          signal: controller ? controller.signal : undefined
+        });
+        if (destroyed || currentRequest !== requestId) return { stale: true };
+        if (!result || !Array.isArray(result.rows) || !isFinite(Number(result.total)) || Number(result.total) < 0) {
+          throw new TypeError('fetchPage must return { rows: Array, total: non-negative number }');
+        }
+        var availablePages = Math.max(1, Math.ceil(Number(result.total) / pageSize));
+        if (requestedPage >= availablePages && requestedPage > 0) {
+          loading = false;
+          return loadPage(availablePages - 1);
+        }
+        pageRows = result.rows.map(clone);
+        total = Number(result.total);
+        page = requestedPage;
+        loading = false;
+        cachePageRows();
+        status.textContent = total + ' records loaded';
+        render();
+        return { rows: pageRows.slice(), total: total, page: page };
+      } catch (error) {
+        if (destroyed || currentRequest !== requestId) return { stale: true };
+        loading = false;
+        status.textContent = 'Unable to load records: ' + (error.message || String(error));
+        render();
+        if (typeof cfg.onError === 'function') cfg.onError(error);
+        throw error;
+      }
+    }
+
+    function parseBulkValue(value, column) {
+      if (column.type === 'number') {
+        var number = Number(value);
+        if (!isFinite(number)) throw new TypeError('Enter a valid number for ' + column.label);
+        return number;
+      }
+      if (column.type === 'boolean') {
+        var booleanValue = String(value).toLowerCase();
+        if (booleanValue !== 'true' && booleanValue !== 'false') throw new TypeError('Enter true or false for ' + column.label);
+        return booleanValue === 'true';
+      }
+      return value;
+    }
+
+    async function bulkEdit(patch) {
+      if (!selectedIds.size) throw new Error('Select at least one row to bulk edit');
+      if (!patch || typeof patch !== 'object' || Array.isArray(patch) || !Object.keys(patch).length) {
+        throw new TypeError('Bulk edit requires a non-empty patch object');
+      }
+      if (!localMode && typeof cfg.onBulkEdit !== 'function') {
+        throw new Error('Server-paged grids require onBulkEdit to persist bulk changes');
+      }
+      var ids = Array.from(selectedIds);
+      var originals = new Map();
+      var localIndices = new Map();
+      ids.forEach(function (id) {
+        var record = rowCache.get(id);
+        if (!record) throw new Error('A selected row is no longer loaded');
+        if (getValue(record, keyField) == null) throw new Error('Bulk editing requires a stable keyField on every row');
+        originals.set(id, clone(record));
+        localIndices.set(id, localMode ? localRows.indexOf(record) : -1);
+      });
+      var updated = ids.map(function (id) {
+        var record = clone(originals.get(id));
+        if (!record) return null;
+        Object.keys(patch).forEach(function (key) { setValue(record, key, patch[key]); });
+        return { id: id, record: record };
+      }).filter(Boolean);
+      updated.forEach(function (item) {
+        rowCache.set(item.id, item.record);
+        if (localMode && localIndices.get(item.id) >= 0) localRows[localIndices.get(item.id)] = item.record;
+        var pageIndex = pageRows.findIndex(function (record, index) { return rowId(record, index) === item.id; });
+        if (pageIndex >= 0) pageRows[pageIndex] = item.record;
+      });
+      renderRows();
+      status.textContent = 'Saving changes for ' + updated.length + ' selected rows…';
+      try {
+        if (typeof cfg.onBulkEdit === 'function') {
+          await cfg.onBulkEdit({
+            ids: ids.slice(),
+            patch: clone(patch),
+            records: updated.map(function (item) { return clone(item.record); }),
+            page: page
+          });
+        }
+        selectedIds.clear();
+        if (!localMode) await loadPage(page);
+        else {
+          status.textContent = total + ' records · changes saved';
+          render();
+        }
+        return { ids: ids, patch: clone(patch), records: updated.map(function (item) { return clone(item.record); }) };
+      } catch (error) {
+        ids.forEach(function (id) {
+          var original = originals.get(id);
+          if (!original) return;
+          rowCache.set(id, original);
+          if (localMode && localIndices.get(id) >= 0) localRows[localIndices.get(id)] = original;
+          var pageIndex = pageRows.findIndex(function (item, index) { return rowId(item, index) === id; });
+          if (pageIndex >= 0) pageRows[pageIndex] = original;
+        });
+        status.textContent = 'Bulk edit failed: ' + (error.message || String(error));
+        render();
+        if (typeof cfg.onError === 'function') cfg.onError(error);
+        throw error;
+      }
+    }
+
+    bulkApply.addEventListener('click', function () {
+      var column = columns.find(function (item) { return item.key === bulkField.value; });
+      if (!column) return;
+      var patch = {};
+      try {
+        patch[column.key] = parseBulkValue(bulkValue.value, column);
+        bulkEdit(patch).catch(function () {});
+      } catch (error) {
+        status.textContent = error.message || String(error);
+      }
+    });
+    scroller.addEventListener('scroll', renderRows);
+    previousButton.addEventListener('click', function () { loadPage(page - 1).catch(function () {}); });
+    nextButton.addEventListener('click', function () { loadPage(page + 1).catch(function () {}); });
+
+    if (localMode) {
+      updateLocalTotal();
+      pageRows = activeLocalRows();
+      cachePageRows();
+      render();
+    } else {
+      render();
+      ready = loadPage(0);
+      ready.catch(function () {});
+    }
+
+    api = {
+      el: root,
+      ready: ready,
+      loadPage: loadPage,
+      setRows: function (rows) {
+        if (!localMode) throw new Error('setRows is only available in local mode');
+        if (!Array.isArray(rows)) throw new TypeError('setRows requires an array');
+        localRows = rows.map(clone);
+        updateLocalTotal();
+        page = 0;
+        selectedIds.clear();
+        rowCache.clear();
+        pageRows = activeLocalRows();
+        cachePageRows();
+        status.textContent = total + ' records';
+        render();
+        return api;
+      },
+      setPageSize: function (size) {
+        size = Math.floor(Number(size));
+        if (!isFinite(size) || size < 1) throw new RangeError('pageSize must be a positive number');
+        pageSize = size;
+        page = 0;
+        scroller.scrollTop = 0;
+        return localMode ? Promise.resolve(loadPage(0)) : loadPage(0);
+      },
+      setSort: function (key, direction) {
+        if (key && !columns.some(function (column) { return column.key === key; })) throw new Error('Unknown sort column: ' + key);
+        sort = { key: key || null, direction: direction === 'desc' ? 'desc' : 'asc' };
+        page = 0;
+        return localMode ? Promise.resolve(loadPage(0)) : loadPage(0);
+      },
+      setFilters: function (value) {
+        filters = clone(value || {});
+        updateLocalTotal();
+        page = 0;
+        return localMode ? Promise.resolve(loadPage(0)) : loadPage(0);
+      },
+      getState: function () {
+        return { page: page, pageSize: pageSize, total: total, sort: clone(sort), filters: clone(filters), loading: loading, selected: Array.from(selectedIds) };
+      },
+      selected: function () {
+        return Array.from(selectedIds).map(function (id) { return clone(rowCache.get(id)); }).filter(Boolean);
+      },
+      clearSelection: function () { selectedIds.clear(); notifySelection(); renderRows(); return api; },
+      bulkEdit: bulkEdit,
+      destroy: function () {
+        destroyed = true;
+        requestId++;
+        if (controller) controller.abort();
+        root.remove();
+      }
+    };
+    return api;
+  }
+
+  return { create: create };
+})();
+
+if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.DataGrid;

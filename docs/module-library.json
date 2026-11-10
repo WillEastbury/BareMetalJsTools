@@ -31,6 +31,18 @@
                         "sample":  "const trap = BareMetal.A11y.focusTrap(modal, { initialFocus: \u0027[data-autofocus]\u0027 });\r\ncloseButton.addEventListener(\u0027click\u0027, () =\u003e trap.destroy());"
                     },
                     {
+                        "key":  "ai",
+                        "title":  "BareMetal.AI",
+                        "source":  "./src/BareMetal.AI.js",
+                        "docs":  "BareMetal.AI.md",
+                        "api":  [
+                            "create(options)",
+                            "client.stream(messages, options)",
+                            "client.run(messages, options)"
+                        ],
+                        "sample":  "const ai = BareMetal.AI.create({\r\n  endpoint: \u0027/api/ai/stream\u0027,\r\n  model: \u0027assistant-model\u0027\r\n});\r\n\r\nconst result = await ai.stream(\r\n  [{ role: \u0027user\u0027, content: \u0027Summarize the current order status.\u0027 }],\r\n  { onDelta: text =\u003e output.append(document.createTextNode(text)) }\r\n);\r\nconsole.log(result.finishReason, result.usage);"
+                    },
+                    {
                         "key":  "animate",
                         "title":  "BareMetal.Animate",
                         "source":  "./src/BareMetal.Animate.js",
@@ -433,6 +445,26 @@
                                     "randomBytes(length)"
                                 ],
                         "sample":  "const exported = localStorage.getItem(\u0027prefs-key\u0027);\r\nconst key = exported\r\n  ? await BareMetal.Crypto.importKey(JSON.parse(exported), \u0027AES-GCM\u0027, [\u0027encrypt\u0027, \u0027decrypt\u0027])\r\n  : await BareMetal.Crypto.generateSymmetricKey(true);\r\n\r\nif (!exported) {\r\n  const jwk = await BareMetal.Crypto.exportKey(key);\r\n  localStorage.setItem(\u0027prefs-key\u0027, JSON.stringify(jwk));\r\n}\r\n\r\nconst encrypted = await BareMetal.Crypto.encryptSymmetric(key, JSON.stringify({ theme: \u0027dark\u0027 }));"
+                    },
+                    {
+                        "key":  "data-grid",
+                        "title":  "BareMetal.DataGrid",
+                        "source":  "./src/BareMetal.DataGrid.js",
+                        "docs":  "BareMetal.DataGrid.md",
+                        "api":  [
+                            "create(target, options)",
+                            "grid.loadPage(page)",
+                            "grid.setRows(rows)",
+                            "grid.setPageSize(size)",
+                            "grid.setSort(key, direction)",
+                            "grid.setFilters(filters)",
+                            "grid.getState()",
+                            "grid.selected()",
+                            "grid.clearSelection()",
+                            "grid.bulkEdit(patch)",
+                            "grid.destroy()"
+                        ],
+                        "sample":  "const grid = BareMetal.DataGrid.create(\u0027#orders\u0027, {\r\n  rows: initialOrders,\r\n  columns: [\r\n    { key: \u0027id\u0027, label: \u0027Order\u0027, sort: true },\r\n    { key: \u0027customer\u0027, label: \u0027Customer\u0027 },\r\n    { key: \u0027status\u0027, label: \u0027Status\u0027, editable: true },\r\n    { key: \u0027total\u0027, label: \u0027Total\u0027, type: \u0027number\u0027, editable: true }\r\n  ],\r\n  pageSize: 200,\r\n  rowHeight: 38,\r\n  viewportHeight: 480,\r\n  onBulkEdit: async ({ ids, patch }) =\u003e saveMany(ids, patch)\r\n});"
                     },
                     {
                         "key":  "diagnostics",
@@ -1228,6 +1260,27 @@
                         "sample":  "const watch = BareMetal.Observe.resize(panel, function (size) {\r\n  console.log(size.width, size.height);\r\n}, { debounce: 100 });"
                     },
                     {
+                        "key":  "offline-data",
+                        "title":  "BareMetal.OfflineData",
+                        "source":  "./src/BareMetal.OfflineData.js",
+                        "docs":  "BareMetal.OfflineData.md",
+                        "api":  [
+                            "create(options)",
+                            "client.mutate(input)",
+                            "client.put(key, value, request)",
+                            "client.remove(key, request)",
+                            "client.get(key)",
+                            "client.pending()",
+                            "client.flush()",
+                            "client.resolve(id, choice)",
+                            "client.on(event, handler)",
+                            "client.mountConflictUI(target)",
+                            "client.startAutoSync()",
+                            "client.destroy()"
+                        ],
+                        "sample":  "const db = await BareMetal.IDB.open(\u0027orders-v1\u0027, {\r\n  version: 1,\r\n  stores: {\r\n    orders: { keyPath: \u0027id\u0027 },\r\n    outbox: { keyPath: \u0027id\u0027 }\r\n  }\r\n});\r\n\r\nconst offline = BareMetal.OfflineData.create({\r\n  db,\r\n  recordStore: \u0027orders\u0027,\r\n  outboxStore: \u0027outbox\u0027,\r\n  send: async operation =\u003e {\r\n    const response = await fetch(operation.request.url, {\r\n      method: operation.request.method,\r\n      headers: { \u0027Content-Type\u0027: \u0027application/json\u0027 },\r\n      body: JSON.stringify(operation.optimistic)\r\n    });\r\n    if (!response.ok) {\r\n      const error = new Error(\u0027Save failed: \u0027 + response.status);\r\n      error.status = response.status;\r\n      if (response.status === 409 || response.status === 412) error.remote = await response.json();\r\n      throw error;\r\n    }\r\n    return response.status === 204 ? undefined : response.json();\r\n  }\r\n});\r\n\r\nawait offline.put(\u0027PO-1042\u0027, updatedOrder, {\r\n  method: \u0027PUT\u0027,\r\n  url: \u0027/api/orders/PO-1042\u0027\r\n});"
+                    },
+                    {
                         "key":  "pay",
                         "title":  "BareMetal.Pay",
                         "source":  "./src/BareMetal.Pay.js",
@@ -1343,7 +1396,7 @@
                                     "barcode(value, options)",
                                     "qr(value, options)"
                                 ],
-                        "sample":  "const moduleApi = BareMetal.Print;\n// Source: ./src/BareMetal.Print.js\n// See the public API list below for call signatures."
+                        "sample":  "const result = await BareMetal.Print.print(invoiceHtml, {\r\n  device: \u0027pdf\u0027,\r\n  title: \u0027Invoice INV-1042\u0027,\r\n  pageSize: \u0027A4\u0027\r\n});\r\nconst url = URL.createObjectURL(result.blob);\r\ndownloadLink.href = url;\r\ndownloadLink.download = \u0027invoice-1042.pdf\u0027;"
                     },
                     {
                         "key":  "progressive",

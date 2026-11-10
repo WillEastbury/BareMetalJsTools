@@ -6,6 +6,7 @@ Generated implementation and function-calling catalog.
 |---|---|---|---|
 | [BareMetal.3DXR](BareMetal.3DXR.md) | `<script src="src/BareMetal.3DXR.js"></script>` | `BareMetal['3DXR'].create(canvas, options)`, `renderer.addVideo(options)` | [BareMetal.3DXR](BareMetal.3DXR.md) |
 | [BareMetal.A11y](BareMetal.A11y.md) | `<script src="src/BareMetal.A11y.js"></script>` | `focusTrap(container, opts)`, `announce(text, priority)`, `skipNav(targetId)`, `roving(container, selector, opts)`, `prefersReducedMotion()`, `prefersColorScheme()`, `onMotionChange(fn)`, `onSchemeChange(fn)`, `focusTrap()`, `roving()` | [BareMetal.A11y](BareMetal.A11y.md) |
+| [BareMetal.AI](BareMetal.AI.md) | `<script src="src/BareMetal.AI.js"></script>` | `create(options)`, `client.stream(messages, options)`, `client.run(messages, options)` | [BareMetal.AI](BareMetal.AI.md) |
 | [BareMetal.Animate](BareMetal.Animate.md) | `<script src="src/BareMetal.Animate.js"></script>` | `enter(el, className, done)`, `leave(el, className, done)`, `toggle(el, enterClass, leaveClass)`, `move(el, fromRect, toRect)`, `list(container, className)`, `prefersReducedMotion()` | [BareMetal.Animate](BareMetal.Animate.md) |
 | [BareMetal.AudioMixer](modules/BareMetal.AudioMixer.md) | `<script src="src/BareMetal.AudioMixer.js"></script>` | `create(options)` | [BareMetal.AudioMixer](modules/BareMetal.AudioMixer.md) |
 | [BareMetal.Auth](BareMetal.Auth.md) | `<script src="src/BareMetal.Auth.js"></script>` | `configure(options)`, `initialize()`, `login(extraParams)`, `handleCallback(url)`, `logout()`, `clearSession()`, `getToken()`, `getIdToken()`, `silentRefresh()`, `handleSilentCallback()`, `getUser()`, `getUserInfo()`, `isAuthenticated()`, `onAuthChange(callback)`, `attachToRest()`, `_setRedirect(fn)`, `renderLogin(container, options)`, `renderLogout(container, options)`, `renderWhoami(container, options)`, `renderTokenInspector(container, options)`, `renderUserTiles(container, options)`, `renderAuthGate(container, options)`, `configure()`, `login()`, `renderLogin()`, `renderLogout()`, `renderWhoami()`, `renderTokenInspector()`, `renderUserTiles()`, `renderAuthGate()` | [BareMetal.Auth](BareMetal.Auth.md) |
@@ -27,6 +28,7 @@ Generated implementation and function-calling catalog.
 | [BareMetal.ControlSurface](modules/BareMetal.ControlSurface.md) | `<script src="src/BareMetal.ControlSurface.js"></script>` | `create(options)` | [BareMetal.ControlSurface](modules/BareMetal.ControlSurface.md) |
 | [BareMetal.Controls](BareMetal.Controls.md) | `<script src="src/BareMetal.Controls.js"></script>` | `<module API>` | [BareMetal.Controls](BareMetal.Controls.md) |
 | [BareMetal.Crypto](BareMetal.Crypto.md) | `<script src="src/BareMetal.Crypto.js"></script>` | `generateSymmetricKey(extractable)`, `encryptSymmetric(key, data)`, `decryptSymmetric(key, iv, ciphertext)`, `generateAsymmetricKey(bits, extractable)`, `encryptAsymmetric(publicKey, data)`, `decryptAsymmetric(privateKey, envelope)`, `digest(data)`, `digestWithSalt(data, salt)`, `deriveKey(password, salt, iterations)`, `generateSigningKey(extractable)`, `sign(privateKey, data)`, `verifySignature(publicKey, data, signature)`, `exportKey(key, format = 'jwk')`, `importKey(keyData, algorithm, usages, format = 'jwk', extractable)`, `toBase64Url(buffer)`, `fromBase64Url(string)`, `toUtf8(string)`, `fromUtf8(buffer)`, `randomBytes(length)` | [BareMetal.Crypto](BareMetal.Crypto.md) |
+| [BareMetal.DataGrid](BareMetal.DataGrid.md) | `<script src="src/BareMetal.DataGrid.js"></script>` | `create(target, options)`, `grid.loadPage(page)`, `grid.setRows(rows)`, `grid.setPageSize(size)`, `grid.setSort(key, direction)`, `grid.setFilters(filters)`, `grid.getState()`, `grid.selected()`, `grid.clearSelection()`, `grid.bulkEdit(patch)`, `grid.destroy()` | [BareMetal.DataGrid](BareMetal.DataGrid.md) |
 | [BareMetal.Diagnostics](BareMetal.Diagnostics.md) | `<script src="src/BareMetal.Diagnostics.js"></script>` | `trace(name, fn)`, `span(name, opts)`, `timeline()`, `inspect(value, opts)`, `why(value, history)`, `watch(target, path, callback)`, `perf`, `counter(name)`, `gauge(name, fn)`, `report()`, `enable()`, `disable()`, `hook(moduleName, instance)` | [BareMetal.Diagnostics](BareMetal.Diagnostics.md) |
 | [BareMetal.DJDeck](BareMetal.DJDeck.md) | `<script src="src/BareMetal.DJDeck.js"></script>` | `bpm`, `track`, `playing`, `elapsed`, `remaining`, `duration`, `beatGrid`, `waveform`, `hotCues`, `cuePoint`, `loop`, `pitchSemitones`, `tempoPercent`, `playbackRate` | [BareMetal.DJDeck](BareMetal.DJDeck.md) |
 | [BareMetal.DJLibrary](BareMetal.DJLibrary.md) | `<script src="src/BareMetal.DJLibrary.js"></script>` | `saveTrack`, `getTrack`, `listTracks`, `deleteTrack`, `search`, `saveCues`, `getCues`, `savePlaylist`, `getPlaylist`, `saveSetting`, `getSetting` | [BareMetal.DJLibrary](BareMetal.DJLibrary.md) |
@@ -69,6 +71,7 @@ Generated implementation and function-calling catalog.
 | [BareMetal.MusicPlayer](BareMetal.MusicPlayer.md) | `<script src="src/BareMetal.MusicPlayer.js"></script>` | `index`, `currentTime`, `volume`, `pitchBendSemitones`, `highDb`, `streaming` | [BareMetal.MusicPlayer](BareMetal.MusicPlayer.md) |
 | [BareMetal.Notify](BareMetal.Notify.md) | `<script src="src/BareMetal.Notify.js"></script>` | `toast(message, options)`, `success(message, options)`, `error(message, options)`, `warning(message, options)`, `info(message, options)`, `banner(message, options)`, `dismiss(id)`, `dismissAll()`, `count()`, `configure(options)`, `requestPermission()`, `permission()`, `native(title, options)`, `send(title, options)`, `progress(message, options)`, `progress().update(value, message)`, `progress().complete(message)`, `progress().error(message)`, `progress().dismiss()`, `isSupported()`, `isSecureContext()` | [BareMetal.Notify](BareMetal.Notify.md) |
 | [BareMetal.Observe](BareMetal.Observe.md) | `<script src="src/BareMetal.Observe.js"></script>` | `resize(el, callback, opts)`, `intersection(el, callback, opts)`, `mutation(el, callback, opts)`, `lazyLoad(selector, opts)`, `infinite(sentinel, loadMore, opts)`, `sticky(el, opts)`, `viewport(el)`, `trackSize(el, callback, opts)`, `breakpoint(el, breakpoints, callback)`, `animateOnScroll(els, opts)`, `mediaQuery(query, callback)`, `mutationStream(el, opts)` | [BareMetal.Observe](BareMetal.Observe.md) |
+| [BareMetal.OfflineData](BareMetal.OfflineData.md) | `<script src="src/BareMetal.OfflineData.js"></script>` | `create(options)`, `client.mutate(input)`, `client.put(key, value, request)`, `client.remove(key, request)`, `client.get(key)`, `client.pending()`, `client.flush()`, `client.resolve(id, choice)`, `client.on(event, handler)`, `client.mountConflictUI(target)`, `client.startAutoSync()`, `client.destroy()` | [BareMetal.OfflineData](BareMetal.OfflineData.md) |
 | [BareMetal.Pay](BareMetal.Pay.md) | `<script src="src/BareMetal.Pay.js"></script>` | `canPay()`, `request(details, methods, opts)`, `card(opts)`, `googlePay(config)`, `applePay(config)`, `formatCurrency(amount, currency, locale)`, `cart(seed)`, `cart.add(item)`, `cart.remove(id)`, `cart.update(id, qty)`, `cart.clear()`, `cart.getTotal(currency)`, `cart.getItems()`, `cart.toDetails(label)`, `shipping(options)`, `shipping.add(id, label, amount, selected)`, `shipping.getSelected()`, `shipping.toArray()`, `validate(cardNumber)`, `abort(response)`, `complete(response, result)`, `retry(response, errors)` | [BareMetal.Pay](BareMetal.Pay.md) |
 | [BareMetal.PicoScript](BareMetal.PicoScript.md) | `<script src="src/BareMetal.PicoScript.js"></script>` | `label`, `name`, `value`, `description`, `locale` | [BareMetal.PicoScript](BareMetal.PicoScript.md) |
 | [BareMetal.Pipeline](BareMetal.Pipeline.md) | `<script src="src/BareMetal.Pipeline.js"></script>` | `create(...stages)`, `compose(...fns)`, `series(fns, input, ctx)`, `parallel(fns, input, ctx)`, `waterfall(fns)`, `stream(iterable)`, `backpressure(producer, consumer, opts)` | [BareMetal.Pipeline](BareMetal.Pipeline.md) |
@@ -166,6 +169,31 @@ closeButton.addEventListener('click', () => trap.destroy());
 `focusTrap(container, opts)`, `announce(text, priority)`, `skipNav(targetId)`, `roving(container, selector, opts)`, `prefersReducedMotion()`, `prefersColorScheme()`, `onMotionChange(fn)`, `onSchemeChange(fn)`, `focusTrap()`, `roving()`
 
 Implementation guide: [BareMetal.A11y.md](BareMetal.A11y.md)
+
+## BareMetal.AI
+
+```html
+<script src="src/BareMetal.AI.js"></script>
+```
+
+```js
+const ai = BareMetal.AI.create({
+  endpoint: '/api/ai/stream',
+  model: 'assistant-model'
+});
+
+const result = await ai.stream(
+  [{ role: 'user', content: 'Summarize the current order status.' }],
+  { onDelta: text => output.append(document.createTextNode(text)) }
+);
+console.log(result.finishReason, result.usage);
+```
+
+### Public API
+
+`create(options)`, `client.stream(messages, options)`, `client.run(messages, options)`
+
+Implementation guide: [BareMetal.AI.md](BareMetal.AI.md)
 
 ## BareMetal.Animate
 
@@ -553,6 +581,34 @@ const encrypted = await BareMetal.Crypto.encryptSymmetric(key, JSON.stringify({ 
 `generateSymmetricKey(extractable)`, `encryptSymmetric(key, data)`, `decryptSymmetric(key, iv, ciphertext)`, `generateAsymmetricKey(bits, extractable)`, `encryptAsymmetric(publicKey, data)`, `decryptAsymmetric(privateKey, envelope)`, `digest(data)`, `digestWithSalt(data, salt)`, `deriveKey(password, salt, iterations)`, `generateSigningKey(extractable)`, `sign(privateKey, data)`, `verifySignature(publicKey, data, signature)`, `exportKey(key, format = 'jwk')`, `importKey(keyData, algorithm, usages, format = 'jwk', extractable)`, `toBase64Url(buffer)`, `fromBase64Url(string)`, `toUtf8(string)`, `fromUtf8(buffer)`, `randomBytes(length)`
 
 Implementation guide: [BareMetal.Crypto.md](BareMetal.Crypto.md)
+
+## BareMetal.DataGrid
+
+```html
+<script src="src/BareMetal.DataGrid.js"></script>
+```
+
+```js
+const grid = BareMetal.DataGrid.create('#orders', {
+  rows: initialOrders,
+  columns: [
+    { key: 'id', label: 'Order', sort: true },
+    { key: 'customer', label: 'Customer' },
+    { key: 'status', label: 'Status', editable: true },
+    { key: 'total', label: 'Total', type: 'number', editable: true }
+  ],
+  pageSize: 200,
+  rowHeight: 38,
+  viewportHeight: 480,
+  onBulkEdit: async ({ ids, patch }) => saveMany(ids, patch)
+});
+```
+
+### Public API
+
+`create(target, options)`, `grid.loadPage(page)`, `grid.setRows(rows)`, `grid.setPageSize(size)`, `grid.setSort(key, direction)`, `grid.setFilters(filters)`, `grid.getState()`, `grid.selected()`, `grid.clearSelection()`, `grid.bulkEdit(patch)`, `grid.destroy()`
+
+Implementation guide: [BareMetal.DataGrid.md](BareMetal.DataGrid.md)
 
 ## BareMetal.Diagnostics
 
@@ -1454,6 +1510,53 @@ const watch = BareMetal.Observe.resize(panel, function (size) {
 `resize(el, callback, opts)`, `intersection(el, callback, opts)`, `mutation(el, callback, opts)`, `lazyLoad(selector, opts)`, `infinite(sentinel, loadMore, opts)`, `sticky(el, opts)`, `viewport(el)`, `trackSize(el, callback, opts)`, `breakpoint(el, breakpoints, callback)`, `animateOnScroll(els, opts)`, `mediaQuery(query, callback)`, `mutationStream(el, opts)`
 
 Implementation guide: [BareMetal.Observe.md](BareMetal.Observe.md)
+
+## BareMetal.OfflineData
+
+```html
+<script src="src/BareMetal.OfflineData.js"></script>
+```
+
+```js
+const db = await BareMetal.IDB.open('orders-v1', {
+  version: 1,
+  stores: {
+    orders: { keyPath: 'id' },
+    outbox: { keyPath: 'id' }
+  }
+});
+
+const offline = BareMetal.OfflineData.create({
+  db,
+  recordStore: 'orders',
+  outboxStore: 'outbox',
+  send: async operation => {
+    const response = await fetch(operation.request.url, {
+      method: operation.request.method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(operation.optimistic)
+    });
+    if (!response.ok) {
+      const error = new Error('Save failed: ' + response.status);
+      error.status = response.status;
+      if (response.status === 409 || response.status === 412) error.remote = await response.json();
+      throw error;
+    }
+    return response.status === 204 ? undefined : response.json();
+  }
+});
+
+await offline.put('PO-1042', updatedOrder, {
+  method: 'PUT',
+  url: '/api/orders/PO-1042'
+});
+```
+
+### Public API
+
+`create(options)`, `client.mutate(input)`, `client.put(key, value, request)`, `client.remove(key, request)`, `client.get(key)`, `client.pending()`, `client.flush()`, `client.resolve(id, choice)`, `client.on(event, handler)`, `client.mountConflictUI(target)`, `client.startAutoSync()`, `client.destroy()`
+
+Implementation guide: [BareMetal.OfflineData.md](BareMetal.OfflineData.md)
 
 ## BareMetal.Pay
 
