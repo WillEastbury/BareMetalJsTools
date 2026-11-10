@@ -124,9 +124,9 @@
           </div>
         </section>
         <section id="documents" class="mt-3">
-          <div class="fx ai-c jc-b gp2 mb-2"><h2 class="mb0">Documents &amp; lineage</h2><span class="sm fg-m">Powered by DocChain</span></div>
+          <div class="fx ai-c jc-b gp2 mb-2"><h2 class="mb0">Documents &amp; lineage</h2><span class="sm fg-m">DocChain · PDF and print from the tree</span></div>
           <div class="rw g2">
-            <article class="cm6"><div class="cd"><div class="cd-h"><h3 class="mb0">Document tree</h3></div><div id="document-tree" class="cd-b" aria-live="polite"></div></div></article>
+            <article class="cm6"><div class="cd"><div class="cd-h"><h3 class="mb0">Document tree</h3><p class="sm fg-m mb0">Render purchase documents and linked invoices</p></div><div id="document-tree" class="cd-b" aria-live="polite"></div></div></article>
             <article class="cm6"><div class="cd"><div class="cd-h"><h3 class="mb0">Relationship graph</h3></div><div id="document-graph" class="cd-b" aria-label="Document relationship graph"></div></div></article>
           </div>
         </section>
@@ -169,6 +169,30 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
       </div>
     </form>
   </dialog>
+  <dialog id="document-dialog" class="p-3">
+    <header class="fx fx-w ai-c jc-b gp2 mb-2">
+      <div><p class="sm fg-m mb0">DOCUMENT OUTPUT</p><h2 id="document-dialog-title" class="mb0">Document</h2></div>
+      <button id="close-document-dialog" class="bt bt-os" type="button">Close</button>
+    </header>
+    <div class="fx fx-w ai-c gp2 mb-2">
+      <button id="generate-document-pdf" class="bt bt-p" type="button">Generate PDF</button>
+      <a id="download-document-pdf" class="bt bt-op" href="#" download="document.pdf" hidden>Download PDF</a>
+      <button id="print-document" class="bt bt-os" type="button">Print</button>
+    </div>
+    <p id="document-output-status" class="sm fg-m" role="status">Choose an action to render or print this document.</p>
+    <div class="rw g2">
+      <section class="cm5">
+        <div class="cd"><div class="cd-h"><h3 class="mb0">Document preview</h3></div>
+          <div class="cd-b"><iframe id="document-html-preview" class="w-100 bo" title="Document HTML preview" sandbox="" height="560"></iframe></div>
+        </div>
+      </section>
+      <section class="cm7">
+        <div class="cd"><div class="cd-h"><h3 class="mb0">PDF output</h3></div>
+          <div class="cd-b"><iframe id="document-pdf-preview" class="w-100 bo" title="Generated PDF preview" height="560" hidden></iframe></div>
+        </div>
+      </section>
+    </div>
+  </dialog>
   <footer class="bot p-3"><div class="bx fx fx-w jc-b gp2"><a href="./">All interactive apps</a><a href="https://github.com/WillEastbury/BareMetalJsTools">Source</a></div></footer>
   <script src="../../src/BareMetal.IDB.js"></script>
   <script src="../../src/BareMetal.Codes.js"></script>
@@ -179,6 +203,8 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
   <script src="../../src/BareMetal.Graph.js"></script>
   <script src="../../src/BareMetal.DocChain.js"></script>
   <script src="../../src/BareMetal.Modal.js"></script>
+  <script src="../../src/BareMetal.DocumentRenderer.js"></script>
+  <script src="../../src/BareMetal.Print.js"></script>
   <script>
     (function () {
       var DB_NAME = 'bm-erp-demo-v1';
@@ -189,6 +215,13 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
       var adding = false;
       var dialog = document.getElementById('order-dialog');
       var modal = BareMetal.Modal.adopt(dialog, { initialFocus: '[name="customer"]' });
+      var documentDialog = document.getElementById('document-dialog');
+      var documentStatus = document.getElementById('document-output-status');
+      var documentHtmlPreview = document.getElementById('document-html-preview');
+      var documentPdfPreview = document.getElementById('document-pdf-preview');
+      var documentDownload = document.getElementById('download-document-pdf');
+      var activeDocument = null;
+      var documentPdfUrl = '';
       var form = document.getElementById('order-form');
       var status = document.getElementById('db-status');
       var errorBox = document.getElementById('app-error');
@@ -331,24 +364,206 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
         });
       }
 
+      function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      function lineItemsMarkup(order) {
+        var rows = (order.items || []).map(function (item) {
+          var lineTotal = Number(item.quantity) * Number(item.unitPrice);
+          return '<tr><td>' + escapeHtml(item.sku) + '</td><td>' + escapeHtml(item.description) +
+            '</td><td class="number">' + escapeHtml(item.quantity) + '</td><td class="number">' +
+            escapeHtml(currencyAmount({ currency: order.currency, total: item.unitPrice })) +
+            '</td><td class="number">' + escapeHtml(currencyAmount({ currency: order.currency, total: lineTotal })) + '</td></tr>';
+        }).join('');
+        return '<table><thead><tr><th>SKU</th><th>Description</th><th>Qty</th><th>Unit price</th><th>Line total</th></tr></thead><tbody>' +
+          rows + '</tbody></table>';
+      }
+
+      function printableDocument(title, doc, body) {
+        var css = 'body{font:14px/1.5 Arial,sans-serif;color:#1f2937;background:#fff;margin:0;padding:24px}' +
+          '.erp-document{max-width:900px;margin:0 auto}.document-header{border-bottom:3px solid #4338ca;padding-bottom:16px;margin-bottom:24px}' +
+          '.document-header p,.muted{color:#64748b}.document-header h1{font-size:30px;margin:4px 0}' +
+          '.document-meta,.party-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 24px;margin:18px 0}' +
+          '.document-meta div{border-bottom:1px solid #e2e8f0;padding:6px 0}.document-meta dt{font-size:11px;color:#64748b;text-transform:uppercase}' +
+          '.document-meta dd{margin:2px 0 0;font-weight:600}.party-grid section{background:#f8fafc;padding:14px;border-radius:8px}' +
+          'table{width:100%;border-collapse:collapse;margin:20px 0}th,td{border:1px solid #cbd5e1;padding:9px;text-align:left}' +
+          'th{background:#eef2ff;color:#312e81}.number{text-align:right}.document-total{text-align:right;font-size:20px;font-weight:700;margin:18px 0}' +
+          '.document-footer{margin-top:32px;padding-top:12px;border-top:1px solid #cbd5e1;color:#64748b;font-size:12px}';
+        return '<style>' + css + '</style><article class="erp-document"><header class="document-header">' +
+          '<p>NORTHSTAR SUPPLY CO. / PROCUREMENT</p><h1>' + escapeHtml(title) + '</h1><p class="muted">Generated from the ERP document tree</p></header>' +
+          '<dl class="document-meta"><div><dt>Document ID</dt><dd>' + escapeHtml(doc.id) + '</dd></div>' +
+          '<div><dt>Lifecycle</dt><dd>' + escapeHtml(doc.status) + '</dd></div>' +
+          '<div><dt>Document type</dt><dd>' + escapeHtml(doc.type) + '</dd></div>' +
+          '<div><dt>Created</dt><dd>' + escapeHtml(new Date(doc.created).toLocaleDateString('en-GB')) + '</dd></div></dl>' +
+          body + '<footer class="document-footer">Northstar Supply Co. · ' + escapeHtml(doc.id) + '</footer></article>';
+      }
+
+      function orderForDocument(doc) {
+        var purchaseOrder = doc.type === 'Purchase Order' ? doc : BareMetal.DocChain.store.get(doc.parentId);
+        if (!purchaseOrder || purchaseOrder.type !== 'Purchase Order') return null;
+        return binding.state.orders.find(function (order) { return order.id === purchaseOrder.data.orderId; }) || null;
+      }
+
+      function buildDocumentMarkup(doc, action) {
+        if (action === 'invoice') {
+          if (doc.type !== 'Invoice') throw new Error('Select an invoice document in the tree.');
+          var invoiceOrder = orderForDocument(doc);
+          if (!invoiceOrder) throw new Error('The invoice purchase order is not available.');
+          var invoiceNumber = doc.data.number || 'Invoice ' + invoiceOrder.id;
+          var invoiceBody = '<div class="party-grid"><section><h2>From</h2><strong>Northstar Supply Co.</strong><p>Accounts receivable<br>London, United Kingdom</p></section>' +
+            '<section><h2>Bill to</h2><strong>' + escapeHtml(invoiceOrder.customer) + '</strong><p>' +
+            escapeHtml(invoiceOrder.countryLabel || invoiceOrder.country) + '</p></section></div>' +
+            '<p class="muted">Purchase order ' + escapeHtml(invoiceOrder.id) + ' · Issued ' +
+            escapeHtml(new Date().toLocaleDateString('en-GB')) + '</p><h2>Line items</h2>' + lineItemsMarkup(invoiceOrder) +
+            '<p class="document-total">Total due: ' + escapeHtml(currencyAmount(invoiceOrder)) + '</p>' +
+            '<p>Payment terms: due within 30 days. Quote ' + escapeHtml(invoiceNumber) + ' when remitting payment.</p>';
+          return { title: 'Invoice ' + invoiceNumber, filename: invoiceNumber, markup: printableDocument('Invoice ' + invoiceNumber, doc, invoiceBody) };
+        }
+
+        if (doc.type === 'Purchase Order') {
+          var order = orderForDocument(doc);
+          if (!order) throw new Error('The purchase order details are not available.');
+          var orderBody = '<div class="party-grid"><section><h2>Supplier</h2><strong>' + escapeHtml(order.customer) +
+            '</strong><p>' + escapeHtml(order.countryLabel || order.country) + '</p></section><section><h2>Order summary</h2><p>Currency: ' +
+            escapeHtml(order.currency) + '<br>Status: ' + escapeHtml(doc.status) + '</p></section></div>' +
+            '<h2>Line items</h2>' + lineItemsMarkup(order) +
+            '<p class="document-total">Order total: ' + escapeHtml(currencyAmount(order)) + '</p>';
+          return { title: 'Purchase Order ' + order.id, filename: order.id, markup: printableDocument('Purchase Order ' + order.id, doc, orderBody) };
+        }
+
+        if (doc.type === 'Goods Receipt') {
+          var receiptOrder = orderForDocument(doc);
+          var receiptBody = '<h2>Receipt details</h2><p>Reference: ' + escapeHtml(doc.data.reference) +
+            '</p><p>Purchase order: ' + escapeHtml(receiptOrder ? receiptOrder.id : doc.parentId) +
+            '</p><p>Supplier: ' + escapeHtml(receiptOrder ? receiptOrder.customer : 'Unknown supplier') + '</p>';
+          return { title: 'Goods Receipt ' + (doc.data.reference || doc.id), filename: doc.data.reference || doc.id, markup: printableDocument('Goods Receipt', doc, receiptBody) };
+        }
+
+        var portfolioRows = binding.state.orders.map(function (portfolioOrder) {
+          return '<tr><td>' + escapeHtml(portfolioOrder.id) + '</td><td>' + escapeHtml(portfolioOrder.customer) +
+            '</td><td>' + escapeHtml(portfolioOrder.status) + '</td><td class="number">' +
+            escapeHtml(currencyAmount(portfolioOrder)) + '</td></tr>';
+        }).join('');
+        var portfolioBody = '<h2>' + escapeHtml(doc.data.name || 'ERP Portfolio') + '</h2><p>' +
+          binding.state.orders.length + ' purchase orders in this portfolio.</p><table><thead><tr><th>Order</th><th>Supplier</th><th>Status</th><th>Total</th></tr></thead><tbody>' +
+          portfolioRows + '</tbody></table>';
+        return { title: doc.data.name || 'ERP Portfolio', filename: 'erp-portfolio', markup: printableDocument(doc.data.name || 'ERP Portfolio', doc, portfolioBody) };
+      }
+
+      function wrapDocumentHtml(markup) {
+        return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>' +
+          markup + '</body></html>';
+      }
+
+      function showDocumentPreview(docId, action) {
+        var doc = BareMetal.DocChain.store.get(docId);
+        if (!doc) throw new Error('The selected document is no longer available.');
+        var printable = buildDocumentMarkup(doc, action);
+        activeDocument = printable;
+        document.getElementById('document-dialog-title').textContent = printable.title;
+        documentHtmlPreview.srcdoc = wrapDocumentHtml(printable.markup);
+        documentPdfPreview.hidden = true;
+        documentPdfPreview.removeAttribute('src');
+        documentDownload.hidden = true;
+        if (documentPdfUrl) {
+          URL.revokeObjectURL(documentPdfUrl);
+          documentPdfUrl = '';
+        }
+        documentStatus.textContent = 'Previewing ' + doc.type + ' ' + doc.id + '. Generate a PDF or send it to the browser print dialog.';
+        if (!documentDialog.open) documentDialog.showModal();
+        return printable;
+      }
+
+      async function generateDocumentPdf() {
+        if (!activeDocument) throw new Error('Choose a document from the tree first.');
+        var printable = activeDocument;
+        var generateButton = document.getElementById('generate-document-pdf');
+        generateButton.disabled = true;
+        documentStatus.textContent = 'Rendering PDF from the selected document…';
+        documentPdfPreview.hidden = true;
+        documentDownload.hidden = true;
+        if (documentPdfUrl) {
+          URL.revokeObjectURL(documentPdfUrl);
+          documentPdfUrl = '';
+        }
+        try {
+          var result = await BareMetal.Print.print(printable.markup, {
+            device: 'pdf',
+            title: printable.title,
+            pageSize: 'A4',
+            scale: 1.4
+          });
+          documentPdfUrl = URL.createObjectURL(result.blob);
+          documentPdfPreview.src = documentPdfUrl;
+          documentPdfPreview.hidden = false;
+          documentDownload.href = documentPdfUrl;
+          documentDownload.download = printable.filename.replace(/[^a-z0-9_-]+/gi, '-').replace(/^-|-$/g, '') + '.pdf';
+          documentDownload.hidden = false;
+          documentStatus.textContent = result.pages + ' page PDF ready (' + result.searchableWords + ' searchable words).';
+          return result;
+        } finally {
+          generateButton.disabled = false;
+        }
+      }
+
+      function printActiveDocument() {
+        if (!activeDocument) throw new Error('Choose a document from the tree first.');
+        return BareMetal.Print.print(wrapDocumentHtml(activeDocument.markup), { device: 'browser' });
+      }
+
+      function treeActions(node) {
+        var actions = document.createElement('div');
+        var doc = node.doc;
+        actions.className = 'fx fx-w gp1 mt-1';
+        function add(label, action, target, orderId) {
+          var button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'bt bt-op bt-s';
+          button.textContent = label;
+          button.dataset.documentAction = action;
+          button.dataset.documentId = target.id;
+          button.dataset.documentOrder = orderId || '';
+          actions.appendChild(button);
+        }
+        if (doc.type === 'Purchase Order') {
+          add('Render document', 'document', doc, doc.data.orderId);
+          var invoiceNode = node.children.find(function (child) { return child.doc.type === 'Invoice'; });
+          if (invoiceNode) add('Render invoice', 'invoice', invoiceNode.doc, doc.data.orderId);
+        } else if (doc.type === 'Invoice') {
+          var parentOrder = BareMetal.DocChain.store.get(doc.parentId);
+          add('Render invoice', 'invoice', doc, parentOrder && parentOrder.data.orderId);
+        } else {
+          add('Render document', 'document', doc, doc.data.orderId || '');
+        }
+        return actions;
+      }
+
       function renderTreeNode(node, parent) {
         var item = document.createElement('li');
         var doc = node.doc;
         var detail = doc.type + ' - ' + (doc.data.orderId || doc.data.number || doc.data.reference || doc.data.name || doc.id) +
           ' [' + doc.status + '] - ' + BareMetal.DocChain.audit(doc).length + ' audit events';
-        var summary;
         if (node.children.length) {
           var details = document.createElement('details');
           details.open = true;
-          summary = document.createElement('summary');
+          var summary = document.createElement('summary');
           summary.textContent = detail;
           details.appendChild(summary);
+          details.appendChild(treeActions(node));
           var children = document.createElement('ul');
           node.children.forEach(function (child) { renderTreeNode(child, children); });
           details.appendChild(children);
           item.appendChild(details);
         } else {
-          item.textContent = detail;
+          var row = document.createElement('div');
+          row.className = 'fx fx-w ai-c gp2';
+          var label = document.createElement('span');
+          label.textContent = detail;
+          row.appendChild(label);
+          row.appendChild(treeActions(node));
+          item.appendChild(row);
         }
         parent.appendChild(item);
       }
@@ -449,6 +664,40 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
       function findOrder(id) {
         return binding.state.orders.find(function (item) { return item.id === id; });
       }
+
+      document.getElementById('document-tree').addEventListener('click', function (event) {
+        var action = event.target.closest('[data-document-action]');
+        if (!action) return;
+        try {
+          showDocumentPreview(action.dataset.documentId, action.dataset.documentAction);
+          showError('');
+        } catch (error) {
+          showError(error.message || String(error));
+        }
+      });
+
+      document.getElementById('close-document-dialog').addEventListener('click', function () {
+        documentDialog.close();
+      });
+      document.getElementById('generate-document-pdf').addEventListener('click', function () {
+        generateDocumentPdf().catch(function (error) {
+          documentStatus.textContent = 'PDF generation failed: ' + (error.message || String(error));
+          showError(error.message || String(error));
+        });
+      });
+      document.getElementById('print-document').addEventListener('click', function () {
+        try {
+          printActiveDocument();
+          documentStatus.textContent = 'The document was sent to the browser print dialog.';
+          showError('');
+        } catch (error) {
+          documentStatus.textContent = 'Printing failed: ' + (error.message || String(error));
+          showError(error.message || String(error));
+        }
+      });
+      window.addEventListener('pagehide', function () {
+        if (documentPdfUrl) URL.revokeObjectURL(documentPdfUrl);
+      }, { once: true });
 
       document.getElementById('order-rows').addEventListener('click', async function (event) {
         var edit = event.target.closest('[data-edit-order]');
@@ -586,6 +835,9 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
           storage: 'IndexedDB',
           getOrders: function () { return binding.state.orders; },
           openFirst: function () { openEditor(binding.state.orders[0], false); },
+          openDocument: showDocumentPreview,
+          generateDocumentPdf: generateDocumentPdf,
+          printDocument: printActiveDocument,
           pivot: function () { return pivot; }
         };
       }
