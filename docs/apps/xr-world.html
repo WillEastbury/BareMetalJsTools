@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>3DXR Virtual World | BareMetalJsTools</title>
+  <link rel="stylesheet" href="../../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../../src/themes/wavefunction.css">
+</head>
+<body>
+  <header class="nbar">
+    <div class="bx fx ai-c jc-b gp2">
+      <a class="nbar-b" href="./">Interactive apps</a>
+      <nav class="fx ai-c gp2" aria-label="Page navigation">
+        <a class="nl" href="../index.html">Showcase</a>
+        <a class="nl act" href="xr-world.html">3DXR world</a>
+        <a class="nl" href="dj-mixer.html">DJ MIDI mixer</a>
+      </nav>
+    </div>
+  </header>
+  <main class="bx py-4">
+    <header class="mb-4">
+      <span class="bd bg-p">INTERACTIVE SAMPLE</span>
+      <h1 class="dp4 mt-2">Tune a virtual world.</h1>
+      <p class="ld">A procedural 3D sky and generated video tile, controlled by a reactive side-panel model. Immersive VR is optional and requires a compatible HTTPS browser.</p>
+    </header>
+    <div class="rw g3">
+      <section class="cm8">
+        <div class="cd">
+          <div class="cd-h fx fx-w ai-c jc-b gp2">
+            <h2 class="mb0">World renderer</h2>
+            <div class="fx gp2">
+              <button id="start-world" class="bt bt-p" type="button">Start generated tile</button>
+              <button id="enter-vr" class="bt bt-os" type="button">Enter VR</button>
+            </div>
+          </div>
+          <div class="cd-b">
+            <canvas id="world-canvas" class="w-100 bo" width="960" height="540" aria-label="Interactive 3D world preview"></canvas>
+            <p id="world-status" class="sm fg-m" role="status">Creating WebGL renderer…</p>
+          </div>
+        </div>
+      </section>
+      <aside class="cm4">
+        <section class="cd">
+          <div class="cd-h"><h2 class="mb0">Bound world model</h2></div>
+          <div id="world-controls" class="cd-b">
+            <label>Sky color A
+              <input class="fc" type="color" m-value="colorA">
+            </label>
+            <label class="mt-2">Sky color B
+              <input class="fc" type="color" m-value="colorB">
+            </label>
+            <label class="mt-2">Spiral speed: <span m-text="speed"></span>
+              <input class="fc" type="range" min="0" max="3" step="0.1" m-value="speed">
+            </label>
+            <label class="mt-2">Spiral turns: <span m-text="turns"></span>
+              <input class="fc" type="range" min="2" max="14" step="1" m-value="turns">
+            </label>
+            <div class="mt-3 p-2 bg-bs">
+              <strong>Model snapshot</strong>
+              <pre id="world-model" class="fg-dk"></pre>
+            </div>
+          </div>
+        </section>
+        <section class="cd mt-3">
+          <div class="cd-h"><h2 class="mb0">Input</h2></div>
+          <div class="cd-b">
+            <p>Drag on the canvas to look around. The preview tile uses an animated local canvas stream; no external media or server is required.</p>
+            <p class="sm fg-m">XR support: <strong id="xr-support">Checking…</strong></p>
+          </div>
+        </section>
+      </aside>
+    </div>
+    <details class="cd mt-3">
+      <summary class="cd-h">Implementation sample</summary>
+      <pre class="bg-bs fg-dk p-2">const renderer = BareMetal['3DXR'].create(canvas);
+renderer.setProceduralBackground('spiral', { colors: [model.colorA, model.colorB], speed: model.speed, turns: model.turns });
+BareMetal.Bind.bind(controls, model, watch);</pre>
+    </details>
+  </main>
+  <footer class="bot p-3"><div class="bx fx fx-w jc-b gp2"><a href="./">All interactive apps</a><a href="https://github.com/WillEastbury/BareMetalJsTools">Source</a></div></footer>
+  <script src="../../src/BareMetal.Bind.js"></script>
+  <script src="../../src/BareMetal.3DXR.js"></script>
+  <script>
+    (function () {
+      var canvas = document.getElementById('world-canvas');
+      var status = document.getElementById('world-status');
+      var support = document.getElementById('xr-support');
+      var modelView = document.getElementById('world-model');
+      var binding = BareMetal.Bind.reactive({
+        colorA: '#160924',
+        colorB: '#ff2b9d',
+        speed: 0.8,
+        turns: 7
+      });
+      var renderer = null;
+      var tileVideo = null;
+      var tileStream = null;
+      var skyCanvas = document.createElement('canvas');
+      skyCanvas.width = 480;
+      skyCanvas.height = 270;
+      var skyContext = skyCanvas.getContext('2d');
+
+      function drawSky() {
+        var now = performance.now() / 1000;
+        if (skyContext) {
+          var gradient = skyContext.createLinearGradient(0, 0, skyCanvas.width, skyCanvas.height);
+          gradient.addColorStop(0, binding.state.colorA);
+          gradient.addColorStop(1, binding.state.colorB);
+          skyContext.fillStyle = gradient;
+          skyContext.fillRect(0, 0, skyCanvas.width, skyCanvas.height);
+          skyContext.strokeStyle = 'rgba(255,255,255,.55)';
+          skyContext.lineWidth = 3;
+          for (var i = 0; i < 9; i++) {
+            var x = ((now * (30 + i * 3) + i * 57) % (skyCanvas.width + 90)) - 45;
+            skyContext.beginPath();
+            skyContext.arc(x, 70 + i * 20, 10 + (i % 3) * 9, 0, Math.PI * 2);
+            skyContext.stroke();
+          }
+        }
+        requestAnimationFrame(drawSky);
+      }
+
+      function applyModel() {
+        var snapshot = {
+          colorA: binding.state.colorA,
+          colorB: binding.state.colorB,
+          speed: Number(binding.state.speed),
+          turns: Number(binding.state.turns)
+        };
+        modelView.textContent = JSON.stringify(snapshot, null, 2);
+        if (renderer) {
+          renderer.setProceduralBackground('spiral', {
+            colors: [snapshot.colorA, snapshot.colorB],
+            speed: snapshot.speed,
+            turns: snapshot.turns
+          });
+        }
+      }
+
+      function createStreamTile() {
+        if (!renderer || !skyCanvas.captureStream || tileVideo) return;
+        tileStream = skyCanvas.captureStream(24);
+        tileVideo = document.createElement('video');
+        tileVideo.muted = true;
+        tileVideo.playsInline = true;
+        tileVideo.srcObject = tileStream;
+        renderer.addVideo({
+          id: 'procedural-horizon',
+          video: tileVideo,
+          position: [0, 1.6, -3],
+          width: 2,
+          height: 1.125
+        });
+        tileVideo.loop = true;
+      }
+
+      BareMetal.Bind.bind(document.getElementById('world-controls'), binding.state, binding.watch);
+      ['colorA', 'colorB', 'speed', 'turns'].forEach(function (key) {
+        binding.watch(key, applyModel);
+      });
+      drawSky();
+      try {
+        renderer = BareMetal['3DXR'].create(canvas, { background: '#090510', desktopLook: true });
+        renderer.setProceduralBackground('spiral', { colors: [binding.state.colorA, binding.state.colorB], speed: binding.state.speed, turns: binding.state.turns });
+        renderer.on('autoplayblocked', function () { status.textContent = 'Browser blocked tile playback; use Start generated tile.'; });
+        renderer.on('contextlost', function () { status.textContent = 'WebGL context lost. Reload the page to restore the world.'; });
+        createStreamTile();
+        status.textContent = 'WebGL world ready. Drag to look around; use the side panel to change the sky.';
+        renderer.isXRSupported().then(function (supported) {
+          support.textContent = supported ? 'immersive-vr available' : 'immersive-vr unavailable';
+        }).catch(function () {
+          support.textContent = 'not available';
+        });
+      } catch (error) {
+        status.textContent = '3DXR unavailable: ' + (error.message || String(error)) + '. World controls remain available.';
+        support.textContent = 'unavailable';
+      }
+      document.getElementById('start-world').addEventListener('click', function () {
+        if (!renderer) {
+          status.textContent = 'WebGL is unavailable in this browser.';
+          return;
+        }
+        createStreamTile();
+        if (!tileVideo) {
+          status.textContent = 'Canvas video streams are unavailable in this browser.';
+          return;
+        }
+        tileVideo.play().then(function () {
+          status.textContent = 'Generated tile is playing in the virtual world.';
+        }).catch(function (error) {
+          status.textContent = 'Tile playback failed: ' + (error.message || String(error));
+        });
+      });
+      document.getElementById('enter-vr').addEventListener('click', function () {
+        if (!renderer) {
+          status.textContent = 'WebGL is unavailable in this browser.';
+          return;
+        }
+        renderer.enterVR().catch(function (error) {
+          status.textContent = 'Could not enter VR: ' + (error.message || String(error)) + '. Use HTTPS and a supported headset browser.';
+        });
+      });
+      window.addEventListener('pagehide', function () {
+        if (renderer) renderer.dispose();
+        if (tileStream) tileStream.getTracks().forEach(function (track) { track.stop(); });
+      }, { once: true });
+      applyModel();
+      window.__BM_APP__ = {
+        ready: true,
+        rendererAvailable: !!renderer,
+        setSpeed: function (value) { binding.state.speed = value; return Number(binding.state.speed); },
+        getModel: function () { return binding.state; }
+      };
+    })();
+  </script>
+</body>
+</html>

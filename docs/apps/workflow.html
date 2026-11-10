@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Workflow Editor | BareMetalJsTools</title>
+  <link rel="stylesheet" href="../../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../../src/themes/wavefunction.css">
+</head>
+<body>
+  <header class="nbar">
+    <div class="bx fx ai-c jc-b gp2">
+      <a class="nbar-b" href="./">Interactive apps</a>
+      <nav class="fx ai-c gp2" aria-label="Page navigation">
+        <a class="nl" href="../index.html">Showcase</a>
+        <a class="nl act" href="workflow.html">Workflow editor</a>
+        <a class="nl" href="editor.html">Markdown &amp; HTML</a>
+      </nav>
+    </div>
+  </header>
+  <main class="bx py-4">
+    <header class="mb-4">
+      <span class="bd bg-p">INTERACTIVE SAMPLE</span>
+      <h1 class="dp4 mt-2">Edit and run workflows.</h1>
+      <p class="ld">Compose BareMetal.Workflow steps, reorder or remove them, edit the JSON DSL, run the result, and keep it in IndexedDB.</p>
+    </header>
+    <div class="rw g3">
+      <section class="cm5">
+        <div class="cd">
+          <div class="cd-h fx ai-c jc-b gp2">
+            <h2 class="mb0">Workflow steps</h2>
+            <span id="workflow-status" class="bd bg-s" role="status">Opening IndexedDB…</span>
+          </div>
+          <div class="cd-b">
+            <div class="fx fx-w gp1 mb-3">
+              <button class="bt bt-p" data-add-step="SET" type="button">Add SET</button>
+              <button class="bt bt-os" data-add-step="LOG" type="button">Add LOG</button>
+              <button class="bt bt-os" data-add-step="WAIT" type="button">Add WAIT</button>
+              <button class="bt bt-os" data-add-step="IF" type="button">Add IF</button>
+            </div>
+            <ol id="step-list"></ol>
+            <div class="fx fx-w gp2">
+              <button id="run-workflow" class="bt bt-p" type="button" disabled>Run workflow</button>
+              <button id="save-workflow" class="bt bt-os" type="button" disabled>Save to IndexedDB</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="cm7">
+        <div class="cd">
+          <div class="cd-h"><h2 class="mb0">Workflow JSON</h2></div>
+          <div class="cd-b">
+            <label for="workflow-json">Edit the steps array</label>
+            <textarea id="workflow-json" class="fc" rows="20" spellcheck="false"></textarea>
+            <div class="fx fx-w gp2 mt-2">
+              <button id="apply-json" class="bt bt-p" type="button" disabled>Apply JSON</button>
+              <button id="reset-workflow" class="bt bt-os" type="button" disabled>Reset example</button>
+            </div>
+            <p id="workflow-error" class="fg-er" role="alert"></p>
+          </div>
+        </div>
+        <div class="cd mt-3">
+          <div class="cd-h"><h2 class="mb0">Run output</h2></div>
+          <pre id="workflow-output" class="cd-b bg-bs fg-dk" aria-live="polite">Run the workflow to see its context.</pre>
+        </div>
+      </section>
+    </div>
+    <details class="cd mt-3">
+      <summary class="cd-h">Implementation sample</summary>
+      <pre class="bg-bs fg-dk p-2">const result = await BareMetal.Workflow.exec(steps, { actor: 'Ada' });
+await db.put('workflows', { id: 'approval', steps });
+BareMetal.Workflow.stepTypes();</pre>
+    </details>
+  </main>
+  <footer class="bot p-3"><div class="bx fx fx-w jc-b gp2"><a href="./">All interactive apps</a><a href="https://github.com/WillEastbury/BareMetalJsTools">Source</a></div></footer>
+  <script src="../../src/BareMetal.IDB.js"></script>
+  <script src="../../src/BareMetal.Workflow.js"></script>
+  <script>
+    (function () {
+      var DB_NAME = 'bm-workflow-demo-v1';
+      var workflowId = 'purchase-approval';
+      var db;
+      var steps = [];
+      var sourceDirty = false;
+      var status = document.getElementById('workflow-status');
+      var error = document.getElementById('workflow-error');
+      var list = document.getElementById('step-list');
+      var source = document.getElementById('workflow-json');
+      var output = document.getElementById('workflow-output');
+      var sample = [
+        { type: 'SET', name: 'total', value: 1240 },
+        { type: 'IF', condition: 'total >= 1000' },
+        { type: 'SET', name: 'decision', value: 'manager-review' },
+        { type: 'ELSE' },
+        { type: 'SET', name: 'decision', value: 'auto-approved' },
+        { type: 'END' },
+        { type: 'SET', name: 'message', value: 'Order is ${decision}' },
+        { type: 'LOG', level: 'info', message: '${message}' }
+      ];
+
+      function describe(step) {
+        return step.type + (step.name ? ' - ' + step.name : '') +
+          (step.condition ? ' - ' + step.condition : '') +
+          (step.message ? ' - ' + step.message : '') +
+          (step.ms != null ? ' - ' + step.ms + ' ms' : '');
+      }
+
+      function renderSteps() {
+        list.textContent = '';
+        steps.forEach(function (step, index) {
+          var row = document.createElement('li');
+          row.className = 'cd p-2 mb-2';
+          var label = document.createElement('span');
+          label.textContent = describe(step);
+          var controls = document.createElement('span');
+          controls.className = 'fx gp1 mt-2';
+          [['↑', -1, 'Move step up'], ['↓', 1, 'Move step down'], ['×', 0, 'Delete step']].forEach(function (item) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'bt bt-os';
+            button.textContent = item[0];
+            button.setAttribute('aria-label', item[2]);
+            button.addEventListener('click', function () {
+              if (item[1] === 0) steps.splice(index, 1);
+              else {
+                var target = index + item[1];
+                if (target < 0 || target >= steps.length) return;
+                var moving = steps.splice(index, 1)[0];
+                steps.splice(target, 0, moving);
+              }
+              syncSource();
+              renderSteps();
+              error.textContent = '';
+            });
+            controls.appendChild(button);
+          });
+          row.append(label, controls);
+          list.appendChild(row);
+        });
+      }
+
+      function syncSource() {
+        source.value = JSON.stringify(steps, null, 2);
+        sourceDirty = false;
+        Array.prototype.forEach.call(list.querySelectorAll('button'), function (button) { button.disabled = false; });
+        if (db) {
+          document.getElementById('run-workflow').disabled = false;
+          document.getElementById('save-workflow').disabled = false;
+          document.getElementById('apply-json').disabled = false;
+        }
+      }
+
+      function registerWorkflow() {
+        BareMetal.Workflow.fromJSON(workflowId, JSON.stringify(steps));
+      }
+
+      function showError(message) {
+        error.textContent = message || '';
+      }
+
+      async function save() {
+        await db.put('workflows', { id: workflowId, steps: steps, updated: Date.now() });
+        status.textContent = 'Saved in IndexedDB';
+      }
+
+      document.querySelectorAll('[data-add-step]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          if (sourceDirty) {
+            showError('Apply or discard your JSON edits before changing the visual step list.');
+            return;
+          }
+          var type = button.dataset.addStep;
+          var step = type === 'SET' ? { type: 'SET', name: 'newValue', value: '' } :
+            type === 'LOG' ? { type: 'LOG', level: 'info', message: 'Workflow step' } :
+            type === 'WAIT' ? { type: 'WAIT', ms: 250 } :
+            { type: 'IF', condition: 'total > 0' };
+          steps.push(step);
+          syncSource();
+          renderSteps();
+        });
+      });
+
+      document.getElementById('apply-json').addEventListener('click', async function () {
+        try {
+          var parsed = JSON.parse(source.value);
+          if (!Array.isArray(parsed) || parsed.some(function (step) { return !step || typeof step.type !== 'string'; })) {
+            throw new Error('Workflow JSON must be an array of typed steps.');
+          }
+          steps = parsed;
+          registerWorkflow();
+          renderSteps();
+          syncSource();
+          showError('');
+          await save();
+        } catch (exception) {
+          showError(exception.message || String(exception));
+        }
+      });
+
+      document.getElementById('save-workflow').addEventListener('click', function () {
+        save().catch(function (exception) { showError(exception.message || String(exception)); });
+      });
+      document.getElementById('reset-workflow').addEventListener('click', async function () {
+        try {
+          steps = JSON.parse(JSON.stringify(sample));
+          registerWorkflow();
+          syncSource();
+          renderSteps();
+          showError('');
+          await save();
+        } catch (exception) {
+          showError(exception.message || String(exception));
+        }
+      });
+      document.getElementById('run-workflow').addEventListener('click', async function () {
+        try {
+          registerWorkflow();
+          var result = await BareMetal.Workflow.run(workflowId, { actor: 'Demo operator' });
+          output.textContent = JSON.stringify(result, null, 2);
+          showError('');
+        } catch (exception) {
+          showError(exception.message || String(exception));
+        }
+      });
+
+      source.addEventListener('input', function () {
+        sourceDirty = true;
+        Array.prototype.forEach.call(list.querySelectorAll('button'), function (button) { button.disabled = true; });
+        document.getElementById('apply-json').disabled = false;
+        document.getElementById('run-workflow').disabled = true;
+        document.getElementById('save-workflow').disabled = true;
+        status.textContent = 'Unsaved JSON edits';
+      });
+
+      async function initialize() {
+        if (!BareMetal.IDB.isSupported()) throw new Error('IndexedDB is unavailable; this demo requires browser IndexedDB.');
+        db = await BareMetal.IDB.open(DB_NAME, {
+          version: 1,
+          stores: { workflows: { keyPath: 'id' } }
+        });
+        var stored = await db.get('workflows', workflowId);
+        steps = stored ? stored.steps : JSON.parse(JSON.stringify(sample));
+        registerWorkflow();
+        syncSource();
+        renderSteps();
+        status.textContent = stored ? 'Loaded from IndexedDB' : 'Example workflow ready';
+        document.getElementById('run-workflow').disabled = false;
+        document.getElementById('save-workflow').disabled = false;
+        document.getElementById('apply-json').disabled = false;
+        document.getElementById('reset-workflow').disabled = false;
+        window.__BM_APP__ = {
+          ready: true,
+          getSteps: function () { return steps; },
+          run: function () { return BareMetal.Workflow.run(workflowId, { actor: 'Browser test' }); }
+        };
+      }
+
+      initialize().catch(function (exception) {
+        showError(exception.message || String(exception));
+        status.textContent = 'Unable to open IndexedDB';
+        window.__BM_APP__ = { ready: false, error: exception.message || String(exception) };
+      });
+    })();
+  </script>
+</body>
+</html>

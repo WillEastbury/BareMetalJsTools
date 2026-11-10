@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ERP Bindings | BareMetalJsTools</title>
+  <link rel="stylesheet" href="../../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../../src/themes/wavefunction.css">
+  <link rel="stylesheet" href="../../src/BareMetal.Modal.css">
+</head>
+<body>
+  <header class="nbar">
+    <div class="bx fx ai-c jc-b gp2">
+      <a class="nbar-b" href="./">Interactive apps</a>
+      <nav class="fx ai-c gp2" aria-label="Page navigation">
+        <a class="nl" href="../index.html">Showcase</a>
+        <a class="nl act" href="erp.html">ERP bindings</a>
+        <a class="nl" href="codes.html">Codes &amp; forms</a>
+      </nav>
+    </div>
+  </header>
+  <main class="bx py-4">
+    <header class="mb-4">
+      <span class="bd bg-p">INTERACTIVE SAMPLE</span>
+      <h1 class="dp4 mt-2">A small ERP, end to end.</h1>
+      <p class="ld">Bound purchase orders, editable records, reference codes, document lineage, charts, and pivots. Data stays in this browser’s IndexedDB.</p>
+    </header>
+    <div class="fx fx-w ai-c gp2 mb-3">
+      <button id="add-order" class="bt bt-p" type="button" disabled>Add purchase order</button>
+      <button id="reset-data" class="bt bt-os" type="button" disabled>Reset demo data</button>
+      <span id="db-status" class="bd bg-s" role="status">Opening IndexedDB…</span>
+    </div>
+    <div id="app-error" class="bd bg-er mb-3" role="alert" hidden></div>
+    <section class="cd mb-3">
+      <div class="cd-h"><h2 class="mb0">Purchase orders</h2></div>
+      <div class="cd-b">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr><th>Order</th><th>Supplier</th><th>Country</th><th>Status</th><th>Total</th><th>Lines</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="order-rows" m-each="orders key:id">
+              <template>
+                <tr>
+                  <td><strong m-text=".id"></strong></td>
+                  <td m-text=".customer"></td>
+                  <td><span m-text=".country"></span> / <span m-text=".currency"></span></td>
+                  <td><span class="bd bg-in" m-text=".status"></span></td>
+                  <td m-text=".totalLabel"></td>
+                  <td>
+                    <details>
+                      <summary><span m-text=".items.length"></span> items</summary>
+                      <div class="nested-lines" m-attr="data-order-id:.id"></div>
+                    </details>
+                  </td>
+                  <td class="fx gp1">
+                    <button class="bt bt-p" type="button" data-edit-order m-attr="data-edit-order:.id">Edit</button>
+                    <button class="bt bt-os" type="button" data-advance-order m-attr="data-advance-order:.id">Advance</button>
+                    <button class="bt bt-er" type="button" data-delete-order m-attr="data-delete-order:.id" aria-label="Delete order">×</button>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <p class="sm fg-m mb0">Edit opens a row-bound form. Each order’s expandable lines table is rendered from its nested records.</p>
+      </div>
+    </section>
+    <div class="rw g3">
+      <section class="cm6">
+        <div class="cd">
+          <div class="cd-h"><h2 class="mb0">Order totals by country and currency</h2></div>
+          <div id="spend-chart" class="cd-b" aria-label="Spend chart"></div>
+        </div>
+      </section>
+      <section class="cm6">
+        <div class="cd">
+          <div class="cd-h"><h2 class="mb0">Pivot summary</h2></div>
+          <div id="pivot-control" class="cd-b"></div>
+        </div>
+      </section>
+      <section class="cm6">
+        <div class="cd">
+          <div class="cd-h"><h2 class="mb0">Document tree</h2></div>
+          <div id="document-tree" class="cd-b" aria-live="polite"></div>
+        </div>
+      </section>
+      <section class="cm6">
+        <div class="cd">
+          <div class="cd-h"><h2 class="mb0">Document relationship graph</h2></div>
+          <div id="document-graph" class="cd-b" aria-label="Document relationship graph"></div>
+        </div>
+      </section>
+    </div>
+    <details class="cd mt-3">
+      <summary class="cd-h">Implementation sample</summary>
+      <pre class="bg-bs fg-dk p-2">const db = await BareMetal.IDB.open('bm-erp-demo', {
+  version: 1,
+  stores: { orders: { keyPath: 'id' }, chains: { keyPath: 'id' } }
+});
+const orders = await db.getAll('orders');
+BareMetal.Bind.bind(document.body, state, watch);
+BareMetal.Pivot.create('#pivot-control', { fields, records, groupBy: 'country', valueField: 'total' });
+BareMetal.DocChain.serialize(rootDocument);</pre>
+    </details>
+  </main>
+  <dialog id="order-dialog" class="p-3">
+    <form id="order-form">
+      <h2 id="dialog-title">Edit purchase order</h2>
+      <input type="hidden" name="id" m-value="selected.id">
+      <div class="rw g2">
+        <label class="cm6">Supplier
+          <input class="fc" name="customer" m-value="selected.customer" required>
+        </label>
+        <label class="cm6">Country
+          <select id="edit-country" class="fc" name="country" m-value="selected.country" required></select>
+        </label>
+        <label class="cm6">Currency
+          <select id="edit-currency" class="fc" name="currency" m-value="selected.currency" required></select>
+        </label>
+        <label class="cm6">Total
+          <input class="fc" name="total" type="number" min="0" step="0.01" m-value="selected.total" required>
+        </label>
+      </div>
+      <p id="form-error" class="fg-er" role="alert"></p>
+      <div class="fx gp2">
+        <button class="bt bt-p" type="submit">Save to IndexedDB</button>
+        <button id="cancel-edit" class="bt bt-os" type="button">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+  <footer class="bot p-3"><div class="bx fx fx-w jc-b gp2"><a href="./">All interactive apps</a><a href="https://github.com/WillEastbury/BareMetalJsTools">Source</a></div></footer>
+  <script src="../../src/BareMetal.IDB.js"></script>
+  <script src="../../src/BareMetal.Codes.js"></script>
+  <script src="../../src/BareMetal.Bind.js"></script>
+  <script src="../../src/BareMetal.Forms.js"></script>
+  <script src="../../src/BareMetal.Charts.js"></script>
+  <script src="../../src/BareMetal.Pivot.js"></script>
+  <script src="../../src/BareMetal.Graph.js"></script>
+  <script src="../../src/BareMetal.DocChain.js"></script>
+  <script src="../../src/BareMetal.Modal.js"></script>
+  <script>
+    (function () {
+      var DB_NAME = 'bm-erp-demo-v1';
+      var db;
+      var rootDocument;
+      var graphHandle;
+      var pivot;
+      var adding = false;
+      var dialog = document.getElementById('order-dialog');
+      var modal = BareMetal.Modal.adopt(dialog, { initialFocus: '[name="customer"]' });
+      var form = document.getElementById('order-form');
+      var status = document.getElementById('db-status');
+      var errorBox = document.getElementById('app-error');
+      var countries = BareMetal.Codes.countries.list();
+      var currencies = BareMetal.Codes.currencies.list();
+      var countrySelect = document.getElementById('edit-country');
+      var currencySelect = document.getElementById('edit-currency');
+
+      function addOptions(select, items, label) {
+        items.forEach(function (item) {
+          var option = document.createElement('option');
+          option.value = item.code;
+          option.textContent = label(item);
+          select.appendChild(option);
+        });
+      }
+      addOptions(countrySelect, countries, function (item) { return item.name + ' (' + item.code + ')'; });
+      addOptions(currencySelect, currencies, function (item) { return item.code + ' - ' + item.name; });
+
+      var binding = BareMetal.Bind.reactive({ orders: [], selected: {} });
+      var formApi = BareMetal.Forms.create(form, {
+        fields: {
+          customer: { required: true, minLength: 2 },
+          country: { required: true },
+          currency: { required: true },
+          total: { required: true, min: 0 }
+        }
+      });
+
+      function showError(message) {
+        errorBox.hidden = !message;
+        errorBox.textContent = message || '';
+      }
+
+      function seedOrders() {
+        return [
+          { id: 'PO-1042', customer: 'Northstar Audio', country: 'GB', currency: 'GBP', status: 'draft', total: 1240.50, items: [{ sku: 'MX-4', description: 'Four-channel mixer', quantity: 1, unitPrice: 890.50 }, { sku: 'CB-12', description: 'Balanced cable', quantity: 5, unitPrice: 70 }] },
+          { id: 'PO-1043', customer: 'Pacific Studio', country: 'US', currency: 'USD', status: 'approved', total: 2860, items: [{ sku: 'SP-8', description: 'Studio monitors', quantity: 2, unitPrice: 930 }, { sku: 'ST-2', description: 'Monitor stands', quantity: 2, unitPrice: 500 }] },
+          { id: 'PO-1044', customer: 'Maple Sound', country: 'CA', currency: 'CAD', status: 'received', total: 715, items: [{ sku: 'MI-1', description: 'MIDI interface', quantity: 1, unitPrice: 495 }, { sku: 'CB-08', description: 'USB cable', quantity: 4, unitPrice: 55 }] },
+          { id: 'PO-1045', customer: 'Berlin Live', country: 'DE', currency: 'EUR', status: 'draft', total: 1980, items: [{ sku: 'DJ-2', description: 'DJ controller', quantity: 1, unitPrice: 1590 }, { sku: 'CA-6', description: 'Carry case', quantity: 1, unitPrice: 390 }] }
+        ];
+      }
+
+      function defineDocumentTypes() {
+        BareMetal.DocChain.defineType('ERP Portfolio', {
+          fields: { name: { type: 'string', required: true } },
+          allowedChildren: ['Purchase Order']
+        });
+        BareMetal.DocChain.defineType('Purchase Order', {
+          fields: { orderId: { type: 'string', required: true }, customer: { type: 'string', required: true }, total: { type: 'number', required: true } },
+          allowedChildren: ['Invoice', 'Goods Receipt'],
+          lifecycle: {
+            initial: 'draft',
+            terminal: ['cancelled', 'invoiced'],
+            transitions: {
+              draft: ['approved', 'cancelled'],
+              approved: ['received', 'invoiced', 'cancelled'],
+              received: ['invoiced']
+            }
+          }
+        });
+        BareMetal.DocChain.defineType('Invoice', {
+          fields: { number: { type: 'string', required: true } },
+          lifecycle: { initial: 'open', terminal: ['paid', 'void'], transitions: { open: ['paid', 'void'] } }
+        });
+        BareMetal.DocChain.defineType('Goods Receipt', {
+          fields: { reference: { type: 'string', required: true } },
+          lifecycle: { initial: 'pending', terminal: ['received'], transitions: { pending: ['received'] } }
+        });
+      }
+
+      function createDocumentTree(orders) {
+        defineDocumentTypes();
+        rootDocument = BareMetal.DocChain.create('ERP Portfolio', { name: 'Smoof Audio Supply' });
+        orders.forEach(function (order, index) {
+          var po = BareMetal.DocChain.derive(rootDocument, 'Purchase Order', {
+            orderId: order.id,
+            customer: order.customer,
+            total: Number(order.total)
+          }, { status: order.status });
+          order.docId = po.id;
+          var invoice = BareMetal.DocChain.derive(po, 'Invoice', { number: 'INV-' + order.id.slice(-4) });
+          var receipt = BareMetal.DocChain.derive(po, 'Goods Receipt', { reference: 'GR-' + order.id.slice(-4) });
+          if (index % 2 === 0) BareMetal.DocChain.link(invoice, receipt, 'fulfilment');
+        });
+      }
+
+      function currencyAmount(order) {
+        try {
+          return new Intl.NumberFormat('en-GB', { style: 'currency', currency: order.currency }).format(Number(order.total) || 0);
+        } catch (error) {
+          return order.currency + ' ' + Number(order.total || 0).toFixed(2);
+        }
+      }
+
+      function renderNestedTables() {
+        Array.prototype.forEach.call(document.querySelectorAll('.nested-lines'), function (host) {
+          var order = binding.state.orders.find(function (item) { return item.id === host.dataset.orderId; });
+          if (!order) return;
+          var table = document.createElement('table');
+          table.className = 'table';
+          var head = document.createElement('thead');
+          var headRow = document.createElement('tr');
+          ['SKU', 'Description', 'Qty', 'Unit price', 'Line total'].forEach(function (value) {
+            var th = document.createElement('th');
+            th.textContent = value;
+            headRow.appendChild(th);
+          });
+          head.appendChild(headRow);
+          table.appendChild(head);
+          var body = document.createElement('tbody');
+          (order.items || []).forEach(function (item) {
+            var row = document.createElement('tr');
+            [item.sku, item.description, item.quantity, currencyAmount({ currency: order.currency, total: item.unitPrice }), currencyAmount({ currency: order.currency, total: item.quantity * item.unitPrice })].forEach(function (value) {
+              var cell = document.createElement('td');
+              cell.textContent = String(value);
+              row.appendChild(cell);
+            });
+            body.appendChild(row);
+          });
+          table.appendChild(body);
+          host.replaceChildren(table);
+        });
+      }
+
+      function renderTreeNode(node, parent) {
+        var item = document.createElement('li');
+        var doc = node.doc;
+        var detail = doc.type + ' - ' + (doc.data.orderId || doc.data.number || doc.data.reference || doc.data.name || doc.id) +
+          ' [' + doc.status + '] - ' + BareMetal.DocChain.audit(doc).length + ' audit events';
+        var summary;
+        if (node.children.length) {
+          var details = document.createElement('details');
+          details.open = true;
+          summary = document.createElement('summary');
+          summary.textContent = detail;
+          details.appendChild(summary);
+          var children = document.createElement('ul');
+          node.children.forEach(function (child) { renderTreeNode(child, children); });
+          details.appendChild(children);
+          item.appendChild(details);
+        } else {
+          item.textContent = detail;
+        }
+        parent.appendChild(item);
+      }
+
+      function persistDocuments() {
+        return db.put('chains', { id: 'portfolio', payload: BareMetal.DocChain.serialize(rootDocument), updated: Date.now() });
+      }
+
+      function renderViews() {
+        binding.state.orders.forEach(function (order) {
+          var country = BareMetal.Codes.countries.get(order.country);
+          order.countryLabel = country ? country.name : order.country;
+          order.totalLabel = currencyAmount(order);
+        });
+        var countryTotals = {};
+        binding.state.orders.forEach(function (order) {
+          var key = order.country + ' (' + order.currency + ')';
+          countryTotals[key] = (countryTotals[key] || 0) + Number(order.total || 0);
+        });
+        BareMetal.Charts.bar('#spend-chart', Object.keys(countryTotals).map(function (label) {
+          return { label: label, value: Math.round(countryTotals[label] * 100) / 100 };
+        }), { showValues: true });
+
+        var records = binding.state.orders.map(function (order) {
+          return { country: order.country, currency: order.currency, status: order.status, total: Number(order.total) || 0 };
+        });
+        if (!pivot) {
+          pivot = BareMetal.Pivot.create('#pivot-control', {
+            fields: ['country', 'currency', 'status', 'total'],
+            records: records,
+            groupBy: 'country',
+            valueField: 'total',
+            op: 'sum'
+          });
+        } else {
+          pivot.setRecords(records);
+        }
+
+        var treeRoot = document.getElementById('document-tree');
+        treeRoot.textContent = '';
+        var tree = document.createElement('ul');
+        renderTreeNode(BareMetal.DocChain.tree(rootDocument), tree);
+        treeRoot.appendChild(tree);
+        if (graphHandle) graphHandle.destroy();
+        var graphData = BareMetal.DocChain.visualize(rootDocument);
+        graphHandle = BareMetal.Graph.create('#document-graph', graphData, {
+          directed: true,
+          groupField: 'type',
+          width: 720,
+          height: 360
+        });
+        status.textContent = 'IndexedDB ready - ' + binding.state.orders.length + ' purchase orders';
+        document.getElementById('add-order').disabled = false;
+        document.getElementById('reset-data').disabled = false;
+        renderNestedTables();
+      }
+
+      function addOrderDocument(order) {
+        var po = BareMetal.DocChain.derive(rootDocument, 'Purchase Order', {
+          orderId: order.id,
+          customer: order.customer,
+          total: Number(order.total)
+        });
+        order.docId = po.id;
+        BareMetal.DocChain.derive(po, 'Invoice', { number: 'INV-' + order.id.slice(-4) });
+        BareMetal.DocChain.derive(po, 'Goods Receipt', { reference: 'GR-' + order.id.slice(-4) });
+      }
+
+      function openEditor(order, isNew) {
+        adding = isNew;
+        document.getElementById('dialog-title').textContent = isNew ? 'Add purchase order' : 'Edit ' + order.id;
+        document.getElementById('form-error').textContent = '';
+        binding.state.selected = JSON.parse(JSON.stringify(order));
+        if (!dialog.open) modal.open();
+      }
+
+      function findOrder(id) {
+        return binding.state.orders.find(function (item) { return item.id === id; });
+      }
+
+      document.getElementById('order-rows').addEventListener('click', async function (event) {
+        var edit = event.target.closest('[data-edit-order]');
+        var advance = event.target.closest('[data-advance-order]');
+        var remove = event.target.closest('[data-delete-order]');
+        try {
+          if (edit) openEditor(findOrder(edit.dataset.editOrder), false);
+          if (advance) {
+            var order = findOrder(advance.dataset.advanceOrder);
+            var doc = BareMetal.DocChain.store.get(order.docId);
+            var next = { draft: 'approved', approved: 'received', received: 'invoiced' }[doc.status];
+            if (!next) throw new Error('This order has completed its lifecycle.');
+            BareMetal.DocChain.transition(doc, next, { actor: 'Demo operator', reason: 'ERP sample action' });
+            order.status = next;
+            doc.data.customer = order.customer;
+            doc.data.total = Number(order.total);
+            await db.put('orders', order);
+            await persistDocuments();
+            renderViews();
+          }
+          if (remove) {
+            var deleted = findOrder(remove.dataset.deleteOrder);
+            await db.delete('orders', deleted.id);
+            BareMetal.DocChain.store.remove(deleted.docId);
+            binding.state.orders.splice(binding.state.orders.indexOf(deleted), 1);
+            await persistDocuments();
+            renderViews();
+          }
+        } catch (error) {
+          showError(error.message || String(error));
+        }
+      });
+
+      form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        var validation = formApi.validate();
+        if (!validation.valid) {
+          document.getElementById('form-error').textContent = 'Check the required fields and total.';
+          return;
+        }
+        var selected = binding.state.selected;
+        selected.total = Number(selected.total);
+        var existing = findOrder(selected.id);
+        try {
+          if (adding || !existing) {
+            selected.items = selected.items || [];
+            selected.status = 'draft';
+            addOrderDocument(selected);
+            binding.state.orders.push(selected);
+          } else {
+            selected.docId = existing.docId;
+            selected.status = existing.status;
+            selected.items = existing.items;
+            binding.state.orders[binding.state.orders.indexOf(existing)] = selected;
+            var documentRecord = BareMetal.DocChain.store.get(selected.docId);
+            if (documentRecord) {
+              documentRecord.data.customer = selected.customer;
+              documentRecord.data.total = Number(selected.total);
+            }
+          }
+          await db.put('orders', selected);
+          await persistDocuments();
+          modal.close();
+          renderViews();
+        } catch (error) {
+          document.getElementById('form-error').textContent = error.message || String(error);
+        }
+      });
+
+      document.getElementById('cancel-edit').addEventListener('click', function () { modal.close(); });
+      document.getElementById('add-order').addEventListener('click', function () {
+        var id = 'PO-' + String(Date.now()).slice(-6);
+        openEditor({ id: id, customer: '', country: 'GB', currency: 'GBP', status: 'draft', total: 0, items: [] }, true);
+      });
+      document.getElementById('reset-data').addEventListener('click', async function () {
+        try {
+          await db.clear('orders');
+          await db.clear('chains');
+          var orders = seedOrders();
+          await db.putAll('orders', orders);
+          BareMetal.DocChain.store.clear();
+          createDocumentTree(orders);
+          await persistDocuments();
+          binding.state.orders.splice(0, binding.state.orders.length);
+          Array.prototype.push.apply(binding.state.orders, orders);
+          renderViews();
+          showError('');
+        } catch (error) {
+          showError(error.message || String(error));
+        }
+      });
+
+      async function initialize() {
+        if (!BareMetal.IDB.isSupported()) throw new Error('IndexedDB is unavailable; this demo requires browser IndexedDB.');
+        db = await BareMetal.IDB.open(DB_NAME, {
+          version: 1,
+          stores: {
+            orders: { keyPath: 'id' },
+            chains: { keyPath: 'id' }
+          }
+        });
+        var orders = await db.getAll('orders');
+        if (!orders.length) {
+          orders = seedOrders();
+          await db.putAll('orders', orders);
+        }
+        var savedChain = await db.get('chains', 'portfolio');
+        if (savedChain && savedChain.payload) {
+          rootDocument = BareMetal.DocChain.deserialize(savedChain.payload);
+        } else {
+          createDocumentTree(orders);
+          await persistDocuments();
+        }
+        var docs = BareMetal.DocChain.find(function (item) { return item.type === 'Purchase Order'; });
+        orders.forEach(function (order) {
+          var doc = docs.find(function (item) { return item.data.orderId === order.id; });
+          if (doc) {
+            order.docId = doc.id;
+            order.status = doc.status;
+          } else {
+            addOrderDocument(order);
+          }
+        });
+        await db.putAll('orders', orders);
+        await persistDocuments();
+        binding.state.orders.splice(0, binding.state.orders.length);
+        Array.prototype.push.apply(binding.state.orders, orders);
+        BareMetal.Bind.bind(document.body, binding.state, binding.watch);
+        renderViews();
+        window.__BM_APP__ = {
+          ready: true,
+          storage: 'IndexedDB',
+          getOrders: function () { return binding.state.orders; },
+          openFirst: function () { openEditor(binding.state.orders[0], false); },
+          pivot: function () { return pivot; }
+        };
+      }
+
+      initialize().catch(function (error) {
+        showError(error.message || String(error));
+        status.textContent = 'Unable to open IndexedDB';
+        window.__BM_APP__ = { ready: false, error: error.message || String(error) };
+      });
+    })();
+  </script>
+</body>
+</html>

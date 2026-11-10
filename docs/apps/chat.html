@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PubSub Chat | BareMetalJsTools</title>
+  <link rel="stylesheet" href="../../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../../src/themes/wavefunction.css">
+  <link rel="stylesheet" href="../../src/BareMetal.Chat.css">
+</head>
+<body class="bm-chat-layout">
+  <aside class="bm-chat-sidebar">
+    <h1 class="fz2">BM Chat</h1>
+    <nav class="bm-chat-conversations" aria-label="Chat channels">
+      <div class="bm-chat-conversation-row" aria-current="true">
+        <button class="bm-chat-conversation-open bt" type="button" data-channel="general"># general</button>
+      </div>
+      <div class="bm-chat-conversation-row" aria-current="false">
+        <button class="bm-chat-conversation-open bt" type="button" data-channel="engineering"># engineering</button>
+      </div>
+      <div class="bm-chat-conversation-row" aria-current="false">
+        <button class="bm-chat-conversation-open bt" type="button" data-channel="support"># support</button>
+      </div>
+    </nav>
+    <label class="mt-2">Your display name
+      <input id="chat-user" class="fc" value="Ada">
+    </label>
+    <button id="system-message" class="bt bt-os mt-2" type="button">Publish a system event</button>
+    <p class="sm fg-m">Same-tab event bus demo. Messages are not sent to a server.</p>
+    <a class="nl" href="./">All interactive apps</a>
+  </aside>
+  <main class="bm-chat-main">
+    <header class="bm-chat-header">
+      <div>
+        <strong id="channel-title"># general</strong>
+        <div class="sm fg-m">PubSub topic: chat.message</div>
+      </div>
+      <a class="nl" href="../index.html">Showcase</a>
+    </header>
+    <section id="chat-log" class="bm-chat-log bm-chat-transcript" aria-live="polite" aria-label="Messages"></section>
+    <div id="chat-status" class="bm-chat-status" role="status">Ready. Events stay in this browser tab.</div>
+    <form id="chat-composer" class="bm-chat-composer">
+      <textarea id="chat-text" class="bm-chat-prompt" rows="2" maxlength="2000" placeholder="Write a message..." aria-label="Message"></textarea>
+      <button class="bt bt-p" type="submit">Send</button>
+    </form>
+  </main>
+  <script src="../../src/BareMetal.PubSub.js"></script>
+  <script>
+    (function () {
+      var bus = BareMetal.PubSub.create();
+      var messageChannel = bus.channel('chat.message', {
+        replay: 40,
+        validate: function (message) {
+          return !!message && typeof message.text === 'string' && !!message.text.trim();
+        }
+      });
+      var systemChannel = bus.channel('chat.system', { replay: 10 });
+      var messages = [];
+      var current = 'general';
+      var log = document.getElementById('chat-log');
+      var status = document.getElementById('chat-status');
+      var user = document.getElementById('chat-user');
+
+      function addMessage(message, kind) {
+        messages.push(message);
+        if (message.channel && message.channel !== current) return;
+        var card = document.createElement('article');
+        card.className = 'bm-chat-message bm-chat-bubble cd';
+        var label = document.createElement('span');
+        label.className = 'bm-chat-message-label';
+        var body = document.createElement('div');
+        body.className = 'bm-chat-message-body';
+        var date = new Date(message.at || Date.now());
+        label.textContent = kind === 'system' ? 'System - ' + date.toLocaleTimeString() :
+          String(message.user || 'Guest') + ' - ' + date.toLocaleTimeString();
+        body.textContent = message.text;
+        card.append(label, body);
+        log.appendChild(card);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      messageChannel.subscribe(function (message) {
+        addMessage(message, 'user');
+      });
+      systemChannel.subscribe(function (message) {
+        addMessage(message, 'system');
+      });
+      bus.on('chat.message', function (message, meta) {
+        status.textContent = 'Received ' + meta.topic + ' from ' + (message.user || 'guest') + '.';
+      }, { ns: 'chat-status' });
+
+      function renderChannel() {
+        log.textContent = '';
+        messages.forEach(function (message) {
+          if (message.channel === current) addMessageToView(message, false);
+        });
+        document.getElementById('channel-title').textContent = '# ' + current;
+        Array.prototype.forEach.call(document.querySelectorAll('[data-channel]'), function (button) {
+          var active = button.dataset.channel === current;
+          button.closest('.bm-chat-conversation-row').setAttribute('aria-current', String(active));
+        });
+      }
+
+      function addMessageToView(message, remember) {
+        if (remember) messages.push(message);
+        var card = document.createElement('article');
+        card.className = 'bm-chat-message bm-chat-bubble cd';
+        var label = document.createElement('span');
+        label.className = 'bm-chat-message-label';
+        var body = document.createElement('div');
+        body.className = 'bm-chat-message-body';
+        label.textContent = (message.system ? 'System' : String(message.user || 'Guest')) + ' - ' +
+          new Date(message.at || Date.now()).toLocaleTimeString();
+        body.textContent = message.text;
+        card.append(label, body);
+        log.appendChild(card);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      document.getElementById('chat-composer').addEventListener('submit', function (event) {
+        event.preventDefault();
+        var text = document.getElementById('chat-text').value.trim();
+        if (!text) return;
+        var accepted = messageChannel.emit({
+          channel: current,
+          user: user.value.trim() || 'Guest',
+          text: text,
+          at: Date.now()
+        });
+        if (accepted) {
+          document.getElementById('chat-text').value = '';
+          status.textContent = 'Published to chat.message.';
+        } else {
+          status.textContent = 'Message was empty or rejected.';
+        }
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-channel]'), function (button) {
+        button.addEventListener('click', function () {
+          current = button.dataset.channel;
+          renderChannel();
+        });
+      });
+      document.getElementById('system-message').addEventListener('click', function () {
+        systemChannel.emit({ channel: current, system: true, text: 'System check complete. PubSub is connected.', at: Date.now() });
+        status.textContent = 'Published to chat.system.';
+      });
+
+      renderChannel();
+      window.__BM_APP__ = {
+        ready: true,
+        messages: messages,
+        sendMessage: function (text) {
+          return messageChannel.emit({ channel: current, user: user.value || 'Guest', text: text, at: Date.now() });
+        },
+        switchChannel: function (name) { current = name; renderChannel(); },
+        dispose: function () { bus.offNs('chat-status'); }
+      };
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Markdown and HTML Editor | BareMetalJsTools</title>
+  <link rel="stylesheet" href="../../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../../src/themes/wavefunction.css">
+</head>
+<body>
+  <header class="nbar">
+    <div class="bx fx ai-c jc-b gp2">
+      <a class="nbar-b" href="./">Interactive apps</a>
+      <nav class="fx ai-c gp2" aria-label="Page navigation">
+        <a class="nl" href="../index.html">Showcase</a>
+        <a class="nl act" href="editor.html">Markdown &amp; HTML</a>
+        <a class="nl" href="workflow.html">Workflow editor</a>
+      </nav>
+    </div>
+  </header>
+  <main class="bx py-4">
+    <header class="mb-4">
+      <span class="bd bg-p">INTERACTIVE SAMPLE</span>
+      <h1 class="dp4 mt-2">Write it. Preview it.</h1>
+      <p class="ld">A live Markdown editor and a sandboxed HTML preview, with no external editor dependencies.</p>
+    </header>
+    <section class="cd">
+      <div class="cd-h fx fx-w ai-c jc-b gp2">
+        <h2 class="mb0">Document editor</h2>
+        <div class="fx ai-c gp2">
+          <label>Mode
+            <select id="editor-mode" class="fc" m-value="mode">
+              <option value="markdown">Markdown</option>
+              <option value="html">HTML</option>
+            </select>
+          </label>
+          <button id="reset-editor" class="bt bt-os" type="button">Reset sample</button>
+          <button id="download-editor" class="bt bt-p" type="button">Download</button>
+        </div>
+      </div>
+      <div class="cd-b">
+        <p id="editor-note" class="sm fg-m" role="status">Markdown preview uses BareMetal.Markdown.renderSafe(). HTML preview runs in a sandbox with scripts and external resources removed.</p>
+        <div class="rw g3">
+          <div class="cm6">
+            <label for="markdown-source">Markdown source</label>
+            <textarea id="markdown-source" class="fc" rows="18" m-value="markdown" aria-label="Markdown source"></textarea>
+            <label for="html-source" class="mt-3">HTML source</label>
+            <textarea id="html-source" class="fc" rows="18" m-value="html" aria-label="HTML source"></textarea>
+          </div>
+          <div class="cm6">
+            <h3 class="mt-0">Preview</h3>
+            <div id="markdown-preview" class="p-3 bg-bs"></div>
+            <iframe id="html-preview" class="w-100 bo" title="Sandboxed HTML preview" sandbox="" referrerpolicy="no-referrer" height="460"></iframe>
+          </div>
+        </div>
+        <p id="editor-count" class="sm fg-m"></p>
+      </div>
+    </section>
+    <details class="cd mt-3">
+      <summary class="cd-h">Implementation sample</summary>
+      <pre class="bg-bs fg-dk p-2">const preview = document.querySelector('#markdown-preview');
+BareMetal.Markdown.renderSafe(preview, markdownSource);
+htmlPreview.srcdoc = sandboxedDocument;
+BareMetal.Bind.bind(document.body, state, watch);</pre>
+    </details>
+  </main>
+  <footer class="bot p-3"><div class="bx fx fx-w jc-b gp2"><a href="./">All interactive apps</a><a href="https://github.com/WillEastbury/BareMetalJsTools">Source</a></div></footer>
+  <script src="../../src/BareMetal.Bind.js"></script>
+  <script src="../../src/BareMetal.Markdown.js"></script>
+  <script>
+    (function () {
+      var markdownSample = '# Field notes\n\nWrite in **Markdown** and preview it instantly.\n\n- Safe preview uses the BareMetal renderer\n- Try a table:\n\n| Code | Meaning |\n| --- | --- |\n| 200 | Ready |\n| 404 | Not found |\n\nRaw HTML is not executed in this editor.';
+      var htmlSample = '<article><h1>HTML preview</h1><p>Edit this semantic HTML. The sandbox strips scripts, event handlers, forms, and external resource URLs.</p><ul><li>Headings</li><li>Lists</li><li>Tables</li></ul></article>';
+      var root = document.querySelector('main');
+      var preview = document.getElementById('markdown-preview');
+      var frame = document.getElementById('html-preview');
+      var note = document.getElementById('editor-note');
+      var count = document.getElementById('editor-count');
+      var binding = BareMetal.Bind.reactive({
+        mode: 'markdown',
+        markdown: markdownSample,
+        html: htmlSample,
+        showMarkdown: true,
+        showHtml: false
+      });
+
+      function safeHtmlDocument(source) {
+        var parsed = new DOMParser().parseFromString(source, 'text/html');
+        Array.prototype.forEach.call(parsed.querySelectorAll('script,iframe,object,embed,form,link,base,meta,style,img,video,audio,source'), function (node) {
+          node.remove();
+        });
+        Array.prototype.forEach.call(parsed.querySelectorAll('*'), function (element) {
+          Array.prototype.slice.call(element.attributes).forEach(function (attribute) {
+            if (/^on/i.test(attribute.name) || /^(src|srcdoc|style|href|action|formaction|poster|srcset|background|data|ping|manifest|xlink:href)$/i.test(attribute.name)) {
+              element.removeAttribute(attribute.name);
+            }
+          });
+        });
+        return '<!doctype html><html><head><meta charset="utf-8"><title>Sandboxed preview</title></head><body>' +
+          parsed.body.innerHTML + '</body></html>';
+      }
+
+      function renderMarkdown() {
+        BareMetal.Markdown.renderSafe(preview, binding.state.markdown);
+        count.textContent = binding.state.markdown.length + ' Markdown characters';
+      }
+      function renderHtml() {
+        frame.srcdoc = safeHtmlDocument(binding.state.html);
+        count.textContent = binding.state.html.length + ' HTML characters';
+      }
+      function syncMode() {
+        var markdown = binding.state.mode === 'markdown';
+        binding.state.showMarkdown = markdown;
+        binding.state.showHtml = !markdown;
+        document.getElementById('markdown-source').hidden = !markdown;
+        document.getElementById('html-source').hidden = markdown;
+        preview.hidden = !markdown;
+        frame.hidden = markdown;
+        note.textContent = markdown
+          ? 'Markdown is rendered with BareMetal.Markdown.renderSafe(). Raw HTML and scripts are not trusted.'
+          : 'HTML is rendered in a sandbox. Scripts, event handlers, forms, styles, and external resources are removed.';
+        if (markdown) renderMarkdown();
+        else renderHtml();
+      }
+
+      BareMetal.Bind.bind(root, binding.state, binding.watch);
+      binding.watch('markdown', renderMarkdown);
+      binding.watch('html', renderHtml);
+      binding.watch('mode', syncMode);
+      renderMarkdown();
+      syncMode();
+
+      document.getElementById('reset-editor').addEventListener('click', function () {
+        binding.state.markdown = markdownSample;
+        binding.state.html = htmlSample;
+        binding.state.mode = 'markdown';
+      });
+      document.getElementById('download-editor').addEventListener('click', function () {
+        var isMarkdown = binding.state.mode === 'markdown';
+        var source = isMarkdown ? binding.state.markdown : safeHtmlDocument(binding.state.html);
+        var blob = new Blob([source], { type: isMarkdown ? 'text/markdown' : 'text/html' });
+        var url = URL.createObjectURL(blob);
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = isMarkdown ? 'field-notes.md' : 'field-notes.html';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      });
+
+      window.__BM_APP__ = {
+        ready: true,
+        safeHtmlDocument: safeHtmlDocument,
+        getMode: function () { return binding.state.mode; },
+        getMarkdownPreview: function () { return preview.textContent; }
+      };
+    })();
+  </script>
+</body>
+</html>
