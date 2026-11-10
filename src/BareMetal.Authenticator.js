@@ -153,15 +153,10 @@ BareMetal.Authenticator = (function(){
     while (n-- > 0) out *= 10;
     return out;
   }
-  function getNodeCrypto() {
-    try { return typeof require === 'function' ? require('crypto') : null; }
-    catch (_) { return null; }
-  }
   function getCrypto() {
     if (typeof crypto !== 'undefined') return crypto;
     if (typeof globalThis !== 'undefined' && globalThis.crypto) return globalThis.crypto;
-    var node = getNodeCrypto();
-    return node && node.webcrypto ? node.webcrypto : null;
+    return null;
   }
   function randomBytes(length) {
     var c = getCrypto();
