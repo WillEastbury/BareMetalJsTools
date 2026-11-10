@@ -18,6 +18,13 @@ Every module follows the same pattern: small, obvious, fast. You can read the so
 
 ## The BareMetal family
 
+### Responsive media gallery
+
+`BareMetal.Gallery` provides image, video and audio cards with search, category
+and tag filters, favourites, sorting, grid/list views and larger previews.
+It follows the selected theme and adapts to narrow panels. See
+[Gallery usage and API](docs/BareMetal.Gallery.md).
+
 This toolkit doesn't exist in isolation. The same "strip away the nonsense" philosophy runs through the entire stack:
 
 | Project | What it is |
@@ -83,6 +90,9 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.ComponentFactories`](docs/BareMetal.ComponentFactories.md) | `create.*` helpers and `chatEndpoint()` auto-wire for REST-backed chatbots. | [2 KB](src/BareMetal.ComponentFactories.js) | [1 KB](src/BareMetal.ComponentFactories.min.js) | *Hand-rolled boilerplate* |
 | [`BareMetal.Template`](docs/BareMetal.Template.md) | Schema-driven DOM builder. Hand it metadata, get a form or table back. | [7 KB](src/BareMetal.Template.js) | [4 KB](src/BareMetal.Template.min.js) | Formly (≈80 KB), *JSON Forms (≈200 KB)* |
 | [`BareMetal.Chat`](docs/BareMetal.Chat.md) | Theme-aware sidebar, conversation list, transcript, composer, status, and response-control layout primitives. | [CSS](src/BareMetal.Chat.css) | — | App-local chat page styling |
+| [`BareMetal.Controls`](docs/BareMetal.Controls.md) | Shared accessible range, disclosure, and help controls. | [source](src/BareMetal.Controls.js) | [CSS](src/BareMetal.Controls.css) | No equivalent |
+| [`BareMetal.Modal`](docs/BareMetal.Modal.md) | Native dialog wrapper with focus restoration and busy state. | [source](src/BareMetal.Modal.js) | [CSS](src/BareMetal.Modal.css) | Bootstrap modal JS |
+| [`BareMetal.Gallery`](docs/BareMetal.Gallery.md) | Responsive media catalogue with filters, favourites, sorting, list/grid views, and preview. | [source](src/BareMetal.Gallery.js) | [CSS](src/BareMetal.Gallery.css) | Media gallery libraries |
 | [`BareMetal.Metadata`](docs/BareMetal.Metadata.md) | Client-side entity schema registry. Inline JSON, server fetch, or PicoWAL binary — declare your entities and render them automatically. | [8 KB](src/BareMetal.Metadata.js) | [4 KB](src/BareMetal.Metadata.min.js) | *GraphQL schema* + codegen toolchain |
 | [`BareMetal.Communications`](docs/BareMetal.Communications.md) | REST + WebSocket transport. Negotiates WS binary frames → BSO1 → JSON fallback. CSRF, 401-redirect, request multiplexing. | [19 KB](src/BareMetal.Communications.js) | [8 KB](src/BareMetal.Communications.min.js) | Axios (≈14 KB) + *socket.io-client* (≈45 KB) |
 | [`BareMetal.Launcher`](docs/BareMetal.Launcher.md) | Hosted terminal/session launcher helpers. API wrapper, tiny store, session cards, idle display, reconnecting WebSocket attach, optional xterm bridge. | [15 KB](src/BareMetal.Launcher.js) | [8 KB](src/BareMetal.Launcher.min.js) | *React shell* + socket.io-client + state library |
@@ -93,6 +103,8 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.Charts`](docs/BareMetal.Charts.md) | SVG charts — bar, line, sparkline, donut, gauge. Animated, themeable via CSS custom properties. | [16 KB](src/BareMetal.Charts.js) | [8 KB](src/BareMetal.Charts.min.js) | *Chart.js (≈200 KB)*, D3 (≈250 KB) |
 | [`BareMetal.Pivot`](docs/BareMetal.Pivot.md) | Group, summarise, sort, and filter records. Optional bar chart. | [8 KB](src/BareMetal.Pivot.js) | [5 KB](src/BareMetal.Pivot.min.js) | Pivot tables, Crosstab |
 | [`BareMetal.Graph`](docs/BareMetal.Graph.md) | Force-directed graph visualiser. Drag, zoom, hover, dynamic add/remove. | [18 KB](src/BareMetal.Graph.js) | [9 KB](src/BareMetal.Graph.min.js) | D3-force (≈30 KB) + D3-selection (≈20 KB), *Cytoscape.js* (≈600 KB) |
+| [`BareMetal.3DXR`](docs/BareMetal.3DXR.md) | Dependency-free WebGL/WebXR video tiles, gaze-to-audio focus, playlists, and ambient audio. | [source](src/BareMetal.3DXR.js) | — | Three.js + video/audio plumbing |
+| [`BareMetal.MusicPlayer`](docs/BareMetal.MusicPlayer.md) | Browser music playlists, remote-callable controls, repeat/shuffle, Media Session, and crossfades. | [source](src/BareMetal.MusicPlayer.js) | — | Howler.js, Plyr |
 | [`BareMetal.Auth`](docs/BareMetal.Auth.md) | OIDC/OAuth2 PKCE client. Silent refresh, provider presets (Google, Microsoft, GitHub, Apple, Facebook), login/whoami UI components. | [28 KB](src/BareMetal.Auth.js) | [16 KB](src/BareMetal.Auth.min.js) | *oidc-client-ts (≈80 KB)*, Auth0 SPA SDK (≈60 KB) |
 | [`BareMetal.Crypto`](docs/BareMetal.Crypto.md) | Web Crypto wrapper. AES-256-GCM symmetric, RSA-OAEP hybrid envelope, ECDSA P-256 signing, PBKDF2 key derivation. | [5 KB](src/BareMetal.Crypto.js) | [3 KB](src/BareMetal.Crypto.min.js) | *Stanford JS Crypto (≈45 KB)*, tweetnacl (≈7 KB) |
 | [`BareMetal.LocalKVStore`](docs/BareMetal.LocalKVStore.md) | Key-value store abstraction. localStorage, sessionStorage, IndexedDB backends with TTL, namespacing, cross-tab sync. | [14 KB](src/BareMetal.LocalKVStore.js) | [7 KB](src/BareMetal.LocalKVStore.min.js) | *localForage (≈29 KB)*, idb-keyval (≈1 KB) |
@@ -104,7 +116,8 @@ The whole point is the same everywhere: understand what the machine actually nee
 | [`BareMetal.StateMachine`](docs/BareMetal.StateMachine.md) | Finite state machine. States, transitions, guards, actions, context, subscribe/unsubscribe. | [3 KB](src/BareMetal.StateMachine.js) | [1 KB](src/BareMetal.StateMachine.min.js) | *XState (≈50 KB)*, Robot (≈4 KB) |
 | [`BareMetal.Logger`](docs/BareMetal.Logger.md) | Structured logging. Levels, transports (console, beacon, custom), batching, safe circular-ref stringify, child loggers. | [5 KB](src/BareMetal.Logger.js) | [3 KB](src/BareMetal.Logger.min.js) | *Winston (≈80 KB)*, Pino (≈30 KB), loglevel (≈3 KB) |
 | [`BareMetal.Animate`](docs/BareMetal.Animate.md) | CSS transition/animation helper. Enter/leave, stagger, spring, respects `prefers-reduced-motion`, timeout fallback. | [8 KB](src/BareMetal.Animate.js) | [4 KB](src/BareMetal.Animate.min.js) | *Framer Motion (≈120 KB)*, GSAP (≈60 KB), animate.css (≈80 KB) |
-| [`BareMetal.TestRunner`](docs/BareMetal.TestRunner.md) | In-browser test runner. describe/it/expect, async, hooks, mocks, grep, bail, retry, TAP + Markdown reporters. | [24 KB](src/BareMetal.TestRunner.js) | [13 KB](src/BareMetal.TestRunner.min.js) | *Jest (≈1 MB)*, Mocha (≈100 KB), uvu (≈6 KB) |
+| [`BareMetal.TestRunner`](docs/BareMetal.TestRunner.md) | Dependency-free in-browser test runner. describe/it/expect, async, hooks, mocks, grep, bail, retry, TAP + Markdown reporters. | [24 KB](src/BareMetal.TestRunner.js) | [13 KB](src/BareMetal.TestRunner.min.js) | Mocha (≈100 KB), uvu (≈6 KB), Jest (≈1 MB) |
+| [`BareMetal.Minifier`](docs/MINIFY.md) | Dependency-free JavaScript/CSS lexical minifier with Edge/CDP build tooling. | [source](src/BareMetal.Minifier.js) | — | Terser, clean-css |
 | [`BareMetal.DragDrop`](docs/BareMetal.DragDrop.md) | Pointer-event drag & drop. Sortable lists, drop zones, constraints, touch support, `setPointerCapture`. | [11 KB](src/BareMetal.DragDrop.js) | [6 KB](src/BareMetal.DragDrop.min.js) | *SortableJS (≈40 KB)*, dnd-kit (≈45 KB), Draggable (≈80 KB) |
 | [`BareMetal.A11y`](docs/BareMetal.A11y.md) | Accessibility helpers. Focus traps, live regions, skip links, roving tabindex, keyboard navigation, ARIA attribute management. | [9 KB](src/BareMetal.A11y.js) | [5 KB](src/BareMetal.A11y.min.js) | *focus-trap (≈10 KB)*, ally.js (≈130 KB) |
 | [`BareMetal.Expressions`](docs/BareMetal.Expressions.md) | 50+ pre-built regex patterns. Email, phone, URL, postal codes, credit card, UUID, semver, JWT, dates, and more. `test()`, `extract()`, `detect()`, `register()`. | [25 KB](src/BareMetal.Expressions.js) | [17 KB](src/BareMetal.Expressions.min.js) | *validator.js (≈60 KB)*, regex collections scattered across Stack Overflow |
@@ -360,21 +373,24 @@ Reader and editor over PicoWAL JSON packs. Full walkthrough: [`BareMetal.Play`](
 
 ## Tests
 
-```bash
-npm install && npm test
+Zero Node.js, npm, Jest, Mocha, or jsdom. Open `harness.html` in a browser, or run the headless Edge harness:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File run-harness.ps1
+powershell -ExecutionPolicy Bypass -File run-harness.ps1 -Smoke
 ```
 
-Tests run under Node + jsdom. Each module is loaded in isolation via `new Function(...)` so globals can be mocked per test.
+Suites live in `tests/browser/` and are listed in `tests/harness-manifest.js`. The smoke manifest is the stable local subset.
 
-| Suite | What's covered |
-|---|---|
-| Bind | `reactive()`, all `m-*` directives, dot-paths, formatters, reactive arrays, keyed diffing, transitions, expressions |
-| Rest | CRUD, fetch errors, CSRF, FormData |
-| Template | `buildForm` field types, layout, lookup; `buildTable` cells, callbacks, badges |
-| Routing | Pattern matching, params, query parsing, `navigate()` |
-| Rendering | Entity lifecycle, lookup hydration, `minibind` |
-| Compress | Round-trip, profiles, `compressBound` |
-| Metadata | Register, get, scanInline, type normalisation, toTemplateFields |
+### Minify
+
+Dependency-free JavaScript/CSS minification uses Edge CDP and `BareMetal.Minifier`:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File minify.ps1
+powershell -ExecutionPolicy Bypass -File minify.ps1 -Check
+powershell -ExecutionPolicy Bypass -File minify.ps1 -All -Write
+```
 
 ---
 

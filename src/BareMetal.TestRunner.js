@@ -7,6 +7,9 @@ BareMetal.TestRunner = (function () {
   var g = typeof globalThis !== 'undefined' ? globalThis : window;
   var root = makeSuite('', null);
   var cur = root;
+  var registrationErrors = [];
+  var runPromise = null;
+  var runGeneration = 0;
 
   function makeSuite(name, parent) {
     return { name: name || '', parent: parent, suites: [], tests: [], ba: [], aa: [], be: [], ae: [] };
@@ -35,6 +38,23 @@ BareMetal.TestRunner = (function () {
     var bk;
     var i;
     if (Object.is(a, b)) return true;
+    if (b && b.$$asymmetric === 'any') {
+      return a != null && (b.ctor ? a instanceof b.ctor || a.constructor === b.ctor : true);
+    }
+    if (b && b.$$asymmetric === 'arrayContaining') {
+      if (!Array.isArray(a)) return false;
+      return (b.value || []).every(function (item) {
+        return a.some(function (el) { return eq(el, item, s); });
+      });
+    }
+    if (b && b.$$asymmetric === 'objectContaining') {
+      if (!a || typeof a !== 'object') return false;
+      ak = Object.keys(b.value || {});
+      for (i = 0; i < ak.length; i++) {
+        if (!Object.prototype.hasOwnProperty.call(a, ak[i]) || !eq(a[ak[i]], b.value[ak[i]], s)) return false;
+      }
+      return true;
+    }
     if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
     if (a instanceof Date && b instanceof Date) return a.getTime() === b.getTime();
     if (a instanceof RegExp && b instanceof RegExp) return a.source === b.source && a.flags === b.flags;
@@ -96,7 +116,9 @@ BareMetal.TestRunner = (function () {
             v();
           } catch (e) {
             err = e;
-            ok = !m || String(e && e.message || e).indexOf(m) > -1;
+            if (!m) ok = true;
+            else if (typeof m === 'function') ok = e instanceof m;
+            else ok = String(e && e.message || e).indexOf(m) > -1;
           }
         }
         done(ok, 'Expected function to' + (neg ? ' not' : '') + ' throw' + (m ? ' ' + printable(m) : ''));
@@ -166,6 +188,27 @@ BareMetal.TestRunner = (function () {
         var c = v && v.calls || [];
         var ok = c.some(function (call) { return eq(call, args); });
         done(ok, 'Expected spy to' + (neg ? ' not' : '') + ' have been called with ' + printable(args));
+      },
+      toMatchObject: function (x) {
+        function match(a, b) {
+          if (b && b.$$asymmetric === 'any') return a == null ? false : (b.ctor ? a instanceof b.ctor || a.constructor === b.ctor : true);
+          if (b && b.$$asymmetric === 'objectContaining') return match(a, b.value);
+          if (b && b.$$asymmetric === 'arrayContaining') {
+            if (!Array.isArray(a)) return false;
+            return (b.value || []).every(function (item) {
+              return a.some(function (el) { return match(el, item); });
+            });
+          }
+          if (typeof b !== 'object' || b === null) return eq(a, b);
+          if (a == null || typeof a !== 'object') return false;
+          var keys = Object.keys(b);
+          var i;
+          for (i = 0; i < keys.length; i++) {
+            if (!Object.prototype.hasOwnProperty.call(a, keys[i]) || !match(a[keys[i]], b[keys[i]])) return false;
+          }
+          return true;
+        }
+        done(match(v, x), 'Expected ' + printable(v) + ' to' + (neg ? ' not' : '') + ' match object ' + printable(x));
       },
       get resolves() {
         return {
@@ -392,7 +435,16 @@ BareMetal.TestRunner = (function () {
     cur = s;
     try {
       if (typeof fn === 'function') fn();
-    } catch (_) {}
+    } catch (e) {
+      registrationErrors.push({ suite: name, error: e });
+      s.tests.push({
+        name: '(suite definition threw)',
+        fn: function () { throw e; },
+        skip: false,
+        only: false,
+        timeout: 5000
+      });
+    }
     cur = p;
   }
 
@@ -402,7 +454,9 @@ BareMetal.TestRunner = (function () {
     s.skipped = true;
     p.suites.push(s);
     cur = s;
-    try { if (typeof fn === 'function') fn(); } catch (_) {}
+    try { if (typeof fn === 'function') fn(); } catch (e) {
+      registrationErrors.push({ suite: name, error: e });
+    }
     cur = p;
   };
 
@@ -412,7 +466,16 @@ BareMetal.TestRunner = (function () {
     s.only = true;
     p.suites.push(s);
     cur = s;
-    try { if (typeof fn === 'function') fn(); } catch (_) {}
+    try { if (typeof fn === 'function') fn(); } catch (e) {
+      registrationErrors.push({ suite: name, error: e });
+      s.tests.push({
+        name: '(suite definition threw)',
+        fn: function () { throw e; },
+        skip: false,
+        only: false,
+        timeout: 5000
+      });
+    }
     cur = p;
   };
 
@@ -453,6 +516,15 @@ BareMetal.TestRunner = (function () {
   }
   test.skip = it.skip;
   test.only = it.only;
+  test.each = function (rows) {
+    return function (name, fn) {
+      rows.forEach(function (row, index) {
+        it(name + ' [' + index + ']', function () {
+          return fn.apply(null, Array.isArray(row) ? row : [row]);
+        });
+      });
+    };
+  };
 
   /**
    * Creates an assertion chain.
@@ -462,6 +534,9 @@ BareMetal.TestRunner = (function () {
   function expect(value) {
     return chain(value);
   }
+  expect.any = function (ctor) { return { $$asymmetric: 'any', ctor: ctor }; };
+  expect.objectContaining = function (obj) { return { $$asymmetric: 'objectContaining', value: obj }; };
+  expect.arrayContaining = function (arr) { return { $$asymmetric: 'arrayContaining', value: arr }; };
 
   /**
    * Registers a beforeEach hook.
@@ -507,6 +582,10 @@ BareMetal.TestRunner = (function () {
         spy.calls.push(args);
         spy.lastCall = args;
         try {
+          if (spy._once && spy._once.length) {
+            spy.returnValue = spy._once.shift()();
+            return spy.returnValue;
+          }
           spy.returnValue = typeof spy.impl === 'function' ? spy.impl.apply(this, args) : undefined;
           return spy.returnValue;
         } catch (e) {
@@ -516,14 +595,42 @@ BareMetal.TestRunner = (function () {
       };
       spy.impl = impl;
       spy.calls = [];
+      spy._once = [];
       spy.lastCall = null;
       spy.returnValue = undefined;
       spy.error = null;
+      Object.defineProperty(spy, 'mock', {
+        get: function () { return { calls: spy.calls }; }
+      });
       spy.reset = function () {
         spy.calls = [];
         spy.lastCall = null;
         spy.returnValue = undefined;
         spy.error = null;
+        return spy;
+      };
+      spy.mockReturnValue = function (val) {
+        spy.impl = function () { return val; };
+        return spy;
+      };
+      spy.mockResolvedValue = function (val) {
+        spy.impl = function () { return Promise.resolve(val); };
+        return spy;
+      };
+      spy.mockRejectedValue = function (val) {
+        spy.impl = function () { return Promise.reject(val); };
+        return spy;
+      };
+      spy.mockImplementation = function (fn) {
+        spy.impl = fn;
+        return spy;
+      };
+      spy.mockReturnValueOnce = function (val) {
+        spy._once.push(function () { return val; });
+        return spy;
+      };
+      spy.mockResolvedValueOnce = function (val) {
+        spy._once.push(function () { return Promise.resolve(val); });
         return spy;
       };
       return spy;
@@ -561,12 +668,33 @@ BareMetal.TestRunner = (function () {
    * @returns {Promise<{passed:number,failed:number,skipped:number,pending:number,results:Array,duration:number}>}
    */
   async function run(opts) {
+    if (runPromise) return runPromise;
+    runGeneration += 1;
+    runPromise = runOnce(opts);
+    return runPromise;
+  }
+
+  async function runOnce(opts) {
     configure(opts);
-    var res = { passed: 0, failed: 0, skipped: 0, pending: 0, results: [], bail: false };
+    var res = {
+      passed: 0,
+      failed: 0,
+      skipped: 0,
+      pending: 0,
+      results: [],
+      bail: false,
+      registrationErrors: registrationErrors.slice(),
+      runGeneration: runGeneration
+    };
     var onlyMode = hasOnly(root);
     var start = Date.now();
     await runSuite(root, [], res, onlyMode);
     res.duration = Date.now() - start;
+    res.total = res.passed + res.failed + res.skipped + res.pending;
+    if (res.total === 0) {
+      res.failed += 1;
+      res.results.push({ name: '(harness)', status: 'failed', duration: 0, error: new Error('no tests registered') });
+    }
     delete res.bail;
     if (g.console && console.log) console.log('\nDone: ' + res.passed + ' passed, ' + res.failed + ' failed, ' + res.skipped + ' skipped, ' + res.pending + ' pending (' + res.duration + 'ms)');
     return res;
@@ -697,6 +825,23 @@ BareMetal.TestRunner = (function () {
     };
   }
 
+  var _restores = [];
+  mock.spyOn = function (obj, method) {
+    var orig = obj[method];
+    var spy = mock.fn(typeof orig === 'function' ? orig : function () { return orig; });
+    obj[method] = spy;
+    spy.mockRestore = function () { obj[method] = orig; };
+    _restores.push(spy.mockRestore);
+    return spy;
+  };
+  mock.restoreAllMocks = function () {
+    while (_restores.length) _restores.pop()();
+  };
+  mock.resetModules = function () {};
+  mock.useFakeTimers = function () {};
+  mock.useRealTimers = function () {};
+  mock.advanceTimersByTime = function () {};
+
   var api = {
     describe: describe,
     it: it,
@@ -716,5 +861,3 @@ BareMetal.TestRunner = (function () {
 
   return api;
 })();
-
-if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.TestRunner;

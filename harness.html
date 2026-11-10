@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>BM Test Harness</title></head>
+<body>
+<div id="results"></div>
+<script src="src/BareMetal.TestRunner.js"></script>
+<script src="src/BareMetal.Print.js"></script>
+<script src="src/BareMetal.Progressive.js"></script>
+<script src="src/BareMetal.PubSub.js"></script>
+<script src="src/BareMetal.A11y.js"></script>
+<script src="src/BareMetal.Animate.js"></script>
+<script src="src/BareMetal.Auth.js"></script>
+<script src="src/BareMetal.Authenticator.js"></script>
+<script src="src/BareMetal.Binary.js"></script>
+<script src="src/BareMetal.Bind.js"></script>
+<script src="src/BareMetal.Blob.js"></script>
+<script src="src/BareMetal.Cache.js"></script>
+<script src="src/BareMetal.Capabilities.js"></script>
+<script src="src/BareMetal.Charts.js"></script>
+<script src="src/BareMetal.Clipboard.js"></script>
+<script src="src/BareMetal.Codes.js"></script>
+<script src="src/BareMetal.Colour.js"></script>
+<script src="src/BareMetal.Communications.js"></script>
+<script src="src/BareMetal.ComponentFactories.js"></script>
+<script src="src/BareMetal.Compress.js"></script>
+<script src="src/BareMetal.Config.js"></script>
+<script src="src/BareMetal.DocChain.js"></script>
+<script src="src/BareMetal.Document.js"></script>
+<script src="src/BareMetal.DocumentWAL.js"></script>
+<script src="src/BareMetal.ControlSurface.js"></script>
+<script src="src/BareMetal.Crypto.js"></script>
+<script src="src/BareMetal.Diagnostics.js"></script>
+<script src="src/BareMetal.DragDrop.js"></script>
+<script src="src/BareMetal.Errors.js"></script>
+<script src="src/BareMetal.Expressions.js"></script>
+<script src="src/BareMetal.FileIO.js"></script>
+<script src="src/BareMetal.Forms.js"></script>
+<script src="src/BareMetal.Gamepad.js"></script>
+<script src="src/BareMetal.Geo.js"></script>
+<script src="src/BareMetal.Graph.js"></script>
+<script src="src/BareMetal.I18n.js"></script>
+<script src="src/BareMetal.IDB.js"></script>
+<script src="src/BareMetal.Inbox.js"></script>
+<script src="src/BareMetal.InputRouter.js"></script>
+<script src="src/BareMetal.Launcher.js"></script>
+<script src="src/BareMetal.LocalKVStore.js"></script>
+<script src="src/BareMetal.Logger.js"></script>
+<script src="src/BareMetal.Markdown.js"></script>
+<script src="src/BareMetal.Media.js"></script>
+<script src="src/BareMetal.Metadata.js"></script>
+<script src="src/BareMetal.Notify.js"></script>
+<script src="src/BareMetal.Observe.js"></script>
+<script src="src/BareMetal.Pay.js"></script>
+<script src="src/BareMetal.PicoScript.js"></script>
+<script src="src/BareMetal.Pipeline.js"></script>
+<script src="src/BareMetal.Pivot.js"></script>
+<script src="src/BareMetal.Play.js"></script>
+<script src="src/BareMetal.RBAC.js"></script>
+<script src="src/BareMetal.Rendering.js"></script>
+<script src="src/BareMetal.Report.js"></script>
+<script src="src/BareMetal.Ribbon.js"></script>
+<script src="src/BareMetal.Routing.js"></script>
+<script src="src/BareMetal.Scan.js"></script>
+<script src="src/BareMetal.Schedule.js"></script>
+<script src="src/BareMetal.Schema.js"></script>
+<script src="src/BareMetal.Search.js"></script>
+<script src="src/BareMetal.Speech.js"></script>
+<script src="src/BareMetal.StateMachine.js"></script>
+<script src="src/BareMetal.Story.js"></script>
+<script src="src/BareMetal.Sync.js"></script>
+<script src="src/BareMetal.Template.js"></script>
+<script src="src/BareMetal.Tenant.js"></script>
+<script src="src/BareMetal.Time.js"></script>
+<script src="src/BareMetal.Timeline.js"></script>
+<script src="src/BareMetal.Font.js"></script>
+<script src="src/BareMetal.FooterBar.js"></script>
+<script src="src/BareMetal.Minifier.js"></script>
+<script src="src/BareMetal.Types.js"></script>
+<script src="src/BareMetal.Session.js"></script>
+<script src="src/BareMetal.Sheet.js"></script>
+<script src="src/BareMetal.Components.js"></script>
+<script src="src/BareMetal.Workflow.js"></script>
+<script src="src/BareMetal.Communications.js"></script>
+<script src="src/BareMetal.Tokens.js"></script>
+<script src="src/BareMetal.Compress.js"></script>
+<script>
+(function () {
+  window.global = window;
+  BareMetal.TestRunner.installGlobals();
+
+  var params = new URLSearchParams(location.search || '');
+  var requested = params.get('manifest');
+  // Accept legacy ?manifest=ci as an alias for the client smoke subset.
+  var manifestName = (requested === 'smoke' || requested === 'ci') ? 'smoke' : 'full';
+  var manifestSrc = manifestName === 'smoke'
+    ? 'tests/harness-manifest.smoke.js'
+    : 'tests/harness-manifest.js';
+
+  var files = [];
+  var expected = 0;
+  var loaded = 0;
+  var loadErrors = [];
+
+  function finish(res) {
+    var pre = document.createElement('pre');
+    pre.id = 'test-results';
+    pre.setAttribute('data-complete', 'true');
+    pre.setAttribute('data-passed', String(res.passed));
+    pre.setAttribute('data-failed', String(res.failed));
+    pre.setAttribute('data-skipped', String(res.skipped || 0));
+    pre.setAttribute('data-total', String(res.total || (res.results && res.results.length) || 0));
+    pre.setAttribute('data-generation', String(res.runGeneration || 1));
+    pre.setAttribute('data-manifest', String(expected));
+    pre.setAttribute('data-manifest-name', manifestName);
+    pre.setAttribute('data-loaded', String(loaded));
+    var fails = (res.results || []).filter(function (x) { return x.status === 'failed'; }).map(function (x) {
+      return x.name + ': ' + (x.error && x.error.message || x.error);
+    });
+    pre.setAttribute('data-fails', fails.join(' || '));
+    pre.textContent = 'passed=' + res.passed + ' failed=' + res.failed + (fails.length ? '\n' + fails.join('\n') : '');
+    document.getElementById('results').appendChild(pre);
+  }
+
+  function startRun() {
+    if (loaded !== expected || loadErrors.length) {
+      finish({
+        passed: 0,
+        failed: 1,
+        skipped: 0,
+        total: 1,
+        runGeneration: 1,
+        results: []
+      });
+      document.getElementById('test-results').textContent +=
+        ' manifest-error loaded=' + loaded + '/' + expected + ' ' + loadErrors.join(',');
+      return;
+    }
+    window.__bmHarness = BareMetal.TestRunner.run().then(function (res) {
+      finish(res);
+      return res;
+    }).catch(function (e) {
+      document.getElementById('results').textContent = 'ERROR: ' + e;
+      throw e;
+    });
+  }
+
+  function next(i) {
+    if (i >= files.length) { startRun(); return; }
+    var s = document.createElement('script');
+    s.src = files[i];
+    s.onload = function () { loaded++; next(i + 1); };
+    s.onerror = function () { loadErrors.push(files[i]); next(i + 1); };
+    document.head.appendChild(s);
+  }
+
+  function loadManifest() {
+    var s = document.createElement('script');
+    s.src = manifestSrc;
+    s.onload = function () {
+      files = window.BM_TEST_FILES || [];
+      expected = window.BM_TEST_FILE_COUNT || files.length;
+      next(0);
+    };
+    s.onerror = function () {
+      finish({
+        passed: 0,
+        failed: 1,
+        skipped: 0,
+        total: 1,
+        runGeneration: 1,
+        results: [{ status: 'failed', name: 'manifest', error: 'failed to load ' + manifestSrc }]
+      });
+    };
+    document.head.appendChild(s);
+  }
+
+  loadManifest();
+})();
+</script>
+</body></html>

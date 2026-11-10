@@ -3,11 +3,9 @@
 ## Build & Test
 
 ```bash
-npm install
-npm test                          # full suite (Jest + jsdom)
-npx jest tests/BareMetalBind.test.js          # single file
-npx jest --testNamePattern="reactive"         # single test by name
-npm run test:coverage             # with coverage report
+powershell -ExecutionPolicy Bypass -File run-harness.ps1
+powershell -ExecutionPolicy Bypass -File run-harness.ps1 -Smoke
+powershell -ExecutionPolicy Bypass -File minify.ps1 -Check
 ```
 
 No build step exists — source files are used directly.
@@ -118,21 +116,11 @@ Do not convert to ES modules or classes.
 
 ### Test pattern
 
-Tests load source via `fs.readFileSync` + `new Function(...)` to execute in a fresh jsdom context. The file is executed as-is and the result is read from `BareMetal.X`:
-
-```js
-function loadModule() {
-  const code = fs.readFileSync(SRC_PATH, 'utf8');
-  const fn = new Function('document', 'requestAnimationFrame',
-    code + '\nreturn BareMetal.X;'
-  );
-  return fn(global.document, (cb) => setTimeout(cb, 0));
-}
-```
+Browser suites register tests with `BareMetal.TestRunner` and load from `tests/harness-manifest.js`. Keep suites dependency-free and headless-browser compatible.
 
 ### No dependencies
 
-Zero runtime dependencies. `jest` and `jest-environment-jsdom` are the only dev dependencies.
+Zero runtime and test-runner dependencies. Use the browser harness and Edge CDP; no Node.js, npm, Jest, or jsdom.
 
 ### Reactive binding directives
 

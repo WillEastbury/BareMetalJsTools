@@ -1,3 +1,5 @@
+/* Preserve native hidden semantics even when a component sets display. */
+[hidden]:not([hidden="until-found"]){display:none!important}
 /* ============================================================
    BareMetalStyles — compact CSS framework with short class names
    Implements only the Bootstrap 5 subset actually used by
@@ -79,43 +81,43 @@ th { text-align: inherit; }
 
 .ca { flex: 0 0 auto; width: auto; }
 .c12 { flex: 0 0 auto; width: 100%; }
-.c1 { flex: 0 0 auto; width: 8.3333%; } .col-2 { flex: 0 0 auto; width: 16.6667%; }
-.c3 { flex: 0 0 auto; width: 25%; } .col-4 { flex: 0 0 auto; width: 33.3333%; }
-.c5 { flex: 0 0 auto; width: 41.6667%; } .col-6 { flex: 0 0 auto; width: 50%; }
-.c7 { flex: 0 0 auto; width: 58.3333%; } .col-8 { flex: 0 0 auto; width: 66.6667%; }
-.c9 { flex: 0 0 auto; width: 75%; } .col-10 { flex: 0 0 auto; width: 83.3333%; }
+.c1 { flex: 0 0 auto; width: 8.3333%; } .c2, .col-2 { flex: 0 0 auto; width: 16.6667%; }
+.c3 { flex: 0 0 auto; width: 25%; } .c4, .col-4 { flex: 0 0 auto; width: 33.3333%; }
+.c5 { flex: 0 0 auto; width: 41.6667%; } .c6, .col-6 { flex: 0 0 auto; width: 50%; }
+.c7 { flex: 0 0 auto; width: 58.3333%; } .c8, .col-8 { flex: 0 0 auto; width: 66.6667%; }
+.c9 { flex: 0 0 auto; width: 75%; } .c10, .col-10 { flex: 0 0 auto; width: 83.3333%; }
 .c11 { flex: 0 0 auto; width: 91.6667%; }
 
 /* sm (≥576px) */
 @media (min-width: 576px) {
-  .cs1 { flex: 0 0 auto; width: 8.3333%; } .col-sm-2 { flex: 0 0 auto; width: 16.6667%; }
-  .cs3 { flex: 0 0 auto; width: 25%; } .col-sm-4 { flex: 0 0 auto; width: 33.3333%; }
-  .cs5 { flex: 0 0 auto; width: 41.6667%; } .col-sm-6 { flex: 0 0 auto; width: 50%; }
-  .cs7 { flex: 0 0 auto; width: 58.3333%; } .col-sm-8 { flex: 0 0 auto; width: 66.6667%; }
-  .cs9 { flex: 0 0 auto; width: 75%; } .col-sm-10 { flex: 0 0 auto; width: 83.3333%; }
-  .cs11 { flex: 0 0 auto; width: 91.6667%; } .col-sm-12 { flex: 0 0 auto; width: 100%; }
+  .cs1 { flex: 0 0 auto; width: 8.3333%; } .cs2, .col-sm-2 { flex: 0 0 auto; width: 16.6667%; }
+  .cs3 { flex: 0 0 auto; width: 25%; } .cs4, .col-sm-4 { flex: 0 0 auto; width: 33.3333%; }
+  .cs5 { flex: 0 0 auto; width: 41.6667%; } .cs6, .col-sm-6 { flex: 0 0 auto; width: 50%; }
+  .cs7 { flex: 0 0 auto; width: 58.3333%; } .cs8, .col-sm-8 { flex: 0 0 auto; width: 66.6667%; }
+  .cs9 { flex: 0 0 auto; width: 75%; } .cs10, .col-sm-10 { flex: 0 0 auto; width: 83.3333%; }
+  .cs11 { flex: 0 0 auto; width: 91.6667%; } .cs12, .col-sm-12 { flex: 0 0 auto; width: 100%; }
 }
 
 /* md (≥768px) */
 @media (min-width: 768px) {
-  .cm1 { flex: 0 0 auto; width: 8.3333%; } .col-md-2 { flex: 0 0 auto; width: 16.6667%; }
-  .cm3 { flex: 0 0 auto; width: 25%; } .col-md-4 { flex: 0 0 auto; width: 33.3333%; }
-  .cm5 { flex: 0 0 auto; width: 41.6667%; } .col-md-6 { flex: 0 0 auto; width: 50%; }
-  .cm7 { flex: 0 0 auto; width: 58.3333%; } .col-md-8 { flex: 0 0 auto; width: 66.6667%; }
-  .cm9 { flex: 0 0 auto; width: 75%; } .col-md-10 { flex: 0 0 auto; width: 83.3333%; }
-  .cm11 { flex: 0 0 auto; width: 91.6667%; } .col-md-12 { flex: 0 0 auto; width: 100%; }
+  .cm1 { flex: 0 0 auto; width: 8.3333%; } .cm2, .col-md-2 { flex: 0 0 auto; width: 16.6667%; }
+  .cm3 { flex: 0 0 auto; width: 25%; } .cm4, .col-md-4 { flex: 0 0 auto; width: 33.3333%; }
+  .cm5 { flex: 0 0 auto; width: 41.6667%; } .cm6, .col-md-6 { flex: 0 0 auto; width: 50%; }
+  .cm7 { flex: 0 0 auto; width: 58.3333%; } .cm8, .col-md-8 { flex: 0 0 auto; width: 66.6667%; }
+  .cm9 { flex: 0 0 auto; width: 75%; } .cm10, .col-md-10 { flex: 0 0 auto; width: 83.3333%; }
+  .cm11 { flex: 0 0 auto; width: 91.6667%; } .cm12, .col-md-12 { flex: 0 0 auto; width: 100%; }
   .dbl { display: block !important; }
   .dn { display: none !important; }
 }
 
 /* xl (≥1200px) */
 @media (min-width: 1200px) {
-  .cx1 { flex: 0 0 auto; width: 8.3333%; } .col-xl-2 { flex: 0 0 auto; width: 16.6667%; }
-  .cx3 { flex: 0 0 auto; width: 25%; } .col-xl-4 { flex: 0 0 auto; width: 33.3333%; }
-  .cx5 { flex: 0 0 auto; width: 41.6667%; } .col-xl-6 { flex: 0 0 auto; width: 50%; }
-  .cx7 { flex: 0 0 auto; width: 58.3333%; } .col-xl-8 { flex: 0 0 auto; width: 66.6667%; }
-  .cx9 { flex: 0 0 auto; width: 75%; } .col-xl-10 { flex: 0 0 auto; width: 83.3333%; }
-  .cx11 { flex: 0 0 auto; width: 91.6667%; } .col-xl-12 { flex: 0 0 auto; width: 100%; }
+  .cx1 { flex: 0 0 auto; width: 8.3333%; } .cx2, .col-xl-2 { flex: 0 0 auto; width: 16.6667%; }
+  .cx3 { flex: 0 0 auto; width: 25%; } .cx4, .col-xl-4 { flex: 0 0 auto; width: 33.3333%; }
+  .cx5 { flex: 0 0 auto; width: 41.6667%; } .cx6, .col-xl-6 { flex: 0 0 auto; width: 50%; }
+  .cx7 { flex: 0 0 auto; width: 58.3333%; } .cx8, .col-xl-8 { flex: 0 0 auto; width: 66.6667%; }
+  .cx9 { flex: 0 0 auto; width: 75%; } .cx10, .col-xl-10 { flex: 0 0 auto; width: 83.3333%; }
+  .cx11 { flex: 0 0 auto; width: 91.6667%; } .cx12, .col-xl-12 { flex: 0 0 auto; width: 100%; }
 }
 
 /* ============================================================

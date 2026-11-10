@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>BM Minifier Host</title></head>
+<body>
+<pre id="status">loading</pre>
+<script src="src/BareMetal.Minifier.js"></script>
+<script>
+(function () {
+  function ready() {
+    var ok = !!(window.BareMetal && BareMetal.Minifier &&
+      typeof BareMetal.Minifier.minifyJS === 'function' &&
+      typeof BareMetal.Minifier.minifyCSS === 'function');
+    var el = document.getElementById('status');
+    el.id = 'minify-ready';
+    el.setAttribute('data-ready', ok ? 'true' : 'false');
+    el.textContent = ok ? 'ready' : 'missing BareMetal.Minifier';
+  }
+  ready();
+})();
+</script>
+</body></html>

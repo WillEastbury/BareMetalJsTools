@@ -75,6 +75,7 @@ BareMetal.Template = (() => {
     form.setAttribute('m-submit', 'save');
     const cols = layout.columns || 1;
     const rw  = mk('div', { className: 'rw g3' });
+    const prefix = 'form_' + crypto.randomUUID() + '_';
 
     (layout.fields || Object.keys(fields)).forEach(name => {
       const f = fields[name] || {};
@@ -90,7 +91,7 @@ BareMetal.Template = (() => {
 
       if (f.type === 'boolean') {
         const wrap = mk('div', { className: 'fch mt2' });
-        const chkId = 'f_' + name;
+        const chkId = prefix + name;
         const inp = buildInput(name, f);
         inp.id = chkId;
         const chkLabel = mk('label', { className: 'fch-l', htmlFor: chkId,
@@ -103,6 +104,8 @@ BareMetal.Template = (() => {
 
       const lbl = buildLabel(name, f);
       const inp = buildInput(name, f);
+      inp.id = prefix + name;
+      lbl.htmlFor = inp.id;
 
       if (f.type === 'select' && f.lookupUrl) {
         const grp = mk('div', { className: 'ig ig-s' });

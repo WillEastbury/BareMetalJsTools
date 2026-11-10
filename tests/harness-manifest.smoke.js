@@ -1,0 +1,38 @@
+// Client smoke manifest (issue #50). Run locally via:
+//   powershell -ExecutionPolicy Bypass -File run-harness.ps1 -Smoke
+// Excludes suites known to hang or navigate the harness page
+// (Auth, Cache, Components, Rest(+compression), Tokens, Workflow, Sync).
+// Expand this list only after a full Edge run stays green. Not a GitHub Actions gate.
+window.BM_TEST_FILES = [
+  'tests/browser/BareMetal.Bind.browser.js',
+  'tests/browser/BareMetal.Codes.browser.js',
+  'tests/browser/BareMetal.ControlSurface.browser.js',
+  'tests/browser/BareMetal.Crypto.browser.js',
+  'tests/browser/BareMetal.Diagnostics.browser.js',
+  'tests/browser/BareMetal.DocChain.browser.js',
+  'tests/browser/BareMetal.Document.browser.js',
+  'tests/browser/BareMetal.DocumentWAL.browser.js',
+  'tests/browser/BareMetal.DragDrop.browser.js',
+  'tests/browser/BareMetal.Errors.browser.js',
+  'tests/browser/BareMetal.Expressions.browser.js',
+  'tests/browser/BareMetal.Font.browser.js',
+  'tests/browser/BareMetal.FooterBar.browser.js',
+  'tests/browser/BareMetal.I18n.browser.js',
+  'tests/browser/BareMetal.IDB.browser.js',
+  'tests/browser/BareMetal.Logger.browser.js',
+  'tests/browser/BareMetal.Markdown.browser.js',
+  'tests/browser/BareMetal.Metadata.browser.js',
+  'tests/browser/BareMetal.Minifier.browser.js',
+  'tests/browser/BareMetal.PubSub.browser.js',
+  'tests/browser/BareMetal.Ribbon.browser.js',
+  'tests/browser/BareMetal.Routing.browser.js',
+  'tests/browser/BareMetal.Sheet.browser.js',
+  'tests/browser/BareMetal.StateMachine.browser.js',
+  'tests/browser/BareMetal.Template.browser.js',
+  'tests/browser/BareMetal.Tenant.browser.js',
+  'tests/browser/BareMetal.TestRunner.browser.js',
+  'tests/browser/BareMetal.Time.browser.js',
+  'tests/browser/BareMetal.Timeline.browser.js',
+  'tests/browser/BareMetal.Types.browser.js'
+];
+window.BM_TEST_FILE_COUNT = window.BM_TEST_FILES.length;

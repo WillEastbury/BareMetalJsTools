@@ -17,8 +17,13 @@
     "LICENSE"
   ],
   "exports": {
+    "./3dxr": "./src/BareMetal.3DXR.js",
     "./binary": "./src/BareMetal.Binary.js",
     "./bind": "./src/BareMetal.Bind.js",
+    "./modal": "./src/BareMetal.Modal.js",
+    "./modal.css": "./src/BareMetal.Modal.css",
+    "./controls": "./src/BareMetal.Controls.js",
+    "./controls.css": "./src/BareMetal.Controls.css",
     "./components": "./src/BareMetal.Components.js",
     "./component-factories": "./src/BareMetal.ComponentFactories.js",
     "./rendering": "./src/BareMetal.Rendering.js",
@@ -32,6 +37,7 @@
     "./compress": "./src/BareMetal.Compress.js",
     "./charts": "./src/BareMetal.Charts.js",
     "./graph": "./src/BareMetal.Graph.js",
+    "./music-player": "./src/BareMetal.MusicPlayer.js",
     "./geo": "./src/BareMetal.Geo.js",
     "./control-surface": "./src/BareMetal.ControlSurface.js",
     "./control-surface.css": "./src/BareMetal.ControlSurface.css",
@@ -48,9 +54,13 @@
     "./file-io": "./src/BareMetal.FileIO.js",
     "./blob": "./src/BareMetal.Blob.js",
     "./local-kv-store": "./src/BareMetal.LocalKVStore.js",
+    "./gallery": "./src/BareMetal.Gallery.js",
     "./idb": "./src/BareMetal.IDB.js",
     "./progressive": "./src/BareMetal.Progressive.js",
     "./capabilities": "./src/BareMetal.Capabilities.js",
+    "./minifier": "./src/BareMetal.Minifier.js",
+    "./tabs": "./src/BareMetal.Tabs.js",
+    "./theme-picker": "./src/BareMetal.ThemePicker.js",
     "./test-runner": "./src/BareMetal.TestRunner.js",
     "./service-worker": "./src/BareMetal.ServiceWorker.js",
     "./time": "./src/BareMetal.Time.js",
@@ -116,35 +126,13 @@
     "./themes/lava": "./src/themes/lava.css",
     "./themes/candy": "./src/themes/candy.css",
     "./fonts": "./src/fonts/fonts.css",
+    "./workspace.css": "./src/BareMetal.Workspace.css",
+    "./studio.css": "./src/BareMetal.Studio.css",
+    "./themes/aurora": "./src/themes/aurora.css",
+    "./themes/midnight": "./src/themes/midnight.css",
+    "./themes/paper": "./src/themes/paper.css",
+    "./gallery.css": "./src/BareMetal.Gallery.css",
     "./chat.css": "./src/BareMetal.Chat.css"
-  },
-  "scripts": {
-    "test": "jest",
-    "test:coverage": "jest --coverage",
-    "minify": "for %f in (src\\BareMetal.*.js) do npx terser %f --compress --mangle -o %~dpnf.min.js"
-  },
-  "devDependencies": {
-    "csso-cli": "^4.0.2",
-    "fake-indexeddb": "^6.2.5",
-    "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
-    "terser": "^5.46.1"
-  },
-  "jest": {
-    "testEnvironment": "jest-environment-jsdom",
-    "testMatch": [
-      "**/tests/**/*.test.js"
-    ],
-    "setupFiles": [
-      "./jest.setup.js"
-    ],
-    "collectCoverageFrom": [
-      "src/BareMetal.*.js",
-      "!src/BareMetal.*.min.js",
-      "!src/BareMetal.PicoScript.js",
-      "!src/BareMetal.PicoScript.Editor.js"
-    ],
-    "verbose": true
   },
   "keywords": [
     "vanilla-js",

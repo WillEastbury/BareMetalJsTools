@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BareMetal.3DXR video tiles</title>
+  <style>
+    html, body { width: 100%; height: 100%; margin: 0; background: #090510; color: #f9e8ff; font: 16px system-ui, sans-serif; }
+    body { display: grid; grid-template-rows: 1fr auto; }
+    .stage { position: relative; min-height: 0; }
+    #scene { width: 100%; height: 100%; display: block; touch-action: none; }
+    .controls { display: flex; gap: 1rem; align-items: center; padding: .8rem 1rem; background: #171021; }
+    button, input { font: inherit; }
+    .bm-3dxr-reticle { position: absolute; z-index: 2; inset: 50% auto auto 50%; transform: translate(-50%, -50%); color: white; text-shadow: 0 0 8px #f0b4ff; font-size: 1.5rem; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <div class="stage"><canvas id="scene" aria-label="3D video tile scene"></canvas></div>
+  <div class="controls">
+    <button id="enter-vr" disabled>Enter VR</button>
+    <button id="play-audio">Play ambient music</button>
+    <label>Ambient audio <input id="ambient-volume" type="range" min="0" max="1" step="0.01" value="0.2"></label>
+    <span id="status">Loading manifest…</span>
+  </div>
+  <script src="../src/BareMetal.3DXR.js"></script>
+  <script src="../src/BareMetal.MusicPlayer.js"></script>
+  <script>
+    (async function () {
+      const status = document.querySelector('#status');
+      const renderer = BareMetal['3DXR'].create(document.querySelector('#scene'), { background: '#10091a' });
+      renderer.setProceduralBackground('spiral', { colors: ['#14091f', '#ff2b9d'], speed: 0.55, turns: 7 });
+      const music = BareMetal.MusicPlayer.create({ volume: 0.2, crossfade: 3, repeat: 'all' });
+      renderer.on('focuschange', event => {
+        status.textContent = event.id ? 'Audio: ' + event.id : 'Look at a tile to enable its audio';
+      });
+      renderer.on('autoplayblocked', () => { status.textContent = 'Click the scene once to start preview audio.'; });
+
+      try {
+        // Replace this URL with the Spirals manifest endpoint.
+        const response = await fetch('/manifest.json', { credentials: 'same-origin' });
+        if (!response.ok) throw new Error('Manifest returned HTTP ' + response.status);
+        const manifest = await response.json();
+        const clips = manifest.videos || manifest;
+        if (!Array.isArray(clips) || clips.length === 0) throw new Error('Manifest has no videos');
+        if (Array.isArray(manifest.audio) && manifest.audio.length) {
+          music.setPlaylist(manifest.audio, { shuffle: true, repeat: 'all' });
+        } else {
+          music.setPlaylist([{ src: '/media/ambient.mp3', title: 'Spirals ambient mix' }], { repeat: 'all' });
+        }
+
+        const layout = [
+          { position: [-1.8, 1.65, -3.2], yaw: -0.38 },
+          { position: [0, 1.65, -3.6], yaw: 0 },
+          { position: [1.8, 1.65, -3.2], yaw: 0.38 }
+        ];
+        layout.forEach((tile, index) => renderer.addVideo({
+          id: 'tile-' + (index + 1),
+          src: clips[index % clips.length],
+          playlist: clips,
+          shuffle: true,
+          position: tile.position,
+          yaw: tile.yaw,
+          width: 1.55,
+          height: 0.88
+        }));
+        status.textContent = 'Drag to look. Look at a tile for audio.';
+      } catch (error) {
+        status.textContent = 'Could not load video manifest: ' + error.message;
+      }
+
+      const vrButton = document.querySelector('#enter-vr');
+      vrButton.disabled = !(await renderer.isXRSupported());
+      vrButton.addEventListener('click', () => {
+        renderer.enterVR().catch(error => { status.textContent = error.message; });
+        music.play().catch(() => { status.textContent = 'Press Play ambient music to start the soundtrack.'; });
+      });
+      document.querySelector('#play-audio').addEventListener('click', event => {
+        if (music.state().playing) { music.pause(); event.currentTarget.textContent = 'Play ambient music'; }
+        else music.play().then(() => { event.currentTarget.textContent = 'Pause ambient music'; }).catch(() => { status.textContent = 'Audio playback was blocked.'; });
+      });
+      document.querySelector('#ambient-volume').addEventListener('input', event => music.setVolume(event.target.value));
+      window.addEventListener('pagehide', () => { renderer.dispose(); music.destroy(); }, { once: true });
+    })();
+  </script>
+</body>
+</html>
