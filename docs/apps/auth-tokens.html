@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tokens, RBAC and Auth | BareMetalJsTools</title>
+  <link rel="stylesheet" href="../../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../../src/themes/wavefunction.css">
+</head>
+<body>
+  <header class="nbar">
+    <div class="bx fx ai-c jc-b gp2">
+      <a class="nbar-b" href="./">Interactive apps</a>
+      <nav class="fx ai-c gp2" aria-label="Page navigation">
+        <a class="nl" href="../index.html">Showcase</a>
+        <a class="nl act" href="auth-tokens.html">Tokens &amp; RBAC</a>
+        <a class="nl" href="chat.html">PubSub chat</a>
+      </nav>
+    </div>
+  </header>
+  <main class="bx py-4">
+    <header class="mb-4">
+      <span class="bd bg-p">INTERACTIVE SAMPLE</span>
+      <h1 class="dp4 mt-2">Inspect tokens. Exercise RBAC.</h1>
+      <p class="ld">Decode claims locally, verify demo signatures with a temporary in-memory key, and see role-based UI decisions change.</p>
+    </header>
+    <div class="bd bg-wn p-2 mb-3">
+      Demo only: never paste a production token here. Decoding is not signature verification, client-side RBAC is not authorization, and this page sends no token to a server or identity provider.
+    </div>
+    <div class="rw g3">
+      <section class="cm6">
+        <div class="cd">
+          <div class="cd-h"><h2 class="mb0">Demo sign-in</h2></div>
+          <div class="cd-b">
+            <label>Sample role
+              <select id="demo-role" class="fc">
+                <option value="viewer">Viewer</option>
+                <option value="editor">Editor</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+            <div class="fx gp2 mt-2">
+              <button id="issue-token" class="bt bt-p" type="button" disabled>Sign in as sample user</button>
+              <button id="sign-out" class="bt bt-os" type="button" disabled>Clear session</button>
+            </div>
+            <p id="auth-status" class="sm fg-m" role="status">Creating an ephemeral signing key…</p>
+            <h3>Current UI permissions</h3>
+            <ul id="permission-list"></ul>
+          </div>
+        </div>
+      </section>
+      <section class="cm6">
+        <div class="cd">
+          <div class="cd-h"><h2 class="mb0">Token inspector</h2></div>
+          <div class="cd-b">
+            <label for="token-input">Paste a token to decode locally</label>
+            <textarea id="token-input" class="fc" rows="6" spellcheck="false" autocomplete="off"></textarea>
+            <div class="fx gp2 mt-2">
+              <button id="inspect-token" class="bt bt-p" type="button" disabled>Inspect</button>
+              <button id="copy-demo-token" class="bt bt-os" type="button" disabled>Use demo token</button>
+            </div>
+            <p id="token-status" class="sm" role="status"></p>
+            <div class="rw g2">
+              <div class="cm6"><h3>Header</h3><pre id="token-header" class="bg-bs fg-dk p-2"></pre></div>
+              <div class="cm6"><h3>Claims</h3><pre id="token-claims" class="bg-bs fg-dk p-2"></pre></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="cm12">
+        <div class="cd">
+          <div class="cd-h"><h2 class="mb0">OIDC Auth example</h2></div>
+          <div class="cd-b">
+            <p>Set your own trusted provider values to generate a starter snippet. This form only creates code; it does not initialize Auth or contact the provider.</p>
+            <div class="rw g2">
+              <label class="cm6">OIDC authority
+                <input id="authority" class="fc" type="url" value="https://login.example.com">
+              </label>
+              <label class="cm6">SPA client ID
+                <input id="client-id" class="fc" value="your-spa-client">
+              </label>
+            </div>
+            <button id="build-auth-example" class="bt bt-os mt-2" type="button">Build Auth example</button>
+            <pre id="auth-example" class="bg-bs fg-dk p-2 mt-2"></pre>
+          </div>
+        </div>
+      </section>
+    </div>
+    <details class="cd mt-3">
+      <summary class="cd-h">Implementation sample</summary>
+      <pre class="bg-bs fg-dk p-2">const token = await BareMetal.Tokens.sign(claims, ephemeralKey, { algorithm: 'HS256' });
+await BareMetal.Tokens.verify(token, ephemeralKey, { algorithms: ['HS256'] });
+BareMetal.RBAC.configure({ tokenSource: 'manual', rolePermissions });
+BareMetal.RBAC.setToken(token);</pre>
+    </details>
+  </main>
+  <footer class="bot p-3"><div class="bx fx fx-w jc-b gp2"><a href="./">All interactive apps</a><a href="https://github.com/WillEastbury/BareMetalJsTools">Source</a></div></footer>
+  <script src="../../src/BareMetal.Tokens.js"></script>
+  <script src="../../src/BareMetal.RBAC.js"></script>
+  <script src="../../src/BareMetal.Auth.js"></script>
+  <script>
+    (function () {
+      var signingKey = null;
+      var demoToken = '';
+      var status = document.getElementById('auth-status');
+      var permissionList = document.getElementById('permission-list');
+      var tokenInput = document.getElementById('token-input');
+      var tokenStatus = document.getElementById('token-status');
+      var issuer = 'https://auth.example.invalid';
+
+      BareMetal.RBAC.configure({
+        tokenSource: 'manual',
+        claimMapping: { roles: 'realm_access.roles' },
+        rolePermissions: {
+          viewer: ['records:read', 'reports:read'],
+          editor: ['records:read', 'records:write', 'reports:read'],
+          admin: []
+        },
+        superRoles: ['admin']
+      });
+
+      function renderPermissions() {
+        var permissions = [
+          ['records:read', 'Read purchase orders'],
+          ['records:write', 'Edit purchase orders'],
+          ['reports:read', 'View reports'],
+          ['users:manage', 'Manage users']
+        ];
+        permissionList.textContent = '';
+        permissions.forEach(function (item) {
+          var li = document.createElement('li');
+          var allowed = BareMetal.RBAC.can(item[0]);
+          li.textContent = (allowed ? 'ALLOW' : 'DENY') + ' - ' + item[1] + ' (' + item[0] + ')';
+          li.className = allowed ? 'fg-ok' : 'fg-er';
+          permissionList.appendChild(li);
+        });
+      }
+
+      async function issueToken(role) {
+        var now = Math.floor(Date.now() / 1000);
+        demoToken = await BareMetal.Tokens.sign({
+          iss: issuer,
+          aud: 'baremetal-demo',
+          sub: 'sample-user-01',
+          name: 'Sample User',
+          email: 'sample@example.invalid',
+          iat: now,
+          exp: now + 1800,
+          scope: 'records.read reports.read',
+          realm_access: { roles: [role] }
+        }, signingKey, { algorithm: 'HS256' });
+        tokenInput.value = demoToken;
+        BareMetal.RBAC.setToken(demoToken);
+        status.textContent = 'Signed in with a locally generated ' + role + ' token. The key exists only in this page memory.';
+        renderPermissions();
+        await inspectToken();
+      }
+
+      async function inspectToken() {
+        var token = tokenInput.value.trim();
+        if (!token) {
+          tokenStatus.textContent = 'Enter a token first.';
+          return false;
+        }
+        try {
+          var decoded = BareMetal.Tokens.decode(token);
+          document.getElementById('token-header').textContent = JSON.stringify(decoded.header, null, 2);
+          document.getElementById('token-claims').textContent = JSON.stringify(decoded.payload, null, 2);
+          var verified = false;
+          if (signingKey && token === demoToken) {
+            await BareMetal.Tokens.verify(token, signingKey, {
+              algorithms: ['HS256'],
+              issuer: issuer,
+              audience: 'baremetal-demo'
+            });
+            verified = true;
+          }
+          var seconds = BareMetal.Tokens.expiresIn(token);
+          tokenStatus.textContent = verified
+            ? 'Signature verified with the temporary demo key. Expires in ' + Math.max(0, seconds) + ' seconds.'
+            : 'Decoded only - signature unverified. External JWTs need trusted issuer keys.';
+          return true;
+        } catch (error) {
+          tokenStatus.textContent = 'Token could not be decoded or verified: ' + (error.message || String(error));
+          document.getElementById('token-header').textContent = '';
+          document.getElementById('token-claims').textContent = '';
+          return false;
+        }
+      }
+
+      document.getElementById('issue-token').addEventListener('click', function () {
+        issueToken(document.getElementById('demo-role').value).catch(function (error) {
+          status.textContent = error.message || String(error);
+        });
+      });
+      document.getElementById('sign-out').addEventListener('click', function () {
+        BareMetal.RBAC.clearToken();
+        demoToken = '';
+        tokenInput.value = '';
+        status.textContent = 'Signed out. RBAC session cleared.';
+        tokenStatus.textContent = '';
+        permissionList.textContent = '';
+        document.getElementById('token-header').textContent = '';
+        document.getElementById('token-claims').textContent = '';
+      });
+      document.getElementById('inspect-token').addEventListener('click', function () {
+        inspectToken();
+      });
+      document.getElementById('copy-demo-token').addEventListener('click', function () {
+        tokenInput.value = demoToken;
+        inspectToken();
+      });
+      document.getElementById('build-auth-example').addEventListener('click', function () {
+        var authority = document.getElementById('authority').value.trim().replace(/\/+$/, '');
+        var clientId = document.getElementById('client-id').value.trim();
+        if (!authority || !clientId) {
+          document.getElementById('auth-example').textContent = 'Enter both an authority and client ID.';
+          return;
+        }
+        document.getElementById('auth-example').textContent = [
+          'BareMetal.Auth.configure({',
+          '  authority: ' + JSON.stringify(authority) + ',',
+          '  clientId: ' + JSON.stringify(clientId) + ',',
+          "  redirectUri: location.origin + '/callback.html',",
+          "  scopes: 'openid profile email',",
+          "  storage: 'session'",
+          '});',
+          'await BareMetal.Auth.initialize();',
+          'await BareMetal.Auth.login();',
+          '// In the callback page: await BareMetal.Auth.handleCallback();',
+          'const accessToken = await BareMetal.Auth.getToken();'
+        ].join('\n');
+      });
+
+      BareMetal.Tokens.generateSecret('HS256').then(async function (key) {
+        signingKey = key;
+        document.getElementById('issue-token').disabled = false;
+        document.getElementById('inspect-token').disabled = false;
+        document.getElementById('copy-demo-token').disabled = false;
+        document.getElementById('sign-out').disabled = false;
+        await issueToken('viewer');
+        window.__BM_APP__ = {
+          ready: true,
+          setRole: issueToken,
+          inspect: inspectToken,
+          getToken: function () { return demoToken; },
+          permissions: function () { return BareMetal.RBAC.identity(); }
+        };
+      }).catch(function (error) {
+        status.textContent = 'Web Crypto unavailable: ' + (error.message || String(error));
+        window.__BM_APP__ = { ready: false, error: error.message || String(error) };
+      });
+    })();
+  </script>
+</body>
+</html>

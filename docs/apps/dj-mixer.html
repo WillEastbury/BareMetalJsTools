@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DJ MIDI Mixer | BareMetalJsTools</title>
+  <link rel="stylesheet" href="../../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../../src/themes/wavefunction.css">
+</head>
+<body>
+  <header class="nbar">
+    <div class="bx fx ai-c jc-b gp2">
+      <a class="nbar-b" href="./">Interactive apps</a>
+      <nav class="fx ai-c gp2" aria-label="Page navigation">
+        <a class="nl" href="../index.html">Showcase</a>
+        <a class="nl act" href="dj-mixer.html">DJ MIDI mixer</a>
+        <a class="nl" href="xr-world.html">3DXR world</a>
+      </nav>
+    </div>
+  </header>
+  <main class="bx py-4">
+    <header class="mb-4">
+      <span class="bd bg-p">INTERACTIVE SAMPLE</span>
+      <h1 class="dp4 mt-2">Four decks. Your local MP3s.</h1>
+      <p class="ld">A browser-only DJ mixer with 3-band EQ, faders, pitch, crossfader, cue/PFL preview, meters, and optional Web MIDI input.</p>
+    </header>
+    <section class="cd mb-3">
+      <div class="cd-h"><h2 class="mb0">Load local audio</h2></div>
+      <div class="cd-b">
+        <label for="track-files">Choose up to four MP3 files
+          <input id="track-files" class="fc" type="file" accept=".mp3,audio/mpeg" multiple>
+        </label>
+        <p id="mixer-status" class="sm fg-m" role="status">Creating Web Audio mixer…</p>
+        <div class="rw g2 mt-2">
+          <label class="cm6">Master gain
+            <input id="master-gain" class="fc" type="range" min="0" max="1" step="0.01" value="0.8">
+          </label>
+          <label class="cm6">Crossfader
+            <input id="crossfader" class="fc" type="range" min="0" max="100" step="1" value="50">
+          </label>
+        </div>
+        <div class="fx fx-w ai-c gp2 mt-2">
+          <button id="midi-connect" class="bt bt-os" type="button">Connect MIDI controller</button>
+          <label>Cue / PFL gain
+            <input id="cue-gain" type="range" min="0" max="1" step="0.01" value="0.8">
+          </label>
+          <span id="midi-status" class="sm fg-m" role="status">MIDI not connected</span>
+        </div>
+      </div>
+    </section>
+    <div class="rw g2">
+      <section class="cm6">
+        <article class="cd">
+          <div class="cd-h fx fx-w ai-c jc-b gp2"><h2 class="mb0">Deck 1</h2><strong id="track-name-0">No track loaded</strong></div>
+          <div class="cd-b">
+            <audio id="audio-0" class="w-100" controls preload="metadata"></audio>
+            <div class="fx gp2 mt-2">
+              <button class="bt bt-p" data-play="0" type="button" disabled>Play</button>
+              <button class="bt bt-os" data-pause="0" type="button" disabled>Pause</button>
+              <button class="bt bt-os" data-cue="0" type="button" aria-pressed="false">Cue / PFL</button>
+              <progress class="mt-2" data-meter="0" max="1" value="0"></progress>
+            </div>
+            <label>Channel fader
+              <input class="fc" type="range" min="0" max="1" step="0.01" value="1" data-fader="0">
+            </label>
+            <div class="rw g2">
+              <label class="cm4">Low
+                <input class="fc" type="range" min="-12" max="12" value="0" data-eq="low" data-deck="0">
+              </label>
+              <label class="cm4">Mid
+                <input class="fc" type="range" min="-12" max="12" value="0" data-eq="mid" data-deck="0">
+              </label>
+              <label class="cm4">High
+                <input class="fc" type="range" min="-12" max="12" value="0" data-eq="high" data-deck="0">
+              </label>
+            </div>
+            <label>Pitch (semitones)
+              <input class="fc" type="range" min="-12" max="12" value="0" data-pitch="0">
+            </label>
+          </div>
+        </article>
+      </section>
+      <section class="cm6">
+        <article class="cd">
+          <div class="cd-h fx fx-w ai-c jc-b gp2"><h2 class="mb0">Deck 2</h2><strong id="track-name-1">No track loaded</strong></div>
+          <div class="cd-b">
+            <audio id="audio-1" class="w-100" controls preload="metadata"></audio>
+            <div class="fx gp2 mt-2">
+              <button class="bt bt-p" data-play="1" type="button" disabled>Play</button>
+              <button class="bt bt-os" data-pause="1" type="button" disabled>Pause</button>
+              <button class="bt bt-os" data-cue="1" type="button" aria-pressed="false">Cue / PFL</button>
+              <progress class="mt-2" data-meter="1" max="1" value="0"></progress>
+            </div>
+            <label>Channel fader
+              <input class="fc" type="range" min="0" max="1" step="0.01" value="1" data-fader="1">
+            </label>
+            <div class="rw g2">
+              <label class="cm4">Low
+                <input class="fc" type="range" min="-12" max="12" value="0" data-eq="low" data-deck="1">
+              </label>
+              <label class="cm4">Mid
+                <input class="fc" type="range" min="-12" max="12" value="0" data-eq="mid" data-deck="1">
+              </label>
+              <label class="cm4">High
+                <input class="fc" type="range" min="-12" max="12" value="0" data-eq="high" data-deck="1">
+              </label>
+            </div>
+            <label>Pitch (semitones)
+              <input class="fc" type="range" min="-12" max="12" value="0" data-pitch="1">
+            </label>
+          </div>
+        </article>
+      </section>
+      <section class="cm6">
+        <article class="cd">
+          <div class="cd-h fx fx-w ai-c jc-b gp2"><h2 class="mb0">Deck 3</h2><strong id="track-name-2">No track loaded</strong></div>
+          <div class="cd-b">
+            <audio id="audio-2" class="w-100" controls preload="metadata"></audio>
+            <div class="fx gp2 mt-2">
+              <button class="bt bt-p" data-play="2" type="button" disabled>Play</button>
+              <button class="bt bt-os" data-pause="2" type="button" disabled>Pause</button>
+              <button class="bt bt-os" data-cue="2" type="button" aria-pressed="false">Cue / PFL</button>
+              <progress class="mt-2" data-meter="2" max="1" value="0"></progress>
+            </div>
+            <label>Channel fader
+              <input class="fc" type="range" min="0" max="1" step="0.01" value="1" data-fader="2">
+            </label>
+            <div class="rw g2">
+              <label class="cm4">Low
+                <input class="fc" type="range" min="-12" max="12" value="0" data-eq="low" data-deck="2">
+              </label>
+              <label class="cm4">Mid
+                <input class="fc" type="range" min="-12" max="12" value="0" data-eq="mid" data-deck="2">
+              </label>
+              <label class="cm4">High
+                <input class="fc" type="range" min="-12" max="12" value="0" data-eq="high" data-deck="2">
+              </label>
+            </div>
+            <label>Pitch (semitones)
+              <input class="fc" type="range" min="-12" max="12" value="0" data-pitch="2">
+            </label>
+          </div>
+        </article>
+      </section>
+      <section class="cm6">
+        <article class="cd">
+          <div class="cd-h fx fx-w ai-c jc-b gp2"><h2 class="mb0">Deck 4</h2><strong id="track-name-3">No track loaded</strong></div>
+          <div class="cd-b">
+            <audio id="audio-3" class="w-100" controls preload="metadata"></audio>
+            <div class="fx gp2 mt-2">
+              <button class="bt bt-p" data-play="3" type="button" disabled>Play</button>
+              <button class="bt bt-os" data-pause="3" type="button" disabled>Pause</button>
+              <button class="bt bt-os" data-cue="3" type="button" aria-pressed="false">Cue / PFL</button>
+              <progress class="mt-2" data-meter="3" max="1" value="0"></progress>
+            </div>
+            <label>Channel fader
+              <input class="fc" type="range" min="0" max="1" step="0.01" value="1" data-fader="3">
+            </label>
+            <div class="rw g2">
+              <label class="cm4">Low
+                <input class="fc" type="range" min="-12" max="12" value="0" data-eq="low" data-deck="3">
+              </label>
+              <label class="cm4">Mid
+                <input class="fc" type="range" min="-12" max="12" value="0" data-eq="mid" data-deck="3">
+              </label>
+              <label class="cm4">High
+                <input class="fc" type="range" min="-12" max="12" value="0" data-eq="high" data-deck="3">
+              </label>
+            </div>
+            <label>Pitch (semitones)
+              <input class="fc" type="range" min="-12" max="12" value="0" data-pitch="3">
+            </label>
+          </div>
+        </article>
+      </section>
+    </div>
+    <details class="cd mt-3">
+      <summary class="cd-h">Implementation sample</summary>
+      <pre class="bg-bs fg-dk p-2">const mixer = BareMetal.DJMixer.create();
+const audio = new Audio(URL.createObjectURL(file));
+mixer.addChannel(0, audio);
+mixer.setChannel(0, { low: 3, mid: -1, high: 2, fader: 0.8 });
+mixer.setCrossfader(-0.5);</pre>
+    </details>
+  </main>
+  <footer class="bot p-3"><div class="bx fx fx-w jc-b gp2"><a href="./">All interactive apps</a><a href="https://github.com/WillEastbury/BareMetalJsTools">Source</a></div></footer>
+  <script src="../../src/BareMetal.DJMixer.js"></script>
+  <script src="../../src/BareMetal.MIDI.js"></script>
+  <script src="../../src/BareMetal.MP3.js"></script>
+  <script>
+    (function () {
+      var mixer = null;
+      var midi = BareMetal.MIDI.create();
+      var audios = [];
+      var objectUrls = [];
+      var focusedDeck = 0;
+      var midiConnected = false;
+      var status = document.getElementById('mixer-status');
+      var midiStatus = document.getElementById('midi-status');
+
+      function showStatus(message) { status.textContent = message; }
+      function setCrossfader(value) {
+        var slider = document.getElementById('crossfader');
+        slider.value = String(Math.round((value + 1) * 50));
+        if (mixer) mixer.setCrossfader(value);
+      }
+
+      try {
+        mixer = BareMetal.DJMixer.create({ masterGain: 0.8 });
+        for (var i = 0; i < 4; i++) {
+          var audio = document.getElementById('audio-' + i);
+          audios.push(audio);
+          mixer.addChannel(i, audio);
+          (function (index, player) {
+            document.querySelector('[data-play="' + index + '"]').addEventListener('click', function () {
+              mixer.context.resume().then(function () { return player.play(); }).catch(function (error) {
+                showStatus('Playback failed: ' + (error.message || String(error)));
+              });
+              focusedDeck = index;
+            });
+            document.querySelector('[data-pause="' + index + '"]').addEventListener('click', function () { player.pause(); });
+            document.querySelector('[data-cue="' + index + '"]').addEventListener('click', function (event) {
+              var enabled = mixer.toggleCue(index);
+              event.currentTarget.setAttribute('aria-pressed', String(enabled));
+              focusedDeck = index;
+            });
+            document.querySelector('[data-fader="' + index + '"]').addEventListener('input', function (event) {
+              mixer.setChannel(index, { fader: Number(event.target.value) });
+            });
+            Array.prototype.forEach.call(document.querySelectorAll('[data-deck="' + index + '"][data-eq]'), function (slider) {
+              slider.addEventListener('input', function () {
+                var patch = {};
+                patch[slider.dataset.eq] = Number(slider.value);
+                mixer.setChannel(index, patch);
+              });
+            });
+            document.querySelector('[data-pitch="' + index + '"]').addEventListener('input', function (event) {
+              mixer.setPitch(index, Number(event.target.value));
+            });
+          })(i, audio);
+        }
+        showStatus('Mixer ready. Load MP3s from your device; audio is not uploaded.');
+      } catch (error) {
+        showStatus('Web Audio could not start: ' + (error.message || String(error)));
+      }
+
+      async function loadFiles(fileList) {
+        if (!mixer) throw new Error('Web Audio is unavailable; local tracks cannot be mixed in this browser.');
+        var files = Array.prototype.slice.call(fileList || []).filter(function (file) {
+          return /\.mp3$/i.test(file.name) || file.type === 'audio/mpeg';
+        });
+        if (!files.length) {
+          showStatus('Choose one or more MP3 files.');
+          return 0;
+        }
+        if (files.length > 4) showStatus('Only the first four MP3 files are loaded.');
+        var loadedCount = Math.min(files.length, 4);
+        for (var i = 0; i < loadedCount; i++) {
+          if (objectUrls[i]) URL.revokeObjectURL(objectUrls[i]);
+          objectUrls[i] = URL.createObjectURL(files[i]);
+          audios[i].src = objectUrls[i];
+          audios[i].load();
+          document.querySelector('[data-play="' + i + '"]').disabled = false;
+          document.querySelector('[data-pause="' + i + '"]').disabled = false;
+          var title = files[i].name;
+          try {
+            var tags = await BareMetal.MP3.readTags(files[i]);
+            if (tags && tags.title) title = tags.artist ? tags.artist + ' - ' + tags.title : tags.title;
+          } catch (error) {
+            title = files[i].name + ' (ID3 tags unavailable)';
+          }
+          document.getElementById('track-name-' + i).textContent = title;
+        }
+        showStatus(loadedCount + ' local MP3 file(s) loaded into the first decks.');
+        return loadedCount;
+      }
+
+      document.getElementById('track-files').addEventListener('change', function (event) {
+        loadFiles(event.target.files).catch(function (error) {
+          showStatus('Could not load local tracks: ' + (error.message || String(error)));
+        });
+      });
+      document.getElementById('master-gain').addEventListener('input', function (event) {
+        if (mixer) mixer.setMasterGain(Number(event.target.value));
+      });
+      document.getElementById('crossfader').addEventListener('input', function (event) {
+        if (mixer) mixer.setCrossfader((Number(event.target.value) - 50) / 50);
+      });
+      document.getElementById('cue-gain').addEventListener('input', function (event) {
+        if (mixer) mixer.setCueGain(Number(event.target.value));
+      });
+      document.getElementById('midi-connect').addEventListener('click', async function () {
+        if (midiConnected) return;
+        try {
+          await midi.request();
+          midi.mapCC(1, function (message) { setCrossfader(message.value * 2 - 1); });
+          midi.mapCC(7, function (message) {
+            document.getElementById('master-gain').value = String(message.value);
+            if (mixer) mixer.setMasterGain(message.value);
+          });
+          for (var deck = 0; deck < 4; deck++) {
+            (function (index) {
+              midi.mapCC(16 + index, function (message) {
+                var slider = document.querySelector('[data-fader="' + index + '"]');
+                slider.value = String(message.value);
+                if (mixer) mixer.setChannel(index, { fader: message.value });
+              });
+            })(deck);
+          }
+          midi.mapPitchBend(function (message) {
+            if (mixer) mixer.setPitchBend(focusedDeck, message.value * 2);
+          });
+          midi.onMessage(function (message) {
+            midiStatus.textContent = midi.getInputs().length + ' MIDI input(s) - last message: ' + message.type;
+          });
+          var devices = midi.getDevices();
+          midiStatus.textContent = devices.inputs.length + ' MIDI input(s) connected.';
+          midiConnected = true;
+          document.getElementById('midi-connect').disabled = true;
+        } catch (error) {
+          midiStatus.textContent = 'MIDI unavailable or permission denied: ' + (error.message || String(error));
+        }
+      });
+
+      window.setInterval(function () {
+        if (!mixer) return;
+        for (var i = 0; i < 4; i++) {
+          var meter = document.querySelector('[data-meter="' + i + '"]');
+          if (meter) meter.value = mixer.meter(i);
+        }
+      }, 120);
+      window.addEventListener('pagehide', function () {
+        midi.destroy();
+        if (mixer) mixer.destroy();
+        objectUrls.forEach(function (url) { if (url) URL.revokeObjectURL(url); });
+      }, { once: true });
+
+      window.__BM_APP__ = {
+        ready: true,
+        channels: mixer ? mixer.getState().length : 0,
+        loadFiles: loadFiles,
+        setCrossfader: setCrossfader,
+        midi: midi
+      };
+    })();
+  </script>
+</body>
+</html>

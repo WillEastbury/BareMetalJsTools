@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Codes and Forms | BareMetalJsTools</title>
+  <link rel="stylesheet" href="../../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../../src/themes/wavefunction.css">
+</head>
+<body>
+  <header class="nbar">
+    <div class="bx fx ai-c jc-b gp2">
+      <a class="nbar-b" href="./">Interactive apps</a>
+      <nav class="fx ai-c gp2" aria-label="Page navigation">
+        <a class="nl" href="../index.html">Showcase</a>
+        <a class="nl act" href="codes.html">Codes &amp; forms</a>
+        <a class="nl" href="erp.html">ERP demo</a>
+      </nav>
+    </div>
+  </header>
+  <main class="bx py-4">
+    <header class="mb-4">
+      <span class="bd bg-p">INTERACTIVE SAMPLE</span>
+      <h1 class="dp4 mt-2">Codes in a real form.</h1>
+      <p class="ld">Bind common reference codes into validated forms, inspect their metadata, and convert units.</p>
+    </header>
+    <div class="rw g3">
+      <section class="cm8">
+        <div class="cd">
+          <div class="cd-h"><h2 class="mb0">Reference-code form</h2></div>
+          <div class="cd-b">
+            <form id="code-form" class="rw g2">
+              <label class="cm6">Country
+                <select class="fc" name="country" m-value="country"></select>
+              </label>
+              <label class="cm6">Currency
+                <select class="fc" name="currency" m-value="currency"></select>
+              </label>
+              <label class="cm6">Language
+                <select class="fc" name="language" m-value="language"></select>
+              </label>
+              <label class="cm6">HTTP status
+                <select class="fc" name="httpStatus" m-value="httpStatus"></select>
+              </label>
+              <label class="cm6">MIME extension
+                <select class="fc" name="extension" m-value="extension"></select>
+              </label>
+              <label class="cm6">Invoice amount
+                <input class="fc" name="amount" type="number" min="0" step="0.01" m-value="amount" required>
+              </label>
+              <div class="cm12 fx ai-c gp2">
+                <button class="bt bt-p" type="submit">Validate form</button>
+                <span id="form-status" role="status" aria-live="polite"></span>
+              </div>
+            </form>
+            <div class="mt-3 p-2 bg-bs">
+              <h3 class="mt-0">Bound selection</h3>
+              <p>Country: <strong m-text="countryLabel"></strong></p>
+              <p>Currency: <strong m-text="currencyLabel"></strong></p>
+              <p>Language: <strong m-text="languageLabel"></strong></p>
+              <p>HTTP response: <strong m-text="httpLabel"></strong></p>
+              <p>File type: <strong m-text="mimeLabel"></strong></p>
+              <p>Formatted amount: <strong m-text="formattedAmount"></strong></p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <aside class="cm4">
+        <section class="cd">
+          <div class="cd-h"><h2 class="mb0">Unit conversion</h2></div>
+          <div class="cd-b">
+            <label>Distance in kilometres
+              <input id="km-input" class="fc" type="number" min="0" step="0.1" value="10">
+            </label>
+            <p><span id="conversion-result" class="ld"></span></p>
+            <p class="sm fg-m">Uses <code>BareMetal.Codes.units.convert()</code>.</p>
+          </div>
+        </section>
+        <section class="cd mt-3">
+          <div class="cd-h"><h2 class="mb0">Search country codes</h2></div>
+          <div class="cd-b">
+            <label>Search
+              <input id="country-search" class="fc" type="search" placeholder="e.g. United">
+            </label>
+            <ul id="country-results" class="lu mt-2" aria-live="polite"></ul>
+          </div>
+        </section>
+      </aside>
+    </div>
+    <details class="cd mt-3">
+      <summary class="cd-h">Implementation sample</summary>
+      <pre class="bg-bs fg-dk p-2">const { state, watch } = BareMetal.Bind.reactive({
+  country: 'GB', currency: 'GBP', language: 'en'
+});
+BareMetal.Bind.bind(form, state, watch);
+BareMetal.Forms.create(form, { fields: { country: { required: true } } });
+BareMetal.Codes.countries.get(state.country);</pre>
+    </details>
+  </main>
+  <footer class="bot p-3"><div class="bx fx fx-w jc-b gp2"><a href="./">All interactive apps</a><a href="https://github.com/WillEastbury/BareMetalJsTools">Source</a></div></footer>
+  <script src="../../src/BareMetal.Codes.js"></script>
+  <script src="../../src/BareMetal.Bind.js"></script>
+  <script src="../../src/BareMetal.Forms.js"></script>
+  <script>
+    (function () {
+      var codes = BareMetal.Codes;
+      var form = document.getElementById('code-form');
+      var countrySelect = form.elements.country;
+      var currencySelect = form.elements.currency;
+      var languageSelect = form.elements.language;
+      var httpSelect = form.elements.httpStatus;
+      var mimeSelect = form.elements.extension;
+      var status = document.getElementById('form-status');
+      var countryList = codes.countries.list();
+      var commonCountries = ['GB', 'US', 'CA', 'AU', 'DE', 'FR', 'JP'];
+      var commonCurrencies = ['GBP', 'USD', 'EUR', 'CAD', 'AUD', 'JPY'];
+      var commonLanguages = ['en', 'fr', 'de', 'es', 'ja'];
+      var httpCodes = ['200', '201', '204', '301', '400', '401', '403', '404', '409', '422', '429', '500'];
+      var extensions = ['pdf', 'csv', 'json', 'html', 'js', 'css', 'jpg', 'png', 'mp3', 'mp4'];
+
+      function fill(select, collection, keys) {
+        keys.forEach(function (key) {
+          var item = collection.get(key);
+          if (!item) return;
+          var option = document.createElement('option');
+          option.value = item.code || item.ext || String(key);
+          option.textContent = item.name || item.phrase || item.type || option.value;
+          select.appendChild(option);
+        });
+      }
+
+      fill(countrySelect, codes.countries, commonCountries);
+      fill(currencySelect, codes.currencies, commonCurrencies);
+      fill(languageSelect, codes.languages, commonLanguages);
+      fill(httpSelect, codes.http, httpCodes);
+      fill(mimeSelect, codes.mime, extensions);
+
+      var binding = BareMetal.Bind.reactive({
+        country: 'GB',
+        currency: 'GBP',
+        language: 'en',
+        httpStatus: '200',
+        extension: 'pdf',
+        amount: 1250,
+        countryLabel: '',
+        currencyLabel: '',
+        languageLabel: '',
+        httpLabel: '',
+        mimeLabel: '',
+        formattedAmount: ''
+      });
+
+      function updateSummary() {
+        var country = codes.countries.get(binding.state.country);
+        var currency = codes.currencies.get(binding.state.currency);
+        var language = codes.languages.get(binding.state.language);
+        var response = codes.http.get(binding.state.httpStatus);
+        var mime = codes.mime.get(binding.state.extension);
+        binding.state.countryLabel = country ? country.name + ' (' + country.code + ')' : 'Unknown';
+        binding.state.currencyLabel = currency ? currency.name + ' (' + currency.code + ' ' + currency.symbol + ')' : 'Unknown';
+        binding.state.languageLabel = language ? language.name + ' (' + language.code + ')' : 'Unknown';
+        binding.state.httpLabel = response ? response.code + ' ' + response.phrase + ' - ' + response.category : 'Unknown';
+        binding.state.mimeLabel = mime ? mime.ext + ' - ' + mime.type : 'Unknown';
+        binding.state.formattedAmount = currency ? new Intl.NumberFormat(binding.state.language + '-' + binding.state.country, {
+          style: 'currency',
+          currency: currency.code
+        }).format(Number(binding.state.amount) || 0) : String(binding.state.amount);
+      }
+
+      BareMetal.Bind.bind(document.querySelector('main'), binding.state, binding.watch);
+      var formApi = BareMetal.Forms.create(form, {
+        fields: {
+          country: { required: true },
+          currency: { required: true },
+          language: { required: true },
+          amount: { required: true, min: 0 }
+        }
+      });
+      ['country', 'currency', 'language', 'httpStatus', 'extension', 'amount'].forEach(function (key) {
+        binding.watch(key, updateSummary);
+      });
+      updateSummary();
+      formApi.onChange(updateSummary);
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var result = formApi.validate();
+        status.className = result.valid ? 'fg-ok' : 'fg-er';
+        status.textContent = result.valid ? 'Form valid. Codes resolved from BareMetal.Codes.' : 'Check the required form fields.';
+      });
+
+      function renderCountries(query) {
+        var list = codes.countries.search(query).slice(0, 12);
+        var root = document.getElementById('country-results');
+        root.textContent = '';
+        list.forEach(function (item) {
+          var li = document.createElement('li');
+          li.textContent = item.code + ' - ' + item.name + (item.currency ? ' (' + item.currency + ')' : '');
+          root.appendChild(li);
+        });
+        if (!list.length) {
+          var empty = document.createElement('li');
+          empty.textContent = 'No matches';
+          root.appendChild(empty);
+        }
+      }
+      document.getElementById('country-search').addEventListener('input', function (event) {
+        renderCountries(event.target.value);
+      });
+      renderCountries('');
+
+      function convert() {
+        var km = Number(document.getElementById('km-input').value) || 0;
+        var miles = codes.units.convert(km, 'km', 'mi');
+        document.getElementById('conversion-result').textContent = km + ' km = ' + Number(miles).toFixed(2) + ' mi';
+      }
+      document.getElementById('km-input').addEventListener('input', convert);
+      convert();
+      window.__BM_APP__ = {
+        ready: true,
+        countries: countryList.length,
+        validate: function () { return formApi.validate(); }
+      };
+    })();
+  </script>
+</body>
+</html>
