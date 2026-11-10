@@ -2,6 +2,8 @@
 var BareMetal = (typeof BareMetal !== 'undefined') ? BareMetal : {};
 BareMetal.Bind = (() => {
   'use strict';
+  const boundRoots = new WeakMap();
+  const boundRootList = [];
 
   // Formatter registry
   const formatters = {};
@@ -171,6 +173,11 @@ BareMetal.Bind = (() => {
     const L = new Map();
     const notify = k => (L.get(k) || []).forEach(fn => fn());
     const watch  = (k, fn) => { L.has(k) || L.set(k, []); L.get(k).push(fn); };
+    const refresh = k => notify(k);
+    const refreshAll = () => {
+      Array.from(L.keys()).forEach(k => notify(k));
+    };
+    const invalidate = refresh;
     const data   = { ...initial };
     for (const k of Object.keys(data)) {
       if (Array.isArray(data[k])) data[k] = wrapArray(data[k], () => notify(k));
@@ -182,7 +189,7 @@ BareMetal.Bind = (() => {
         return true;
       }
     });
-    return { state, watch, data };
+    return { state, watch, data, refresh, invalidate, refreshAll };
   }
 
   // Transition helpers — shared double-rAF pattern
@@ -318,6 +325,14 @@ BareMetal.Bind = (() => {
 
   // bind()
   function bind(root, state, watch) {
+    if (root && root.__bmBindingDestroy) {
+      root.__bmBindingDestroy();
+    }
+    const timers = [];
+    const refreshers = [];
+    const refresh = () => refreshers.slice().forEach(fn => {
+      try { fn(); } catch (_) {}
+    });
 
     // m-expression (process first so computed values exist for other directives)
     root.querySelectorAll('[m-expression]').forEach(n => {
@@ -334,10 +349,52 @@ BareMetal.Bind = (() => {
         } catch (_) { /* silently skip eval errors */ }
       };
       evaluate();
+      n.__bmRefresh = evaluate;
+      refreshers.push(evaluate);
       const watchKeys = new Set(deps.map(d => topKey(d)));
       const targetTop = topKey(target);
       watchKeys.delete(targetTop);
       watchKeys.forEach(k => watch(k, evaluate));
+    });
+
+    // m-timed-function / m-timedfunction
+    // Syntax: m-timed-function="target = expression"
+    // Interval: m-refresh-ms="1000", m-refresh="1000", or expression "target = expr | 1000"
+    root.querySelectorAll('[m-timed-function],[m-timedfunction],[m-timed-function],[m-timed]').forEach(n => {
+      const attr = n.hasAttribute('m-timed-function') ? 'm-timed-function'
+        : n.hasAttribute('m-timedfunction') ? 'm-timedfunction'
+        : n.hasAttribute('m-timed') ? 'm-timed' : null;
+      if (!attr) return;
+      let raw = n.getAttribute(attr) || '';
+      let interval = 0;
+      const intervalAttr = n.getAttribute('m-refresh-ms') || n.getAttribute('m-refresh') || n.getAttribute('m-timer');
+      if (intervalAttr != null) interval = Math.max(0, Number(intervalAttr) || 0);
+      else {
+        const pipe = raw.match(/\|\s*(\d+(?:\.\d+)?)\s*$/);
+        if (pipe) {
+          interval = Math.max(0, Number(pipe[1]) || 0);
+          raw = raw.replace(/\|\s*\d+(?:\.\d+)?\s*$/, '').trim();
+        }
+      }
+      const parsed = parseExpression(raw);
+      if (!parsed) return;
+      const argNames = parsed.deps.slice();
+      const fn = new Function(...argNames, `return (${parsed.expr});`);
+      let stopped = false;
+      const evaluate = () => {
+        if (stopped) return;
+        try {
+          const args = argNames.map(d => getPath(state, d));
+          setPath(state, parsed.target, fn(...args));
+        } catch (_) { /* silently skip eval errors */ }
+      };
+      evaluate();
+      n.__bmRefresh = evaluate;
+      refreshers.push(evaluate);
+      if (interval > 0) {
+        const timer = setInterval(evaluate, interval);
+        timers.push(timer);
+      }
     });
 
     // m-value (two-way, no formatters)
@@ -392,6 +449,7 @@ BareMetal.Bind = (() => {
         }
         else { const s = fmt(v); if (n.value !== s) n.value = s; }
       };
+      n.__bmRefresh = sync;
       sync(); watch(wk, sync);
       if (radio) {
         n.addEventListener('change', () => {
@@ -505,6 +563,7 @@ BareMetal.Bind = (() => {
         }
       };
       sync();
+      n.__bmRefresh = sync;
       watch(wk, sync);
       if (optionsKey && optionsKey !== wk) watch(optionsKey, sync);
     });
@@ -516,8 +575,10 @@ BareMetal.Bind = (() => {
       const { path } = parseBinding(expr);
       const wk = topKey(path);
       const sync = () => n.textContent = resolveBinding(expr, state) ?? '';
+      n.__bmRefresh = sync;
       sync(); watch(wk, sync);
     });
+
 
     // m-if (with m-transition support)
     root.querySelectorAll('[m-if]').forEach(n => {
@@ -527,14 +588,16 @@ BareMetal.Bind = (() => {
       const hasTr = n.hasAttribute('m-transition');
       let visible = !!getPath(state, k);
       n.style.display = visible ? '' : 'none';
-      watch(wk, () => {
+      const sync = () => {
         const next = !!getPath(state, k);
         if (next === visible) return;
         visible = next;
         if (!hasTr) { n.style.display = next ? '' : 'none'; return; }
         if (next) transitionIn(n, trName);
         else transitionOut(n, trName, () => { n.style.display = 'none'; });
-      });
+      };
+      n.__bmRefresh = sync;
+      watch(wk, sync);
     });
 
     // m-class
@@ -543,6 +606,7 @@ BareMetal.Bind = (() => {
       parsePairs(n.getAttribute('m-class')).forEach(([cls, k]) => {
         const wk = topKey(k);
         const sync = () => n.classList.toggle(cls, !!getPath(state, k));
+        n.__bmRefresh = sync;
         sync(); watch(wk, sync);
       });
     });
@@ -557,6 +621,7 @@ BareMetal.Bind = (() => {
           if (v == null || v === false) n.removeAttribute(attr);
           else n.setAttribute(attr, v === true ? '' : String(v));
         };
+        n.__bmRefresh = sync;
         sync(); watch(wk, sync);
       });
     });
@@ -627,6 +692,7 @@ BareMetal.Bind = (() => {
           });
         }
       };
+      n.__bmRefresh = render;
       render(); watch(wk, render);
     });
 
@@ -643,14 +709,120 @@ BareMetal.Bind = (() => {
         typeof handler === 'function' && handler(e);
       });
     });
+
+    const controller = {
+      refresh: () => {
+        refreshers.slice().forEach(fn => {
+          try { fn(); } catch (_) {}
+        });
+        root.querySelectorAll('[m-text],[m-value],[m-if],[m-class],[m-attr],[m-each],[m-many-select],[m-many-checklist],[m-timed-function],[m-timedfunction],[m-timed]').forEach(n => {
+          if (typeof n.__bmRefresh === 'function') {
+            try { n.__bmRefresh(); } catch (_) {}
+          }
+        });
+      },
+      refreshAll: refresh,
+      refreshPath: top => {
+        let count = 0;
+        refreshers.forEach(fn => {
+          fn();
+          count++;
+        });
+        return count;
+      },
+      refreshControl: element => {
+        if (!element) return refresh();
+        if (typeof element === 'string') {
+          const target = root.querySelectorAll(element);
+          let count = 0;
+          target.forEach(n => {
+            if (typeof n.__bmRefresh === 'function') { n.__bmRefresh(); count++; }
+          });
+          return count;
+        }
+        if (typeof element.__bmRefresh === 'function') {
+          element.__bmRefresh();
+          return 1;
+        }
+        const controls = element.querySelectorAll ? element.querySelectorAll('[__bm-nothing]') : [];
+        let count = 0;
+        // Refresh known bound controls by top-level path or explicit refresh callback.
+        if (typeof element.refresh === 'function') { element.refresh(); count++; }
+        else if (typeof element.invalidate === 'function') { element.invalidate(); count++; }
+        return count;
+      },
+      destroy: () => {
+        timers.forEach(timer => clearInterval(timer));
+        timers.length = 0;
+        refreshers.length = 0;
+        if (root.__bmBindingDestroy === destroyController) delete root.__bmBindingDestroy;
+        const rootIndex = boundRootList.indexOf(root);
+        if (rootIndex >= 0) boundRootList.splice(rootIndex, 1);
+      }
+    };
+    function destroyController() { controller.destroy(); }
+    root.__bmBindingDestroy = destroyController;
+    boundRoots.set(root, controller);
+    if (boundRootList.indexOf(root) < 0) boundRootList.push(root);
+    return controller;
   }
+
+  function refresh(target) {
+    let count = 0;
+    if (typeof target === 'string') {
+      const top = topKey(target);
+      boundRootList.slice().forEach(root => {
+        const controller = boundRoots.get(root);
+        if (typeof controller.refreshPath === 'function') count += controller.refreshPath(top);
+        else {
+          root.querySelectorAll('[m-text],[m-if],[m-class],[m-attr],[m-expression],[m-timed-function],[m-timedfunction],[m-timed],[m-each],[m-table]').forEach(n => {
+            const attrs = ['m-text','m-if','m-class','m-attr','m-expression','m-timed-function','m-timedfunction','m-timed','m-each','m-table'];
+            const hits = attrs.some(attr => {
+              const value = n.getAttribute(attr);
+              return value && topKey(parseBinding(value).path || value) === top;
+            });
+            if (hits) {
+              if (typeof n.__bmRefresh === 'function') { n.__bmRefresh(); count++; }
+              else n.dispatchEvent ? n.dispatchEvent(new CustomEvent('bm:refresh', { detail: { path: target } })) : null;
+            }
+          });
+        }
+      });
+      return count;
+    }
+    if (typeof target === 'object' && target) {
+      if (typeof target.__bmRefresh === 'function') {
+        target.__bmRefresh();
+        return 1;
+      }
+      if (boundRoots.has(target) && typeof boundRoots.get(target).refresh === 'function') {
+        boundRoots.get(target).refresh();
+        return 1;
+      }
+      let found = 0;
+      if (typeof target.__bmRefresh === 'function') { target.__bmRefresh(); found++; }
+      target.querySelectorAll && target.querySelectorAll('[m-expression],[m-timed-function],[m-timedfunction],[m-timed]').forEach(n => {
+        if (typeof n.__bmRefresh === 'function') { n.__bmRefresh(); found++; }
+      });
+      return found;
+    }
+    boundRootList.slice().forEach(root => {
+      const controller = boundRoots.get(root);
+      if (controller && typeof controller.refresh === 'function') { controller.refresh(); count++; }
+    });
+    return count;
+  }
+
+  function invalidate(target) { return refresh(target); }
+
+  function refreshControl(element) { return refresh(element); }
 
   return {
     reactive, bind, formatters,
     // Exposed helpers for Components module
     getPath, setPath, topKey, parseBinding, applyPipes,
     resolveInScope, resolveBinding, parsePairs, applyRow, el,
-    appendList, removeList
+    appendList, removeList, refresh, invalidate, refreshControl
   };
 })();
 

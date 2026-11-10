@@ -267,6 +267,7 @@ badge.textContent = 'New';
 | `m-each` | `items` or `items key:id` | Repeats a `<template>` over an array, optionally with keyed diffing. |
 | `m-click` | `handlerName` | Calls `state[handlerName](event)` on click. |
 | `m-submit` | `handlerName` | Calls `state[handlerName](event)` on form submit. |
+| `m-timed-function="target = expression"` | `m-refresh-ms` or `m-refresh` | Evaluates immediately and optionally repeats on a millisecond timer. |
 | `m-add="path"` | `m-add-value`, `m-add-default` | Appends a state value or JSON default to an array. |
 | `m-remove="path"` | `m-remove-key`, `m-remove-value`, `m-remove-index-only` | Removes the current row or matching value from an array. |
 | `m-many-select="path"` | State path + `m-options`/`m-options-json` | Native multi-select or toggle-list binding. |
@@ -336,6 +337,35 @@ according to the option representation.
   });
   BareMetal.Bind.bind(document.getElementById('tasks').parentElement, state, watch);
 </script>
+```
+
+### Timed and manual refresh
+```html
+<span m-timed-function="clock = Date.now()" m-refresh-ms="1000"></span>
+<div m-expression="copy = external.value"></div>
+<button m-click="refreshCopy">Refresh copy</button>
+```
+
+Timed functions evaluate once immediately. With `m-refresh-ms` or
+`m-refresh`, they also evaluate on the interval. A suffix such as
+`m-timed-function="clock = Date.now() | 1000"` is also accepted.
+
+```js
+const { state, watch, refresh, invalidate, refreshAll } =
+  BareMetal.Bind.reactive({ external: { value: 1 }, copy: 0 });
+
+// Refresh every bound root
+BareMetal.Bind.refresh();
+
+// Refresh a top-level state path
+BareMetal.Bind.refresh('external');
+
+// Refresh one bound element or expression control
+BareMetal.Bind.refreshControl(document.querySelector('#copy'));
+
+const controller = BareMetal.Bind.bind(root, state, watch);
+controller.refresh();
+controller.destroy();
 ```
 
 ## Notes

@@ -81,6 +81,38 @@ describe('BareMetal.Bind m-text', function () {
   });
 });
 
+describe('BareMetal.Bind timed and manual refresh', function () {
+  test('evaluates a timed function and exposes manual refresh', async function () {
+    var bind = BareMetal.Bind;
+    var r = bind.reactive({ now: 0, nested: { value: 1 }, copy: 0 });
+    var root = document.createElement('div');
+    root.innerHTML =
+      '<span id="clock" m-timed-function="now = Date.now()" m-refresh="10" m-text="now"></span>' +
+      '<span id="copy" m-expression="copy = nested.value"></span>';
+    var controller = bind.bind(root, r.state, r.watch);
+    var clock = root.querySelector('#clock');
+    var copy = root.querySelector('#copy');
+    expect(r.state.now).toBeGreaterThan(0);
+    r.state.nested.value = 42;
+    bind.refreshControl(copy);
+    expect(r.state.copy).toBe(42);
+    await new Promise(resolve => setTimeout(resolve, 30));
+    expect(Number(clock.textContent)).toBeGreaterThan(0);
+    expect(typeof controller.refresh).toBe('function');
+    controller.destroy();
+  });
+
+  test('reactive refresh invalidates a top-level path', function () {
+    var r = BareMetal.Bind.reactive({ external: 1 });
+    var seen = 0;
+    r.watch('external', function () { seen++; });
+    r.state.external = 1;
+    r.refresh('external');
+    r.invalidate('external');
+    expect(seen).toBe(3);
+  });
+});
+
 describe('BareMetal.Bind native controls', function () {
   test('binds select, range and radio inputs two-way', function () {
     var bind = BareMetal.Bind;
