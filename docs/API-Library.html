@@ -70,7 +70,7 @@
         var body = element('div', 'cd-b');
         var load = element('details', 'mb-2');
         load.append(element('summary', 'fg-p', 'Browser loading'));
-        var loadCode = element('pre', 'bg-dk fg-lt p-2 mt-2');
+        var loadCode = element('pre', 'bg-bs fg-dk p-2 mt-2');
         loadCode.textContent = ['<scr','ipt src="../',module.source.replace(/^\.\//, ''),'"></scr','ipt>'].join('');
         load.append(loadCode);
         body.append(load);
@@ -86,7 +86,7 @@
         }
         var sample = element('details', 'mt-2');
         sample.append(element('summary', 'fg-p', 'Usage sample'));
-        var sampleCode = element('pre', 'bg-dk fg-lt p-2 mt-2');
+        var sampleCode = element('pre', 'bg-bs fg-dk p-2 mt-2');
         sampleCode.textContent = module.sample || ('// Load and use ' + module.title + ' from the page.');
         sample.append(sampleCode);
         body.append(sample);

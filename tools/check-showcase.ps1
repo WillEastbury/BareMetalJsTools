@@ -85,7 +85,7 @@ try {
   $wsUrl = [string](@($page.webSocketDebuggerUrl)[0])
   $ws.ConnectAsync([Uri]$wsUrl, $cts.Token).Wait()
   Send-Cdp $ws 1 'Runtime.enable' @{}
-  $expression = "JSON.stringify((function(){var s=window.__BM_SHOWCASE__;return {status:s||null,cards:document.querySelectorAll('#catalog-grid article').length,rows:document.querySelectorAll('#relation-demo tbody tr').length,chart:!!document.querySelector('#chart-live svg'),styles:Array.from(document.styleSheets).map(function(x){return x.href||'inline'}),title:document.title,url:location.href}})())"
+  $expression = "JSON.stringify((function(){function lum(color){var rgb=color.match(/\d+/g).slice(0,3).map(function(x){var v=Number(x)/255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2]}function ratio(a,b){var x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}var s=window.__BM_SHOWCASE__;var code=document.querySelector('#bind-demo pre');var cs=code?getComputedStyle(code):null;return {status:s||null,cards:document.querySelectorAll('#catalog-grid article').length,rows:document.querySelectorAll('#relation-demo tbody tr').length,chart:!!document.querySelector('#chart-live svg'),codeColor:cs&&cs.color,codeBackground:cs&&cs.backgroundColor,codeContrast:cs&&ratio(cs.color,cs.backgroundColor),styles:Array.from(document.styleSheets).map(function(x){return x.href||'inline'}),title:document.title,url:location.href}})())"
   $id = 2
   Send-Cdp $ws $id 'Runtime.evaluate' @{ expression = $expression; returnByValue = $true }
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
@@ -125,8 +125,43 @@ try {
   if ($report.cards -lt 100) { throw "Expected at least 100 module cards, got $($report.cards)" }
   if ($report.rows -lt 1) { throw 'Nested data-table sample did not render rows' }
   if (-not $report.chart) { throw 'BareMetal.Charts example did not render SVG' }
+  if ($report.codeBackground -eq 'rgba(0, 0, 0, 0)' -or $report.codeContrast -lt 4.5) { throw "Code sample contrast failed: $($report.codeColor)/$($report.codeBackground) ($($report.codeContrast):1)" }
   if ($report.styles -match 'inline') { throw 'Found inline stylesheet; expected BareMetalStyles only' }
   Write-Output ("SHOWCASE_OK modules={0} demos={1} rows={2}" -f $report.cards,$report.status.examples,$report.rows)
+
+  Send-Cdp $ws 50 'Page.enable' @{}
+  Send-Cdp $ws 51 'Page.navigate' @{ url = "http://127.0.0.1:$HttpPort/docs/API-Library.html" }
+  $apiExpression = "JSON.stringify((function(){function lum(color){var rgb=color.match(/\d+/g).slice(0,3).map(function(x){var v=Number(x)/255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2]}function ratio(a,b){var x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}var card=document.querySelector('#modules article');var code=card&&card.querySelector('pre');var css=code?getComputedStyle(code):null;return {title:document.title,cards:document.querySelectorAll('#modules article').length,color:css&&css.color,background:css&&css.backgroundColor,contrast:css&&ratio(css.color,css.backgroundColor),styles:Array.from(document.styleSheets).map(function(x){return x.href||'inline'})}})())"
+  $id = 52
+  Send-Cdp $ws $id 'Runtime.evaluate' @{ expression = $apiExpression; returnByValue = $true }
+  $apiReport = $null
+  $deadline = (Get-Date).AddSeconds(30)
+  while ((Get-Date) -lt $deadline) {
+    $raw = Receive-Cdp $ws 1500
+    if (-not $raw) {
+      $id++
+      Send-Cdp $ws $id 'Runtime.evaluate' @{ expression = $apiExpression; returnByValue = $true }
+      continue
+    }
+    try { $message = $raw | ConvertFrom-Json } catch { continue }
+    if ($message.method -eq 'Runtime.exceptionThrown') {
+      $details = $message.params.exceptionDetails
+      throw ('API page browser exception: ' + $details.text + ' at ' + $details.url + ':' + $details.lineNumber)
+    }
+    if ($message.id -eq $id) {
+      $value = $message.result.result.value
+      if ($value -and $value -ne 'null') {
+        $candidate = $value | ConvertFrom-Json
+        if ($candidate.cards -gt 0) { $apiReport = $candidate; break }
+      }
+      $id++
+      Send-Cdp $ws $id 'Runtime.evaluate' @{ expression = $apiExpression; returnByValue = $true }
+    }
+  }
+  if (-not $apiReport) { throw 'API library page did not render module cards' }
+  if ($apiReport.background -eq 'rgba(0, 0, 0, 0)' -or $apiReport.contrast -lt 4.5) { throw "API sample text contrast failed: $($apiReport.color)/$($apiReport.background) ($($apiReport.contrast):1)" }
+  if ($apiReport.styles -match 'inline') { throw 'API library uses inline styles instead of BareMetalStyles' }
+  Write-Output ("API_LIBRARY_OK cards={0} sample-contrast={1}:1" -f $apiReport.cards,$apiReport.contrast)
 } finally {
   if ($ws) { try { $ws.Abort() } catch {} }
   if ($browser -and -not $browser.HasExited) { try { Stop-Process -Id $browser.Id -Force } catch {} }

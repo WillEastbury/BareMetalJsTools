@@ -83,7 +83,7 @@
                   <p class="mt-2">Hello, <strong m-text="name"></strong></p>
                 </div>
                 <div class="cm6">
-                  <pre class="p-3 bg-dk fg-lt"><code>const model = BareMetal.Bind.reactive({ name:'Ada' });
+                  <pre class="p-3 bg-bs fg-dk"><code>const model = BareMetal.Bind.reactive({ name:'Ada' });
 BareMetal.Bind.bind(root, model.state, model.watch);
 
 model.state.name = 'Grace';</code></pre>
@@ -97,7 +97,7 @@ model.state.name = 'Grace';</code></pre>
             <div class="cd-h"><h3 class="mb0">SVG charts</h3></div>
             <div class="cd-b">
               <div id="chart-live"></div>
-              <pre class="p-3 bg-dk fg-lt"><code>BareMetal.Charts.bar(target, [
+              <pre class="p-3 bg-bs fg-dk"><code>BareMetal.Charts.bar(target, [
   { label:'Bind', value:96 },
   { label:'Small', value:88 },
   { label:'Readable', value:100 }
@@ -127,7 +127,7 @@ Edit this **Markdown**. Raw HTML is sanitized.</textarea>
               </div>
               <button class="bt bt-p" id="machine-next" type="button">Send NEXT</button>
               <button class="bt bt-os" id="machine-reset" type="button">Reset</button>
-              <pre id="machine-log" class="p-3 bg-dk fg-lt mt-2">state: idle</pre>
+              <pre id="machine-log" class="p-3 bg-bs fg-dk mt-2">state: idle</pre>
             </div>
           </div>
         </div>
@@ -136,7 +136,7 @@ Edit this **Markdown**. Raw HTML is sanitized.</textarea>
             <div class="cd-h"><h3 class="mb0">Pub/Sub events</h3></div>
             <div class="cd-b">
               <button class="bt bt-p" id="publish-event" type="button">Publish ui.status.ready</button>
-              <pre id="event-log" class="p-3 bg-dk fg-lt mt-2">Waiting for events...</pre>
+              <pre id="event-log" class="p-3 bg-bs fg-dk mt-2">Waiting for events...</pre>
             </div>
           </div>
         </div>
@@ -259,7 +259,7 @@ Edit this **Markdown**. Raw HTML is sanitized.</textarea>
         summary.className = 'fg-p';
         summary.textContent = 'Implementation sample';
         var code = document.createElement('pre');
-        code.className = 'bg-dk fg-lt p-2 mt-2';
+        code.className = 'bg-bs fg-dk p-2 mt-2';
         code.textContent = item.sample || ('<scr' + 'ipt src="../' + item.source.replace(/^\.\//,'') + '"></scr' + 'ipt>');
         details.append(summary, code);
         var links = document.createElement('div');
