@@ -26,4 +26,17 @@ describe('BareMetal.ModuleLoader', function () {
     var restored = await BareMetal.Minifier.decompressGzip(compressed);
     expect(new TextDecoder().decode(restored)).toBe(source);
   });
+
+  it('supports Picocompress as a browser-native fallback', async function () {
+    if (!BareMetal.Compress) return;
+    var source = 'var BareMetal = {}; BareMetal.example = true;';
+    var packed = await BareMetal.Minifier.compressGzip(source, {
+      format: 'picocompress',
+      profile: 'balanced'
+    });
+    var restored = await BareMetal.Minifier.decompressGzip(packed, {
+      format: 'picocompress'
+    });
+    expect(new TextDecoder().decode(restored)).toBe(source);
+  });
 });

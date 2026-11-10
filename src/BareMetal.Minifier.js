@@ -469,17 +469,52 @@
     return { code: out.trim(), errors: errors };
   }
 
-  async function compressGzip(source) {
-    if (typeof CompressionStream === "undefined") throw new Error("CompressionStream(gzip) is unavailable");
+  function compressionOptions(options) {
+    if (typeof options === "string") return { format: options };
+    return options || {};
+  }
+
+  function compressionFormat(options) {
+    var opts = compressionOptions(options);
+    var format = opts.format || opts.compression || opts.algorithm || "gzip";
+    format = String(format).toLowerCase();
+    return format === "pico" ? "picocompress" : format;
+  }
+
+  async function compressGzip(source, options) {
+    var format = compressionFormat(options);
     var bytes = typeof source === "string" ? new TextEncoder().encode(source) : new Uint8Array(source);
-    var stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"));
+    if (format === "picocompress") {
+      if (typeof root === "undefined" || !root.BareMetal || !root.BareMetal.Compress ||
+          typeof root.BareMetal.Compress.compress !== "function") {
+        throw new Error("BareMetal.Compress is required for picocompress output");
+      }
+      var picoOptions = compressionOptions(options);
+      var compressed = root.BareMetal.Compress.compress(bytes, picoOptions);
+      return new Uint8Array(compressed);
+    }
+    if (format !== "gzip") throw new Error("Unsupported compression format: " + format);
+    if (typeof CompressionStream === "undefined") throw new Error("CompressionStream(gzip) is unavailable");
+    var gzipBytes = bytes;
+    var stream = new Blob([gzipBytes]).stream().pipeThrough(new CompressionStream("gzip"));
     return new Uint8Array(await new Response(stream).arrayBuffer());
   }
 
-  async function decompressGzip(source) {
-    if (typeof DecompressionStream === "undefined") throw new Error("DecompressionStream(gzip) is unavailable");
+  async function decompressGzip(source, options) {
+    var format = compressionFormat(options);
     var bytes = typeof source === "string" ? new TextEncoder().encode(source) : new Uint8Array(source);
-    var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+    if (format === "picocompress") {
+      if (typeof root === "undefined" || !root.BareMetal || !root.BareMetal.Compress ||
+          typeof root.BareMetal.Compress.decompress !== "function") {
+        throw new Error("BareMetal.Compress is required for picocompress input");
+      }
+      var decompressOptions = compressionOptions(options);
+      return new Uint8Array(root.BareMetal.Compress.decompress(bytes, decompressOptions));
+    }
+    if (format !== "gzip") throw new Error("Unsupported compression format: " + format);
+    if (typeof DecompressionStream === "undefined") throw new Error("DecompressionStream(gzip) is unavailable");
+    var gzipBytes = bytes;
+    var stream = new Blob([gzipBytes]).stream().pipeThrough(new DecompressionStream("gzip"));
     return new Uint8Array(await new Response(stream).arrayBuffer());
   }
 

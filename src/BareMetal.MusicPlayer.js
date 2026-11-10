@@ -22,6 +22,14 @@ BareMetal.MusicPlayer = (function () {
       this.shuffle = !!this.options.shuffle;
       this.fadeHandle = 0;
       this.destroyed = false;
+      this.pitchSemitones = 0;
+      this.pitchBendSemitones = 0;
+      this.gainDb = 20 * Math.log10(this.volume);
+      this.lowDb = 0;
+      this.midDb = 0;
+      this.highDb = 0;
+      this.audioContext = null;
+      this.deckDsp = [];
       this.decks.forEach((audio, deck) => {
         audio.preload = 'auto';
         audio.crossOrigin = this.options.crossOrigin;
@@ -77,6 +85,7 @@ BareMetal.MusicPlayer = (function () {
     }
 
     play() {
+      this._ensureDsp();
       if (this.index < 0 && this.playlist.length) this.load(0);
       const audio = this.decks[this.active];
       if (!audio.src) return Promise.resolve(false);
@@ -125,8 +134,10 @@ BareMetal.MusicPlayer = (function () {
 
     setVolume(value) {
       this.volume = clamp(value);
-      this.decks.forEach(audio => { if (audio === this.decks[this.active]) audio.volume = this.volume; });
-      this._emit('volumechange', { volume: this.volume });
+      this.gainDb = this.volume > 0 ? 20 * Math.log10(this.volume) : -Infinity;
+      this._ensureDsp();
+      this._applyDsp();
+      this._emit('volumechange', { volume: this.volume, gainDb: this.gainDb });
       return this;
     }
 
@@ -145,11 +156,110 @@ BareMetal.MusicPlayer = (function () {
       return this;
     }
 
+    _ensureDsp() {
+      if (this.audioContext) return;
+      var Context = typeof AudioContext !== 'undefined' ? AudioContext :
+        (typeof webkitAudioContext !== 'undefined' ? webkitAudioContext : null);
+      if (!Context) return;
+      try {
+        this.audioContext = new Context();
+        this.masterGain = this.audioContext.createGain();
+        this.masterGain.gain.value = this.volume;
+        this.masterGain.connect(this.audioContext.destination);
+        this.decks.forEach((audio, index) => {
+          var source = this.audioContext.createMediaElementSource(audio);
+          var low = this.audioContext.createBiquadFilter();
+          var mid = this.audioContext.createBiquadFilter();
+          var high = this.audioContext.createBiquadFilter();
+          var deckGain = this.audioContext.createGain();
+          low.type = 'lowshelf';
+          low.frequency.value = 250;
+          mid.type = 'peaking';
+          mid.frequency.value = 1000;
+          mid.Q.value = 1;
+          high.type = 'highshelf';
+          high.frequency.value = 5000;
+          deckGain.gain.value = index === this.active ? 1 : 0;
+          source.connect(low);
+          low.connect(mid);
+          mid.connect(high);
+          high.connect(deckGain);
+          deckGain.connect(this.masterGain);
+          this.deckDsp[index] = { source: source, low: low, mid: mid, high: high, gain: deckGain };
+        });
+        this._applyDsp();
+      } catch (_) {
+        this.audioContext = null;
+        this.deckDsp = [];
+      }
+    }
+
+    _applyDsp() {
+      this.deckDsp.forEach(dsp => {
+        if (!dsp) return;
+        dsp.low.gain.value = this.lowDb;
+        dsp.mid.gain.value = this.midDb;
+        dsp.high.gain.value = this.highDb;
+      });
+      if (this.masterGain) this.masterGain.gain.value = this.volume;
+      this.decks.forEach((audio, index) => {
+        var pitch = (this.pitchSemitones + this.pitchBendSemitones);
+        audio.playbackRate = Math.pow(2, pitch / 12);
+        audio.preservesPitch = true;
+        if ('mozPreservesPitch' in audio) audio.mozPreservesPitch = true;
+        if ('webkitPreservesPitch' in audio) audio.webkitPreservesPitch = true;
+      });
+    }
+
+    setPitch(semitones) {
+      this.pitchSemitones = Number(semitones) || 0;
+      this._applyDsp();
+      this._emit('pitchchange', { semitones: this.pitchSemitones, pitchBend: this.pitchBendSemitones });
+      return this;
+    }
+
+    setPitchBend(semitones) {
+      this.pitchBendSemitones = Number(semitones) || 0;
+      this._applyDsp();
+      this._emit('pitchchange', { semitones: this.pitchSemitones, pitchBend: this.pitchBendSemitones });
+      return this;
+    }
+
+    setGainDb(db) {
+      var gainDb = Number(db) || 0;
+      this.gainDb = gainDb;
+      this.volume = Math.pow(10, gainDb / 20);
+      this._ensureDsp();
+      this._applyDsp();
+      this._emit('volumechange', { volume: this.volume, gainDb: gainDb });
+      return this;
+    }
+
+    setLow(db) { this.lowDb = Number(db) || 0; this._ensureDsp(); this._applyDsp(); return this; }
+    setMid(db) { this.midDb = Number(db) || 0; this._ensureDsp(); this._applyDsp(); return this; }
+    setHigh(db) { this.highDb = Number(db) || 0; this._ensureDsp(); this._applyDsp(); return this; }
+
+    setStreaming(options) {
+      this.streaming = Object.assign({
+        preload: 'metadata',
+        crossOrigin: 'anonymous',
+        range: true
+      }, options || {});
+      this.decks.forEach(audio => {
+        audio.preload = this.streaming.preload;
+        audio.crossOrigin = this.streaming.crossOrigin || null;
+      });
+      return this.streaming;
+    }
+
     state() {
       const audio = this.decks[this.active];
       return { index: this.index, entry: this.playlist[this.index] || null, playing: !audio.paused,
         currentTime: audio.currentTime || 0, duration: Number.isFinite(audio.duration) ? audio.duration : 0,
-        volume: this.volume, repeat: this.repeat, shuffle: this.shuffle };
+        volume: this.volume, gainDb: this.gainDb, pitchSemitones: this.pitchSemitones,
+        pitchBendSemitones: this.pitchBendSemitones, lowDb: this.lowDb, midDb: this.midDb,
+        highDb: this.highDb, repeat: this.repeat, shuffle: this.shuffle,
+        streaming: this.streaming || null };
     }
 
     destroy() {
@@ -186,6 +296,7 @@ BareMetal.MusicPlayer = (function () {
     }
 
     _crossfadeTo(index) {
+      this._ensureDsp();
       this._cancelFade();
       const oldDeck = this.active, newDeck = 1 - oldDeck;
       const outgoing = this.decks[oldDeck], incoming = this.decks[newDeck];
@@ -208,11 +319,15 @@ BareMetal.MusicPlayer = (function () {
           const progress = duration ? Math.min(1, (now - start) / duration) : 1;
           incoming.volume = this.volume * progress;
           outgoing.volume = this.volume * (1 - progress);
+          if (this.deckDsp[newDeck]) this.deckDsp[newDeck].gain.gain.value = progress;
+          if (this.deckDsp[oldDeck]) this.deckDsp[oldDeck].gain.gain.value = 1 - progress;
           if (progress >= 1) {
             outgoing.pause();
             outgoing.currentTime = 0;
             outgoing.volume = 0;
             incoming.volume = this.volume;
+            if (this.deckDsp[oldDeck]) this.deckDsp[oldDeck].gain.gain.value = 0;
+            if (this.deckDsp[newDeck]) this.deckDsp[newDeck].gain.gain.value = 1;
             this.fadeHandle = 0;
             this._emit('crossfadeend', this.state());
             resolve(true);
@@ -230,7 +345,10 @@ BareMetal.MusicPlayer = (function () {
     _cancelFade() {
       if (this.fadeHandle) cancelAnimationFrame(this.fadeHandle);
       this.fadeHandle = 0;
-      this.decks.forEach((audio, index) => { audio.volume = index === this.active ? this.volume : 0; });
+      this.decks.forEach((audio, index) => {
+        audio.volume = index === this.active ? this.volume : 0;
+        if (this.deckDsp[index]) this.deckDsp[index].gain.gain.value = index === this.active ? 1 : 0;
+      });
     }
 
     _mediaSession() {

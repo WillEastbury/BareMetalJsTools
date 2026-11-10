@@ -55,6 +55,19 @@ Lexical compaction only: no mangling, no AST. Intended for known BareMetal sourc
 load-time gzip layer for assets already received as bytes; it does not replace HTTP
 compression or TLS.
 
+Pass `{ format: 'picocompress', profile: 'balanced' }` to use the repository's
+`BareMetal.Compress` implementation instead:
+
+```js
+const packed = await BareMetal.Minifier.compressGzip(bytes, {
+  format: 'picocompress',
+  profile: 'balanced'
+});
+const restored = await BareMetal.Minifier.decompressGzip(packed, {
+  format: 'picocompress'
+});
+```
+
 ## When to regenerate
 
 1. After an accepted change to `BareMetal.Minifier.js`, re-run `-All -Check`. If drift is expected, `-All -Write` in a focused PR.

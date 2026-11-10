@@ -25,4 +25,11 @@ A small browser audio player with playlist navigation, repeat/shuffle, remote-ca
 - `on(name, callback)` listens for `trackchange`, `timeupdate`, `play`, `pause`, `stop`, `ended`, `crossfadeend`, `volumechange`, `modechange`, `autoplayblocked`, and `error`.
 - `destroy()` releases both media elements and event listeners.
 
+- `setPitch(semitones)`, `setPitchBend(semitones)`, `setLow(db)`,
+  `setMid(db)`, `setHigh(db)`, and `setGainDb(db)` control optional Web Audio
+  DSP. Pitch changes use `playbackRate` while retaining `preservesPitch`.
+- `setStreaming({ preload, crossOrigin, range })` selects native media preload
+  and streaming behavior. HTTP Range support remains server/header dependent;
+  manifest-module payload compression is handled separately.
+
 Cross-origin audio servers must permit CORS when `crossOrigin` is enabled. Streaming formats and seek behavior depend on the media server, browser, codec, and response headers. For shared two-person playback, send authorized player actions through the application's control channel and resolve the resulting state on both clients; this library does not provide networking or authentication.

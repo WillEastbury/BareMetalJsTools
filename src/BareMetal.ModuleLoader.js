@@ -33,8 +33,15 @@ BareMetal.ModuleLoader = (function () {
 
     async function decompress(buffer, encoding) {
       if (!encoding) return buffer;
+      var format = String(encoding).toLowerCase();
+      if (format === 'picocompress' || format === 'pico' || format === 'baremetal.compress') {
+        if (!BareMetal.Compress || typeof BareMetal.Compress.decompress !== 'function') {
+          throw new Error('BareMetal.Compress is required for picocompress module content');
+        }
+        return new Uint8Array(BareMetal.Compress.decompress(new Uint8Array(buffer))).buffer;
+      }
       if (typeof DecompressionStream === 'undefined') throw new Error('DecompressionStream is unavailable for encoding: ' + encoding);
-      var stream = new DecompressionStream(encoding);
+      var stream = new DecompressionStream(format);
       var response = new Response(buffer).body.pipeThrough(stream);
       return new Response(response).arrayBuffer();
     }
@@ -73,12 +80,7 @@ BareMetal.ModuleLoader = (function () {
 
       var contentEncoding = entry.encoding || response.headers && response.headers.get('content-encoding');
       var buffer = await response.arrayBuffer();
-      if (contentEncoding) {
-        var normalized = String(contentEncoding).toLowerCase();
-        if (normalized === 'gzip' || normalized === 'deflate' || normalized === 'deflate-raw') {
-          buffer = await decompress(buffer, normalized);
-        }
-      }
+      if (entry.encoding) buffer = await decompress(buffer, entry.encoding);
 
       if (entry.sha256 || entry.hash) {
         if (!BareMetal.Integrity) throw new Error('BareMetal.Integrity is required for verified module loading');

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>BareMetalJsTools Size Report</title>
+</head>
+<body>
+<pre id="size-report">loading</pre>
+<script src="src/BareMetal.Compress.js"></script>
+<script src="src/BareMetal.Minifier.js"></script>
+<script>
+(function () {
+  var reportElement = document.getElementById('size-report');
+
+  function unique(values) {
+    var seen = {};
+    var out = [];
+    values.forEach(function (value) {
+      if (!seen[value]) { seen[value] = true; out.push(value); }
+    });
+    return out;
+  }
+
+  function minPath(path) {
+    if (/\.css$/.test(path)) return path.replace(/\.css$/, '.min.css');
+    if (/\.js$/.test(path)) return path.replace(/\.js$/, '.min.js');
+    return null;
+  }
+
+  async function measure(path) {
+    var response = await fetch(path);
+    if (!response.ok) throw new Error(path + ': HTTP ' + response.status);
+    var raw = await response.arrayBuffer();
+    var gzip = await BareMetal.Minifier.compressGzip(new Uint8Array(raw), { format: 'gzip' });
+    var restored = await BareMetal.Minifier.decompressGzip(gzip, { format: 'gzip' });
+    if (restored.length !== raw.byteLength) throw new Error(path + ': gzip round-trip mismatch');
+    var result = { path: path, rawBytes: raw.byteLength, gzipBytes: gzip.length };
+    if (raw.byteLength <= 65536 && BareMetal.Compress && BareMetal.Compress.compress) {
+      try {
+        var pico = await BareMetal.Minifier.compressGzip(new Uint8Array(raw), {
+          format: 'picocompress',
+          profile: 'balanced'
+        });
+        var picoRestored = await BareMetal.Minifier.decompressGzip(pico, { format: 'picocompress' });
+        if (picoRestored.length === raw.byteLength) {
+          result.picocompressBytes = pico.length;
+        }
+      } catch (_) {}
+    }
+    return result;
+  }
+
+  async function start() {
+    try {
+      if (!BareMetal.Minifier || !BareMetal.Minifier.compressGzip || !BareMetal.Minifier.decompressGzip) {
+        throw new Error('BareMetal.Minifier gzip helpers unavailable');
+      }
+      var packageResponse = await fetch('package.json');
+      if (!packageResponse.ok) throw new Error('package.json: HTTP ' + packageResponse.status);
+      var packageJson = await packageResponse.json();
+      var exports = Object.keys(packageJson.exports || {}).map(function (key) {
+        return packageJson.exports[key];
+      });
+      exports = unique(exports).filter(function (path) {
+        return /\.(js|css)$/.test(path);
+      });
+      var paths = [];
+      exports.forEach(function (path) {
+        paths.push(path);
+        var min = minPath(path);
+        if (min) paths.push(min);
+      });
+      paths = unique(paths);
+
+      var results = [];
+      for (var i = 0; i < paths.length; i++) {
+        try { results.push(await measure(paths[i])); }
+        catch (error) { results.push({ path: paths[i], error: error.message || String(error) }); }
+      }
+      var report = {
+        algorithm: 'gzip',
+        source: 'BareMetal.Minifier.compressGzip/decompressGzip',
+        results: results
+      };
+      reportElement.textContent = JSON.stringify(report);
+      reportElement.setAttribute('data-complete', 'true');
+    } catch (error) {
+      reportElement.textContent = JSON.stringify({ algorithm: 'gzip', error: error.message || String(error), results: [] });
+      reportElement.setAttribute('data-complete', 'true');
+    }
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>
