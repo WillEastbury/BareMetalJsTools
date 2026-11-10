@@ -175,8 +175,8 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
       <button id="close-document-dialog" class="bt bt-os" type="button">Close</button>
     </header>
     <div class="fx fx-w ai-c gp2 mb-2">
-      <button id="generate-document-pdf" class="bt bt-p" type="button">Generate PDF</button>
-      <a id="download-document-pdf" class="bt bt-op" href="#" download="document.pdf" hidden>Download PDF</a>
+      <button id="download-document-pdf-button" class="bt bt-p" type="button">Download PDF</button>
+      <a id="download-document-pdf" class="bt bt-op" href="#" download="document.pdf" hidden>Download again</a>
       <button id="print-document" class="bt bt-os" type="button">Print</button>
     </div>
     <p id="document-output-status" class="sm fg-m" role="status">Choose an action to render or print this document.</p>
@@ -476,12 +476,12 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
         return printable;
       }
 
-      async function generateDocumentPdf() {
+      async function downloadDocumentPdf() {
         if (!activeDocument) throw new Error('Choose a document from the tree first.');
         var printable = activeDocument;
-        var generateButton = document.getElementById('generate-document-pdf');
-        generateButton.disabled = true;
-        documentStatus.textContent = 'Rendering PDF from the selected document…';
+        var downloadButton = document.getElementById('download-document-pdf-button');
+        downloadButton.disabled = true;
+        documentStatus.textContent = 'Creating a PDF directly in JavaScript…';
         documentPdfPreview.hidden = true;
         documentDownload.hidden = true;
         if (documentPdfUrl) {
@@ -489,8 +489,7 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
           documentPdfUrl = '';
         }
         try {
-          var result = await BareMetal.Print.print(printable.markup, {
-            device: 'pdf',
+          var result = await BareMetal.DocumentRenderer.render(printable.markup, {
             title: printable.title,
             pageSize: 'A4',
             scale: 1.4
@@ -501,10 +500,11 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
           documentDownload.href = documentPdfUrl;
           documentDownload.download = printable.filename.replace(/[^a-z0-9_-]+/gi, '-').replace(/^-|-$/g, '') + '.pdf';
           documentDownload.hidden = false;
-          documentStatus.textContent = result.pages + ' page PDF ready (' + result.searchableWords + ' searchable words).';
+          documentDownload.click();
+          documentStatus.textContent = result.pages + ' page PDF download started (' + result.searchableWords + ' searchable words). No print dialog or printer driver was used.';
           return result;
         } finally {
-          generateButton.disabled = false;
+          downloadButton.disabled = false;
         }
       }
 
@@ -679,9 +679,9 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
       document.getElementById('close-document-dialog').addEventListener('click', function () {
         documentDialog.close();
       });
-      document.getElementById('generate-document-pdf').addEventListener('click', function () {
-        generateDocumentPdf().catch(function (error) {
-          documentStatus.textContent = 'PDF generation failed: ' + (error.message || String(error));
+      document.getElementById('download-document-pdf-button').addEventListener('click', function () {
+        downloadDocumentPdf().catch(function (error) {
+          documentStatus.textContent = 'PDF download failed: ' + (error.message || String(error));
           showError(error.message || String(error));
         });
       });
@@ -836,7 +836,7 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
           getOrders: function () { return binding.state.orders; },
           openFirst: function () { openEditor(binding.state.orders[0], false); },
           openDocument: showDocumentPreview,
-          generateDocumentPdf: generateDocumentPdf,
+          downloadDocumentPdf: downloadDocumentPdf,
           printDocument: printActiveDocument,
           pivot: function () { return pivot; }
         };
