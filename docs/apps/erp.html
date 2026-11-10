@@ -124,7 +124,7 @@
           </div>
         </section>
         <section id="documents" class="mt-3">
-          <div class="fx ai-c jc-b gp2 mb-2"><h2 class="mb0">Documents &amp; lineage</h2><span class="sm fg-m">DocChain · PDF and print from the tree</span></div>
+          <div class="fx ai-c jc-b gp2 mb-2"><h2 class="mb0">Documents &amp; lineage</h2><span class="sm fg-m">DocChain · Direct PDF downloads; printing is separate</span></div>
           <div class="rw g2">
             <article class="cm6"><div class="cd"><div class="cd-h"><h3 class="mb0">Document tree</h3><p class="sm fg-m mb0">Render purchase documents and linked invoices</p></div><div id="document-tree" class="cd-b" aria-live="polite"></div></div></article>
             <article class="cm6"><div class="cd"><div class="cd-h"><h3 class="mb0">Relationship graph</h3></div><div id="document-graph" class="cd-b" aria-label="Document relationship graph"></div></div></article>
@@ -139,7 +139,14 @@
 const orders = await db.getAll('orders');
 BareMetal.Bind.bind(document.body, state, watch);
 BareMetal.Pivot.create('#pivot-control', { fields, records, groupBy: 'country', valueField: 'total' });
-BareMetal.DocChain.serialize(rootDocument);</pre>
+BareMetal.DocChain.serialize(rootDocument);
+
+const order = window.__BM_APP__.getOrders()[0];
+const purchaseOrder = BareMetal.DocChain.store.get(order.docId);
+const invoice = purchaseOrder.children.map(id => BareMetal.DocChain.store.get(id))
+  .find(doc => doc.type === 'Invoice');
+window.__BM_APP__.openDocument(invoice.id, 'invoice');
+await window.__BM_APP__.downloadDocumentPdf(); // Direct PDF download, no print driver.</pre>
         </details>
       </section>
     </div>

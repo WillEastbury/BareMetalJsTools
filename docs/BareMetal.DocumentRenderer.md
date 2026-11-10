@@ -62,7 +62,15 @@ The renderer accepts HTML strings, sanitizes them, lays them out in a hidden sam
 
 ### `download(html, filename, options)`
 
-Renders the document, triggers a browser download, and resolves to the same result object as `render`.
+Renders the document, triggers a browser file download, and resolves to the same result object as `render`. It does not open a print dialog or invoke a printer driver.
+
+```js
+const result = await BareMetal.DocumentRenderer.download(invoiceHtml, 'invoice-1042.pdf', {
+  title: 'Invoice INV-1042',
+  pageSize: 'A4'
+});
+console.log('Downloaded PDF pages:', result.pages);
+```
 
 ## Fidelity and limits
 

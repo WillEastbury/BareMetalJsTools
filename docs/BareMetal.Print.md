@@ -27,6 +27,8 @@ Selects a device using `options.device`:
 - `thermal` returns receipt text or structured receipt output.
 - `pdf` delegates to `BareMetal.DocumentRenderer.render` and resolves to `{ blob, pages, bytes, pageSize, orientation, searchableWords }`. Load `BareMetal.DocumentRenderer.js` first. This path writes a real PDF in JavaScript and does not open the print UI.
 
+For a direct download without involving the browser print UI or printer driver, use `BareMetal.DocumentRenderer.download(...)`. The ERP sample uses `BareMetal.DocumentRenderer.render(...)` and an anchor download for the same direct-PDF flow; its separate **Print** action is the only one that opens browser printing.
+
 ### `preview(document, options)`
 
 Creates a browser preview of the rendered document.
