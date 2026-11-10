@@ -3,508 +3,413 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1020">
-  <title>BareMetalJsTools | Browser-native JavaScript primitives</title>
-  <meta name="description" content="Interactive showcase for BareMetalJsTools: dependency-free browser modules for UI, data, media, security, workflows and utilities.">
+  <meta name="theme-color" content="#0f172a">
+  <title>BareMetalJsTools | Browser-native modules</title>
+  <meta name="description" content="Live examples and the complete function-by-function implementation guide for BareMetalJsTools.">
   <link rel="stylesheet" href="../src/BareMetalStyles.css">
-  <link rel="stylesheet" href="../src/BareMetal.Styles.BootstrapCompatibilityShim.css">
+  <link rel="stylesheet" href="../src/fonts/fonts.css">
   <link rel="stylesheet" href="../src/themes/wavefunction.css">
-  <style>
-    :root { --showcase-accent:#77a7ff; --showcase-cyan:#62d7c7; --showcase-ink:#edf3ff; --showcase-muted:#aab6cf; }
-    * { box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
-    body { margin:0; background:#090e1b; color:var(--showcase-ink); font-family:Inter,Segoe UI,system-ui,sans-serif; }
-    a { color:#9bbcff; }
-    .shell { width:min(1180px,calc(100% - 32px)); margin:auto; }
-    .nav { position:sticky; top:0; z-index:20; border-bottom:1px solid rgba(170,182,207,.12); background:rgba(9,14,27,.88); backdrop-filter:blur(18px); }
-    .nav-inner { height:68px; display:flex; align-items:center; gap:20px; }
-    .brand { display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:-.02em; }
-    .brand-mark { width:34px; height:34px; display:grid; place-items:center; border-radius:10px; background:linear-gradient(135deg,#6c8cff,#62d7c7); color:#07101e; }
-    .nav-links { margin-left:auto; display:flex; gap:8px; }
-    .nav-links a { text-decoration:none; padding:9px 12px; border-radius:9px; color:var(--showcase-muted); }
-    .nav-links a:hover { background:rgba(119,167,255,.1); color:#fff; }
-    .hero { position:relative; overflow:hidden; padding:92px 0 68px; }
-    .hero::before { content:""; position:absolute; width:620px; height:620px; right:-230px; top:-300px; border-radius:50%; background:radial-gradient(circle,rgba(98,215,199,.16),transparent 64%); }
-    .hero-grid { position:relative; display:grid; grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr); align-items:end; gap:48px; }
-    .eyebrow { display:inline-flex; align-items:center; gap:8px; color:#86aaff; font-size:.78rem; text-transform:uppercase; letter-spacing:.14em; font-weight:800; }
-    .eyebrow::before { content:""; width:28px; height:2px; background:#62d7c7; }
-    h1 { margin:18px 0 18px; max-width:760px; font-size:clamp(3.2rem,8vw,7.2rem); line-height:.88; letter-spacing:-.075em; }
-    .gradient { background:linear-gradient(100deg,#fff 10%,#9bbcff 52%,#62d7c7 92%); -webkit-background-clip:text; background-clip:text; color:transparent; }
-    .lede { max-width:650px; color:var(--showcase-muted); font-size:clamp(1.05rem,2vw,1.28rem); line-height:1.65; }
-    .hero-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:28px; }
-    .button { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 16px; border:1px solid rgba(170,182,207,.18); border-radius:10px; text-decoration:none; color:#eef4ff; background:rgba(255,255,255,.055); font-weight:700; }
-    .button.primary { border-color:transparent; background:linear-gradient(135deg,#7ba1ff,#62d7c7); color:#07101e; }
-    .metrics { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
-    .metric { min-height:132px; padding:18px; border:1px solid rgba(170,182,207,.13); border-radius:16px; background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.018)); }
-    .metric strong { display:block; font-size:2.25rem; letter-spacing:-.06em; }
-    .metric span { display:block; margin-top:7px; color:var(--showcase-muted); font-size:.82rem; }
-    section { padding:72px 0; }
-    .section-head { display:flex; align-items:end; justify-content:space-between; gap:20px; margin-bottom:26px; }
-    .section-head h2 { margin:0; font-size:clamp(2rem,4vw,3.4rem); letter-spacing:-.055em; }
-    .section-head p { max-width:520px; margin:0; color:var(--showcase-muted); line-height:1.55; }
-    .lab { border-top:1px solid rgba(170,182,207,.12); border-bottom:1px solid rgba(170,182,207,.12); background:rgba(255,255,255,.018); }
-    .lab-tabs { display:flex; gap:8px; overflow:auto; margin-bottom:16px; }
-    .lab-tab { white-space:nowrap; border:1px solid rgba(170,182,207,.14); background:transparent; color:var(--showcase-muted); border-radius:999px; padding:9px 13px; cursor:pointer; }
-    .lab-tab.active { color:#07101e; background:#62d7c7; border-color:#62d7c7; }
-    .lab-panel { display:none; }
-    .lab-panel.active { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,.75fr); gap:16px; }
-    .panel { min-height:330px; border:1px solid rgba(170,182,207,.13); border-radius:18px; background:#0d1424; overflow:hidden; }
-    .panel-preview { padding:26px; }
-    .panel-code { border-left:1px solid rgba(170,182,207,.12); background:#080d18; padding:20px; overflow:auto; }
-    pre { margin:0; color:#bdc9df; font:13px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace; white-space:pre-wrap; }
-    .demo-input { width:100%; min-height:44px; border:1px solid rgba(170,182,207,.18); border-radius:9px; background:#080d18; color:#edf3ff; padding:10px 12px; }
-    .demo-output { margin-top:18px; min-height:96px; display:grid; place-items:center; border:1px dashed rgba(170,182,207,.18); border-radius:12px; font-size:1.45rem; }
-    #chart-live { min-height:250px; }
-    .markdown-preview { min-height:250px; line-height:1.7; }
-    .machine-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:18px 0; }
-    .machine-step { padding:14px 8px; text-align:center; border:1px solid rgba(170,182,207,.15); border-radius:10px; color:var(--showcase-muted); }
-    .machine-step.active { border-color:#62d7c7; color:#07101e; background:#62d7c7; }
-    .event-log { min-height:130px; margin-top:14px; padding:12px; border-radius:10px; background:#080d18; color:#bdc9df; font:13px/1.6 ui-monospace,monospace; }
-    .toolbar { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
-    .search { flex:1; }
-    .chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
-    .chip { border:1px solid rgba(170,182,207,.14); background:transparent; color:var(--showcase-muted); border-radius:999px; padding:8px 12px; cursor:pointer; }
-    .chip.active { background:rgba(119,167,255,.16); color:#fff; border-color:rgba(119,167,255,.48); }
-    .catalog-count { color:var(--showcase-muted); font-size:.86rem; white-space:nowrap; }
-    .catalog { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-    .card { min-height:188px; display:flex; flex-direction:column; padding:18px; border:1px solid rgba(170,182,207,.12); border-radius:14px; background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018)); transition:.18s ease; }
-    .card:hover { transform:translateY(-3px); border-color:rgba(119,167,255,.42); background:linear-gradient(145deg,rgba(119,167,255,.09),rgba(255,255,255,.018)); }
-    .card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
-    .card-category { color:#86aaff; font-size:.68rem; text-transform:uppercase; letter-spacing:.12em; }
-    .card h3 { margin:10px 0 8px; font-size:1.05rem; }
-    .card p { margin:0; color:var(--showcase-muted); font-size:.86rem; line-height:1.55; }
-    .card-links { display:flex; gap:12px; margin-top:auto; padding-top:16px; }
-    .card-links a { font-size:.78rem; text-decoration:none; font-weight:800; }
-    .card-example { margin-top:14px; border-top:1px solid rgba(170,182,207,.12); padding-top:10px; }
-    .card-example summary { color:#9bbcff; cursor:pointer; font-size:.78rem; font-weight:800; }
-    .card-example pre { max-height:180px; margin-top:8px; padding:10px; border-radius:8px; background:#080d18; overflow:auto; font-size:.72rem; }
-    .footer { padding:34px 0 52px; border-top:1px solid rgba(170,182,207,.12); color:var(--showcase-muted); }
-    .footer-inner { display:flex; justify-content:space-between; gap:20px; }
-    @media(max-width:900px) {
-      .hero-grid,.lab-panel.active { grid-template-columns:1fr; }
-      .metrics { grid-template-columns:repeat(4,1fr); }
-      .metric { min-height:100px; }
-      .catalog { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    }
-    @media(max-width:620px) {
-      .nav-links a:not(:last-child) { display:none; }
-      .hero { padding-top:58px; }
-      .metrics { grid-template-columns:repeat(2,1fr); }
-      .catalog { grid-template-columns:1fr; }
-      .section-head,.footer-inner { display:block; }
-      .section-head p { margin-top:12px; }
-      .panel-code { border-left:0; border-top:1px solid rgba(170,182,207,.12); }
-    }
-  </style>
 </head>
 <body>
-  <nav class="nav">
-    <div class="shell nav-inner">
-      <div class="brand"><span class="brand-mark">BM</span> BareMetalJsTools</div>
-      <div class="nav-links">
-        <a href="#lab">Live lab</a>
-        <a href="#catalog">Library</a>
-        <a href="API-Library.md">API library</a>
-        <a href="../README.md">Readme</a>
-        <a href="https://github.com/WillEastbury/BareMetalJsTools">GitHub</a>
-      </div>
-    </div>
-  </nav>
-
-  <header class="hero">
-    <div class="shell hero-grid">
-      <div>
-        <div class="eyebrow">Vanilla JavaScript toolkit</div>
-        <h1>The browser is <span class="gradient">enough.</span></h1>
-        <p class="lede">Small, readable modules for reactive interfaces, charts, storage, authentication, media, workflows and data. No framework runtime. No build step. No dependency chain.</p>
-        <div class="hero-actions">
-          <a class="button primary" href="#lab">Run the live lab</a>
-          <a class="button" href="#catalog">Browse the library</a>
-        </div>
-      </div>
-      <div class="metrics">
-        <div class="metric"><strong id="metric-exports">116</strong><span>package exports</span></div>
-        <div class="metric"><strong>0</strong><span>runtime dependencies</span></div>
-        <div class="metric"><strong>0</strong><span>required build steps</span></div>
-        <div class="metric"><strong>97</strong><span>smoke tests passing</span></div>
-      </div>
+  <script>
+    window.__BM_SHOWCASE__ = { ready: false, modules: 0, examples: 0, error: null };
+    window.addEventListener('error', function (event) {
+      window.__BM_SHOWCASE__.error = event.message || 'Showcase script error';
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+      window.__BM_SHOWCASE__.error = String(event.reason && event.reason.message || event.reason || 'Unhandled promise rejection');
+    });
+  </script>
+  <header class="nbar">
+    <div class="bx fx ai-c jc-b gp2">
+      <a class="nbar-b" href="./">BareMetalJsTools</a>
+      <nav class="fx ai-c gp2" aria-label="Main navigation">
+        <a class="nl" href="#examples">Examples</a>
+        <a class="nl" href="#library">Module library</a>
+        <a class="nl" href="API-Library.html">API guide</a>
+        <a class="nl" href="https://github.com/WillEastbury/BareMetalJsTools">GitHub</a>
+      </nav>
     </div>
   </header>
 
-  <main>
-    <section class="lab" id="lab">
-      <div class="shell">
-        <div class="section-head">
-          <h2>Live laboratory</h2>
-          <p>Every panel uses a real BareMetal module from this repository.</p>
-        </div>
-        <div class="lab-tabs" role="tablist">
-          <button class="lab-tab active" data-tab="reactive">Reactive UI</button>
-          <button class="lab-tab" data-tab="charts">Charts</button>
-          <button class="lab-tab" data-tab="markdown">Markdown</button>
-          <button class="lab-tab" data-tab="machine">State machine</button>
-          <button class="lab-tab" data-tab="events">Pub/Sub</button>
-        </div>
-
-        <div class="lab-panel active" id="panel-reactive">
-          <div class="panel panel-preview">
-            <label for="demo-name">Name</label>
-            <input class="demo-input" id="demo-name" m-value="name" value="Ada">
-            <div class="demo-output">Hello, <strong m-text="name"></strong></div>
+  <main class="bx">
+    <section class="py-5">
+      <div class="rw g3 ai-c">
+        <div class="cm8">
+          <span class="bd bg-p">VANILLA JAVASCRIPT · NO RUNTIME DEPS</span>
+          <h1 class="dp4 mt-2">The browser is enough.</h1>
+          <p class="ld">Small, composable modules for interfaces, data, media, security and workflows. Load a file, call a function, keep your application model in charge.</p>
+          <div class="fx fx-w gp2 mt-3">
+            <a class="bt bt-p" href="#examples">Explore live examples</a>
+            <a class="bt bt-op" href="#library">Browse all modules</a>
           </div>
-          <div class="panel panel-code"><pre>const r = BareMetal.Bind.reactive({
-  name: 'Ada'
-});
-
-BareMetal.Bind.bind(document.body, r.state, r.watch);
-
-r.state.name = 'Ada'; // updates the DOM</pre></div>
         </div>
-
-        <div class="lab-panel" id="panel-charts">
-          <div class="panel panel-preview"><div id="chart-live"></div></div>
-          <div class="panel panel-code"><pre>BareMetal.Charts.bar('#chart-live', [
-  { label: 'Fast', value: 96 },
-  { label: 'Small', value: 88 },
-  { label: 'Readable', value: 100 },
-  { label: 'Portable', value: 92 }
-], { showValues: true });</pre></div>
-        </div>
-
-        <div class="lab-panel" id="panel-markdown">
-          <div class="panel panel-preview">
-            <textarea class="demo-input" id="markdown-input" rows="5"># Built for the browser
-
-- **Plain JavaScript**
-- Safe rendering
-- Tables, lists and links
-
-`No build step.`</textarea>
-            <div class="markdown-preview" id="markdown-live"></div>
+        <div class="cm4">
+          <div class="rw g2">
+            <div class="cm6"><div class="cd"><div class="cd-b"><h2 class="dp5" id="metric-modules">107</h2><span class="fg-m">JavaScript modules</span></div></div></div>
+            <div class="cm6"><div class="cd"><div class="cd-b"><h2 class="dp5">0</h2><span class="fg-m">runtime dependencies</span></div></div></div>
+            <div class="cm6"><div class="cd"><div class="cd-b"><h2 class="dp5">0</h2><span class="fg-m">required build steps</span></div></div></div>
+            <div class="cm6"><div class="cd"><div class="cd-b"><h2 class="dp5">123</h2><span class="fg-m">browser smoke checks</span></div></div></div>
           </div>
-          <div class="panel panel-code"><pre>BareMetal.Markdown.renderSafe(
-  document.querySelector('#markdown-live'),
-  markdownSource,
-  { sanitize: true }
-);</pre></div>
-        </div>
-
-        <div class="lab-panel" id="panel-machine">
-          <div class="panel panel-preview">
-            <div class="machine-grid">
-              <div class="machine-step active" data-machine-state="idle">Idle</div>
-              <div class="machine-step" data-machine-state="working">Working</div>
-              <div class="machine-step" data-machine-state="done">Done</div>
-            </div>
-            <button class="button primary" id="machine-next">Send NEXT</button>
-            <button class="button" id="machine-reset">Reset</button>
-            <div class="event-log" id="machine-log">state: idle</div>
-          </div>
-          <div class="panel panel-code"><pre>const job = BareMetal.StateMachine.create({
-  initial: 'idle',
-  states: {
-    idle: { on: { NEXT: 'working' } },
-    working: { on: { NEXT: 'done' } },
-    done: {}
-  }
-});</pre></div>
-        </div>
-
-        <div class="lab-panel" id="panel-events">
-          <div class="panel panel-preview">
-            <button class="button primary" id="publish-event">Publish ui.status.ready</button>
-            <div class="event-log" id="event-log">Waiting for events...</div>
-          </div>
-          <div class="panel panel-code"><pre>const bus = BareMetal.PubSub.create();
-
-bus.on('ui.**', (payload, meta) => {
-  show(meta.topic, payload);
-});
-
-bus.emit('ui.status.ready', { ok: true });</pre></div>
         </div>
       </div>
     </section>
 
-    <section id="catalog">
-      <div class="shell">
-        <div class="section-head">
-          <h2>One library. Every layer.</h2>
-          <p>Browse package exports and jump directly to source or API documentation.</p>
+    <section id="examples" class="mb-4">
+      <div class="fx fx-w ai-c jc-b gp2 mb-3">
+        <div>
+          <h2 class="mb-1">Live examples</h2>
+          <p class="fg-m mb0">Each demo runs the real module files from this repository.</p>
         </div>
-        <div class="toolbar">
-          <input class="demo-input search" id="catalog-search" type="search" placeholder="Search modules, capabilities or tags">
-          <span class="catalog-count" id="catalog-count"></span>
+        <div id="example-tabs" class="fx fx-w gp1" role="tablist" aria-label="Examples">
+          <button class="bt bt-p" type="button" data-tab="bind">Bind</button>
+          <button class="bt bt-os" type="button" data-tab="charts">Charts</button>
+          <button class="bt bt-os" type="button" data-tab="markdown">Markdown</button>
+          <button class="bt bt-os" type="button" data-tab="state">State machine</button>
+          <button class="bt bt-os" type="button" data-tab="events">Pub/Sub</button>
+          <button class="bt bt-os" type="button" data-tab="relations">Relations</button>
         </div>
-        <div class="chips" id="category-chips"></div>
-        <div class="catalog" id="catalog-grid"></div>
       </div>
+
+      <div class="rw g3">
+        <div class="cm12" data-example="bind">
+          <div class="cd" id="bind-demo">
+            <div class="cd-h"><h3 class="mb0">Reactive model binding</h3></div>
+            <div class="cd-b">
+              <div class="rw g3">
+                <div class="cm6">
+                  <label class="fl" for="demo-name">Name</label>
+                  <input class="fc" id="demo-name" m-value="name" value="Ada">
+                  <p class="mt-2">Hello, <strong m-text="name"></strong></p>
+                </div>
+                <div class="cm6">
+                  <pre class="p-3 bg-dk fg-lt"><code>const model = BareMetal.Bind.reactive({ name:'Ada' });
+BareMetal.Bind.bind(root, model.state, model.watch);
+
+model.state.name = 'Grace';</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cm12" data-example="charts" hidden>
+          <div class="cd">
+            <div class="cd-h"><h3 class="mb0">SVG charts</h3></div>
+            <div class="cd-b">
+              <div id="chart-live"></div>
+              <pre class="p-3 bg-dk fg-lt"><code>BareMetal.Charts.bar(target, [
+  { label:'Bind', value:96 },
+  { label:'Small', value:88 },
+  { label:'Readable', value:100 }
+]);</code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="cm12" data-example="markdown" hidden>
+          <div class="cd">
+            <div class="cd-h"><h3 class="mb0">Safe Markdown rendering</h3></div>
+            <div class="cd-b">
+              <textarea class="fc mb-2" id="markdown-input" rows="4">## Hello, browser
+
+Edit this **Markdown**. Raw HTML is sanitized.</textarea>
+              <div class="bo rd p-3" id="markdown-live"></div>
+            </div>
+          </div>
+        </div>
+        <div class="cm12" data-example="state" hidden>
+          <div class="cd">
+            <div class="cd-h"><h3 class="mb0">State machine</h3></div>
+            <div class="cd-b">
+              <div class="rw g2 mb-2">
+                <div class="cm4"><div class="cd"><div class="cd-b" id="state-idle">Idle</div></div></div>
+                <div class="cm4"><div class="cd"><div class="cd-b" id="state-working">Working</div></div></div>
+                <div class="cm4"><div class="cd"><div class="cd-b" id="state-done">Done</div></div></div>
+              </div>
+              <button class="bt bt-p" id="machine-next" type="button">Send NEXT</button>
+              <button class="bt bt-os" id="machine-reset" type="button">Reset</button>
+              <pre id="machine-log" class="p-3 bg-dk fg-lt mt-2">state: idle</pre>
+            </div>
+          </div>
+        </div>
+        <div class="cm12" data-example="events" hidden>
+          <div class="cd">
+            <div class="cd-h"><h3 class="mb0">Pub/Sub events</h3></div>
+            <div class="cd-b">
+              <button class="bt bt-p" id="publish-event" type="button">Publish ui.status.ready</button>
+              <pre id="event-log" class="p-3 bg-dk fg-lt mt-2">Waiting for events...</pre>
+            </div>
+          </div>
+        </div>
+        <div class="cm12" data-example="relations" hidden>
+          <div class="cd" id="relation-demo">
+            <div class="cd-h"><h3 class="mb0">JSON table and many-to-many binding</h3></div>
+            <div class="cd-b">
+              <div class="rw g3">
+                <div class="cm6">
+                  <table class="tb tb-h tb-s" m-table="tracks" m-table-cols="Title:title,Artist:artist.name,Tags:tags"></table>
+                </div>
+                <div class="cm6">
+                  <strong>Selected tags</strong>
+                  <div m-many-checklist="selectedTags" m-options="tagOptions" m-value-field="id" m-label-field="name"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="library" class="py-5">
+      <div class="fx fx-w ai-c jc-b gp2 mb-3">
+        <div>
+          <h2 class="mb-1">Complete module library</h2>
+          <p class="fg-m mb0">Search, filter, inspect the source and open an implementation sample for every JavaScript export.</p>
+        </div>
+        <a class="bt bt-op" href="API-Library.html">Open full API library</a>
+      </div>
+      <div class="rw g2 ai-c mb-3">
+        <div class="cm9"><input class="fc" id="catalog-search" type="search" placeholder="Search modules or capabilities"></div>
+        <div class="cm3"><span class="bd bg-s" id="catalog-count">Loading modules…</span></div>
+      </div>
+      <div id="category-chips" class="fx fx-w gp1 mb-3"></div>
+      <div id="catalog-grid" class="rw g3"></div>
     </section>
   </main>
 
-  <footer class="footer">
-    <div class="shell footer-inner">
-      <span>BareMetalJsTools — plain JavaScript for the browser.</span>
-      <span><a href="../README.md">README</a> · <a href="https://github.com/WillEastbury/BareMetalJsTools">Repository</a></span>
+  <footer class="bot p-3">
+    <div class="bx fx fx-w jc-b gp2">
+      <span>BareMetalJsTools · browser-native modules.</span>
+      <span><a href="https://github.com/WillEastbury/BareMetalJsTools/blob/main/README.md">README</a> · <a href="API-Library.html">API Library</a> · <a href="https://github.com/WillEastbury/BareMetalJsTools">Source</a></span>
     </div>
   </footer>
 
   <script src="../src/BareMetal.Bind.js"></script>
+  <script src="../src/BareMetal.Components.js"></script>
+  <script src="../src/BareMetal.Template.js"></script>
   <script src="../src/BareMetal.Charts.js"></script>
   <script src="../src/BareMetal.Markdown.js"></script>
   <script src="../src/BareMetal.StateMachine.js"></script>
   <script src="../src/BareMetal.PubSub.js"></script>
   <script src="../src/BareMetal.Types.js"></script>
-  <script src="../src/BareMetal.Modal.js"></script>
   <script>
   (function () {
     'use strict';
-
-    var descriptions = {
-      styles:'Compact CSS framework with grids, forms, tables, cards and utility classes.',
-      bind:'Reactive proxies and declarative m-* DOM directives.',
-      components:'Calendar, chat, table, tree, toast and other UI directives.',
-      template:'Schema-driven form and table builder.',
-      communications:'REST and WebSocket transport with retry and caching helpers.',
-      binary:'Compact BSO1 binary wire serialisation.',
-      routing:'History-based SPA routing with parameters and queries.',
-      auth:'OIDC/OAuth2 PKCE authentication and provider presets.',
-      crypto:'Web Crypto wrappers for AES, RSA, ECDSA and key derivation.',
-      charts:'SVG bar, line, sparkline, donut and gauge rendering.',
-      graph:'Interactive force-directed graph visualisation.',
-      markdown:'Dependency-free GFM-style Markdown rendering.',
-      workflow:'Executable workflow engine and visual step model.',
-      picoscript:'Protocol compiler and deterministic VM surface.',
-      types:'Runtime type registry, contracts, guards and reflection.',
-      test:'In-browser test runner and assertions.'
-    };
-
+    var packageUrl = '../package.json';
+    var libraryUrl = 'module-library.json';
+    var search = document.getElementById('catalog-search');
+    var chips = document.getElementById('category-chips');
+    var grid = document.getElementById('catalog-grid');
+    var count = document.getElementById('catalog-count');
+    var activeCategory = 'All';
+    var allModules = [];
     var groups = [
-      { id:'UI', match:/^(styles|bind|components|component-factories|template|rendering|controls|modal|tabs|ribbon|sheet|document|colour|font|footerbar|chat)/, icon:'▦' },
-      { id:'Data', match:/^(binary|metadata|schema|types|codes|expressions|i18n|validate|url|config|cache|sync|transport|communications|compress|docchain|idb|local-kv-store|pipeline)/, icon:'◫' },
-      { id:'Visual', match:/^(charts|graph|3dxr|pivot|gallery|media|animate|drag-drop|observe|play|story|report|mermaid|print)/, icon:'◉' },
-      { id:'Security', match:/^(auth|authenticator|crypto|tokens|rbac|session|tenant)/, icon:'◆' },
-      { id:'Workflow', match:/^(workflow|picoscript|state-machine|report|markdown|diagnostics|errors|test-runner|minifier)/, icon:'⌁' },
-      { id:'Platform', match:/^(time|service-worker|progressive|workers|clipboard|file-io|blob|notify|inbox|pubsub|undoredo|geo|gamepad|speech|pay|observe|capabilities|launcher|a11y|logger|control-surface|timeline|audio-mixer|scene-inspector|input-router|forms|search|schedule|scan|progressive)/, icon:'◌' }
+      { id:'UI', match:/^(styles|bind|components|component|template|rendering|controls|modal|tabs|ribbon|sheet|document|colour|font|footerbar|chat)/ },
+      { id:'Data', match:/^(binary|metadata|schema|types|codes|expressions|i18n|validate|url|config|cache|sync|transport|communications|compress|docchain|idb|local-kv|pipeline|mp3catalog|dj-library)/ },
+      { id:'Visual', match:/^(charts|graph|3dxr|pivot|gallery|media|animate|drag-drop|observe|play|story|report|mermaid|print|dj-deck|dj-mixer)/ },
+      { id:'Security', match:/^(auth|authenticator|crypto|tokens|rbac|session|tenant|integrity|secure-transport)/ },
+      { id:'Workflow', match:/^(workflow|picoscript|state-machine|report|markdown|diagnostics|errors|test-runner|minifier|module-loader)/ },
+      { id:'Platform', match:/^(time|service-worker|progressive|workers|clipboard|file-io|blob|notify|inbox|pubsub|undoredo|geo|gamepad|speech|pay|observe|capabilities|launcher|a11y|logger|control-surface|timeline|audio-mixer|scene-inspector|input-router|forms|search|schedule|scan|midi|vt-terminal|id3|mp3)/ }
     ];
 
     function groupFor(key) {
-      for (var i=0;i<groups.length;i++) if (groups[i].match.test(key)) return groups[i];
-      return { id:'Utilities', icon:'•' };
+      for (var i = 0; i < groups.length; i++) if (groups[i].match.test(key)) return groups[i].id;
+      return 'Utilities';
     }
 
-    function titleFor(key) {
-      if (key === 'styles') return 'BareMetalStyles';
-      if (key === 'styles/bootstrap-shim') return 'Bootstrap Compatibility Shim';
-      if (key === 'test-runner') return 'BareMetal.TestRunner';
-      var parts=key.replace(/^\.\//,'').split('-');
-      return 'BareMetal.' + parts.map(function (part) {
-        if (part === 'css') return 'CSS';
-        if (part === 'idb') return 'IDB';
-        if (part === 'rbac') return 'RBAC';
-        if (part === 'url') return 'URL';
-        if (part === 'i18n') return 'I18n';
-        if (part === 'picoscript') return 'PicoScript';
-        return part ? part.charAt(0).toUpperCase()+part.slice(1) : part;
-      }).join('');
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
 
-    function docsFor(key, exportPath) {
-      var clean=key.replace(/\.css$/,'');
-      var file=titleFor(clean).replace(/^BareMetal\./,'BareMetal.');
-      if (key === 'styles') file='BareMetal.Styles';
-      if (key === 'styles/bootstrap-shim') return null;
-      if (key === 'themes/base' || key.indexOf('themes/')===0) return null;
-      if (key === 'fonts') return null;
-      if (exportPath && exportPath.indexOf('.css')>=0) return null;
-      var candidates=['BareMetal.'+clean.split('-').map(function(p){return p.charAt(0).toUpperCase()+p.slice(1)}).join('')+'.md'];
-      if (clean === 'test-runner') candidates=['BareMetal.TestRunner.md'];
-      if (clean === 'picoscript') candidates=['BareMetal.PicoScript.md'];
-      if (clean === '3dxr') candidates=['BareMetal.3DXR.md'];
-      if (clean === 'chat') candidates=['BareMetal.Chat.md'];
-      if (clean === 'controls') candidates=['BareMetal.Controls.md'];
-      if (clean === 'gallery') candidates=['BareMetal.Gallery.md'];
-      if (clean === 'modal') candidates=['BareMetal.Modal.md'];
-      if (clean === 'music-player') candidates=['BareMetal.MusicPlayer.md'];
-      if (clean === 'theme-picker') candidates=['theme-picker.md'];
-      if (clean === 'minifier') candidates=['MINIFY.md'];
-      return './'+candidates[0];
+    function apiSummary(api) {
+      return (api || []).map(function (item) { return String(item).split('(')[0]; }).filter(Boolean).join(', ');
     }
-
-    function descriptionFor(key) {
-      if (descriptions[key]) return descriptions[key];
-      if (descriptions[key.replace(/-.*/, '')]) return descriptions[key.replace(/-.*/, '')];
-      var g=groupFor(key);
-      var suffix = {
-        UI:'A focused browser UI primitive for building readable, themeable interfaces.',
-        Data:'A standalone data and interoperability primitive with no framework dependency.',
-        Visual:'A browser-native visualisation or interaction primitive.',
-        Security:'Browser-side security and identity tooling.',
-        Workflow:'Composable workflow, reporting or developer tooling.',
-        Platform:'A self-contained platform capability for modern browsers.',
-        Utilities:'A compact standalone utility for browser applications.'
-      }[g.id];
-      return suffix;
-    }
-
-    function implementationFor(item) {
-      var namespace = item.title.replace('BareMetal.', '').replace(/[^A-Za-z0-9]/g, '');
-      var key = item.key;
-      var api = item.api || [];
-      var load = "<script src=\"" + item.path.replace('../','') + "\"></script>";
-      if (key === 'bind') {
-        return "const { state, watch } = BareMetal.Bind.reactive({ name: 'Ada' });\nBareMetal.Bind.bind(document.querySelector('#app'), state, watch);";
-      }
-      if (key === 'charts') {
-        return "BareMetal.Charts.bar('#chart-live', [{ label: 'A', value: 10 }, { label: 'B', value: 18 }]);";
-      }
-      if (key === 'state-machine') {
-        return "const machine = BareMetal.StateMachine.create({ initial:'idle', states:{ idle:{on:{NEXT:'done'}}, done:{} } });\nmachine.send('NEXT');";
-      }
-      if (key === 'markdown') {
-        return "BareMetal.Markdown.renderSafe(document.querySelector('#preview'), '# Hello', { sanitize:true });";
-      }
-      if (key === 'pubsub') {
-        return "const bus = BareMetal.PubSub.create();\nbus.on('ui.ready', value => console.log(value));\nbus.emit('ui.ready', { ok:true });";
-      }
-      if (key === 'types') {
-        return "BareMetal.Types.define('User', { fields:{ id:'number', name:'string' } });\nconsole.log(BareMetal.Types.check({ id:1, name:'Ada' }, 'User'));";
-      }
-      if (api.indexOf('create') >= 0) {
-        return "const instance = BareMetal." + namespace + ".create({});";
-      }
-      if (api.length) {
-        return "BareMetal." + namespace + "." + api[0] + "();";
-      }
-      return "// Load " + item.title + "\n" + load + "\n// Use its public API documented in the implementation guide.";
-    }
-
-    var search=document.getElementById('catalog-search');
-    var chips=document.getElementById('category-chips');
-    var grid=document.getElementById('catalog-grid');
-    var count=document.getElementById('catalog-count');
-    var activeCategory='All';
-    var allExports=[];
 
     function renderCatalog() {
-      var term=(search.value||'').trim().toLower();
-      var filtered=allExports.filter(function(item){
-        var group=groupFor(item.key);
-        if(activeCategory !== 'All' && group.id !== activeCategory) return false;
-        if(!term) return true;
-        return (item.key+' '+item.title+' '+item.description+' '+group.id).toLower().indexOf(term)>=0;
+      var term = String(search.value || '').trim().toLowerCase();
+      var filtered = allModules.filter(function (item) {
+        var group = groupFor(item.key);
+        if (activeCategory !== 'All' && activeCategory !== group) return false;
+        var haystack = (item.key + ' ' + item.title + ' ' + item.api.join(' ') + ' ' + group).toLowerCase();
+        return !term || haystack.indexOf(term) >= 0;
       });
-      count.textContent=filtered.length+' modules';
-      grid.innerHTML=filtered.map(function(item){
-        var group=groupFor(item.key);
-        var docs=docsFor(item.key,item.path);
-        var source='../'+item.path.replace(/^\.\//,'');
-        var implementation=implementationFor(item);
-        return '<article class="card">'+
-          '<div class="card-top"><span class="card-category">'+group.icon+' '+group.id+'</span></div>'+
-          '<h3>'+item.title+'</h3>'+
-          '<p>'+item.description+'</p>'+
-          '<details class="card-example"><summary>Implemented usage</summary><pre>'+implementation.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</pre></details>'+
-          '<div class="card-links"><a href="'+source+'">Source</a>'+ (docs ? '<a href="'+docs+'">Documentation</a>' : '')+'<a href="API-Library.md">API guide</a></div>'+
-        '</article>';
-      }).join('');
+      count.textContent = filtered.length + ' / ' + allModules.length + ' modules';
+      grid.replaceChildren();
+      filtered.forEach(function (item) {
+        var column = document.createElement('div');
+        column.className = 'cm6';
+        var card = document.createElement('article');
+        card.className = 'cd mb-3';
+        var header = document.createElement('div');
+        header.className = 'cd-h fx jc-b ai-c gp1';
+        var title = document.createElement('h3');
+        title.className = 'cd-t mb0';
+        title.textContent = item.title;
+        var badge = document.createElement('span');
+        badge.className = 'bd bg-p';
+        badge.textContent = groupFor(item.key);
+        header.append(title, badge);
+        var body = document.createElement('div');
+        body.className = 'cd-b';
+        var api = document.createElement('p');
+        api.className = 'sm fg-m';
+        api.textContent = apiSummary(item.api) || 'See source and module guide for API.';
+        var details = document.createElement('details');
+        details.className = 'mt-2';
+        var summary = document.createElement('summary');
+        summary.className = 'fg-p';
+        summary.textContent = 'Implementation sample';
+        var code = document.createElement('pre');
+        code.className = 'bg-dk fg-lt p-2 mt-2';
+        code.textContent = item.sample || ('<scr' + 'ipt src="../' + item.source.replace(/^\.\//,'') + '"></scr' + 'ipt>');
+        details.append(summary, code);
+        var links = document.createElement('div');
+        links.className = 'fx fx-w gp2 mt-3';
+        var source = document.createElement('a');
+        source.className = 'bt bt-s bt-os';
+        source.href = '../' + item.source.replace(/^\.\//,'');
+        source.textContent = 'Source';
+        links.appendChild(source);
+        if (item.docs) {
+          var docs = document.createElement('a');
+          docs.className = 'bt bt-s bt-op';
+          docs.href = 'https://github.com/WillEastbury/BareMetalJsTools/blob/main/docs/' + item.docs;
+          docs.textContent = 'Function guide';
+          links.appendChild(docs);
+        }
+        var apiLink = document.createElement('a');
+        apiLink.className = 'bt bt-s bt-os';
+        apiLink.href = 'API-Library.html#' + item.title.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+        apiLink.textContent = 'API index';
+        links.appendChild(apiLink);
+        body.append(api, details, links);
+        card.append(header, body);
+        column.appendChild(card);
+        grid.appendChild(column);
+      });
     }
 
     Promise.all([
-      fetch('../package.json').then(function(r){return r.json();}),
-      fetch('module-library.json').then(function(r){return r.ok?r.json():{modules:[]};}).catch(function(){return {modules:[]};})
-    ]).then(function(parts){
-      var pkg=parts[0];
-      var library=parts[1];
-      var libraryMap={};
-      (library.modules||[]).forEach(function(module){libraryMap[module.key]=module;});
-      var entries=Object.entries(pkg.exports||{});
-      allExports=entries.map(function(entry){
-        var key=entry[0].replace(/^\.\//,'');
-        var indexed=libraryMap[key]||{};
+      fetch(packageUrl).then(function (response) {
+        if (!response.ok) throw new Error('package.json HTTP ' + response.status);
+        return response.json();
+      }),
+      fetch(libraryUrl).then(function (response) {
+        if (!response.ok) throw new Error('module library HTTP ' + response.status);
+        return response.json();
+      })
+    ]).then(function (values) {
+      var pkg = values[0];
+      var docs = values[1];
+      var moduleMap = {};
+      (docs.modules || []).forEach(function (item) { moduleMap[item.key] = item; });
+      allModules = Object.entries(pkg.exports || {}).filter(function (entry) {
+        return /\.js$/.test(entry[1]) && !/\.min\.js$/.test(entry[1]);
+      }).map(function (entry) {
+        var key = entry[0].replace(/^\.\//,'');
+        var info = moduleMap[key] || {};
         return {
-          key:key,
-          path:entry[1],
-          title:indexed.title||titleFor(key),
-          description:descriptionFor(key),
-          api:indexed.api||[]
+          key: key,
+          title: info.title || key,
+          source: entry[1],
+          docs: info.docs || null,
+          api: info.api || [],
+          sample: info.sample || ''
         };
       });
-      document.getElementById('metric-exports').textContent=allExports.length;
-      var categories=['All'].concat(groups.map(function(g){return g.id;})).concat(['Utilities']);
-      chips.innerHTML=categories.map(function(category){
-        return '<button class="chip '+(category==='All'?'active':'')+'" data-category="'+category+'">'+category+'</button>';
-      }).join('');
-      chips.addEventListener('click',function(event){
-        var button=event.target.closest('[data-category]');
-        if(!button)return;
-        activeCategory=button.dataset.category;
-        Array.prototype.forEach.call(chips.querySelectorAll('.chip'),function(chip){chip.classList.toggle('active',chip===button);});
-        renderCatalog();
+      document.getElementById('metric-modules').textContent = allModules.length;
+      window.__BM_SHOWCASE__.modules = allModules.length;
+      var categories = ['All'].concat(groups.map(function (item) { return item.id; })).concat(['Utilities']);
+      categories.forEach(function (category) {
+        var button = document.createElement('button');
+        button.className = category === 'All' ? 'bt bt-s2' : 'bt bt-s bt-os';
+        button.type = 'button';
+        button.textContent = category;
+        button.addEventListener('click', function () {
+          activeCategory = category;
+          Array.prototype.forEach.call(chips.querySelectorAll('button'), function (other) {
+            other.className = other === button ? 'bt bt-s2' : 'bt bt-s bt-os';
+          });
+          renderCatalog();
+        });
+        chips.appendChild(button);
       });
-      search.addEventListener('input',renderCatalog);
+      search.addEventListener('input', renderCatalog);
       renderCatalog();
-    }).catch(function(){
-      count.textContent='Package catalog unavailable';
+      window.__BM_SHOWCASE__.ready = true;
+      window.__BM_SHOWCASE__.examples = document.querySelectorAll('[data-example]').length;
+    }).catch(function (error) {
+      count.textContent = 'Module catalog failed to load';
+      window.__BM_SHOWCASE__.error = error.message || String(error);
+      window.__BM_SHOWCASE__.ready = true;
+      var message = document.createElement('p');
+      message.className = 'fg-er';
+      message.textContent = error.message || String(error);
+      grid.appendChild(message);
     });
 
-    Array.prototype.forEach.call(document.querySelectorAll('.lab-tab'),function(tab){
-      tab.addEventListener('click',function(){
-        Array.prototype.forEach.call(document.querySelectorAll('.lab-tab'),function(t){t.classList.toggle('active',t===tab);});
-        Array.prototype.forEach.call(document.querySelectorAll('.lab-panel'),function(panel){panel.classList.remove('active');});
-        document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+    document.getElementById('example-tabs').addEventListener('click', function (event) {
+      var button = event.target.closest('[data-tab]');
+      if (!button) return;
+      Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (item) {
+        item.className = item === button ? 'bt bt-p' : 'bt bt-os';
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-example]'), function (panel) {
+        panel.hidden = panel.dataset.example !== button.dataset.tab;
       });
     });
 
-    if (window.BareMetal && BareMetal.Bind) {
-      var reactive=BareMetal.Bind.reactive({ name:'Ada' });
-      BareMetal.Bind.bind(document.getElementById('panel-reactive'),reactive.state,reactive.watch);
+    var app = document.getElementById('bind-demo');
+    if (window.BareMetal && BareMetal.Bind && app) {
+      var model = BareMetal.Bind.reactive({ name: 'Ada' });
+      BareMetal.Bind.bind(app, model.state, model.watch);
     }
     if (window.BareMetal && BareMetal.Charts) {
-      BareMetal.Charts.bar('#chart-live',[
-        {label:'Fast',value:96},{label:'Small',value:88},{label:'Readable',value:100},{label:'Portable',value:92}
-      ],{showValues:true,colors:['#77a7ff','#62d7c7','#9d86ff','#ef9f55']});
+      BareMetal.Charts.bar('#chart-live', [
+        { label: 'Bind', value: 96 }, { label: 'Small', value: 88 },
+        { label: 'Readable', value: 100 }, { label: 'Portable', value: 92 }
+      ], { showValues: true });
     }
     function updateMarkdown() {
-      if (!window.BareMetal || !BareMetal.Markdown) return;
-      BareMetal.Markdown.renderSafe(document.getElementById('markdown-live'),document.getElementById('markdown-input').value,{sanitize:true});
+      if (window.BareMetal && BareMetal.Markdown) {
+        BareMetal.Markdown.renderSafe(document.getElementById('markdown-live'), document.getElementById('markdown-input').value);
+      }
     }
-    var markdownInput=document.getElementById('markdown-input');
-    markdownInput.addEventListener('input',updateMarkdown);
+    document.getElementById('markdown-input').addEventListener('input', updateMarkdown);
     updateMarkdown();
 
-    var machine=BareMetal.StateMachine && BareMetal.StateMachine.create({
-      initial:'idle',
-      states:{
-        idle:{on:{NEXT:'working'}},
-        working:{on:{NEXT:'done'}},
-        done:{on:{RESET:'idle'}}
-      }
+    var machine = BareMetal.StateMachine.create({
+      initial: 'idle',
+      states: { idle: { on: { NEXT: 'working' } }, working: { on: { NEXT: 'done' } }, done: { on: { RESET: 'idle' } } }
     });
-    function updateMachine() {
-      if(!machine)return;
-      var state=machine.getState();
-      Array.prototype.forEach.call(document.querySelectorAll('[data-machine-state]'),function(step){
-        step.classList.toggle('active',step.dataset.machineState===state);
+    function renderMachine() {
+      var state = machine.getState();
+      ['idle','working','done'].forEach(function (name) {
+        var node = document.getElementById('state-' + name);
+        node.className = name === state ? 'bd bg-ok' : 'bd bg-s';
       });
-      document.getElementById('machine-log').textContent='state: '+state+' | event API: machine.send(event)';
+      document.getElementById('machine-log').textContent = 'Current state: ' + state;
     }
-    document.getElementById('machine-next').addEventListener('click',function(){
-      if(machine) { machine.send('NEXT'); updateMachine(); }
+    document.getElementById('machine-next').addEventListener('click', function () { machine.send('NEXT'); renderMachine(); });
+    document.getElementById('machine-reset').addEventListener('click', function () { machine.send('RESET'); renderMachine(); });
+
+    var bus = BareMetal.PubSub.create();
+    bus.on('ui.**', function (payload, meta) {
+      document.getElementById('event-log').textContent = meta.topic + ' → ' + JSON.stringify(payload);
     });
-    document.getElementById('machine-reset').addEventListener('click',function(){
-      if(machine) { machine.send('RESET'); updateMachine(); }
+    document.getElementById('publish-event').addEventListener('click', function () {
+      bus.emit('ui.status.ready', { ok:true, source:'showcase' });
     });
 
-    if (window.BareMetal && BareMetal.PubSub) {
-      var bus=BareMetal.PubSub.create();
-      bus.on('ui.**',function(payload,meta){
-        document.getElementById('event-log').textContent=meta.topic+' → '+JSON.stringify(payload);
-      });
-      document.getElementById('publish-event').addEventListener('click',function(){
-        bus.emit('ui.status.ready',{ok:true,source:'live-showcase'});
-      });
-    }
+    var relationModel = BareMetal.Bind.reactive({
+      tracks: [
+        { title:'Blue Monday', artist:{name:'New Order'}, tags:[{id:1,name:'Electronic'},{id:2,name:'80s'}] },
+        { title:'Bizarre Love Triangle', artist:{name:'New Order'}, tags:[{id:1,name:'Electronic'}] }
+      ],
+      selectedTags: [{id:1,name:'Electronic'}],
+      tagOptions: [{id:1,name:'Electronic'},{id:2,name:'80s'},{id:3,name:'Synthpop'}]
+    });
+    BareMetal.Components.bindComponents(document.getElementById('relation-demo'), relationModel.state, relationModel.watch);
+    BareMetal.Bind.bind(document.getElementById('relation-demo'), relationModel.state, relationModel.watch);
   })();
   </script>
 </body>

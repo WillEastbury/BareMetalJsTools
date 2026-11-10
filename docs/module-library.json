@@ -6,10 +6,10 @@
                         "source":  "./src/BareMetal.3DXR.js",
                         "docs":  "BareMetal.3DXR.md",
                         "api":  [
-                                    "VERSION",
-                                    "create",
-                                    "isSupported"
-                                ]
+                                    "BareMetal[\u00273DXR\u0027].create(canvas, options)",
+                                    "renderer.addVideo(options)"
+                                ],
+                        "sample":  "\u003ccanvas id=\"scene\" class=\"scene\"\u003e\u003c/canvas\u003e\n\u003cbutton id=\"enter-vr\"\u003eEnter VR\u003c/button\u003e\n\u003cscript src=\"BareMetal.3DXR.js\"\u003e\u003c/script\u003e\n\u003cscript\u003e\n  const xr = BareMetal[\u00273DXR\u0027].create(document.querySelector(\u0027#scene\u0027));\n  xr.setProceduralBackground(\u0027spiral\u0027, { colors: [\u0027#160924\u0027, \u0027#ff2b9d\u0027], speed: 0.8 });\n  const clips = [\u0027/media/a.mp4\u0027, \u0027/media/b.mp4\u0027, \u0027/media/c.mp4\u0027];\n\n  xr.addVideo({\n    id: \u0027tile-1\u0027, src: clips[0], playlist: clips, shuffle: true,\n    position: [-1, 1.6, -3], width: 1.6, height: 0.9, yaw: -0.25\n  });\n  xr.addVideo({\n    id: \u0027tile-2\u0027, src: clips[1], playlist: clips, shuffle: true,\n    position: [1, 1.6, -3], width: 1.6, height: 0.9, yaw: 0.25\n  });\n\n  xr.on(\u0027focuschange\u0027, ({ id }) =\u003e console.log(\u0027Audio focus:\u0027, id));\n  xr.on(\u0027tileended\u0027, ({ id }) =\u003e console.log(\u0027Tile advanced:\u0027, id));\n  xr.setAmbientTrack(\u0027/media/ambient.mp3\u0027, { volume: 0.2 });\n  document.querySelector(\u0027#enter-vr\u0027).addEventListener(\u0027click\u0027, () =\u003e xr.enterVR());\n\u003c/script\u003e"
                     },
                     {
                         "key":  "a11y",
@@ -17,15 +17,18 @@
                         "source":  "./src/BareMetal.A11y.js",
                         "docs":  "BareMetal.A11y.md",
                         "api":  [
-                                    "focusTrap",
-                                    "announce",
-                                    "skipNav",
-                                    "roving",
-                                    "prefersReducedMotion",
-                                    "prefersColorScheme",
-                                    "onMotionChange",
-                                    "onSchemeChange"
-                                ]
+                                    "focusTrap(container, opts)",
+                                    "announce(text, priority)",
+                                    "skipNav(targetId)",
+                                    "roving(container, selector, opts)",
+                                    "prefersReducedMotion()",
+                                    "prefersColorScheme()",
+                                    "onMotionChange(fn)",
+                                    "onSchemeChange(fn)",
+                                    "focusTrap()",
+                                    "roving()"
+                                ],
+                        "sample":  "const trap = BareMetal.A11y.focusTrap(modal, { initialFocus: \u0027[data-autofocus]\u0027 });\r\ncloseButton.addEventListener(\u0027click\u0027, () =\u003e trap.destroy());"
                     },
                     {
                         "key":  "animate",
@@ -33,22 +36,24 @@
                         "source":  "./src/BareMetal.Animate.js",
                         "docs":  "BareMetal.Animate.md",
                         "api":  [
-                                    "enter",
-                                    "leave",
-                                    "toggle",
-                                    "move",
-                                    "list",
-                                    "prefersReducedMotion"
-                                ]
+                                    "enter(el, className, done)",
+                                    "leave(el, className, done)",
+                                    "toggle(el, enterClass, leaveClass)",
+                                    "move(el, fromRect, toRect)",
+                                    "list(container, className)",
+                                    "prefersReducedMotion()"
+                                ],
+                        "sample":  "BareMetal.Animate.enter(panel, \u0027fade-in\u0027, () =\u003e {\r\n  console.log(\u0027panel is visible\u0027);\r\n});"
                     },
                     {
                         "key":  "audio-mixer",
                         "title":  "BareMetal.AudioMixer",
                         "source":  "./src/BareMetal.AudioMixer.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.AudioMixer.md",
                         "api":  [
-
-                                ]
+                                    "create(options)"
+                                ],
+                        "sample":  "const mixer = BareMetal.AudioMixer.create({ tracks: [] });\nmixer.addTrack({ id:\u0027deck-a\u0027, label:\u0027Deck A\u0027, gain:1 });"
                     },
                     {
                         "key":  "auth",
@@ -56,61 +61,55 @@
                         "source":  "./src/BareMetal.Auth.js",
                         "docs":  "BareMetal.Auth.md",
                         "api":  [
-                                    "configure",
-                                    "initialize",
-                                    "login",
-                                    "handleCallback",
-                                    "logout",
-                                    "clearSession",
-                                    "getToken",
-                                    "getIdToken",
-                                    "silentRefresh",
-                                    "handleSilentCallback",
-                                    "getUser",
-                                    "getUserInfo",
-                                    "isAuthenticated",
-                                    "onAuthChange",
-                                    "attachToRest",
-                                    "_setRedirect",
-                                    "parseJwt",
-                                    "createPkce",
-                                    "decodeJwtParts",
-                                    "renderLogin",
-                                    "renderLogout",
-                                    "renderWhoami",
-                                    "renderTokenInspector",
-                                    "renderUserTiles",
-                                    "renderAuthGate"
-                                ]
+                                    "configure(options)",
+                                    "initialize()",
+                                    "login(extraParams)",
+                                    "handleCallback(url)",
+                                    "logout()",
+                                    "clearSession()",
+                                    "getToken()",
+                                    "getIdToken()",
+                                    "silentRefresh()",
+                                    "handleSilentCallback()",
+                                    "getUser()",
+                                    "getUserInfo()",
+                                    "isAuthenticated()",
+                                    "onAuthChange(callback)",
+                                    "attachToRest()",
+                                    "_setRedirect(fn)",
+                                    "renderLogin(container, options)",
+                                    "renderLogout(container, options)",
+                                    "renderWhoami(container, options)",
+                                    "renderTokenInspector(container, options)",
+                                    "renderUserTiles(container, options)",
+                                    "renderAuthGate(container, options)",
+                                    "configure()",
+                                    "login()",
+                                    "renderLogin()",
+                                    "renderLogout()",
+                                    "renderWhoami()",
+                                    "renderTokenInspector()",
+                                    "renderUserTiles()",
+                                    "renderAuthGate()"
+                                ],
+                        "sample":  "await BareMetal.Auth.login({ prompt: \u0027login\u0027, login_hint: \u0027ada@example.com\u0027 });"
                     },
                     {
                         "key":  "authenticator",
                         "title":  "BareMetal.Authenticator",
                         "source":  "./src/BareMetal.Authenticator.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.Authenticator.md",
                         "api":  [
-                                    "setup",
-                                    "verify",
-                                    "generate",
-                                    "challenge",
-                                    "protect",
-                                    "lastVerified",
-                                    "timeSinceVerify",
-                                    "replayGuard",
-                                    "backupVerify",
-                                    "qrSvg",
-                                    "base32encode",
-                                    "base32decode",
-                                    "hmacSha1",
-                                    "hotp",
-                                    "totp",
-                                    "policy",
-                                    "events",
-                                    "onSetup",
-                                    "onVerify",
-                                    "onFail",
-                                    "onChallenge"
-                                ]
+                                    "setup(userId, options)",
+                                    "verify(code, secret, options)",
+                                    "generate(secret, options)",
+                                    "challenge(session, options)",
+                                    "protect(fn, options)",
+                                    "replayGuard(secret, options)",
+                                    "backupVerify(code, backupCodes)",
+                                    "qrSvg(uri, options)"
+                                ],
+                        "sample":  "const moduleApi = BareMetal.Authenticator;\n// Source: ./src/BareMetal.Authenticator.js\n// See the public API list below for call signatures."
                     },
                     {
                         "key":  "binary",
@@ -118,11 +117,25 @@
                         "source":  "./src/BareMetal.Binary.js",
                         "docs":  "BareMetal.Binary.md",
                         "api":  [
-                                    "setSigningKey",
-                                    "deserialize",
-                                    "fetchLayout",
-                                    "SpanReader"
-                                ]
+                                    "setSigningKey(base64Key)",
+                                    "setSigningKeyBytes(keyBytes)",
+                                    "fetchSchema(slug, apiRoot)",
+                                    "getCachedSchema(slug)",
+                                    "serialize(object, schema)",
+                                    "deserialize(buffer, schema)",
+                                    "deserializeList(buffer, schema)",
+                                    "verifySignature(payload)",
+                                    "fetchLayout(slug)",
+                                    "createTracker(entity, layout)",
+                                    "buildDelta(tracker, layout)",
+                                    "applyDelta(slug, entityId, deltaBuffer)",
+                                    "applyDeltaJson(slug, entityId, changes, expectedVersion = 0)",
+                                    "SpanReader",
+                                    "new BareMetal.Binary.SpanReader(buffer)",
+                                    "SpanWriter",
+                                    "new BareMetal.Binary.SpanWriter(size = 256)"
+                                ],
+                        "sample":  "await BareMetal.Binary.setSigningKeyBytes(new Uint8Array(32).fill(1));"
                     },
                     {
                         "key":  "bind",
@@ -130,42 +143,43 @@
                         "source":  "./src/BareMetal.Bind.js",
                         "docs":  "BareMetal.Bind.md",
                         "api":  [
-                                    "reactive",
-                                    "getPath",
-                                    "resolveInScope",
-                                    "appendList"
-                                ]
+                                    "reactive(initial)",
+                                    "bind(root, state, watch)",
+                                    "formatters",
+                                    "getPath(obj, path)",
+                                    "setPath(obj, path, value)",
+                                    "topKey(path)",
+                                    "parseBinding(expr)",
+                                    "applyPipes(value, pipes)",
+                                    "resolveInScope(path, state, scope)",
+                                    "resolveBinding(expr, state, scope)",
+                                    "parsePairs(attr)",
+                                    "applyRow(el, state, scope)",
+                                    "el(tag, className)",
+                                    "m-each"
+                                ],
+                        "sample":  "const { state, watch, data } = BareMetal.Bind.reactive({ items: [], open: false });\r\nwatch(\u0027items\u0027, () =\u003e console.log(\u0027items changed\u0027, data.items.length));\r\nstate.items.push({ id: 1, name: \u0027Desk\u0027 });\r\nstate.open = true;"
                     },
                     {
                         "key":  "blob",
                         "title":  "BareMetal.Blob",
                         "source":  "./src/BareMetal.Blob.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.Blob.md",
                         "api":  [
-                                    "usage",
-                                    "create",
-                                    "chunk",
-                                    "upload",
-                                    "resume",
-                                    "download",
-                                    "hash",
-                                    "store",
-                                    "lifecycle",
-                                    "transform",
-                                    "encrypt",
-                                    "decrypt",
-                                    "compress",
-                                    "decompress",
-                                    "toDataURL",
-                                    "fromDataURL",
-                                    "toBase64",
-                                    "fromBase64",
-                                    "slice",
-                                    "concat",
-                                    "diff",
-                                    "fingerprint",
-                                    "quota"
-                                ]
+                                    "usage(options)",
+                                    "create(options)",
+                                    "chunk(blob, options)",
+                                    "upload(blob, options)",
+                                    "resume(token, options)",
+                                    "download(id, options)",
+                                    "hash(blob, options)",
+                                    "store(adapter)",
+                                    "lifecycle(options)",
+                                    "transform(blob, options)",
+                                    "encrypt(blob, key)",
+                                    "decrypt(blob, key)"
+                                ],
+                        "sample":  "const moduleApi = BareMetal.Blob;\n// Source: ./src/BareMetal.Blob.js\n// See the public API list below for call signatures."
                     },
                     {
                         "key":  "cache",
@@ -173,24 +187,12 @@
                         "source":  "./src/BareMetal.Cache.js",
                         "docs":  "BareMetal.Cache.md",
                         "api":  [
-                                    "get",
-                                    "set",
-                                    "has",
-                                    "delete",
-                                    "clear",
-                                    "size",
-                                    "keys",
-                                    "entries",
-                                    "wrap",
-                                    "invalidate",
-                                    "invalidateByTag",
-                                    "prune",
-                                    "stats",
-                                    "hits",
-                                    "misses",
-                                    "hitRate",
-                                    "evictions"
-                                ]
+                                    "create(opts)",
+                                    "tiered(levels)",
+                                    "lru(maxSize)",
+                                    "memoize(fn, opts)"
+                                ],
+                        "sample":  "const cache = BareMetal.Cache.create({\r\n  ttl: 30_000,\r\n  swr: 5_000,\r\n  maxSize: 250,\r\n  storage: \u0027localStorage\u0027\r\n});"
                     },
                     {
                         "key":  "capabilities",
@@ -198,10 +200,22 @@
                         "source":  "./src/BareMetal.Capabilities.js",
                         "docs":  "BareMetal.Capabilities.md",
                         "api":  [
-                                    "compatible",
-                                    "missing",
-                                    "optional"
-                                ]
+                                    "detect(feature)",
+                                    "detectAll(features)",
+                                    "profile()",
+                                    "supports(feature, fallbackValue)",
+                                    "fallback(...options)",
+                                    "permission(name)",
+                                    "requestPermission(name)",
+                                    "register(name, detectFn)",
+                                    "require(features)",
+                                    "degrade(features, levels)",
+                                    "onChange(callback)",
+                                    "constraints()",
+                                    "score()",
+                                    "compare(required, available)"
+                                ],
+                        "sample":  "BareMetal.Capabilities.detect(\u0027serviceWorker\u0027);"
                     },
                     {
                         "key":  "charts",
@@ -209,8 +223,13 @@
                         "source":  "./src/BareMetal.Charts.js",
                         "docs":  "BareMetal.Charts.md",
                         "api":  [
-
-                                ]
+                                    "bar(target, data, options)",
+                                    "line(target, data, options)",
+                                    "sparkline(target, values, options)",
+                                    "donut(target, data, options)",
+                                    "gauge(target, value, options)"
+                                ],
+                        "sample":  "BareMetal.Charts.bar(\u0027#revenue\u0027, [\r\n  { label: \u0027Q1\u0027, value: 120000 },\r\n  { label: \u0027Q2\u0027, value: 156000 },\r\n  { label: \u0027Q3\u0027, value: 149000 }\r\n], { showValues: true, colors: [\u0027--bs-primary\u0027] });"
                     },
                     {
                         "key":  "clipboard",
@@ -218,8 +237,24 @@
                         "source":  "./src/BareMetal.Clipboard.js",
                         "docs":  "BareMetal.Clipboard.md",
                         "api":  [
-
-                                ]
+                                    "writeText(text)",
+                                    "readText()",
+                                    "write(list)",
+                                    "read()",
+                                    "copy(text, options)",
+                                    "copyFrom(element, options)",
+                                    "copyImage(node)",
+                                    "readImage()",
+                                    "onPaste(element, callback)",
+                                    "onPasteFiles(element, callback)",
+                                    "onPasteImage(element, callback)",
+                                    "cut(element)",
+                                    "checkPermission(name)",
+                                    "requestPermission(name)",
+                                    "isSupported()",
+                                    "isSecureContext()"
+                                ],
+                        "sample":  "await BareMetal.Clipboard.writeText(\u0027Invoice #1042\u0027);"
                     },
                     {
                         "key":  "codes",
@@ -227,8 +262,20 @@
                         "source":  "./src/BareMetal.Codes.js",
                         "docs":  "BareMetal.Codes.md",
                         "api":  [
-
-                                ]
+                                    "countries",
+                                    "currencies",
+                                    "days",
+                                    "months",
+                                    "languages",
+                                    "timezones",
+                                    "http",
+                                    "mime",
+                                    "colours",
+                                    "cards",
+                                    "units",
+                                    "subdivisions(code)"
+                                ],
+                        "sample":  "const gb = BareMetal.Codes.countries.get(\u0027GB\u0027);\r\nconst matches = BareMetal.Codes.countries.search(\u0027united\u0027);"
                     },
                     {
                         "key":  "colour",
@@ -241,7 +288,8 @@
                                     "set",
                                     "open",
                                     "close"
-                                ]
+                                ],
+                        "sample":  "const picker = BareMetal.Colour.create(\u0027#slot\u0027, {\r\n  value: \u0027#e91e8c\u0027,\r\n  onChange(hex) { console.log(hex); }\r\n});\r\npicker.get(); // \u0027#e91e8c\u0027"
                     },
                     {
                         "key":  "communications",
@@ -249,11 +297,31 @@
                         "source":  "./src/BareMetal.Communications.js",
                         "docs":  "BareMetal.Communications.md",
                         "api":  [
-                                    "records",
-                                    "setRoot",
-                                    "connectWs",
-                                    "setSecureTransport"
-                                ]
+                                    "setRoot(root)",
+                                    "getRoot()",
+                                    "init()",
+                                    "call(method, url, body)",
+                                    "entity(slug)",
+                                    "entityClient.list(query)",
+                                    "entityClient.get(id)",
+                                    "entityClient.create(data)",
+                                    "entityClient.update(id, data)",
+                                    "entityClient.remove(id)",
+                                    "entityClient.delta(id, changes, expectedVersion = 0)",
+                                    "entityClient.deltaFromTracker(tracker)",
+                                    "entityClient.metadata()",
+                                    "byId(routeId, options)",
+                                    "resolveRouteId(verb, path)",
+                                    "connectWs(url)",
+                                    "isWsReady()",
+                                    "ensureBinary()",
+                                    "isBinaryAvailable()",
+                                    "walStream(entityName)",
+                                    "walStreamAll()",
+                                    "setCompression(options)",
+                                    "getCompression()"
+                                ],
+                        "sample":  "BareMetal.Communications.setRoot(\u0027/v2/api\u0027);\r\nconsole.log(BareMetal.Communications.getRoot()); // /v2/api/"
                     },
                     {
                         "key":  "component-factories",
@@ -261,8 +329,20 @@
                         "source":  "./src/BareMetal.ComponentFactories.js",
                         "docs":  "BareMetal.ComponentFactories.md",
                         "api":  [
-
-                                ]
+                                    "create.message(text, opts)",
+                                    "create.botMessage(text, opts)",
+                                    "create.toast(message, opts)",
+                                    "create.calendarEvent(date, label, opts)",
+                                    "create.ganttTask(label, start, end, opts)",
+                                    "create.treeNode(label, opts)",
+                                    "create.tableRow(obj)",
+                                    "create.navLink(text, href, opts)",
+                                    "create.navDropdown(title, ...links)",
+                                    "create.listItem(key, data)",
+                                    "chatEndpoint(messagesKey, url, opts)",
+                                    "chatEndpoint()"
+                                ],
+                        "sample":  "BareMetal.ComponentFactories.create.message(\u0027Can you resend the quote?\u0027, { avatar: \u0027ðŸ§‘\u0027 });"
                     },
                     {
                         "key":  "components",
@@ -270,8 +350,16 @@
                         "source":  "./src/BareMetal.Components.js",
                         "docs":  "BareMetal.Components.md",
                         "api":  [
-                                    "header"
-                                ]
+                                    "bindComponents(root, state, watch)",
+                                    "m-img",
+                                    "m-chatbot",
+                                    "m-calendar",
+                                    "m-gantt",
+                                    "m-table",
+                                    "m-tree",
+                                    "m-entity"
+                                ],
+                        "sample":  "const { state, watch } = BareMetal.Bind.reactive({\r\n  links: [\r\n    { text: \u0027Dashboard\u0027, href: \u0027/\u0027, active: true },\r\n    [\u0027Admin\u0027, { text: \u0027Users\u0027, href: \u0027/users\u0027 }, { text: \u0027Roles\u0027, href: \u0027/roles\u0027 }]\r\n  ]\r\n});\r\nBareMetal.Components.bindComponents(document.getElementById(\u0027nav\u0027), state, watch);"
                     },
                     {
                         "key":  "compress",
@@ -279,8 +367,13 @@
                         "source":  "./src/BareMetal.Compress.js",
                         "docs":  "BareMetal.Compress.md",
                         "api":  [
-
-                                ]
+                                    "compress(input, options)",
+                                    "decompress(input)",
+                                    "compressBound(inputLength)",
+                                    "PROFILES",
+                                    "compress()"
+                                ],
+                        "sample":  "const bytes = new TextEncoder().encode(JSON.stringify(payload));\r\nconst compressed = BareMetal.Compress.compress(bytes, { profile: \u0027q3\u0027 });"
                     },
                     {
                         "key":  "config",
@@ -288,9 +381,10 @@
                         "source":  "./src/BareMetal.Config.js",
                         "docs":  "BareMetal.Config.md",
                         "api":  [
-                                    "create",
+                                    "create(opts)",
                                     "priorities"
-                                ]
+                                ],
+                        "sample":  "const config = BareMetal.Config.create({\r\n  strict: true,\r\n  schema: {\r\n    apiBase: { type: \u0027string\u0027, required: true },\r\n    featureFlag: { type: \u0027boolean\u0027, default: false }\r\n  }\r\n});"
                     },
                     {
                         "key":  "controls",
@@ -299,16 +393,18 @@
                         "docs":  "BareMetal.Controls.md",
                         "api":  [
 
-                                ]
+                                ],
+                        "sample":  "const moduleApi = BareMetal.Controls;\n// Source: ./src/BareMetal.Controls.js\n// See the public API list below for call signatures."
                     },
                     {
                         "key":  "control-surface",
                         "title":  "BareMetal.ControlSurface",
                         "source":  "./src/BareMetal.ControlSurface.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.ControlSurface.md",
                         "api":  [
-
-                                ]
+                                    "create(options)"
+                                ],
+                        "sample":  "const panel = BareMetal.ControlSurface.create({ title:\u0027Settings\u0027, fields:[{ name:\u0027level\u0027, type:\u0027range\u0027, min:0, max:1, defaultValue:0.7 }] });\ndocument.querySelector(\u0027#app\u0027).append(panel.element);"
                     },
                     {
                         "key":  "crypto",
@@ -316,20 +412,27 @@
                         "source":  "./src/BareMetal.Crypto.js",
                         "docs":  "BareMetal.Crypto.md",
                         "api":  [
-                                    "name",
-                                    "modulusLength",
-                                    "publicExponent",
-                                    "hash",
-                                    "default",
-                                    "iv",
-                                    "baseKey",
-                                    "generateSymmetricKey",
-                                    "generateAsymmetricKey",
-                                    "digest",
-                                    "generateSigningKey",
-                                    "exportKey",
-                                    "toBase64Url"
-                                ]
+                                    "generateSymmetricKey(extractable)",
+                                    "encryptSymmetric(key, data)",
+                                    "decryptSymmetric(key, iv, ciphertext)",
+                                    "generateAsymmetricKey(bits, extractable)",
+                                    "encryptAsymmetric(publicKey, data)",
+                                    "decryptAsymmetric(privateKey, envelope)",
+                                    "digest(data)",
+                                    "digestWithSalt(data, salt)",
+                                    "deriveKey(password, salt, iterations)",
+                                    "generateSigningKey(extractable)",
+                                    "sign(privateKey, data)",
+                                    "verifySignature(publicKey, data, signature)",
+                                    "exportKey(key, format = \u0027jwk\u0027)",
+                                    "importKey(keyData, algorithm, usages, format = \u0027jwk\u0027, extractable)",
+                                    "toBase64Url(buffer)",
+                                    "fromBase64Url(string)",
+                                    "toUtf8(string)",
+                                    "fromUtf8(buffer)",
+                                    "randomBytes(length)"
+                                ],
+                        "sample":  "const exported = localStorage.getItem(\u0027prefs-key\u0027);\r\nconst key = exported\r\n  ? await BareMetal.Crypto.importKey(JSON.parse(exported), \u0027AES-GCM\u0027, [\u0027encrypt\u0027, \u0027decrypt\u0027])\r\n  : await BareMetal.Crypto.generateSymmetricKey(true);\r\n\r\nif (!exported) {\r\n  const jwk = await BareMetal.Crypto.exportKey(key);\r\n  localStorage.setItem(\u0027prefs-key\u0027, JSON.stringify(jwk));\r\n}\r\n\r\nconst encrypted = await BareMetal.Crypto.encryptSymmetric(key, JSON.stringify({ theme: \u0027dark\u0027 }));"
                     },
                     {
                         "key":  "diagnostics",
@@ -337,20 +440,21 @@
                         "source":  "./src/BareMetal.Diagnostics.js",
                         "docs":  "BareMetal.Diagnostics.md",
                         "api":  [
-                                    "trace",
-                                    "span",
-                                    "timeline",
-                                    "inspect",
-                                    "why",
-                                    "watch",
+                                    "trace(name, fn)",
+                                    "span(name, opts)",
+                                    "timeline()",
+                                    "inspect(value, opts)",
+                                    "why(value, history)",
+                                    "watch(target, path, callback)",
                                     "perf",
-                                    "counter",
-                                    "gauge",
-                                    "report",
-                                    "enable",
-                                    "disable",
-                                    "hook"
-                                ]
+                                    "counter(name)",
+                                    "gauge(name, fn)",
+                                    "report()",
+                                    "enable()",
+                                    "disable()",
+                                    "hook(moduleName, instance)"
+                                ],
+                        "sample":  "const save = BareMetal.Diagnostics.trace(\u0027order.save\u0027, async order =\u003e api.save(order));"
                     },
                     {
                         "key":  "dj-deck",
@@ -358,26 +462,22 @@
                         "source":  "./src/BareMetal.DJDeck.js",
                         "docs":  "BareMetal.DJDeck.md",
                         "api":  [
-                                    "audio",
-                                    "loadFile",
-                                    "loadUrl",
-                                    "play",
-                                    "pause",
-                                    "cue",
-                                    "setCuePoint",
-                                    "setHotCue",
-                                    "jumpHotCue",
-                                    "seek",
-                                    "nudge",
-                                    "setPitch",
-                                    "setTempo",
-                                    "setLoop",
-                                    "getLoop",
-                                    "sync",
-                                    "state",
-                                    "onChange",
-                                    "destroy"
-                                ]
+                                    "bpm",
+                                    "track",
+                                    "playing",
+                                    "elapsed",
+                                    "remaining",
+                                    "duration",
+                                    "beatGrid",
+                                    "waveform",
+                                    "hotCues",
+                                    "cuePoint",
+                                    "loop",
+                                    "pitchSemitones",
+                                    "tempoPercent",
+                                    "playbackRate"
+                                ],
+                        "sample":  "const deck = BareMetal.DJDeck.create();\r\nawait deck.loadFile(fileFromPicker);\r\ndeck.play();\r\ndeck.setCuePoint(8);\r\ndeck.setHotCue(0, 8);\r\ndeck.jumpHotCue(0);\r\ndeck.setPitch(-1);\r\ndeck.setTempo(103);\r\ndeck.setLoop(8, true);"
                     },
                     {
                         "key":  "dj-library",
@@ -396,7 +496,8 @@
                                     "getPlaylist",
                                     "saveSetting",
                                     "getSetting"
-                                ]
+                                ],
+                        "sample":  "const library = BareMetal.DJLibrary.create();\r\nawait library.saveTrack({ id: file.name, title: \u0027Track\u0027, bpm: 128, key: \u0027Am\u0027 });\r\nawait library.saveCues(file.name, { hotCues: [0, 32], loops: [], cuePoint: 0 });\r\nconst tracks = await library.search(\u0027\u0027, { minBpm: 120, maxBpm: 140 });"
                     },
                     {
                         "key":  "dj-mixer",
@@ -404,46 +505,29 @@
                         "source":  "./src/BareMetal.DJMixer.js",
                         "docs":  "BareMetal.DJMixer.md",
                         "api":  [
-                                    "context",
-                                    "addChannel",
-                                    "setChannel",
-                                    "setCrossfader",
-                                    "setPitch",
-                                    "setPitchBend",
-                                    "setMasterGain",
-                                    "setCrossfaderCurve",
-                                    "setLimiter",
-                                    "setCue",
-                                    "toggleCue",
-                                    "setCueGain",
-                                    "setPreviewMix",
-                                    "getCueState",
-                                    "cueMeter",
-                                    "createPreviewControl",
-                                    "meter",
-                                    "state",
-                                    "getState",
-                                    "destroy"
-                                ]
+                                    "enabled",
+                                    "mix",
+                                    "gain",
+                                    "channels"
+                                ],
+                        "sample":  "const mixer = BareMetal.DJMixer.create({ masterGain: 1 });\r\nconst ch0 = mixer.addChannel(0, audioElement0);\r\nconst ch1 = mixer.addChannel(1, audioElement1);\r\nconst ch2 = mixer.addChannel(2, audioElement2);\r\nconst ch3 = mixer.addChannel(3, audioElement3);\r\n\r\nmixer.setChannel(0, { low: 3, mid: -1, high: 2, pan: -0.2, gainDb: -3 });\r\nmixer.setCrossfader(-0.5);\r\nmixer.setPitch(0, 2);\r\nmixer.setPitchBend(0, -0.25);"
                     },
                     {
                         "key":  "docchain",
-                        "title":  "BareMetal.Docchain",
+                        "title":  "BareMetal.DocChain",
                         "source":  "./src/BareMetal.DocChain.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.DocChain.md",
                         "api":  [
-                                    "type",
-                                    "id",
-                                    "data",
-                                    "status",
-                                    "parentId",
-                                    "children",
-                                    "created",
-                                    "updated",
-                                    "version",
-                                    "meta",
-                                    "auditTrail"
-                                ]
+                                    "defineType(name, schema)",
+                                    "create(type, data, options)",
+                                    "derive(parent, type, data)",
+                                    "transition(document, status)",
+                                    "validate(document)",
+                                    "lineage(id)",
+                                    "auditTrail(id)",
+                                    "store"
+                                ],
+                        "sample":  "const moduleApi = BareMetal.DocChain;\n// Source: ./src/BareMetal.DocChain.js\n// See the public API list below for call signatures."
                     },
                     {
                         "key":  "document",
@@ -467,20 +551,20 @@
                                     "font",
                                     "fontSize",
                                     "query"
-                                ]
+                                ],
+                        "sample":  "\u003cscript src=\"BareMetal.Document.js\"\u003e\u003c/script\u003e\r\n\u003cdiv id=\"doc\" style=\"height:24rem\"\u003e\u003c/div\u003e\r\n\u003cscript\u003e\r\n  const doc = BareMetal.Document.create(\u0027#doc\u0027, {\r\n    html: \u0027\u003ch1\u003eNotes\u003c/h1\u003e\u003cp\u003eSemantic HTML.\u003c/p\u003e\u0027,\r\n    onChange(html, prev) { console.log(html); }\r\n  });\r\n  doc.bold();\r\n\u003c/script\u003e"
                     },
                     {
                         "key":  "documentwal",
-                        "title":  "BareMetal.Documentwal",
+                        "title":  "BareMetal.DocumentWAL",
                         "source":  "./src/BareMetal.DocumentWAL.js",
-                        "docs":  "BareMetal.Documentwal.md",
+                        "docs":  "BareMetal.DocumentWAL.md",
                         "api":  [
-                                    "create",
-                                    "memoryTransport",
-                                    "httpTransport",
-                                    "getPath",
-                                    "setPath"
-                                ]
+                                    "create(options)",
+                                    "memoryTransport(seed?)",
+                                    "httpTransport(root)"
+                                ],
+                        "sample":  "\u003cscript src=\"BareMetal.DocumentWAL.js\"\u003e\u003c/script\u003e\r\n\u003cscript\u003e\r\n  const wal = BareMetal.DocumentWAL.create({\r\n    docId: \u0027sheet-1\u0027,\r\n    snapshot: { cells: {} },\r\n    transport: BareMetal.DocumentWAL.memoryTransport()\r\n  });\r\n  wal.set(\u0027cells.A1\u0027, { v: \u0027Hello\u0027 });\r\n  wal.undo();\r\n  wal.push().then(() =\u003e wal.pull());\r\n  const stream = wal.stream(0);\r\n\u003c/script\u003e"
                     },
                     {
                         "key":  "drag-drop",
@@ -488,10 +572,11 @@
                         "source":  "./src/BareMetal.DragDrop.js",
                         "docs":  "BareMetal.DragDrop.md",
                         "api":  [
-                                    "draggable",
-                                    "droppable",
-                                    "sortable"
-                                ]
+                                    "draggable(el, opts)",
+                                    "droppable(el, opts)",
+                                    "sortable(container, opts)"
+                                ],
+                        "sample":  "{ type: el.dataset.type || \u0027\u0027, id: el.id || \u0027\u0027, text: el.textContent.trim() }"
                     },
                     {
                         "key":  "errors",
@@ -499,25 +584,25 @@
                         "source":  "./src/BareMetal.Errors.js",
                         "docs":  "BareMetal.Errors.md",
                         "api":  [
-                                    "BareMetalError",
-                                    "create",
-                                    "classify",
-                                    "isRetryable",
-                                    "isTransient",
-                                    "chain",
-                                    "getChain",
-                                    "toUserSafe",
-                                    "toJSON",
-                                    "fromJSON",
-                                    "wrap",
-                                    "assert",
-                                    "codes",
-                                    "register",
-                                    "lookup",
-                                    "match",
-                                    "aggregate",
-                                    "boundary"
-                                ]
+                                    "new BareMetalError(code, message, opts)",
+                                    "create(code, message, opts)",
+                                    "classify(err)",
+                                    "isRetryable(err)",
+                                    "isTransient(err)",
+                                    "chain(err, cause)",
+                                    "getChain(err)",
+                                    "toUserSafe(err)",
+                                    "toJSON(err)",
+                                    "fromJSON(obj)",
+                                    "wrap(fn, opts)",
+                                    "assert(condition, code, message)",
+                                    "codes.register(code, defaults)",
+                                    "codes.lookup(code)",
+                                    "match(err, handlers)",
+                                    "aggregate(errors)",
+                                    "boundary(fn, fallback)"
+                                ],
+                        "sample":  "const err = new BareMetal.Errors.BareMetalError(\u0027AUTH_ERROR\u0027, \u0027Token expired\u0027, {\r\n  category: \u0027auth\u0027,\r\n  retryable: false\r\n});"
                     },
                     {
                         "key":  "expressions",
@@ -525,36 +610,53 @@
                         "source":  "./src/BareMetal.Expressions.js",
                         "docs":  "BareMetal.Expressions.md",
                         "api":  [
-                                    "hex",
-                                    "description",
-                                    "pattern",
-                                    "examples",
-                                    "extract",
-                                    "detect",
-                                    "validate",
-                                    "prepare",
-                                    "list",
-                                    "info",
-                                    "register"
-                                ]
+                                    "list()",
+                                    "info(name)",
+                                    "detect(value)",
+                                    "register(name, cfg)",
+                                    "register()"
+                                ],
+                        "sample":  "const names = BareMetal.Expressions.list();"
                     },
                     {
                         "key":  "file-io",
-                        "title":  "BareMetal.FileIo",
+                        "title":  "BareMetal.FileIO",
                         "source":  "./src/BareMetal.FileIO.js",
-                        "docs":  "BareMetal.FileIo.md",
+                        "docs":  "BareMetal.FileIO.md",
                         "api":  [
-                                    "destroy",
-                                    "open",
-                                    "save",
-                                    "dropZone",
-                                    "readAsText",
-                                    "pick",
-                                    "formatSize",
-                                    "slice",
-                                    "blobToArrayBuffer",
-                                    "hasFileSystemAccess"
-                                ]
+                                    "open(options)",
+                                    "openText(options)",
+                                    "openJSON(options)",
+                                    "openBinary(options)",
+                                    "openDataURL(options)",
+                                    "openDirectory()",
+                                    "save(content, options)",
+                                    "download(content, filename, type)",
+                                    "downloadUrl(url, filename)",
+                                    "dropZone(element, options)",
+                                    "readAsText(file, encoding)",
+                                    "readAsJSON(file)",
+                                    "readAsArrayBuffer(file)",
+                                    "readAsDataURL(file)",
+                                    "readChunked(file, options)",
+                                    "stream(file)",
+                                    "pick(options)",
+                                    "formatSize(bytes)",
+                                    "ext(name)",
+                                    "isImage(file)",
+                                    "isVideo(file)",
+                                    "isAudio(file)",
+                                    "isPDF(file)",
+                                    "slice(file, start, end)",
+                                    "blobToArrayBuffer(blob)",
+                                    "blobToText(blob)",
+                                    "blobToDataURL(blob)",
+                                    "textToBlob(text, type)",
+                                    "arrayBufferToBlob(buffer, type)",
+                                    "hasFileSystemAccess()",
+                                    "hasDragDrop()"
+                                ],
+                        "sample":  "const file = await BareMetal.FileIO.open({\r\n  accept: [\u0027application/json\u0027, \u0027.json\u0027],\r\n  description: \u0027JSON files\u0027\r\n});"
                     },
                     {
                         "key":  "font",
@@ -565,20 +667,22 @@
                                     "el",
                                     "get",
                                     "set"
-                                ]
+                                ],
+                        "sample":  "BareMetal.Font.create(\u0027#slot\u0027, {\r\n  family: \u0027Georgia, serif\u0027,\r\n  size: 14,\r\n  onChange({ family, size }) {}\r\n});"
                     },
                     {
                         "key":  "footerbar",
-                        "title":  "BareMetal.Footerbar",
+                        "title":  "BareMetal.FooterBar",
                         "source":  "./src/BareMetal.FooterBar.js",
-                        "docs":  "BareMetal.Footerbar.md",
+                        "docs":  "BareMetal.FooterBar.md",
                         "api":  [
                                     "el",
                                     "setStatus",
                                     "setTabs",
                                     "setZoom",
                                     "getZoom"
-                                ]
+                                ],
+                        "sample":  "const foot = BareMetal.FooterBar.create(\u0027#foot\u0027, {\r\n  status: \u0027Ready\u0027,\r\n  zoom: 100,\r\n  tabs: [{ id: \u0027s1\u0027, label: \u0027Sheet1\u0027, active: true }],\r\n  onTab(id) {},\r\n  onZoom(percent) {}\r\n});\r\nfoot.setStatus(\u0027A1\u0027);"
                     },
                     {
                         "key":  "forms",
@@ -586,23 +690,43 @@
                         "source":  "./src/BareMetal.Forms.js",
                         "docs":  "BareMetal.Forms.md",
                         "api":  [
-                                    "destroy",
-                                    "create",
-                                    "getState",
-                                    "serialize",
-                                    "deserialize",
-                                    "validate",
-                                    "mask",
-                                    "wizard",
-                                    "repeater",
-                                    "autosave",
-                                    "conditional",
-                                    "submit",
-                                    "fromJSON",
-                                    "toFormData",
-                                    "diff",
-                                    "focus"
-                                ]
+                                    "create(form, schema)",
+                                    "formApi.validate()",
+                                    "formApi.getValues()",
+                                    "formApi.setValues(obj)",
+                                    "formApi.reset()",
+                                    "formApi.destroy()",
+                                    "formApi.onSubmit(cb)",
+                                    "formApi.onChange(cb)",
+                                    "formApi.getState()",
+                                    "getState(form)",
+                                    "serialize(form)",
+                                    "deserialize(form, data)",
+                                    "validate(root, rules)",
+                                    "mask(input, pattern)",
+                                    "wizard(container, steps)",
+                                    "wizardApi.next()",
+                                    "wizardApi.getCurrentStep()",
+                                    "wizardApi.isFirst()",
+                                    "wizardApi.onStep(cb)",
+                                    "wizardApi.submit()",
+                                    "repeater(container, opts)",
+                                    "repeaterApi.add(data)",
+                                    "repeaterApi.remove(index)",
+                                    "repeaterApi.getAll()",
+                                    "repeaterApi.onAdd(cb)",
+                                    "repeaterApi.destroy()",
+                                    "autosave(form, opts)",
+                                    "autosaveApi.restore()",
+                                    "autosaveApi.clear()",
+                                    "conditional(form, rules)",
+                                    "submit(form, handler, opts)",
+                                    "fromJSON(container, schema)",
+                                    "toFormData(form)",
+                                    "diff(form)",
+                                    "focus(form, opts)"
+                                ],
+                        "sample":  "const api = BareMetal.Forms.create(form, {\r\n  fields: {\r\n    email: { required: true, email: true }\r\n  }\r\n});"
                     },
                     {
                         "key":  "gallery",
@@ -611,7 +735,8 @@
                         "docs":  "BareMetal.Gallery.md",
                         "api":  [
 
-                                ]
+                                ],
+                        "sample":  "\u003clink rel=\"stylesheet\" href=\"BareMetal.Gallery.css\"\u003e\n\u003cscript src=\"BareMetal.Gallery.js\"\u003e\u003c/script\u003e\n\u003csection id=\"library\"\u003e\u003c/section\u003e\n\u003cscript\u003e\nconst gallery = BareMetal.Gallery.create({\n  label: \u0027Your media\u0027,\n  onFavourite: async (id, favourite) =\u003e {\n    // Persist through your authenticated application API.\n    return {favourite};\n  },\n  onError: error =\u003e console.error(error.message)\n});\ndocument.querySelector(\u0027#library\u0027).append(gallery.element);\nconst card = gallery.card(\u0027clip-1\u0027, \u0027Summer walk\u0027, {\n  kind: \u0027video\u0027, category: \u0027Nature\u0027, tags: [\u0027forest\u0027, \u0027summer\u0027],\n  description: \u0027A gentle walk through the woods\u0027,\n  state: \u0027done\u0027, created: Date.now(), favourite: false\n});\ncard.preview.append(gallery.media({\n  url: \u0027/media/walk.mp4\u0027, mime: \u0027video/mp4\u0027, name: \u0027Summer walk\u0027\n}));\n\u003c/script\u003e"
                     },
                     {
                         "key":  "gamepad",
@@ -619,8 +744,23 @@
                         "source":  "./src/BareMetal.Gamepad.js",
                         "docs":  "BareMetal.Gamepad.md",
                         "api":  [
-
-                                ]
+                                    "poll()",
+                                    "on(event, callback)",
+                                    "off(event, callback)",
+                                    "start(opts)",
+                                    "stop()",
+                                    "getState(index)",
+                                    "isPressed(index, button)",
+                                    "getAxis(index, axisIndex)",
+                                    "vibrate(index, opts)",
+                                    "map(index, mapping)",
+                                    "combo(index, sequence, callback, opts)",
+                                    "combo.cancel()",
+                                    "deadzone(value, threshold)",
+                                    "normalize(gamepad)",
+                                    "profiles"
+                                ],
+                        "sample":  "const pads = BareMetal.Gamepad.poll();\r\nconsole.log(pads[0]);"
                     },
                     {
                         "key":  "geo",
@@ -628,8 +768,26 @@
                         "source":  "./src/BareMetal.Geo.js",
                         "docs":  "BareMetal.Geo.md",
                         "api":  [
-
-                                ]
+                                    "getCurrentPosition(opts)",
+                                    "watchPosition(callback, opts)",
+                                    "clearWatch(watchId)",
+                                    "distance(p1, p2)",
+                                    "bearing(p1, p2)",
+                                    "midpoint(p1, p2)",
+                                    "boundingBox(center, radiusMeters)",
+                                    "isInside(point, polygon)",
+                                    "encode(lat, lng, precision)",
+                                    "decode(hash)",
+                                    "track(opts)",
+                                    "tracker.start()",
+                                    "tracker.stop()",
+                                    "tracker.getPath()",
+                                    "tracker.getDistance()",
+                                    "tracker.onUpdate(cb)",
+                                    "geocode(address)",
+                                    "reverseGeocode(lat, lng)"
+                                ],
+                        "sample":  "const pos = await BareMetal.Geo.getCurrentPosition({\r\n  enableHighAccuracy: true,\r\n  timeout: 10000\r\n});"
                     },
                     {
                         "key":  "graph",
@@ -637,14 +795,22 @@
                         "source":  "./src/BareMetal.Graph.js",
                         "docs":  "BareMetal.Graph.md",
                         "api":  [
-                                    "xmlns",
-                                    "style",
-                                    "y",
-                                    "svg",
-                                    "simulation",
-                                    "nodes",
-                                    "edges"
-                                ]
+                                    "create(target, data, options)",
+                                    "graphHandle.svg",
+                                    "graphHandle.simulation",
+                                    "graphHandle.nodes",
+                                    "graphHandle.edges",
+                                    "graphHandle.addNode(node)",
+                                    "graphHandle.addEdge(edge)",
+                                    "graphHandle.removeNode(id)",
+                                    "graphHandle.removeEdge(source, target)",
+                                    "graphHandle.pin(id)",
+                                    "graphHandle.unpin(id)",
+                                    "graphHandle.stop()",
+                                    "graphHandle.restart()",
+                                    "graphHandle.destroy()"
+                                ],
+                        "sample":  "const graph = BareMetal.Graph.create(\u0027#services\u0027, {\r\n  nodes: [\r\n    { id: \u0027gateway\u0027, label: \u0027Gateway\u0027, group: \u0027edge\u0027 },\r\n    { id: \u0027orders\u0027, label: \u0027Orders\u0027, group: \u0027services\u0027, detail: \u0027Handles checkout\u0027 },\r\n    { id: \u0027postgres\u0027, label: \u0027Postgres\u0027, group: \u0027data\u0027, pinned: true }\r\n  ],\r\n  edges: [\r\n    { source: \u0027gateway\u0027, target: \u0027orders\u0027, label: \u0027HTTP\u0027, weight: 2 },\r\n    { source: \u0027orders\u0027, target: \u0027postgres\u0027, label: \u0027SQL\u0027 }\r\n  ]\r\n}, {\r\n  directed: true,\r\n  groupField: \u0027group\u0027\r\n});"
                     },
                     {
                         "key":  "i18n",
@@ -652,15 +818,17 @@
                         "source":  "./src/BareMetal.I18n.js",
                         "docs":  "BareMetal.I18n.md",
                         "api":  [
-                                    "setLocale",
-                                    "getLocale",
-                                    "addMessages",
-                                    "t",
-                                    "loadMessages",
-                                    "isRTL",
-                                    "subscribe",
-                                    "configure"
-                                ]
+                                    "setLocale(code)",
+                                    "getLocale()",
+                                    "configure(opts)",
+                                    "addMessages(locale, messages)",
+                                    "t(key, params)",
+                                    "loadMessages(locale, url)",
+                                    "isRTL(locale)",
+                                    "subscribe(fn)",
+                                    "configure()"
+                                ],
+                        "sample":  "BareMetal.I18n.setLocale(\u0027fr-CA\u0027);"
                     },
                     {
                         "key":  "id3",
@@ -675,7 +843,8 @@
                                     "comment",
                                     "track",
                                     "genre"
-                                ]
+                                ],
+                        "sample":  "const tags = await BareMetal.ID3.read(file);\r\nconsole.log(tags.title, tags.artist, tags.album, tags.track, tags.picture);"
                     },
                     {
                         "key":  "idb",
@@ -683,46 +852,60 @@
                         "source":  "./src/BareMetal.IDB.js",
                         "docs":  "BareMetal.IDB.md",
                         "api":  [
-                                    "set",
-                                    "get",
-                                    "delete",
-                                    "has",
-                                    "keys",
-                                    "clear",
-                                    "close"
-                                ]
+                                    "open(name, opts)",
+                                    "isSupported()",
+                                    "databases()",
+                                    "deleteDatabase(name)",
+                                    "kv(name)",
+                                    "db.close()",
+                                    "db.stores()",
+                                    "db.put(store, value)",
+                                    "db.putAll(store, values)",
+                                    "db.get(store, key)",
+                                    "db.getAll(store, opts)",
+                                    "db.delete(store, key)",
+                                    "db.deleteAll(store, keys)",
+                                    "db.clear(store)",
+                                    "db.count(store)",
+                                    "db.getBy(store, index, value)",
+                                    "db.getAllBy(store, index, value, opts)",
+                                    "db.range(store, index, opts)",
+                                    "db.each(store, cb)",
+                                    "db.eachBy(store, index, opts, cb)",
+                                    "db.filter(store, cb)",
+                                    "db.transaction(stores, mode, fn)",
+                                    "db.batch(store, op, items)",
+                                    "db.export(store)",
+                                    "db.import(store, data)",
+                                    "kvStore.set(key, value)",
+                                    "kvStore.get(key)",
+                                    "kvStore.delete(key)",
+                                    "kvStore.has(key)",
+                                    "kvStore.keys()",
+                                    "kvStore.clear()",
+                                    "kvStore.close()"
+                                ],
+                        "sample":  "const db = await BareMetal.IDB.open(\u0027crm\u0027, {\r\n  version: 2,\r\n  stores: {\r\n    contacts: {\r\n      keyPath: \u0027id\u0027,\r\n      indexes: [\r\n        { name: \u0027byEmail\u0027, keyPath: \u0027email\u0027, unique: true },\r\n        { name: \u0027byCompany\u0027, keyPath: \u0027company\u0027 }\r\n      ]\r\n    }\r\n  }\r\n});"
                     },
                     {
                         "key":  "inbox",
                         "title":  "BareMetal.Inbox",
                         "source":  "./src/BareMetal.Inbox.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.Inbox.md",
                         "api":  [
-                                    "id",
-                                    "channel",
-                                    "title",
-                                    "body",
-                                    "data",
-                                    "priority",
-                                    "action",
-                                    "icon",
-                                    "group",
-                                    "read",
-                                    "timestamp",
-                                    "dismissed",
-                                    "pinned",
-                                    "summary",
-                                    "items"
-                                ]
+                                    "create(options)"
+                                ],
+                        "sample":  "const moduleApi = BareMetal.Inbox;\n// Source: ./src/BareMetal.Inbox.js\n// See the public API list below for call signatures."
                     },
                     {
                         "key":  "input-router",
                         "title":  "BareMetal.InputRouter",
                         "source":  "./src/BareMetal.InputRouter.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.InputRouter.md",
                         "api":  [
-
-                                ]
+                                    "create(options)"
+                                ],
+                        "sample":  "const router = BareMetal.InputRouter.create({ element:document, onAction:event =\u003e console.log(event.action) });"
                     },
                     {
                         "key":  "integrity",
@@ -730,11 +913,14 @@
                         "source":  "./src/BareMetal.Integrity.js",
                         "docs":  "BareMetal.Integrity.md",
                         "api":  [
-                                    "sha256",
-                                    "verify",
-                                    "createManifest",
-                                    "verifyManifest"
-                                ]
+                                    "version",
+                                    "algorithm",
+                                    "revision",
+                                    "commit",
+                                    "source",
+                                    "modules"
+                                ],
+                        "sample":  "\u003cscript src=\"src/BareMetal.Integrity.js\"\u003e\u003c/script\u003e\r\n\u003cscript\u003e\r\nconst digest = await BareMetal.Integrity.sha256(moduleBytes);\r\nconst valid = await BareMetal.Integrity.verify(moduleBytes, expectedDigest);\r\n\r\nconst result = await BareMetal.Integrity.verifyManifest({\r\n  version: 1,\r\n  algorithm: \u0027SHA-256\u0027,\r\n  revision: \u0027source revision or commit\u0027,\r\n  modules: {\r\n    \u0027BareMetal.Bind\u0027: {\r\n      path: \u0027src/BareMetal.Bind.min.js\u0027,\r\n      sha256: \u002764-character hex digest\u0027\r\n    }\r\n  }\r\n}, { baseUrl: \u0027/\u0027 });\r\n\r\nif (!result.ok) throw new Error(\u0027Module integrity failed\u0027);\r\n\u003c/script\u003e"
                     },
                     {
                         "key":  "launcher",
@@ -742,29 +928,44 @@
                         "source":  "./src/BareMetal.Launcher.js",
                         "docs":  "BareMetal.Launcher.md",
                         "api":  [
-                                    "createStore",
-                                    "createApi",
-                                    "createSocket",
-                                    "attachTerminal",
-                                    "renderSessionCards",
-                                    "createLauncher"
-                                ]
+                                    "createStore(initial)",
+                                    "createApi(options)",
+                                    "renderSessionCards(container, sessions, options)",
+                                    "createSocket(url, options)",
+                                    "attachTerminal(target, socket, options)",
+                                    "createLauncher(container, options)"
+                                ],
+                        "sample":  "const store = BareMetal.Launcher.createStore({ sessions: [] });\r\nstore.subscribe(state =\u003e console.log(state.sessions.length));\r\nstore.set({ sessions: [{ id: \u0027s1\u0027, status: \u0027running\u0027 }] });"
                     },
                     {
                         "key":  "local-kv-store",
-                        "title":  "BareMetal.LocalKvStore",
+                        "title":  "BareMetal.LocalKVStore",
                         "source":  "./src/BareMetal.LocalKVStore.js",
-                        "docs":  "BareMetal.LocalKvStore.md",
+                        "docs":  "BareMetal.LocalKVStore.md",
                         "api":  [
-                                    "get",
-                                    "set",
-                                    "remove",
-                                    "has",
-                                    "clear",
-                                    "allEntries",
-                                    "getRaw",
-                                    "setRaw"
-                                ]
+                                    "create(options)",
+                                    "store.get(key)",
+                                    "store.set(key, value, ttl)",
+                                    "store.remove(key)",
+                                    "store.has(key)",
+                                    "store.clear()",
+                                    "store.getMany(keys)",
+                                    "store.setMany(entries, ttl)",
+                                    "store.removeMany(keys)",
+                                    "store.keys()",
+                                    "store.values()",
+                                    "store.entries()",
+                                    "store.count()",
+                                    "store.find(predicate)",
+                                    "store.ttl(key)",
+                                    "store.expire(key, ttl)",
+                                    "store.persist(key)",
+                                    "store.cleanup()",
+                                    "store.size()",
+                                    "store.onChange(callback)",
+                                    "create()"
+                                ],
+                        "sample":  "const cache = BareMetal.LocalKVStore.create({\r\n  backend: \u0027local\u0027,\r\n  namespace: \u0027app-cache\u0027,\r\n  ttl: 60\r\n});"
                     },
                     {
                         "key":  "logger",
@@ -772,10 +973,19 @@
                         "source":  "./src/BareMetal.Logger.js",
                         "docs":  "BareMetal.Logger.md",
                         "api":  [
-                                    "create",
-                                    "console",
-                                    "beacon"
-                                ]
+                                    "create(opts)",
+                                    "console(record)",
+                                    "beacon(url)",
+                                    "logger.debug(msg, data)",
+                                    "logger.info(msg, data)",
+                                    "logger.warn(msg, data)",
+                                    "logger.error(msg, data)",
+                                    "logger.child(extraContext)",
+                                    "logger.setLevel(level)",
+                                    "logger.addTransport(fn)",
+                                    "create()"
+                                ],
+                        "sample":  "var log = BareMetal.Logger.create({\r\n  level: \u0027debug\u0027,\r\n  context: { service: \u0027checkout\u0027 }\r\n});"
                     },
                     {
                         "key":  "markdown",
@@ -783,16 +993,16 @@
                         "source":  "./src/BareMetal.Markdown.js",
                         "docs":  "BareMetal.Markdown.md",
                         "api":  [
-                                    "meta",
-                                    "render",
-                                    "renderTo",
-                                    "renderSafe",
-                                    "createRenderer",
-                                    "toc",
-                                    "frontMatter",
-                                    "inline",
-                                    "escape"
-                                ]
+                                    "render(input, options)",
+                                    "inline(input, options)",
+                                    "renderTo(el, input, options)",
+                                    "renderSafe(el, input, options)",
+                                    "createRenderer(options)",
+                                    "toc(input, options)",
+                                    "frontMatter(input)",
+                                    "escape(value)"
+                                ],
+                        "sample":  "var html = BareMetal.Markdown.render(\u0027# Hello\\n\\nVisit [Docs](guide.md)\u0027, {\r\n  baseUrl: \u0027/help/\u0027\r\n});"
                     },
                     {
                         "key":  "media",
@@ -800,8 +1010,28 @@
                         "source":  "./src/BareMetal.Media.js",
                         "docs":  "BareMetal.Media.md",
                         "api":  [
-
-                                ]
+                                    "camera(opts)",
+                                    "microphone(opts)",
+                                    "screen(opts)",
+                                    "snapshot(videoEl, opts)",
+                                    "record(stream, opts)",
+                                    "recorder.start()",
+                                    "recorder.pause()",
+                                    "recorder.stop()",
+                                    "recorder.onData(cb)",
+                                    "recorder.getBlob()",
+                                    "devices()",
+                                    "switchCamera(stream, deviceId)",
+                                    "pip(videoEl)",
+                                    "torch(stream, on)",
+                                    "preview(stream, container, opts)",
+                                    "preview.destroy()",
+                                    "constraints(stream)",
+                                    "audioContext(stream)",
+                                    "analyser.getFrequency()",
+                                    "analyser.getWaveform()"
+                                ],
+                        "sample":  "const cam = await BareMetal.Media.camera({ facingMode: \u0027environment\u0027 });\r\ncam.stop();"
                     },
                     {
                         "key":  "mermaid-diagram-renderer",
@@ -810,7 +1040,8 @@
                         "docs":  "BareMetal.MermaidDiagramRenderer.md",
                         "api":  [
 
-                                ]
+                                ],
+                        "sample":  "\u003clink rel=\"stylesheet\" href=\"BareMetal.MermaidDiagramRenderer.css\"\u003e\r\n\u003cscript src=\"BareMetal.MermaidDiagramRenderer.js\"\u003e\u003c/script\u003e"
                     },
                     {
                         "key":  "metadata",
@@ -818,17 +1049,18 @@
                         "source":  "./src/BareMetal.Metadata.js",
                         "docs":  "BareMetal.Metadata.md",
                         "api":  [
-                                    "register",
-                                    "get",
-                                    "list",
-                                    "remove",
-                                    "scanInline",
-                                    "fetchAndRegister",
-                                    "renderForm",
-                                    "renderTable",
-                                    "toTemplateFields",
-                                    "fromBinary"
-                                ]
+                                    "register(meta)",
+                                    "get(slug)",
+                                    "list()",
+                                    "remove(slug)",
+                                    "scanInline()",
+                                    "fetchAndRegister(url)",
+                                    "toTemplateFields(metaOrSlug)",
+                                    "renderForm(slugOrMeta, rootElement, state, watch)",
+                                    "renderTable(slugOrMeta, rootElement, items, callbacks)",
+                                    "fromBinary(buffer)"
+                                ],
+                        "sample":  "const customer = BareMetal.Metadata.register({\r\n  name: \u0027Customer\u0027,\r\n  fields: [\r\n    { name: \u0027name\u0027, type: \u0027text\u0027, required: true },\r\n    { name: \u0027tier\u0027, type: \u0027text\u0027, enumValues: [\u0027Bronze\u0027, \u0027Silver\u0027, \u0027Gold\u0027] }\r\n  ]\r\n});"
                     },
                     {
                         "key":  "midi",
@@ -836,16 +1068,10 @@
                         "source":  "./src/BareMetal.MIDI.js",
                         "docs":  "BareMetal.MIDI.md",
                         "api":  [
-                                    "request",
-                                    "onMessage",
-                                    "mapCC",
-                                    "mapPitchBend",
-                                    "getInputs",
-                                    "getOutputs",
-                                    "getDevices",
-                                    "send",
-                                    "destroy"
-                                ]
+                                    "inputs",
+                                    "outputs"
+                                ],
+                        "sample":  "const midi = BareMetal.MIDI.create();\r\nawait midi.request();\r\n\r\nmidi.mapCC(1, message =\u003e player.setPitchBend(message.value * 2 - 1));\r\nmidi.mapPitchBend(message =\u003e player.setPitchBend(message.value * 2));\r\nmidi.onMessage(message =\u003e console.log(message));"
                     },
                     {
                         "key":  "midi-profiles",
@@ -853,29 +1079,27 @@
                         "source":  "./src/BareMetal.MIDIProfiles.js",
                         "docs":  "BareMetal.MIDIProfiles.md",
                         "api":  [
-                                    "importJson",
-                                    "exportJson",
-                                    "activate",
-                                    "learn",
-                                    "cancelLearn",
-                                    "capture",
-                                    "resolveMessage",
-                                    "listProfiles",
-                                    "omnisDuoPlaceholder"
-                                ]
+                                    "profile",
+                                    "version",
+                                    "verified",
+                                    "mappings",
+                                    "feedback",
+                                    "note"
+                                ],
+                        "sample":  "const profiles = BareMetal.MIDIProfiles.create();\r\nawait profiles.importJson(profileJson);\r\nprofiles.activate(\u0027OMNIS-DUO\u0027);\r\nprofiles.learn(\u0027deckA.play\u0027, { mode: \u0027toggle\u0027 });\r\nconst mapping = profiles.capture(message);\r\nconst portableJson = profiles.exportJson(\u0027OMNIS-DUO\u0027);"
                     },
                     {
                         "key":  "minifier",
                         "title":  "BareMetal.Minifier",
                         "source":  "./src/BareMetal.Minifier.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.Minifier.md",
                         "api":  [
-                                    "end",
-                                    "minifyJS",
-                                    "minifyCSS",
-                                    "compressGzip",
-                                    "decompressGzip"
-                                ]
+                                    "minifyJS(source, options)",
+                                    "minifyCSS(source, options)",
+                                    "compressGzip(source, options)",
+                                    "decompressGzip(source, options)"
+                                ],
+                        "sample":  "const min = BareMetal.Minifier.minifyJS(source);\nconst packed = await BareMetal.Minifier.compressGzip(min.code);"
                     },
                     {
                         "key":  "modal",
@@ -884,7 +1108,8 @@
                         "docs":  "BareMetal.Modal.md",
                         "api":  [
 
-                                ]
+                                ],
+                        "sample":  "const modal = BareMetal.Modal.create({title: \u0027Sign in\u0027, content: loginForm});\r\nmodal.open();\r\nmodal.setBusy(true); // Blocks Escape and close while a request is pending.\r\nmodal.setBusy(false);\r\nmodal.close();"
                     },
                     {
                         "key":  "module-loader",
@@ -893,7 +1118,8 @@
                         "docs":  "BareMetal.ModuleLoader.md",
                         "api":  [
 
-                                ]
+                                ],
+                        "sample":  "\u003cscript src=\"src/BareMetal.Integrity.js\"\u003e\u003c/script\u003e\r\n\u003cscript src=\"src/BareMetal.ModuleLoader.js\"\u003e\u003c/script\u003e\r\n\u003cscript\u003e\r\nconst modules = BareMetal.ModuleLoader.create({\r\n  manifestUrl: \u0027/modules.manifest.json\u0027,\r\n  baseUrl: \u0027/\u0027,\r\n  requireIntegrity: true,\r\n  cache: \u0027no-store\u0027\r\n});\r\n\r\nawait modules.load(\u0027BareMetal.Bind\u0027);\r\nawait modules.loadAll();\r\n\u003c/script\u003e"
                     },
                     {
                         "key":  "mp3",
@@ -905,7 +1131,8 @@
                                     "create",
                                     "stream",
                                     "loadCatalog"
-                                ]
+                                ],
+                        "sample":  "const tags = await BareMetal.MP3.readTags(file);\r\n\r\nconst audio = BareMetal.MP3.stream(\u0027/audio/track.mp3\u0027, {\r\n  preload: \u0027metadata\u0027,\r\n  controls: true\r\n});\r\n\r\nconst player = BareMetal.MP3.create({\r\n  volume: 0.8,\r\n  crossfade: 2\r\n});\r\nplayer.setPlaylist([{ src: \u0027/audio/track.mp3\u0027, title: tags.title }]);\r\nplayer.setPitch(1);\r\nplayer.setPitchBend(-0.25);\r\nplayer.setLow(3);\r\nplayer.setMid(-1);\r\nplayer.setHigh(2);"
                     },
                     {
                         "key":  "mp3-catalog",
@@ -913,17 +1140,12 @@
                         "source":  "./src/BareMetal.MP3Catalog.js",
                         "docs":  "BareMetal.MP3Catalog.md",
                         "api":  [
-                                    "add",
-                                    "addMany",
-                                    "update",
-                                    "remove",
-                                    "get",
-                                    "list",
-                                    "search",
-                                    "clear",
-                                    "manifest",
-                                    "onChange"
-                                ]
+                                    "version",
+                                    "title",
+                                    "revision",
+                                    "entries"
+                                ],
+                        "sample":  "const catalog = BareMetal.MP3Catalog.create();\r\ncatalog.addMany([\r\n  { id: \u0027a\u0027, title: \u0027Blue Monday\u0027, artist: \u0027New Order\u0027,\r\n    album: \u0027Brotherhood\u0027, genre: \u0027Synthpop\u0027, year: \u00271986\u0027,\r\n    tags: [\u002780s\u0027, \u0027electronic\u0027], src: \u0027/audio/blue-monday.mp3\u0027 }\r\n]);\r\n\r\ncatalog.search(\u0027blue electronic\u0027);\r\ncatalog.search(\u0027\u0027, { artist: \u0027New Order\u0027, year: \u00271986\u0027, tag: \u0027electronic\u0027 });\r\n\r\nconst manifest = catalog.manifest({ revision: \u0027v1\u0027 });"
                     },
                     {
                         "key":  "music-player",
@@ -937,7 +1159,8 @@
                                     "pitchBendSemitones",
                                     "highDb",
                                     "streaming"
-                                ]
+                                ],
+                        "sample":  "\u003cscript src=\"BareMetal.MusicPlayer.js\"\u003e\u003c/script\u003e\n\u003cscript\u003e\n  const music = BareMetal.MusicPlayer.create({ volume: 0.2, crossfade: 3, repeat: \u0027all\u0027 });\n  music.setPlaylist([\n    { src: \u0027/media/ambient-a.mp3\u0027, title: \u0027Ambient A\u0027 },\n    { src: \u0027/media/ambient-b.mp3\u0027, title: \u0027Ambient B\u0027 }\n  ], { shuffle: true });\n  document.querySelector(\u0027#play\u0027).addEventListener(\u0027click\u0027, () =\u003e music.play());\n  music.on(\u0027trackchange\u0027, ({ entry }) =\u003e console.log(\u0027Now playing\u0027, entry.title));\n\u003c/script\u003e"
                     },
                     {
                         "key":  "notify",
@@ -945,8 +1168,29 @@
                         "source":  "./src/BareMetal.Notify.js",
                         "docs":  "BareMetal.Notify.md",
                         "api":  [
-
-                                ]
+                                    "toast(message, options)",
+                                    "success(message, options)",
+                                    "error(message, options)",
+                                    "warning(message, options)",
+                                    "info(message, options)",
+                                    "banner(message, options)",
+                                    "dismiss(id)",
+                                    "dismissAll()",
+                                    "count()",
+                                    "configure(options)",
+                                    "requestPermission()",
+                                    "permission()",
+                                    "native(title, options)",
+                                    "send(title, options)",
+                                    "progress(message, options)",
+                                    "progress().update(value, message)",
+                                    "progress().complete(message)",
+                                    "progress().error(message)",
+                                    "progress().dismiss()",
+                                    "isSupported()",
+                                    "isSecureContext()"
+                                ],
+                        "sample":  "const toast = BareMetal.Notify.toast(\u0027Profile updated\u0027, {\r\n  type: \u0027success\u0027,\r\n  title: \u0027Account\u0027,\r\n  duration: 2500\r\n});"
                     },
                     {
                         "key":  "observe",
@@ -954,8 +1198,20 @@
                         "source":  "./src/BareMetal.Observe.js",
                         "docs":  "BareMetal.Observe.md",
                         "api":  [
-
-                                ]
+                                    "resize(el, callback, opts)",
+                                    "intersection(el, callback, opts)",
+                                    "mutation(el, callback, opts)",
+                                    "lazyLoad(selector, opts)",
+                                    "infinite(sentinel, loadMore, opts)",
+                                    "sticky(el, opts)",
+                                    "viewport(el)",
+                                    "trackSize(el, callback, opts)",
+                                    "breakpoint(el, breakpoints, callback)",
+                                    "animateOnScroll(els, opts)",
+                                    "mediaQuery(query, callback)",
+                                    "mutationStream(el, opts)"
+                                ],
+                        "sample":  "const watch = BareMetal.Observe.resize(panel, function (size) {\r\n  console.log(size.width, size.height);\r\n}, { debounce: 100 });"
                     },
                     {
                         "key":  "pay",
@@ -963,20 +1219,30 @@
                         "source":  "./src/BareMetal.Pay.js",
                         "docs":  "BareMetal.Pay.md",
                         "api":  [
-                                    "valid",
-                                    "canPay",
-                                    "request",
-                                    "card",
-                                    "googlePay",
-                                    "applePay",
-                                    "formatCurrency",
-                                    "cart",
-                                    "shipping",
-                                    "validate",
-                                    "abort",
-                                    "complete",
-                                    "retry"
-                                ]
+                                    "canPay()",
+                                    "request(details, methods, opts)",
+                                    "card(opts)",
+                                    "googlePay(config)",
+                                    "applePay(config)",
+                                    "formatCurrency(amount, currency, locale)",
+                                    "cart(seed)",
+                                    "cart.add(item)",
+                                    "cart.remove(id)",
+                                    "cart.update(id, qty)",
+                                    "cart.clear()",
+                                    "cart.getTotal(currency)",
+                                    "cart.getItems()",
+                                    "cart.toDetails(label)",
+                                    "shipping(options)",
+                                    "shipping.add(id, label, amount, selected)",
+                                    "shipping.getSelected()",
+                                    "shipping.toArray()",
+                                    "validate(cardNumber)",
+                                    "abort(response)",
+                                    "complete(response, result)",
+                                    "retry(response, errors)"
+                                ],
+                        "sample":  "if (!BareMetal.Pay.canPay()) console.warn(\u0027Payment Request API unavailable\u0027);"
                     },
                     {
                         "key":  "picoscript",
@@ -984,13 +1250,13 @@
                         "source":  "./src/BareMetal.PicoScript.js",
                         "docs":  "BareMetal.PicoScript.md",
                         "api":  [
-                                    "compile",
-                                    "compilePython",
-                                    "compileDebug",
-                                    "symbolize",
-                                    "VM",
-                                    "PicoCompress"
-                                ]
+                                    "label",
+                                    "name",
+                                    "value",
+                                    "description",
+                                    "locale"
+                                ],
+                        "sample":  "var vm = new ps.VM(opts);\r\nvm.run(words);         // execute bytecode\r\nvm.step();             // single-step (for debuggers)\r\nvm.regs                // register file (R0-R15)\r\nvm.output              // output buffer (bytes)\r\nvm.halted              // true when execution complete\r\nvm.steps               // instruction count"
                     },
                     {
                         "key":  "pipeline",
@@ -998,14 +1264,15 @@
                         "source":  "./src/BareMetal.Pipeline.js",
                         "docs":  "BareMetal.Pipeline.md",
                         "api":  [
-                                    "create",
-                                    "stream",
-                                    "compose",
-                                    "series",
-                                    "parallel",
-                                    "waterfall",
-                                    "backpressure"
-                                ]
+                                    "create(...stages)",
+                                    "compose(...fns)",
+                                    "series(fns, input, ctx)",
+                                    "parallel(fns, input, ctx)",
+                                    "waterfall(fns)",
+                                    "stream(iterable)",
+                                    "backpressure(producer, consumer, opts)"
+                                ],
+                        "sample":  "const pipeline = BareMetal.Pipeline.create(\r\n  value =\u003e value + 1,\r\n  value =\u003e value * 2\r\n);"
                     },
                     {
                         "key":  "pivot",
@@ -1013,12 +1280,15 @@
                         "source":  "./src/BareMetal.Pivot.js",
                         "docs":  "BareMetal.Pivot.md",
                         "api":  [
-                                    "lab",
-                                    "el",
-                                    "compute",
-                                    "setRecords",
-                                    "state"
-                                ]
+                                    "fields",
+                                    "groupBy",
+                                    "valueField",
+                                    "op",
+                                    "sort",
+                                    "sortDir",
+                                    "filter"
+                                ],
+                        "sample":  "\u003cscript src=\"BareMetal.Charts.js\"\u003e\u003c/script\u003e\r\n\u003cscript src=\"BareMetal.Pivot.js\"\u003e\u003c/script\u003e\r\n\u003cdiv id=\"pivot\"\u003e\u003c/div\u003e\r\n\u003cscript\u003e\r\n  BareMetal.Pivot.create(\u0027#pivot\u0027, {\r\n    fields: [\u0027Item\u0027, \u0027Qty\u0027],\r\n    records: [\r\n      { Item: \u0027Paper\u0027, Qty: 12 },\r\n      { Item: \u0027Ink\u0027, Qty: 4 },\r\n      { Item: \u0027Paper\u0027, Qty: 3 }\r\n    ],\r\n    groupBy: \u0027Item\u0027,\r\n    valueField: \u0027Qty\u0027,\r\n    op: \u0027sum\u0027\r\n  });\r\n\u003c/script\u003e"
                     },
                     {
                         "key":  "play",
@@ -1027,61 +1297,39 @@
                         "docs":  "BareMetal.Play.md",
                         "api":  [
                                     "PACKS",
-                                    "freshState",
-                                    "matchConditions",
-                                    "applyEffects",
-                                    "entryNode",
-                                    "offeredChoices",
-                                    "fillText",
-                                    "withPersonaFacts",
-                                    "narratorOf",
-                                    "sceneText",
-                                    "slipsFor",
-                                    "fireTriggers",
-                                    "memoryClient",
-                                    "mount"
-                                ]
+                                    "mount(target, options?)",
+                                    "memoryClient(seed)",
+                                    "freshState()",
+                                    "matchConditions(state, conditions)",
+                                    "applyEffects(state, effects)",
+                                    "entryNode(nodes, choices, state)",
+                                    "offeredChoices(node, nodes, choices, state)",
+                                    "fillText(text, ctx)",
+                                    "sceneText(node, progress, persona)",
+                                    "withPersonaFacts(state, personas, storyId)",
+                                    "narratorOf(personas, storyId)",
+                                    "slipsFor(node, templates, progress, persona)",
+                                    "fireTriggers(node, templates, progress, persona)"
+                                ],
+                        "sample":  "{ stories: 1, nodes: 2, choices: 3, personas: 4, templates: 5, user_progress: 6 }"
                     },
                     {
                         "key":  "print",
                         "title":  "BareMetal.Print",
                         "source":  "./src/BareMetal.Print.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.Print.md",
                         "api":  [
-                                    "subtotal",
-                                    "pageHeight",
-                                    "pageWidth",
-                                    "margins",
-                                    "headerHeight",
-                                    "footerHeight",
-                                    "render",
-                                    "paginate",
-                                    "print",
-                                    "preview",
-                                    "stylesheet",
-                                    "receipt",
-                                    "invoice",
-                                    "document",
-                                    "fromDocChain",
-                                    "grid",
-                                    "table",
-                                    "barcode",
-                                    "qr",
-                                    "label",
-                                    "header",
-                                    "footer",
-                                    "section",
-                                    "columns",
-                                    "image",
-                                    "spacer",
-                                    "_internals",
-                                    "tableHtml",
-                                    "barcodeSvg",
-                                    "qrSvg",
-                                    "qrMatrix",
-                                    "collectBlocks",
-                                    "htmlToThermalText"
-                                ]
+                                    "render(document, options)",
+                                    "paginate(document, options)",
+                                    "print(document, options)",
+                                    "preview(document, options)",
+                                    "receipt(data, options)",
+                                    "invoice(data, options)",
+                                    "document(data, options)",
+                                    "barcode(value, options)",
+                                    "qr(value, options)"
+                                ],
+                        "sample":  "const moduleApi = BareMetal.Print;\n// Source: ./src/BareMetal.Print.js\n// See the public API list below for call signatures."
                     },
                     {
                         "key":  "progressive",
@@ -1089,37 +1337,60 @@
                         "source":  "./src/BareMetal.Progressive.js",
                         "docs":  "BareMetal.Progressive.md",
                         "api":  [
-                                    "register",
-                                    "unregister",
-                                    "getRegistration",
-                                    "update",
-                                    "onInstallPrompt",
-                                    "isInstalled",
-                                    "isInstallable",
-                                    "precache",
-                                    "clearCache",
-                                    "getCacheStatus",
-                                    "isOnline",
-                                    "onConnectivityChange",
-                                    "requestSync",
-                                    "subscribePush",
-                                    "unsubscribePush",
-                                    "getPushSubscription",
-                                    "generateManifest",
-                                    "injectManifest",
-                                    "postMessage",
-                                    "onMessage"
-                                ]
+                                    "register(swUrl, opts)",
+                                    "unregister()",
+                                    "getRegistration()",
+                                    "update()",
+                                    "onInstallPrompt(callback)",
+                                    "isInstalled()",
+                                    "isInstallable()",
+                                    "precache(urls)",
+                                    "clearCache(cacheName)",
+                                    "getCacheStatus()",
+                                    "isOnline()",
+                                    "onConnectivityChange(callback)",
+                                    "requestSync(tag)",
+                                    "subscribePush(vapidPublicKey)",
+                                    "unsubscribePush()",
+                                    "getPushSubscription()",
+                                    "generateManifest(opts)",
+                                    "injectManifest(opts)",
+                                    "postMessage(msg)",
+                                    "onMessage(callback)",
+                                    "register()",
+                                    "generateManifest()"
+                                ],
+                        "sample":  "BareMetal.Progressive.register(\u0027/sw.js\u0027, {\r\n  scope: \u0027/app/\u0027,\r\n  onInstalled: function () { console.log(\u0027App cached for first install\u0027); },\r\n  onUpdate: function () { console.log(\u0027Update available\u0027); },\r\n  onActivated: function () { console.log(\u0027New worker activated\u0027); },\r\n  onError: function (err) { console.error(err); }\r\n});"
                     },
                     {
                         "key":  "pubsub",
-                        "title":  "BareMetal.Pubsub",
+                        "title":  "BareMetal.PubSub",
                         "source":  "./src/BareMetal.PubSub.js",
-                        "docs":  "BareMetal.Pubsub.md",
+                        "docs":  "BareMetal.PubSub.md",
                         "api":  [
-                                    "emit",
-                                    "subscribe"
-                                ]
+                                    "create()",
+                                    "on(topic, handler, opts)",
+                                    "once(topic, handler, opts)",
+                                    "emit(topic, data, opts)",
+                                    "sticky(topic, data, opts)",
+                                    "off(topic, handler)",
+                                    "offAll(topic)",
+                                    "offNs(ns)",
+                                    "clear()",
+                                    "use(pattern, fn)",
+                                    "handle(topic, handler)",
+                                    "request(topic, data)",
+                                    "channel(topic, opts)",
+                                    "topics()",
+                                    "subscribers(topic)",
+                                    "has(topic)",
+                                    "channel.emit(data, emitOpts)",
+                                    "channel.subscribe(fn, subOpts)",
+                                    "channel.history()",
+                                    "channel.last()",
+                                    "channel.destroy()"
+                                ],
+                        "sample":  "const appBus = BareMetal.PubSub.create();\r\nconst auditBus = BareMetal.PubSub.create();"
                     },
                     {
                         "key":  "rbac",
@@ -1128,31 +1399,33 @@
                         "docs":  "BareMetal.RBAC.md",
                         "api":  [
                                     "WARNING",
-                                    "configure",
-                                    "identity",
-                                    "isAuthenticated",
-                                    "hasRole",
-                                    "hasAnyRole",
-                                    "hasAllRoles",
-                                    "inGroup",
-                                    "inAnyGroup",
-                                    "inAllGroups",
-                                    "can",
-                                    "canAny",
-                                    "canAll",
-                                    "hasScope",
-                                    "hasAnyScope",
-                                    "check",
-                                    "checkAny",
-                                    "guard",
-                                    "applyDOM",
-                                    "setToken",
-                                    "clearToken",
-                                    "refresh",
-                                    "onExpiry",
-                                    "tenant",
-                                    "isTenant"
-                                ]
+                                    "configure(options)",
+                                    "identity()",
+                                    "isAuthenticated()",
+                                    "hasRole(role)",
+                                    "hasAnyRole(roles)",
+                                    "hasAllRoles(roles)",
+                                    "inGroup(group)",
+                                    "inAnyGroup(groups)",
+                                    "inAllGroups(groups)",
+                                    "can(permission)",
+                                    "canAny(permissions)",
+                                    "canAll(permissions)",
+                                    "hasScope(scope)",
+                                    "hasAnyScope(scopes)",
+                                    "check(criteria)",
+                                    "checkAny(criteria)",
+                                    "guard(criteria)",
+                                    "applyDOM(rootElement)",
+                                    "setToken(token)",
+                                    "clearToken()",
+                                    "refresh()",
+                                    "onExpiry(callback)",
+                                    "tenant()",
+                                    "isTenant(value)",
+                                    "configure()"
+                                ],
+                        "sample":  "console.warn(BareMetal.RBAC.WARNING);"
                     },
                     {
                         "key":  "rendering",
@@ -1160,12 +1433,11 @@
                         "source":  "./src/BareMetal.Rendering.js",
                         "docs":  "BareMetal.Rendering.md",
                         "api":  [
-                                    "setRoot",
-                                    "createNewEntity",
-                                    "bind",
-                                    "state",
-                                    "listEntities"
-                                ]
+                                    "createEntity(slug)",
+                                    "listEntities()",
+                                    "window.minibind"
+                                ],
+                        "sample":  "const customer = await BareMetal.Rendering.createEntity(\u0027customer\u0027);\r\nawait customer.load(42);\r\ncustomer.renderUI(document.getElementById(\u0027editor\u0027));"
                     },
                     {
                         "key":  "ribbon",
@@ -1179,7 +1451,8 @@
                                     "setDisabled",
                                     "setColour",
                                     "setFont"
-                                ]
+                                ],
+                        "sample":  "BareMetal.Ribbon.create(\u0027#bar\u0027, {\r\n  groups: [\r\n    { label: \u0027Style\u0027, items: [\r\n      { id: \u0027bold\u0027, label: \u0027B\u0027, toggle: true },\r\n      { id: \u0027fill\u0027, type: \u0027colour\u0027, value: \u0027#ffffff\u0027 },\r\n      { id: \u0027font\u0027, type: \u0027font\u0027, family: \u0027Georgia, serif\u0027, size: 12 }\r\n    ]}\r\n  ],\r\n  onCommand(id, item, extra) {}\r\n});"
                     },
                     {
                         "key":  "routing",
@@ -1187,53 +1460,64 @@
                         "source":  "./src/BareMetal.Routing.js",
                         "docs":  "BareMetal.Routing.md",
                         "api":  [
-                                    "pathname",
-                                    "search"
-                                ]
+                                    "on(pattern, handler)",
+                                    "notFound(handler)",
+                                    "start()",
+                                    "navigate(path, state, replace)",
+                                    "window.BMRouter"
+                                ],
+                        "sample":  "BMRouter.on(\u0027/projects/:id/edit\u0027, ({ id }, query) =\u003e openEditor(id, query.tab));"
                     },
                     {
                         "key":  "scan",
                         "title":  "BareMetal.Scan",
                         "source":  "./src/BareMetal.Scan.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.Scan.md",
                         "api":  [
-                                    "text",
-                                    "stop"
-                                ]
+                                    "capture(options)",
+                                    "stream(options)",
+                                    "decode(image, options)",
+                                    "decodeQR(image, options)",
+                                    "decodeBarcode(image, options)",
+                                    "ocr(image, options)",
+                                    "map(value, options)",
+                                    "validate(result, options)",
+                                    "continuous(options)",
+                                    "overlay(result, options)",
+                                    "history()",
+                                    "fromImage(image, options)",
+                                    "fromBlob(blob, options)"
+                                ],
+                        "sample":  "const moduleApi = BareMetal.Scan;\n// Source: ./src/BareMetal.Scan.js\n// See the public API list below for call signatures."
                     },
                     {
                         "key":  "scene-inspector",
                         "title":  "BareMetal.SceneInspector",
                         "source":  "./src/BareMetal.SceneInspector.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.SceneInspector.md",
                         "api":  [
-
-                                ]
+                                    "create(options)"
+                                ],
+                        "sample":  "const inspector = BareMetal.SceneInspector.create({ targets:[scene], adapter });\ndocument.querySelector(\u0027#app\u0027).append(inspector.element);"
                     },
                     {
                         "key":  "schedule",
                         "title":  "BareMetal.Schedule",
                         "source":  "./src/BareMetal.Schedule.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.Schedule.md",
                         "api":  [
-                                    "cron",
-                                    "interval",
-                                    "delay",
-                                    "at",
-                                    "every",
-                                    "queue",
-                                    "scheduler",
-                                    "parseCron",
-                                    "nextCron",
-                                    "matchesCron",
-                                    "parseDuration",
-                                    "formatDuration",
-                                    "debounce",
-                                    "throttle",
-                                    "rateLimit",
-                                    "retry",
-                                    "deadline"
-                                ]
+                                    "cron(expression, callback, options)",
+                                    "interval(ms, callback)",
+                                    "delay(ms, callback)",
+                                    "at(date, callback)",
+                                    "every(interval, callback)",
+                                    "queue(options)",
+                                    "scheduler(options)",
+                                    "debounce(fn, wait)",
+                                    "throttle(fn, wait)",
+                                    "retry(fn, options)"
+                                ],
+                        "sample":  "const moduleApi = BareMetal.Schedule;\n// Source: ./src/BareMetal.Schedule.js\n// See the public API list below for call signatures."
                     },
                     {
                         "key":  "schema",
@@ -1241,43 +1525,47 @@
                         "source":  "./src/BareMetal.Schema.js",
                         "docs":  "BareMetal.Schema.md",
                         "api":  [
-                                    "string",
-                                    "number",
-                                    "boolean",
-                                    "array",
-                                    "object",
-                                    "date",
-                                    "oneOf",
-                                    "nullable",
-                                    "optional",
-                                    "parse",
-                                    "validate",
-                                    "transform",
-                                    "coerce",
-                                    "defaults",
-                                    "extend",
-                                    "pick",
-                                    "omit",
-                                    "partial",
-                                    "version",
-                                    "toJSON",
-                                    "fromJSON",
-                                    "custom",
-                                    "toBinary",
-                                    "fromBinary"
-                                ]
+                                    "string(opts)",
+                                    "number(opts)",
+                                    "boolean(opts)",
+                                    "array(itemSchema, opts)",
+                                    "object(shape, opts)",
+                                    "date(opts)",
+                                    "oneOf(schemas)",
+                                    "nullable(schema)",
+                                    "optional(schema)",
+                                    "custom(name, validateFn, opts)",
+                                    "parse(schema, data)",
+                                    "validate(schema, data)",
+                                    "transform(schema, data)",
+                                    "coerce(schema, data)",
+                                    "defaults(schema)",
+                                    "extend(baseSchema, overrides)",
+                                    "pick(schema, keys)",
+                                    "omit(schema, keys)",
+                                    "partial(schema)",
+                                    "version(schema, v, migrations)",
+                                    "versionedSchema.migrate(data, fromV, toV)",
+                                    "toJSON(schema)",
+                                    "fromJSON(descriptor)",
+                                    "toBinary(schema, opts)",
+                                    "fromBinary(binarySchema)"
+                                ],
+                        "sample":  "const Name = BareMetal.Schema.string({ trim: true, min: 2 });"
                     },
                     {
                         "key":  "search",
                         "title":  "BareMetal.Search",
                         "source":  "./src/BareMetal.Search.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.Search.md",
                         "api":  [
-                                    "docCount",
-                                    "termCount",
-                                    "avgDocLength",
-                                    "indexSize"
-                                ]
+                                    "createIndex(options)",
+                                    "tokenize(text, options)",
+                                    "stem(token, language)",
+                                    "highlight(text, terms)",
+                                    "pipeline(options)"
+                                ],
+                        "sample":  "const moduleApi = BareMetal.Search;\n// Source: ./src/BareMetal.Search.js\n// See the public API list below for call signatures."
                     },
                     {
                         "key":  "secure-transport",
@@ -1285,14 +1573,22 @@
                         "source":  "./src/BareMetal.SecureTransport.js",
                         "docs":  "BareMetal.SecureTransport.md",
                         "api":  [
-                                    "setPublicKey",
-                                    "loadPublicKey",
-                                    "encryptObject",
-                                    "decryptObject",
-                                    "fetch",
-                                    "getKeyId",
-                                    "getTunnelUrl"
-                                ]
+                                    "envelope",
+                                    "method",
+                                    "url",
+                                    "headers",
+                                    "body",
+                                    "credentials",
+                                    "ok",
+                                    "status",
+                                    "statusText",
+                                    "arrayBuffer",
+                                    "text",
+                                    "json",
+                                    "rsaKey",
+                                    "aesKey"
+                                ],
+                        "sample":  "\u003cscript src=\"src/BareMetal.SecureTransport.js\"\u003e\u003c/script\u003e\r\n\u003cscript\u003e\r\nconst secure = BareMetal.SecureTransport.create({\r\n  publicKeyUrl: \u0027/api/security/public-key\u0027,\r\n  keyId: \u00272026-11\u0027,\r\n  tunnelUrl: \u0027/bmsecure\u0027\r\n});\r\n\r\nconst response = await secure.fetch(\u0027/api/customers\u0027, {\r\n  method: \u0027GET\u0027\r\n});\r\n\u003c/script\u003e"
                     },
                     {
                         "key":  "service-worker",
@@ -1300,8 +1596,19 @@
                         "source":  "./src/BareMetal.ServiceWorker.js",
                         "docs":  "BareMetal.ServiceWorker.md",
                         "api":  [
-
-                                ]
+                                    "BM_PRECACHE",
+                                    "BM_CLEAR_CACHE",
+                                    "BM_CACHE_STATUS",
+                                    "BM_SET_ROUTES",
+                                    "BM_SKIP_WAITING",
+                                    "BM_SET_OFFLINE_PAGE",
+                                    "cacheFirst(request, cacheName)",
+                                    "networkFirst(request, cacheName)",
+                                    "staleWhileRevalidate(request, cacheName)",
+                                    "networkOnly(request)",
+                                    "cacheOnly(request, cacheName)"
+                                ],
+                        "sample":  "sendToWorker({ type: \u0027BM_PRECACHE\u0027, urls: [\u0027/\u0027, \u0027/offline.json\u0027] });"
                     },
                     {
                         "key":  "session",
@@ -1309,12 +1616,13 @@
                         "source":  "./src/BareMetal.Session.js",
                         "docs":  "BareMetal.Session.md",
                         "api":  [
-                                    "create",
-                                    "tabSync",
-                                    "guard",
-                                    "fingerprint",
-                                    "activity"
-                                ]
+                                    "create(opts)",
+                                    "tabSync(key)",
+                                    "guard(checkFn, redirectFn)",
+                                    "fingerprint()",
+                                    "activity(opts)"
+                                ],
+                        "sample":  "const session = BareMetal.Session.create({\r\n  ttl: 15 * 60 * 1000,\r\n  refreshBefore: 60 * 1000,\r\n  storage: \u0027localStorage\u0027,\r\n  syncTabs: true\r\n});"
                     },
                     {
                         "key":  "sheet",
@@ -1322,27 +1630,13 @@
                         "source":  "./src/BareMetal.Sheet.js",
                         "docs":  "BareMetal.Sheet.md",
                         "api":  [
-                                    "el",
-                                    "addr",
-                                    "parseAddr",
-                                    "getData",
-                                    "setData",
-                                    "getCell",
-                                    "setCell",
-                                    "select",
-                                    "selected",
-                                    "selectedRange",
-                                    "styleSelected",
-                                    "styleRange",
-                                    "mergeSelected",
-                                    "insertRow",
-                                    "deleteRow",
-                                    "insertCol",
-                                    "deleteCol",
-                                    "setRowFilter",
-                                    "unmergeSelected",
-                                    "startEdit"
-                                ]
+                                    "c",
+                                    "c0",
+                                    "r0",
+                                    "c1",
+                                    "r1"
+                                ],
+                        "sample":  "\u003cscript src=\"BareMetal.Sheet.js\"\u003e\u003c/script\u003e\r\n\u003cdiv id=\"sheet\" style=\"height:24rem\"\u003e\u003c/div\u003e\r\n\u003cscript\u003e\r\n  const sheet = BareMetal.Sheet.create(\u0027#sheet\u0027, {\r\n    rows: 20,\r\n    cols: 10,\r\n    cells: { A1: { v: \u0027Hello\u0027, s: { bold: true } } },\r\n    onChange(addr, cell, prev) { console.log(addr, cell); }\r\n  });\r\n  sheet.setCell(\u0027B2\u0027, { v: \u002742\u0027 });\r\n\u003c/script\u003e"
                     },
                     {
                         "key":  "speech",
@@ -1350,8 +1644,16 @@
                         "source":  "./src/BareMetal.Speech.js",
                         "docs":  "BareMetal.Speech.md",
                         "api":  [
-
-                                ]
+                                    "speak(text, opts)",
+                                    "pause()",
+                                    "voices(lang)",
+                                    "isSpeaking()",
+                                    "listen(opts)",
+                                    "command(phrases, callback, opts)",
+                                    "dictate(opts)",
+                                    "queue(items)"
+                                ],
+                        "sample":  "\u003cbutton id=\"talkBtn\"\u003eSpeak\u003c/button\u003e\r\n\u003cbutton id=\"listenBtn\"\u003eListen\u003c/button\u003e\r\n\r\n\u003cscript src=\"BareMetal.Speech.min.js\"\u003e\u003c/script\u003e\r\n\u003cscript\u003e\r\n  document.getElementById(\u0027talkBtn\u0027).addEventListener(\u0027click\u0027, function () {\r\n    BareMetal.Speech.speak(\u0027Hello from BareMetal\u0027, { lang: \u0027en-GB\u0027, rate: 1 });\r\n  });\r\n\r\n  document.getElementById(\u0027listenBtn\u0027).addEventListener(\u0027click\u0027, function () {\r\n    const session = BareMetal.Speech.listen({ lang: \u0027en-US\u0027, interimResults: true });\r\n    session\r\n      .onInterim(function (result) { console.log(\u0027Interim:\u0027, result.transcript); })\r\n      .onResult(function (result) { console.log(\u0027Final:\u0027, result.transcript); });\r\n  });\r\n\u003c/script\u003e"
                     },
                     {
                         "key":  "state-machine",
@@ -1359,12 +1661,14 @@
                         "source":  "./src/BareMetal.StateMachine.js",
                         "docs":  "BareMetal.StateMachine.md",
                         "api":  [
-                                    "send",
-                                    "getState",
-                                    "getContext",
-                                    "matches",
-                                    "subscribe"
-                                ]
+                                    "create(config)",
+                                    "machine.send(event)",
+                                    "machine.getState()",
+                                    "machine.getContext()",
+                                    "machine.matches(stateName)",
+                                    "machine.subscribe(fn)"
+                                ],
+                        "sample":  "var wizard = BareMetal.StateMachine.create({\r\n  initial: \u0027step1\u0027,\r\n  context: { valid: false },\r\n  states: {\r\n    step1: {\r\n      on: {\r\n        NEXT: {\r\n          target: \u0027step2\u0027,\r\n          guard: function (ctx) { return ctx.valid; }\r\n        }\r\n      }\r\n    },\r\n    step2: {}\r\n  }\r\n});"
                     },
                     {
                         "key":  "story",
@@ -1373,14 +1677,15 @@
                         "docs":  "BareMetal.Story.md",
                         "api":  [
                                     "PACKS",
-                                    "validateConditions",
-                                    "validateEffects",
-                                    "validateTriggers",
-                                    "validateBaseFacts",
-                                    "graphData",
-                                    "memoryClient",
-                                    "mount"
-                                ]
+                                    "mount(target, options?)",
+                                    "memoryClient(seed)",
+                                    "validateConditions(value)",
+                                    "validateEffects(value)",
+                                    "validateTriggers(value)",
+                                    "validateBaseFacts(value)",
+                                    "graphData(nodes, choices)"
+                                ],
+                        "sample":  "BareMetal.Story.mount(\"#app\", {\r\n  client: BareMetal.Story.memoryClient({\r\n    stories: [{ id: 1, slug: \"paper-lantern\", title: \"The Paper Lantern\", tags: [\"sample\", \"fiction\"] }],\r\n    nodes: [{ id: 1, story_id: 1, key: \"yard\", text: \"The lantern sits on warm stones.\" }],\r\n    choices: [],\r\n    personas: [],\r\n    templates: []\r\n  })\r\n});"
                     },
                     {
                         "key":  "sync",
@@ -1388,29 +1693,31 @@
                         "source":  "./src/BareMetal.Sync.js",
                         "docs":  "BareMetal.Sync.md",
                         "api":  [
-                                    "diff",
-                                    "patch",
-                                    "merge",
-                                    "conflict",
-                                    "resolve",
-                                    "queue",
-                                    "replay",
-                                    "echo",
-                                    "clock",
-                                    "crdt",
-                                    "version",
-                                    "subscribe",
-                                    "batch"
-                                ]
+                                    "diff(a, b)",
+                                    "patch(target, ops)",
+                                    "merge(local, remote, base, strategy)",
+                                    "conflict(path, local, remote, base)",
+                                    "resolve(conflicts, resolutions)",
+                                    "queue(opts)",
+                                    "replay(ops, applyFn)",
+                                    "echo(sent, received)",
+                                    "clock(initial)",
+                                    "crdt(type, opts)",
+                                    "version(obj)",
+                                    "subscribe(syncable, callback)",
+                                    "batch(ops)"
+                                ],
+                        "sample":  "const ops = BareMetal.Sync.diff(\r\n  { title: \u0027Draft\u0027, count: 1 },\r\n  { title: \u0027Ready\u0027, count: 2 }\r\n);"
                     },
                     {
                         "key":  "tabs",
                         "title":  "BareMetal.Tabs",
                         "source":  "./src/BareMetal.Tabs.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.Tabs.md",
                         "api":  [
-
-                                ]
+                                    "create(options)"
+                                ],
+                        "sample":  "const tabs = BareMetal.Tabs.create({ items:[{id:\u0027one\u0027,label:\u0027One\u0027,content:panelOne},{id:\u0027two\u0027,label:\u0027Two\u0027,content:panelTwo}] });\ndocument.querySelector(\u0027#app\u0027).append(tabs.element);"
                     },
                     {
                         "key":  "template",
@@ -1418,42 +1725,31 @@
                         "source":  "./src/BareMetal.Template.js",
                         "docs":  "BareMetal.Template.md",
                         "api":  [
-
-                                ]
+                                    "buildForm(layout, fields)",
+                                    "buildTable(fields, items, callbacks)",
+                                    "buildInput(name, field)",
+                                    "buildLabel(name, field)"
+                                ],
+                        "sample":  "const form = BareMetal.Template.buildForm(\r\n  { columns: 2, fields: [\u0027firstName\u0027, \u0027lastName\u0027, \u0027country\u0027] },\r\n  {\r\n    firstName: { required: true },\r\n    lastName: { required: true },\r\n    country: { type: \u0027Country\u0027, label: \u0027Country/Region\u0027 }\r\n  }\r\n);"
                     },
                     {
                         "key":  "tenant",
                         "title":  "BareMetal.Tenant",
                         "source":  "./src/BareMetal.Tenant.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.Tenant.md",
                         "api":  [
-                                    "create",
-                                    "current",
-                                    "scope",
-                                    "middleware",
-                                    "store",
-                                    "add",
-                                    "get",
-                                    "remove",
-                                    "list",
-                                    "find",
-                                    "count",
-                                    "config",
-                                    "isolate",
-                                    "partition",
-                                    "hierarchy",
-                                    "limits",
-                                    "features",
-                                    "onSwitch",
-                                    "onChange",
-                                    "impersonate",
-                                    "export",
-                                    "import",
-                                    "resolve",
-                                    "seal",
-                                    "suspend",
-                                    "activate"
-                                ]
+                                    "create(options)",
+                                    "resolve(id)",
+                                    "switch(id)",
+                                    "isolate(id, fn)",
+                                    "partition(id)",
+                                    "hierarchy(id)",
+                                    "limits(id)",
+                                    "features(id)",
+                                    "suspend(id)",
+                                    "activate(id)"
+                                ],
+                        "sample":  "const moduleApi = BareMetal.Tenant;\n// Source: ./src/BareMetal.Tenant.js\n// See the public API list below for call signatures."
                     },
                     {
                         "key":  "test-runner",
@@ -1461,23 +1757,34 @@
                         "source":  "./src/BareMetal.TestRunner.js",
                         "docs":  "BareMetal.TestRunner.md",
                         "api":  [
-                                    "ok",
-                                    "status",
-                                    "url",
-                                    "headers",
-                                    "json",
-                                    "text",
-                                    "clone"
-                                ]
+                                    "describe(name, fn)",
+                                    "it(name, fn, timeout)",
+                                    "test(name, fn, timeout)",
+                                    "expect(value)",
+                                    "beforeEach(fn)",
+                                    "afterEach(fn)",
+                                    "beforeAll(fn)",
+                                    "afterAll(fn)",
+                                    "mock.fn(impl)",
+                                    "mock.fetch(responses)",
+                                    "run(opts)",
+                                    "configure(opts)",
+                                    "toTAP(res)",
+                                    "toMarkdown(res, opts)",
+                                    "installGlobals()",
+                                    "run()"
+                                ],
+                        "sample":  "describe(\u0027cart totals\u0027, () =\u003e {\r\n  describe(\u0027with tax\u0027, () =\u003e {\r\n    it(\u0027rounds to 2 decimals\u0027, () =\u003e {\r\n      expect(totalWithTax(19.99, 0.2)).toBeCloseTo(23.99, 2);\r\n    });\r\n  });\r\n});"
                     },
                     {
                         "key":  "theme-picker",
                         "title":  "BareMetal.ThemePicker",
                         "source":  "./src/BareMetal.ThemePicker.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.ThemePicker.md",
                         "api":  [
-
-                                ]
+                                    "create(options)"
+                                ],
+                        "sample":  "const picker = BareMetal.ThemePicker.create({ themes, selected:\u0027wavefunction\u0027, link:themeLink });\ndocument.querySelector(\u0027#settings\u0027).append(picker.element);"
                     },
                     {
                         "key":  "time",
@@ -1485,29 +1792,49 @@
                         "source":  "./src/BareMetal.Time.js",
                         "docs":  "BareMetal.Time.md",
                         "api":  [
-                                    "days",
-                                    "timeZone",
-                                    "hour",
-                                    "fractionalSecondDigits",
-                                    "now",
-                                    "format",
-                                    "add",
-                                    "isBefore",
-                                    "diff",
-                                    "daysInMonth",
-                                    "dayOfWeek",
-                                    "toTimezone",
-                                    "hasTemporal"
-                                ]
+                                    "now()",
+                                    "utcNow()",
+                                    "parse(input)",
+                                    "create(year, month, day, hour, minute, second, ms)",
+                                    "fromDate(date)",
+                                    "format(dt, pattern)",
+                                    "formatRelative(dt, base)",
+                                    "toISO(dt)",
+                                    "toDate(dt)",
+                                    "add(dt, amount, unit)",
+                                    "subtract(dt, amount, unit)",
+                                    "startOf(dt, unit)",
+                                    "endOf(dt, unit)",
+                                    "isBefore(a, b)",
+                                    "isAfter(a, b)",
+                                    "isSame(a, b, precision)",
+                                    "isBetween(dt, start, end)",
+                                    "diff(a, b, unit)",
+                                    "duration(ms)",
+                                    "formatDuration(ms, opts)",
+                                    "daysInMonth(year, month)",
+                                    "isLeapYear(year)",
+                                    "dayOfWeek(dt)",
+                                    "dayOfWeekName(dt)",
+                                    "weekNumber(dt)",
+                                    "toTimezone(dt, tz)",
+                                    "getTimezone()",
+                                    "hasTemporal()",
+                                    "toTemporal(dt)",
+                                    "fromTemporal(t)"
+                                ],
+                        "sample":  "{\r\n  year: 2026,\r\n  month: 4,\r\n  day: 20,\r\n  hour: 17,\r\n  minute: 30,\r\n  second: 0,\r\n  ms: 0,\r\n  iso: \u00272026-04-20T16:30:00.000Z\u0027,\r\n  ts: 1776702600000\r\n}"
                     },
                     {
                         "key":  "timeline",
                         "title":  "BareMetal.Timeline",
                         "source":  "./src/BareMetal.Timeline.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.Timeline.md",
                         "api":  [
-
-                                ]
+                                    "create(options)",
+                                    "formatTime(seconds)"
+                                ],
+                        "sample":  "const timeline = BareMetal.Timeline.create({ duration:120, onSeek:seconds =\u003e player.seek(seconds) });\ndocument.querySelector(\u0027#player\u0027).append(timeline.element);"
                     },
                     {
                         "key":  "tokens",
@@ -1515,23 +1842,24 @@
                         "source":  "./src/BareMetal.Tokens.js",
                         "docs":  "BareMetal.Tokens.md",
                         "api":  [
-                                    "sign",
-                                    "signSync",
-                                    "decode",
-                                    "verify",
-                                    "isExpired",
-                                    "expiresIn",
-                                    "claim",
-                                    "generateSecret",
-                                    "generateKeyPair",
-                                    "importKey",
-                                    "exportKey",
-                                    "importJWK",
-                                    "create",
-                                    "parseDuration",
-                                    "toBase64Url",
-                                    "fromBase64Url"
-                                ]
+                                    "sign(payload, key, options)",
+                                    "signSync(payload, key, options)",
+                                    "decode(token)",
+                                    "verify(token, key, options)",
+                                    "isExpired(token, options)",
+                                    "expiresIn(token, options)",
+                                    "claim(token, name)",
+                                    "generateSecret(algorithmName)",
+                                    "generateKeyPair(algorithmName)",
+                                    "importKey(keyData, algorithmName, kind)",
+                                    "exportKey(key)",
+                                    "importJWK(jwk, algorithmName, kind)",
+                                    "create(payload)",
+                                    "parseDuration(value)",
+                                    "toBase64Url(value)",
+                                    "fromBase64Url(value)"
+                                ],
+                        "sample":  "const token = await BareMetal.Tokens.sign({ sub: \u0027123\u0027 }, \u0027secret\u0027, {\r\n  algorithm: \u0027HS384\u0027,\r\n  header: { kid: \u0027primary\u0027 }\r\n});"
                     },
                     {
                         "key":  "transport",
@@ -1539,22 +1867,31 @@
                         "source":  "./src/BareMetal.Transport.js",
                         "docs":  "BareMetal.Transport.md",
                         "api":  [
-                                    "retry",
-                                    "backoff",
-                                    "idempotencyKey",
-                                    "dedupe",
-                                    "coalesce",
-                                    "cancel",
-                                    "timeout",
-                                    "fetchWithTimeout",
-                                    "fetchWithRetry",
-                                    "race",
-                                    "cache",
-                                    "priority",
-                                    "queue",
-                                    "circuit",
-                                    "rateLimit"
-                                ]
+                                    "retry(fn, policy)",
+                                    "backoff(attempt, policy)",
+                                    "idempotencyKey()",
+                                    "dedupe(keyFn, fn)",
+                                    "deduped.inflight()",
+                                    "coalesce(requests, opts)",
+                                    "coalescer.flush()",
+                                    "cancel(parentSignal)",
+                                    "scope.abort(reason)",
+                                    "timeout(ms)",
+                                    "timeout.clear()",
+                                    "race(promises, signal)",
+                                    "cache(fn, opts)",
+                                    "cached.clear()",
+                                    "priority(fn, level)",
+                                    "queue(opts)",
+                                    "queueApi.add(fn, level)",
+                                    "queueApi.pause()",
+                                    "queueApi.size()",
+                                    "circuit(fn, opts)",
+                                    "circuit.state()",
+                                    "rateLimit(fn, opts)",
+                                    "limited.pending()"
+                                ],
+                        "sample":  "const value = await BareMetal.Transport.retry(doRequest, { maxAttempts: 5, backoff: \u0027linear\u0027 });"
                     },
                     {
                         "key":  "types",
@@ -1562,12 +1899,29 @@
                         "source":  "./src/BareMetal.Types.js",
                         "docs":  "BareMetal.Types.md",
                         "api":  [
-                                    "name",
-                                    "fields",
-                                    "methods",
-                                    "ancestors",
-                                    "serializable"
-                                ]
+                                    "define(name, descriptor)",
+                                    "check(value, type)",
+                                    "is(value, type)",
+                                    "assert(value, type)",
+                                    "cast(value, type)",
+                                    "of(value)",
+                                    "registry",
+                                    "contract(input, output)",
+                                    "guard(type)",
+                                    "union(...types)",
+                                    "intersection(...types)",
+                                    "literal(value)",
+                                    "tuple(...types)",
+                                    "record(keyType, valueType)",
+                                    "nullable(type)",
+                                    "optional(type)",
+                                    "reflect(typeName)",
+                                    "serialize(value, type)",
+                                    "deserialize(data, type)",
+                                    "equals(a, b, type)",
+                                    "clone(value, type)"
+                                ],
+                        "sample":  "BareMetal.Types.define(\u0027Money\u0027, {\r\n  fields: {\r\n    amount: \u0027number\u0027,\r\n    currency: \u0027string\u0027\r\n  }\r\n});"
                     },
                     {
                         "key":  "undo-redo",
@@ -1575,8 +1929,36 @@
                         "source":  "./src/BareMetal.UndoRedo.js",
                         "docs":  "BareMetal.UndoRedo.md",
                         "api":  [
-
-                                ]
+                                    "create(options)",
+                                    "createSnap(options)",
+                                    "history.push(cmd)",
+                                    "history.exec(cmd)",
+                                    "history.undo()",
+                                    "history.redo()",
+                                    "history.canUndo()",
+                                    "history.canRedo()",
+                                    "history.undoName()",
+                                    "history.redoName()",
+                                    "history.size()",
+                                    "history.index()",
+                                    "history.beginGroup(name, data)",
+                                    "history.endGroup()",
+                                    "history.group(name, fn, data)",
+                                    "history.toJSON()",
+                                    "history.fromJSON(json)",
+                                    "history.clear()",
+                                    "history.clearRedo()",
+                                    "history.checkpoint()",
+                                    "history.revertTo(point)",
+                                    "history.bindKeys(el)",
+                                    "history.on(name, fn)",
+                                    "history.off(name, fn)",
+                                    "snapshotHistory.snapshot(value)",
+                                    "snapshotHistory.undo()",
+                                    "snapshotHistory.redo()",
+                                    "snapshotHistory.current()"
+                                ],
+                        "sample":  "const history = BareMetal.UndoRedo.create({\r\n  maxSize: 100,\r\n  onChange: state =\u003e console.log(state)\r\n});"
                     },
                     {
                         "key":  "url",
@@ -1584,29 +1966,30 @@
                         "source":  "./src/BareMetal.URL.js",
                         "docs":  "BareMetal.URL.md",
                         "api":  [
-                                    "parse",
-                                    "build",
-                                    "query",
-                                    "encode",
-                                    "decode",
-                                    "merge",
-                                    "remove",
-                                    "params",
-                                    "template",
-                                    "join",
-                                    "normalize",
-                                    "isAbsolute",
-                                    "isRelative",
-                                    "resolve",
-                                    "compare",
-                                    "slug",
-                                    "hash",
-                                    "get",
-                                    "set",
-                                    "origin",
-                                    "isValid",
-                                    "relative"
-                                ]
+                                    "parse(url)",
+                                    "build(parts)",
+                                    "query.encode(obj)",
+                                    "query.decode(queryString)",
+                                    "query.merge(url, paramsObject)",
+                                    "query.remove(url, keys)",
+                                    "params(pattern, url)",
+                                    "template(pattern, data)",
+                                    "join(...parts)",
+                                    "normalize(url)",
+                                    "isAbsolute(url)",
+                                    "isRelative(url)",
+                                    "resolve(base, relative)",
+                                    "compare(a, b)",
+                                    "slug(text)",
+                                    "encode(value)",
+                                    "decode(value)",
+                                    "hash.get(url)",
+                                    "hash.set(url, value)",
+                                    "origin(url)",
+                                    "isValid(url)",
+                                    "relative(from, to)"
+                                ],
+                        "sample":  "const parsed = BareMetal.URL.parse(\u0027/orders/42?tab=items#totals\u0027);\r\nconsole.log(parsed.pathname, parsed.params.tab, parsed.hash);"
                     },
                     {
                         "key":  "validate",
@@ -1614,38 +1997,32 @@
                         "source":  "./src/BareMetal.Validate.js",
                         "docs":  "BareMetal.Validate.md",
                         "api":  [
-
-                                ]
+                                    "validate(schema, data)",
+                                    "addRule(name, fn)"
+                                ],
+                        "sample":  "var result = BareMetal.Validate.validate({\r\n  age: { type: \u0027number\u0027, min: 18 }\r\n}, {\r\n  age: 16\r\n});\r\n\r\nconsole.log(result.errors[0]);\r\n// { path: \u0027age\u0027, code: \u0027min\u0027, message: \u0027Must be at least 18.\u0027 }"
                     },
                     {
                         "key":  "vector",
                         "title":  "BareMetal.Vector",
                         "source":  "./src/BareMetal.Vector.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.Vector.md",
                         "api":  [
-                                    "createCollection",
-                                    "upsert",
-                                    "remove",
-                                    "count",
-                                    "search",
-                                    "clear"
-                                ]
+                                    "createDatabase(options)",
+                                    "cosineSimilarity(a, b)"
+                                ],
+                        "sample":  "const db = BareMetal.Vector.createDatabase();\nconst collection = db.createCollection(\u0027tracks\u0027);\ncollection.upsert(\u0027track-1\u0027, embedding, { title:\u0027Blue Monday\u0027 });"
                     },
                     {
                         "key":  "vectorsearch",
-                        "title":  "BareMetal.Vectorsearch",
+                        "title":  "BareMetal.VectorSearch",
                         "source":  "./src/BareMetal.VectorSearch.js",
-                        "docs":  null,
+                        "docs":  "modules/BareMetal.VectorSearch.md",
                         "api":  [
-                                    "upsert",
-                                    "remove",
-                                    "has",
-                                    "get",
-                                    "size",
-                                    "clear",
-                                    "topK",
-                                    "dims"
-                                ]
+                                    "createIndex(options)",
+                                    "cosineSimilarity(a, b)"
+                                ],
+                        "sample":  "const index = BareMetal.VectorSearch.createIndex({ dimensions:3 });\nindex.upsert(\u0027track-1\u0027, new Float32Array([0.1,0.2,0.3]));\nconst matches = index.topK(query, 5);"
                     },
                     {
                         "key":  "vt-terminal",
@@ -1653,16 +2030,14 @@
                         "source":  "./src/BareMetal.VTTerminal.js",
                         "docs":  "BareMetal.VTTerminal.md",
                         "api":  [
-                                    "element",
-                                    "write",
-                                    "clear",
-                                    "resize",
-                                    "send",
-                                    "openWebSocket",
-                                    "onInput",
-                                    "getLines",
-                                    "destroy"
-                                ]
+                                    "fg",
+                                    "bg",
+                                    "bold",
+                                    "dim",
+                                    "inverse",
+                                    "underline"
+                                ],
+                        "sample":  "const terminal = BareMetal.VTTerminal.create({\r\n  element: \u0027#terminal\u0027,\r\n  cols: 120,\r\n  rows: 32,\r\n  maxLines: 5000\r\n});\r\n\r\nterminal.write(\u0027\\u001b[32mconnected\\u001b[0m\\r\\n\u0027);\r\nterminal.openWebSocket(\u0027wss://host/terminal\u0027);\r\nterminal.onInput(text =\u003e socket.send(text));"
                     },
                     {
                         "key":  "workers",
@@ -1670,8 +2045,48 @@
                         "source":  "./src/BareMetal.Workers.js",
                         "docs":  "BareMetal.Workers.md",
                         "api":  [
-
-                                ]
+                                    "create(workerFn)",
+                                    "spawn(workerFn)",
+                                    "shared(workerFn, opts)",
+                                    "pool(workerFn, opts)",
+                                    "debounce(fn, wait, opts)",
+                                    "throttle(fn, wait, opts)",
+                                    "read(fn)",
+                                    "write(fn)",
+                                    "nextFrame(fn)",
+                                    "cancelFrame(id)",
+                                    "idle(fn, opts)",
+                                    "cancelIdle(id)",
+                                    "idleQueue(tasks, opts)",
+                                    "taskQueue(opts)",
+                                    "delay(ms)",
+                                    "interval(fn, ms)",
+                                    "timeout(valueOrPromise, ms)",
+                                    "retry(fn, opts)",
+                                    "cleanup()",
+                                    "runner.run(payload, transfer)",
+                                    "runner.terminate()",
+                                    "workerHandle.send(data, transfer)",
+                                    "workerHandle.on(event, handler)",
+                                    "workerHandle.terminate()",
+                                    "sharedHandle.send(data, transfer)",
+                                    "sharedHandle.on(event, handler)",
+                                    "sharedHandle.close()",
+                                    "pool.run(data, transfer)",
+                                    "pool.runAll(items)",
+                                    "pool.map(items, fn)",
+                                    "pool.terminate()",
+                                    "pool.stats()",
+                                    "queue.add(fn, opts)",
+                                    "queue.pause()",
+                                    "queue.resume()",
+                                    "queue.clear()",
+                                    "queue.stats()",
+                                    "idleQueue.cancel()",
+                                    "interval.stop()",
+                                    "interval.restart()"
+                                ],
+                        "sample":  "const hashWorker = BareMetal.Workers.create(function(input) {\r\n  return String(input).toUpperCase();\r\n});"
                     },
                     {
                         "key":  "workflow",
@@ -1679,14 +2094,22 @@
                         "source":  "./src/BareMetal.Workflow.js",
                         "docs":  "BareMetal.Workflow.md",
                         "api":  [
-                                    "VERSION",
-                                    "create",
-                                    "mount",
-                                    "parseTree",
-                                    "serialize",
-                                    "WORKFLOW_TYPES"
-                                ]
+                                    "create(name, steps)",
+                                    "run(name, initialContext)",
+                                    "exec(steps, initialContext)",
+                                    "list()",
+                                    "get(name)",
+                                    "remove(name)",
+                                    "onStep(fn)",
+                                    "onError(fn)",
+                                    "onComplete(fn)",
+                                    "toJSON(name)",
+                                    "fromJSON(name, json)",
+                                    "stepTypes()",
+                                    "designer(container, workflowName)"
+                                ],
+                        "sample":  "BareMetal.Workflow.create(\u0027smoke\u0027, [\r\n  { type: \u0027SET\u0027, name: \u0027count\u0027, value: 1 }\r\n]);"
                     }
                 ],
-    "generated":  "2026-11-10T15:34:10Z"
+    "generated":  "2026-11-10T16:01:16Z"
 }

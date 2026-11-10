@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BareMetalJsTools API Library</title>
+  <link rel="stylesheet" href="../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../src/themes/wavefunction.css">
+</head>
+<body>
+  <header class="nbar">
+    <div class="bx fx ai-c jc-b gp2">
+      <a class="nbar-b" href="./">BareMetalJsTools</a>
+      <nav class="fx ai-c gp2">
+        <a class="nl" href="index.html">Showcase</a>
+        <a class="nl act" href="API-Library.html">API library</a>
+        <a class="nl" href="https://github.com/WillEastbury/BareMetalJsTools">Source</a>
+      </nav>
+    </div>
+  </header>
+  <main class="bx py-4">
+    <header class="mb-4">
+      <span class="bd bg-p">IMPLEMENTATION REFERENCE</span>
+      <h1 class="dp4 mt-2">Function by function.</h1>
+      <p class="ld">Each module links its source, API guide, browser load path, callable API and a usage sample.</p>
+    </header>
+    <div class="rw g2 ai-c mb-3">
+      <div class="cm9"><input class="fc" id="search" type="search" placeholder="Search modules or functions"></div>
+      <div class="cm3"><span id="count" class="bd bg-s">Loading…</span></div>
+    </div>
+    <div id="modules" class="rw g3"></div>
+  </main>
+  <footer class="bot p-3">
+    <div class="bx fx fx-w jc-b gp2">
+      <a href="index.html">Back to live examples</a>
+      <a href="../README.md">README</a>
+    </div>
+  </footer>
+  <script>
+  (function () {
+    'use strict';
+    var search = document.getElementById('search');
+    var count = document.getElementById('count');
+    var root = document.getElementById('modules');
+    var modules = [];
+    function slug(value) { return String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+    function element(tag, cls, text) {
+      var node = document.createElement(tag);
+      if (cls) node.className = cls;
+      if (text != null) node.textContent = text;
+      return node;
+    }
+    function render() {
+      var query = String(search.value || '').toLocaleLowerCase().trim();
+      var visible = modules.filter(function (module) {
+        return !query || (module.title + ' ' + module.key + ' ' + module.api.join(' ') + ' ' + module.sample).toLocaleLowerCase().indexOf(query) >= 0;
+      });
+      count.textContent = visible.length + ' / ' + modules.length + ' modules';
+      root.replaceChildren();
+      visible.forEach(function (module) {
+        var col = element('div', 'cm6');
+        var card = element('article', 'cd mb-3');
+        card.id = slug(module.title);
+        var header = element('div', 'cd-h fx fx-w ai-c jc-b gp2');
+        header.append(element('h2', 'cd-t mb0', module.title));
+        var source = element('a', 'bt bt-s bt-os', 'Source');
+        source.href = '../' + module.source.replace(/^\.\//, '');
+        header.append(source);
+        var body = element('div', 'cd-b');
+        var load = element('details', 'mb-2');
+        load.append(element('summary', 'fg-p', 'Browser loading'));
+        var loadCode = element('pre', 'bg-dk fg-lt p-2 mt-2');
+        loadCode.textContent = ['<scr','ipt src="../',module.source.replace(/^\.\//, ''),'"></scr','ipt>'].join('');
+        load.append(loadCode);
+        body.append(load);
+        body.append(element('h3', 'fs-6', 'Public API'));
+        if (module.api && module.api.length) {
+          var list = element('ul', 'lu');
+          module.api.forEach(function (signature) {
+            list.append(element('li', 'py-1', signature));
+          });
+          body.append(list);
+        } else {
+          body.append(element('p', 'fg-m', 'See the module source for exported functions.'));
+        }
+        var sample = element('details', 'mt-2');
+        sample.append(element('summary', 'fg-p', 'Usage sample'));
+        var sampleCode = element('pre', 'bg-dk fg-lt p-2 mt-2');
+        sampleCode.textContent = module.sample || ('// Load and use ' + module.title + ' from the page.');
+        sample.append(sampleCode);
+        body.append(sample);
+        var actions = element('div', 'fx fx-w gp2 mt-3');
+        if (module.docs) {
+          var guide = element('a', 'bt bt-s bt-op', 'Implementation guide');
+          guide.href = 'https://github.com/WillEastbury/BareMetalJsTools/blob/main/docs/' + module.docs;
+          actions.append(guide);
+        }
+        card.append(header, body, actions);
+        col.append(card);
+        root.append(col);
+      });
+    }
+    fetch('module-library.json').then(function (response) {
+      if (!response.ok) throw new Error('module-library.json HTTP ' + response.status);
+      return response.json();
+    }).then(function (library) {
+      modules = library.modules || [];
+      search.addEventListener('input', render);
+      render();
+    }).catch(function (error) {
+      count.textContent = 'Could not load API library';
+      root.append(element('p', 'fg-er', error.message || String(error)));
+    });
+  })();
+  </script>
+</body>
+</html>

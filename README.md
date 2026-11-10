@@ -11,7 +11,7 @@ BareMetalJsTools is a collection of tiny, zero-dependency vanilla-JS modules tha
 Every module follows the same pattern: small, obvious, fast. You can read the source in one sitting. You can understand what it does without a tutorial series. And because there's nothing to build, your deploy is just... serving files. *How* you serve them matters — cache headers, compression, CDN — but the point is your toolchain stays out of your way.
 
 > [Explore the interactive library showcase](https://willeastbury.github.io/BareMetalJsTools/)
-> [Browse the complete API and implementation library](docs/API-Library.md)
+> [Browse the complete API and implementation library](https://willeastbury.github.io/BareMetalJsTools/docs/API-Library.html)
 
 ---
 
