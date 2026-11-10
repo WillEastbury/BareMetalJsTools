@@ -11,7 +11,7 @@
 <body>
   <header class="nbar">
     <div class="bx fx ai-c jc-b gp2">
-      <a class="nbar-b" href="../index.html">BareMetalJsTools</a>
+      <a class="nbar-b" href="../index.html"><span class="bd bg-p">BM</span> BareMetal Lab</a>
       <nav class="fx ai-c gp2" aria-label="Page navigation">
         <a class="nl" href="../index.html">Showcase</a>
         <a class="nl act" href="./">Interactive apps</a>
@@ -20,25 +20,158 @@
     </div>
   </header>
   <main class="bx py-4">
-    <header class="mb-4">
-      <span class="bd bg-p">BAREMETALJSTOOLS</span>
-      <h1 class="dp4 mt-2">Small apps. Real browser APIs.</h1>
-      <p class="ld">Explore the library through working samples. Data, files, tokens, and chat messages stay in your browser unless a demo says otherwise.</p>
+    <header class="rw g3 ai-c mb-4">
+      <div class="cm8">
+        <span class="bd bg-p">BAREMETAL INTERACTIVE LAB</span>
+        <h1 class="dp4 mt-2">Small modules. Full experiences.</h1>
+        <p class="ld">Explore working applications built from the browser APIs and BareMetalJsTools modules. Local files, records, and demo tokens stay in your browser.</p>
+        <div class="fx fx-w gp2 mt-3">
+          <a class="bt bt-p" href="erp.html">Open the ERP workspace</a>
+          <a class="bt bt-op" href="../API-Library.html">Browse the API library</a>
+        </div>
+      </div>
+      <div class="cm4">
+        <section class="cd">
+          <div class="cd-h"><strong>LAB SNAPSHOT</strong></div>
+          <div class="cd-b rw g2">
+            <div class="cm6"><strong class="dp5">08</strong><div class="sm fg-m">interactive apps</div></div>
+            <div class="cm6"><strong class="dp5">0</strong><div class="sm fg-m">app servers</div></div>
+            <div class="cm12"><span class="bd bg-ok">BROWSER-NATIVE</span> <span class="sm fg-m">IndexedDB, Web Audio, WebGL, Web Crypto</span></div>
+          </div>
+        </section>
+      </div>
     </header>
-    <div class="rw g3">
-      <article class="cm4"><div class="cd h-100"><div class="cd-h"><h2 class="mb0">DJ MIDI mixer</h2></div><div class="cd-b"><p>Load local MP3s into four decks. Mix, EQ, cue, and optionally connect a MIDI controller.</p><a class="bt bt-p" href="dj-mixer.html">Open mixer</a></div></div></article>
-      <article class="cm4"><div class="cd h-100"><div class="cd-h"><h2 class="mb0">Interactive ERP</h2></div><div class="cd-b"><p>IndexedDB-backed purchase orders with bound edit forms, reference codes, document chains, charts, trees, and pivot summaries.</p><a class="bt bt-p" href="erp.html">Open ERP</a></div></div></article>
-      <article class="cm4"><div class="cd h-100"><div class="cd-h"><h2 class="mb0">Markdown &amp; HTML editor</h2></div><div class="cd-b"><p>Edit Markdown with safe rendering or preview inert HTML inside a sandbox.</p><a class="bt bt-p" href="editor.html">Open editor</a></div></div></article>
-      <article class="cm4"><div class="cd h-100"><div class="cd-h"><h2 class="mb0">Workflow editor</h2></div><div class="cd-b"><p>Compose, reorder, persist, and run BareMetal.Workflow steps.</p><a class="bt bt-p" href="workflow.html">Open workflow editor</a></div></div></article>
-      <article class="cm4"><div class="cd h-100"><div class="cd-h"><h2 class="mb0">Tokens, RBAC &amp; Auth</h2></div><div class="cd-b"><p>Inspect JWT claims locally, verify an ephemeral demo token, exercise RBAC, and build an OIDC sample.</p><a class="bt bt-p" href="auth-tokens.html">Open token lab</a></div></div></article>
-      <article class="cm4"><div class="cd h-100"><div class="cd-h"><h2 class="mb0">3DXR virtual world</h2></div><div class="cd-b"><p>Change a procedural 3D sky through a bound model and try WebXR on a supported device.</p><a class="bt bt-p" href="xr-world.html">Open 3DXR world</a></div></div></article>
-      <article class="cm4"><div class="cd h-100"><div class="cd-h"><h2 class="mb0">Codes &amp; forms</h2></div><div class="cd-b"><p>Bind common country, currency, language, MIME, and HTTP codes into a validated form.</p><a class="bt bt-p" href="codes.html">Open codes sample</a></div></div></article>
-      <article class="cm4"><div class="cd h-100"><div class="cd-h"><h2 class="mb0">PubSub chat</h2></div><div class="cd-b"><p>Publish and subscribe to channel messages and system events using BareMetal.PubSub.</p><a class="bt bt-p" href="chat.html">Open chat</a></div></div></article>
+    <section class="cd mb-3" aria-label="Find sample apps">
+      <div class="cd-b rw g2 ai-c">
+        <label class="cm6">Find an app
+          <input id="app-search" class="fc" type="search" placeholder="Search modules or features">
+        </label>
+        <label class="cm3">Category
+          <select id="app-category" class="fc">
+            <option value="all">All categories</option>
+            <option value="media">Media</option>
+            <option value="data">Data &amp; ERP</option>
+            <option value="content">Content</option>
+            <option value="workflow">Workflow</option>
+            <option value="security">Security</option>
+            <option value="xr">XR</option>
+            <option value="collaboration">Collaboration</option>
+          </select>
+        </label>
+        <div class="cm3">
+          <span id="app-count" class="bd bg-s" role="status">8 applications</span>
+          <a class="nl mt-2" href="../index.html">Back to live examples</a>
+        </div>
+      </div>
+    </section>
+    <div id="app-grid" class="rw g3">
+      <article class="cm4" data-app-card data-category="media" data-search="dj midi mixer mp3 local audio cue pfl eq">
+        <div class="cd">
+          <div class="cd-h fx ai-c jc-b gp2"><h2 class="mb0">DJ MIDI mixer</h2><span class="bd bg-in">MEDIA</span></div>
+          <div class="cd-b fx fx-c">
+            <p>Load local MP3s into four decks. Mix, EQ, cue, and optionally connect a MIDI controller.</p>
+            <p class="sm fg-m">DJMixer · MIDI · MP3</p>
+            <a class="bt bt-op mt-2" href="dj-mixer.html">Open mixer</a>
+          </div>
+        </div>
+      </article>
+      <article class="cm4" data-app-card data-category="data" data-search="erp indexeddb purchase orders bindings codes docchain pivot charts tree forms">
+        <div class="cd">
+          <div class="cd-h fx ai-c jc-b gp2"><h2 class="mb0">ERP workspace</h2><span class="bd bg-p">BUSINESS</span></div>
+          <div class="cd-b fx fx-c">
+            <p>Manage purchase orders with bound forms, reference codes, document lineage, charts, trees, and pivot summaries.</p>
+            <p class="sm fg-m">Bind · IDB · DocChain · Pivot</p>
+            <a class="bt bt-op mt-2" href="erp.html">Open workspace</a>
+          </div>
+        </div>
+      </article>
+      <article class="cm4" data-app-card data-category="content" data-search="markdown html editor sandbox preview safe">
+        <div class="cd">
+          <div class="cd-h fx ai-c jc-b gp2"><h2 class="mb0">Markdown &amp; HTML editor</h2><span class="bd bg-s">CONTENT</span></div>
+          <div class="cd-b fx fx-c">
+            <p>Edit Markdown with safe rendering or preview inert HTML inside a sandbox.</p>
+            <p class="sm fg-m">Markdown · Bind</p>
+            <a class="bt bt-op mt-2" href="editor.html">Open editor</a>
+          </div>
+        </div>
+      </article>
+      <article class="cm4" data-app-card data-category="workflow" data-search="workflow editor engine json steps indexeddb automation">
+        <div class="cd">
+          <div class="cd-h fx ai-c jc-b gp2"><h2 class="mb0">Workflow editor</h2><span class="bd bg-wn">AUTOMATION</span></div>
+          <div class="cd-b fx fx-c">
+            <p>Compose, reorder, persist, and run real BareMetal.Workflow steps.</p>
+            <p class="sm fg-m">Workflow · IDB</p>
+            <a class="bt bt-op mt-2" href="workflow.html">Open workflow editor</a>
+          </div>
+        </div>
+      </article>
+      <article class="cm4" data-app-card data-category="security" data-search="token jwt rbac auth oidc pkce inspect claims">
+        <div class="cd">
+          <div class="cd-h fx ai-c jc-b gp2"><h2 class="mb0">Tokens, RBAC &amp; Auth</h2><span class="bd bg-er">SECURITY</span></div>
+          <div class="cd-b fx fx-c">
+            <p>Inspect JWT claims locally, verify an ephemeral demo token, exercise RBAC, and build an OIDC sample.</p>
+            <p class="sm fg-m">Tokens · RBAC · Auth</p>
+            <a class="bt bt-op mt-2" href="auth-tokens.html">Open token lab</a>
+          </div>
+        </div>
+      </article>
+      <article class="cm4" data-app-card data-category="xr" data-search="3dxr webgl webxr virtual world renderer">
+        <div class="cd">
+          <div class="cd-h fx ai-c jc-b gp2"><h2 class="mb0">3DXR virtual world</h2><span class="bd bg-in">IMMERSIVE</span></div>
+          <div class="cd-b fx fx-c">
+            <p>Change a procedural 3D sky through a bound model and try WebXR on a supported device.</p>
+            <p class="sm fg-m">3DXR · Bind · WebGL</p>
+            <a class="bt bt-op mt-2" href="xr-world.html">Open 3DXR world</a>
+          </div>
+        </div>
+      </article>
+      <article class="cm4" data-app-card data-category="data" data-search="codes forms countries currencies languages mime http validation">
+        <div class="cd">
+          <div class="cd-h fx ai-c jc-b gp2"><h2 class="mb0">Codes &amp; forms</h2><span class="bd bg-p">REFERENCE DATA</span></div>
+          <div class="cd-b fx fx-c">
+            <p>Bind common country, currency, language, MIME, and HTTP codes into a validated form.</p>
+            <p class="sm fg-m">Codes · Bind · Forms</p>
+            <a class="bt bt-op mt-2" href="codes.html">Open codes sample</a>
+          </div>
+        </div>
+      </article>
+      <article class="cm4" data-app-card data-category="collaboration" data-search="pubsub chat messaging channels system events">
+        <div class="cd">
+          <div class="cd-h fx ai-c jc-b gp2"><h2 class="mb0">PubSub chat</h2><span class="bd bg-s">MESSAGING</span></div>
+          <div class="cd-b fx fx-c">
+            <p>Publish and subscribe to channel messages and system events with BareMetal.PubSub.</p>
+            <p class="sm fg-m">PubSub · Chat</p>
+            <a class="bt bt-op mt-2" href="chat.html">Open chat</a>
+          </div>
+        </div>
+      </article>
     </div>
     <div class="bd bg-wn p-2 mt-4">
-      Samples use browser-only or mock credentials. Web MIDI, Web Audio, WebGL, and WebXR depend on browser support and user permission. Client-side RBAC is a UI example, never a server authorization boundary.
+      Browser capabilities vary: Web MIDI, Web Audio, WebGL, and WebXR may require compatible hardware and permission. The token app uses mock credentials, and client-side RBAC is a UI example, never a server authorization boundary.
     </div>
   </main>
   <footer class="bot p-3"><div class="bx fx fx-w jc-b gp2"><a href="../index.html">Showcase</a><a href="https://github.com/WillEastbury/BareMetalJsTools">Source</a></div></footer>
+  <script>
+    (function () {
+      var cards = Array.prototype.slice.call(document.querySelectorAll('[data-app-card]'));
+      var search = document.getElementById('app-search');
+      var category = document.getElementById('app-category');
+      var count = document.getElementById('app-count');
+      function filter() {
+        var term = search.value.trim().toLowerCase();
+        var group = category.value;
+        var visible = 0;
+        cards.forEach(function (card) {
+          var matches = (group === 'all' || card.dataset.category === group) &&
+            (!term || card.dataset.search.indexOf(term) >= 0);
+          card.hidden = !matches;
+          if (matches) visible++;
+        });
+        count.textContent = visible + ' of ' + cards.length + ' applications';
+      }
+      search.addEventListener('input', filter);
+      category.addEventListener('change', filter);
+    })();
+  </script>
 </body>
 </html>

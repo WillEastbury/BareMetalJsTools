@@ -11,7 +11,7 @@
 <body>
   <header class="nbar">
     <div class="bx fx ai-c jc-b gp2">
-      <a class="nbar-b" href="./">Interactive apps</a>
+      <a class="nbar-b" href="./"><span class="bd bg-p">BM</span> BareMetal Lab</a>
       <nav class="fx ai-c gp2" aria-label="Page navigation">
         <a class="nl" href="../index.html">Showcase</a>
         <a class="nl act" href="auth-tokens.html">Tokens &amp; RBAC</a>
@@ -20,10 +20,19 @@
     </div>
   </header>
   <main class="bx py-4">
-    <header class="mb-4">
-      <span class="bd bg-p">INTERACTIVE SAMPLE</span>
-      <h1 class="dp4 mt-2">Inspect tokens. Exercise RBAC.</h1>
-      <p class="ld">Decode claims locally, verify demo signatures with a temporary in-memory key, and see role-based UI decisions change.</p>
+    <header class="rw g3 ai-c mb-4">
+      <div class="cm8">
+        <span class="bd bg-p">SECURITY LAB / 05</span>
+        <h1 class="dp4 mt-2">Inspect tokens. Exercise RBAC.</h1>
+        <p class="ld">Decode claims locally, verify demo signatures with a temporary in-memory key, and see role-based UI decisions change.</p>
+      </div>
+      <aside class="cm4">
+        <div class="cd"><div class="cd-b">
+          <strong>Local-only security sandbox</strong>
+          <p class="sm fg-m mt-2">No provider redirects, network calls, or token persistence. Demo signing keys are discarded with the page.</p>
+          <span class="bd bg-wn">NOT PRODUCTION AUTH</span>
+        </div></div>
+      </aside>
     </header>
     <div class="bd bg-wn p-2 mb-3">
       Demo only: never paste a production token here. Decoding is not signature verification, client-side RBAC is not authorization, and this page sends no token to a server or identity provider.

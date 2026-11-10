@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ERP Bindings | BareMetalJsTools</title>
+  <title>Northstar Supply | Purchase orders</title>
   <link rel="stylesheet" href="../../src/BareMetalStyles.css">
   <link rel="stylesheet" href="../../src/fonts/fonts.css">
   <link rel="stylesheet" href="../../src/themes/wavefunction.css">
@@ -12,90 +12,127 @@
 <body>
   <header class="nbar">
     <div class="bx fx ai-c jc-b gp2">
-      <a class="nbar-b" href="./">Interactive apps</a>
+      <a class="nbar-b" href="./"><span class="bd bg-p">NS</span> Northstar Supply</a>
       <nav class="fx ai-c gp2" aria-label="Page navigation">
-        <a class="nl" href="../index.html">Showcase</a>
-        <a class="nl act" href="erp.html">ERP bindings</a>
-        <a class="nl" href="codes.html">Codes &amp; forms</a>
+        <a class="nl" href="../index.html">App gallery</a>
+        <a class="nl" href="../API-Library.html">API library</a>
+        <span class="bd bg-in">DEMO TENANT</span>
       </nav>
     </div>
   </header>
   <main class="bx py-4">
-    <header class="mb-4">
-      <span class="bd bg-p">INTERACTIVE SAMPLE</span>
-      <h1 class="dp4 mt-2">A small ERP, end to end.</h1>
-      <p class="ld">Bound purchase orders, editable records, reference codes, document lineage, charts, and pivots. Data stays in this browser’s IndexedDB.</p>
-    </header>
-    <div class="fx fx-w ai-c gp2 mb-3">
-      <button id="add-order" class="bt bt-p" type="button" disabled>Add purchase order</button>
-      <button id="reset-data" class="bt bt-os" type="button" disabled>Reset demo data</button>
-      <span id="db-status" class="bd bg-s" role="status">Opening IndexedDB…</span>
-    </div>
-    <div id="app-error" class="bd bg-er mb-3" role="alert" hidden></div>
-    <section class="cd mb-3">
-      <div class="cd-h"><h2 class="mb0">Purchase orders</h2></div>
-      <div class="cd-b">
-        <div class="table-responsive">
-          <table class="table">
-            <thead>
-              <tr><th>Order</th><th>Supplier</th><th>Country</th><th>Status</th><th>Total</th><th>Lines</th><th>Actions</th></tr>
-            </thead>
-            <tbody id="order-rows" m-each="orders key:id">
-              <template>
-                <tr>
-                  <td><strong m-text=".id"></strong></td>
-                  <td m-text=".customer"></td>
-                  <td><span m-text=".country"></span> / <span m-text=".currency"></span></td>
-                  <td><span class="bd bg-in" m-text=".status"></span></td>
-                  <td m-text=".totalLabel"></td>
-                  <td>
-                    <details>
-                      <summary><span m-text=".items.length"></span> items</summary>
-                      <div class="nested-lines" m-attr="data-order-id:.id"></div>
-                    </details>
-                  </td>
-                  <td class="fx gp1">
-                    <button class="bt bt-p" type="button" data-edit-order m-attr="data-edit-order:.id">Edit</button>
-                    <button class="bt bt-os" type="button" data-advance-order m-attr="data-advance-order:.id">Advance</button>
-                    <button class="bt bt-er" type="button" data-delete-order m-attr="data-delete-order:.id" aria-label="Delete order">×</button>
-                  </td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-        <p class="sm fg-m mb0">Edit opens a row-bound form. Each order’s expandable lines table is rendered from its nested records.</p>
-      </div>
-    </section>
     <div class="rw g3">
-      <section class="cm6">
-        <div class="cd">
-          <div class="cd-h"><h2 class="mb0">Order totals by country and currency</h2></div>
-          <div id="spend-chart" class="cd-b" aria-label="Spend chart"></div>
+      <aside class="cm2">
+        <section class="cd mb-3">
+          <div class="cd-b">
+            <p class="sm fg-m">OPERATIONS</p>
+            <nav class="fx fx-c" aria-label="ERP navigation">
+              <a class="nl act" href="#orders">Purchase orders</a>
+              <a class="nl" href="#analytics">Analytics &amp; pivot</a>
+              <a class="nl" href="#documents">Document lineage</a>
+              <a class="nl" href="codes.html">Reference codes</a>
+            </nav>
+          </div>
+        </section>
+        <section class="cd">
+          <div class="cd-h"><h2 class="mb0">Workspace</h2></div>
+          <div class="cd-b">
+            <span id="db-status" class="bd bg-s" role="status">Opening IndexedDB…</span>
+            <p class="sm fg-m mt-2">Sample records are stored in this browser only.</p>
+            <details class="mt-3">
+              <summary>Demo controls</summary>
+              <p class="sm fg-m">Reset the local sample data to its original state.</p>
+              <button id="reset-data" class="bt bt-os bt-s" type="button" disabled>Reset demo data</button>
+            </details>
+          </div>
+        </section>
+      </aside>
+      <section class="cm10">
+        <header id="overview" class="fx fx-w ai-c jc-b gp2 mb-3">
+          <div>
+            <p class="sm fg-m">PROCUREMENT / OVERVIEW</p>
+            <h1 class="dp4 mt-1">Purchase orders</h1>
+            <p class="fg-m mb0">Supplier orders, approvals, and receiving in one workspace.</p>
+          </div>
+          <button id="add-order" class="bt bt-p" type="button" disabled>+ New purchase order</button>
+        </header>
+        <div id="app-error" class="bd bg-er mb-3" role="alert" hidden></div>
+        <div class="rw g2 mb-3" aria-label="Procurement summary">
+          <article class="cm3"><div class="cd"><div class="cd-b"><span class="sm fg-m">Open orders</span><strong id="kpi-open" class="dp5">—</strong><div class="sm fg-m">Active lifecycle</div></div></div></article>
+          <article class="cm3"><div class="cd"><div class="cd-b"><span class="sm fg-m">Needs approval</span><strong id="kpi-approval" class="dp5">—</strong><div class="sm fg-m">Draft purchase orders</div></div></div></article>
+          <article class="cm3"><div class="cd"><div class="cd-b"><span class="sm fg-m">Received</span><strong id="kpi-received" class="dp5">—</strong><div class="sm fg-m">Goods received</div></div></div></article>
+          <article class="cm3"><div class="cd"><div class="cd-b"><span class="sm fg-m">Suppliers</span><strong id="kpi-suppliers" class="dp5">—</strong><div class="sm fg-m">Unique vendors</div></div></div></article>
         </div>
-      </section>
-      <section class="cm6">
-        <div class="cd">
-          <div class="cd-h"><h2 class="mb0">Pivot summary</h2></div>
-          <div id="pivot-control" class="cd-b"></div>
-        </div>
-      </section>
-      <section class="cm6">
-        <div class="cd">
-          <div class="cd-h"><h2 class="mb0">Document tree</h2></div>
-          <div id="document-tree" class="cd-b" aria-live="polite"></div>
-        </div>
-      </section>
-      <section class="cm6">
-        <div class="cd">
-          <div class="cd-h"><h2 class="mb0">Document relationship graph</h2></div>
-          <div id="document-graph" class="cd-b" aria-label="Document relationship graph"></div>
-        </div>
-      </section>
-    </div>
-    <details class="cd mt-3">
-      <summary class="cd-h">Implementation sample</summary>
-      <pre class="bg-bs fg-dk p-2">const db = await BareMetal.IDB.open('bm-erp-demo', {
+        <section id="orders" class="cd">
+          <div class="cd-h fx fx-w ai-c jc-b gp2">
+            <div><h2 class="mb0">Purchase order register</h2><p class="sm fg-m mb0">Select a row to edit, advance, or inspect line items.</p></div>
+            <span id="visible-count" class="bd bg-s">0 orders</span>
+          </div>
+          <div class="cd-b">
+            <div class="rw g2 ai-c mb-3">
+              <label class="cm8">Search orders or suppliers
+                <input id="order-search" class="fc" type="search" placeholder="PO number or supplier">
+              </label>
+              <label class="cm4">Lifecycle status
+                <select id="status-filter" class="fc">
+                  <option value="all">All statuses</option>
+                  <option value="draft">Draft</option>
+                  <option value="approved">Approved</option>
+                  <option value="received">Received</option>
+                  <option value="invoiced">Invoiced</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </label>
+            </div>
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr><th>Purchase order</th><th>Supplier</th><th>Ship to</th><th>Status</th><th>Order value</th><th>Lines</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="order-rows" m-each="orders key:id">
+                  <template>
+                    <tr m-attr="data-order-id:.id">
+                      <td><strong m-text=".id"></strong></td>
+                      <td m-text=".customer"></td>
+                      <td m-text=".countryLabel"></td>
+                      <td><span class="bd order-status" m-attr="data-order-status:.status" m-text=".status"></span></td>
+                      <td m-text=".totalLabel"></td>
+                      <td>
+                        <details>
+                          <summary><span m-text=".items.length"></span> lines</summary>
+                          <div class="nested-lines" m-attr="data-order-id:.id"></div>
+                        </details>
+                      </td>
+                      <td class="fx fx-w gp1">
+                        <button class="bt bt-op bt-s" type="button" data-edit-order m-attr="data-edit-order:.id">Edit</button>
+                        <button class="bt bt-os bt-s" type="button" data-advance-order m-attr="data-advance-order:.id">Next step</button>
+                        <button class="bt bt-er bt-s" type="button" data-delete-order m-attr="data-delete-order:.id">Remove</button>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+            <div id="orders-empty" class="p-3 bg-bs tc" hidden>No purchase orders match these filters.</div>
+          </div>
+        </section>
+        <section id="analytics" class="mt-3">
+          <div class="fx ai-c jc-b gp2 mb-2"><h2 class="mb0">Spend &amp; analysis</h2><span class="sm fg-m">Totals remain grouped by currency</span></div>
+          <div class="rw g2">
+            <article class="cm6"><div class="cd"><div class="cd-h"><h3 class="mb0">Order value by country / currency</h3></div><div id="spend-chart" class="cd-b" aria-label="Order value chart"></div></div></article>
+            <article class="cm6"><div class="cd"><div class="cd-h"><h3 class="mb0">Pivot summary</h3></div><div id="pivot-control" class="cd-b"></div></div></article>
+          </div>
+        </section>
+        <section id="documents" class="mt-3">
+          <div class="fx ai-c jc-b gp2 mb-2"><h2 class="mb0">Documents &amp; lineage</h2><span class="sm fg-m">Powered by DocChain</span></div>
+          <div class="rw g2">
+            <article class="cm6"><div class="cd"><div class="cd-h"><h3 class="mb0">Document tree</h3></div><div id="document-tree" class="cd-b" aria-live="polite"></div></div></article>
+            <article class="cm6"><div class="cd"><div class="cd-h"><h3 class="mb0">Relationship graph</h3></div><div id="document-graph" class="cd-b" aria-label="Document relationship graph"></div></div></article>
+          </div>
+        </section>
+        <details class="cd mt-3">
+          <summary class="cd-h">Implementation sample</summary>
+          <pre class="bg-bs fg-dk p-2">const db = await BareMetal.IDB.open('bm-erp-demo-v1', {
   version: 1,
   stores: { orders: { keyPath: 'id' }, chains: { keyPath: 'id' } }
 });
@@ -103,7 +140,9 @@ const orders = await db.getAll('orders');
 BareMetal.Bind.bind(document.body, state, watch);
 BareMetal.Pivot.create('#pivot-control', { fields, records, groupBy: 'country', valueField: 'total' });
 BareMetal.DocChain.serialize(rootDocument);</pre>
-    </details>
+        </details>
+      </section>
+    </div>
   </main>
   <dialog id="order-dialog" class="p-3">
     <form id="order-form">
@@ -223,7 +262,7 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
 
       function createDocumentTree(orders) {
         defineDocumentTypes();
-        rootDocument = BareMetal.DocChain.create('ERP Portfolio', { name: 'Smoof Audio Supply' });
+        rootDocument = BareMetal.DocChain.create('ERP Portfolio', { name: 'Northstar Supply Co.' });
         orders.forEach(function (order, index) {
           var po = BareMetal.DocChain.derive(rootDocument, 'Purchase Order', {
             orderId: order.id,
@@ -243,6 +282,23 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
         } catch (error) {
           return order.currency + ' ' + Number(order.total || 0).toFixed(2);
         }
+      }
+
+      function applyFilters() {
+        var term = document.getElementById('order-search').value.trim().toLowerCase();
+        var selectedStatus = document.getElementById('status-filter').value;
+        var visible = 0;
+        Array.prototype.forEach.call(document.querySelectorAll('#order-rows > tr'), function (row) {
+          var order = findOrder(row.dataset.orderId);
+          if (!order) return;
+          var text = [order.id, order.customer, order.countryLabel, order.currency].join(' ').toLowerCase();
+          var matches = (!term || text.indexOf(term) >= 0) &&
+            (selectedStatus === 'all' || order.status === selectedStatus);
+          row.hidden = !matches;
+          if (matches) visible++;
+        });
+        document.getElementById('visible-count').textContent = visible + ' of ' + binding.state.orders.length + ' purchase orders';
+        document.getElementById('orders-empty').hidden = visible > 0;
       }
 
       function renderNestedTables() {
@@ -302,11 +358,27 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
       }
 
       function renderViews() {
+        var orders = binding.state.orders;
         binding.state.orders.forEach(function (order) {
           var country = BareMetal.Codes.countries.get(order.country);
-          order.countryLabel = country ? country.name : order.country;
+          order.countryLabel = country ? country.name + ' (' + order.country + ')' : order.country;
           order.totalLabel = currencyAmount(order);
         });
+        var openCount = 0;
+        var approvalCount = 0;
+        var receivedCount = 0;
+        var suppliers = {};
+        orders.forEach(function (order) {
+          if (order.status !== 'invoiced' && order.status !== 'cancelled') openCount++;
+          if (order.status === 'draft') approvalCount++;
+          if (order.status === 'received') receivedCount++;
+          suppliers[order.customer] = true;
+        });
+        document.getElementById('kpi-open').textContent = String(openCount);
+        document.getElementById('kpi-approval').textContent = String(approvalCount);
+        document.getElementById('kpi-received').textContent = String(receivedCount);
+        document.getElementById('kpi-suppliers').textContent = String(Object.keys(suppliers).length);
+
         var countryTotals = {};
         binding.state.orders.forEach(function (order) {
           var key = order.country + ' (' + order.currency + ')';
@@ -344,10 +416,15 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
           width: 720,
           height: 360
         });
-        status.textContent = 'IndexedDB ready - ' + binding.state.orders.length + ' purchase orders';
+        var statusClasses = { draft: 'bg-wn', approved: 'bg-ok', received: 'bg-in', invoiced: 'bg-s', cancelled: 'bg-er' };
+        Array.prototype.forEach.call(document.querySelectorAll('.order-status'), function (badge) {
+          badge.className = 'bd order-status ' + (statusClasses[badge.dataset.orderStatus] || 'bg-s');
+        });
+        status.textContent = 'INDEXEDDB READY';
         document.getElementById('add-order').disabled = false;
         document.getElementById('reset-data').disabled = false;
         renderNestedTables();
+        applyFilters();
       }
 
       function addOrderDocument(order) {
@@ -442,6 +519,8 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
       });
 
       document.getElementById('cancel-edit').addEventListener('click', function () { modal.close(); });
+      document.getElementById('order-search').addEventListener('input', applyFilters);
+      document.getElementById('status-filter').addEventListener('change', applyFilters);
       document.getElementById('add-order').addEventListener('click', function () {
         var id = 'PO-' + String(Date.now()).slice(-6);
         openEditor({ id: id, customer: '', country: 'GB', currency: 'GBP', status: 'draft', total: 0, items: [] }, true);
@@ -485,6 +564,7 @@ BareMetal.DocChain.serialize(rootDocument);</pre>
           createDocumentTree(orders);
           await persistDocuments();
         }
+        rootDocument.data.name = 'Northstar Supply Co.';
         var docs = BareMetal.DocChain.find(function (item) { return item.type === 'Purchase Order'; });
         orders.forEach(function (order) {
           var doc = docs.find(function (item) { return item.data.orderId === order.id; });
