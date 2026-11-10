@@ -748,8 +748,10 @@ BareMetal.Print = (function () {
     var cfg = opts || {};
     var device = cfg.device || 'browser';
     if (device === 'pdf') {
-      if (typeof Blob !== 'undefined') return new Blob([String(html == null ? '' : html)], { type: 'application/pdf' });
-      return { type: 'application/pdf', content: String(html == null ? '' : html) };
+      if (!BareMetal.DocumentRenderer || typeof BareMetal.DocumentRenderer.render !== 'function') {
+        throw new Error('Load BareMetal.DocumentRenderer.js to generate a PDF without browser printing');
+      }
+      return BareMetal.DocumentRenderer.render(String(html == null ? '' : html), cfg);
     }
     if (device === 'thermal') {
       if (isArray(html)) return receipt(html, cfg);

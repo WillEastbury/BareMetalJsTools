@@ -24,8 +24,8 @@ Generated implementation and function-calling catalog.
 | [BareMetal.Components](BareMetal.Components.md) | `<script src="src/BareMetal.Components.js"></script>` | `bindComponents(root, state, watch)`, `m-img`, `m-chatbot`, `m-calendar`, `m-gantt`, `m-table`, `m-tree`, `m-entity` | [BareMetal.Components](BareMetal.Components.md) |
 | [BareMetal.Compress](BareMetal.Compress.md) | `<script src="src/BareMetal.Compress.js"></script>` | `compress(input, options)`, `decompress(input)`, `compressBound(inputLength)`, `PROFILES`, `compress()` | [BareMetal.Compress](BareMetal.Compress.md) |
 | [BareMetal.Config](BareMetal.Config.md) | `<script src="src/BareMetal.Config.js"></script>` | `create(opts)`, `priorities` | [BareMetal.Config](BareMetal.Config.md) |
-| [BareMetal.Controls](BareMetal.Controls.md) | `<script src="src/BareMetal.Controls.js"></script>` | `<module API>` | [BareMetal.Controls](BareMetal.Controls.md) |
 | [BareMetal.ControlSurface](modules/BareMetal.ControlSurface.md) | `<script src="src/BareMetal.ControlSurface.js"></script>` | `create(options)` | [BareMetal.ControlSurface](modules/BareMetal.ControlSurface.md) |
+| [BareMetal.Controls](BareMetal.Controls.md) | `<script src="src/BareMetal.Controls.js"></script>` | `<module API>` | [BareMetal.Controls](BareMetal.Controls.md) |
 | [BareMetal.Crypto](BareMetal.Crypto.md) | `<script src="src/BareMetal.Crypto.js"></script>` | `generateSymmetricKey(extractable)`, `encryptSymmetric(key, data)`, `decryptSymmetric(key, iv, ciphertext)`, `generateAsymmetricKey(bits, extractable)`, `encryptAsymmetric(publicKey, data)`, `decryptAsymmetric(privateKey, envelope)`, `digest(data)`, `digestWithSalt(data, salt)`, `deriveKey(password, salt, iterations)`, `generateSigningKey(extractable)`, `sign(privateKey, data)`, `verifySignature(publicKey, data, signature)`, `exportKey(key, format = 'jwk')`, `importKey(keyData, algorithm, usages, format = 'jwk', extractable)`, `toBase64Url(buffer)`, `fromBase64Url(string)`, `toUtf8(string)`, `fromUtf8(buffer)`, `randomBytes(length)` | [BareMetal.Crypto](BareMetal.Crypto.md) |
 | [BareMetal.Diagnostics](BareMetal.Diagnostics.md) | `<script src="src/BareMetal.Diagnostics.js"></script>` | `trace(name, fn)`, `span(name, opts)`, `timeline()`, `inspect(value, opts)`, `why(value, history)`, `watch(target, path, callback)`, `perf`, `counter(name)`, `gauge(name, fn)`, `report()`, `enable()`, `disable()`, `hook(moduleName, instance)` | [BareMetal.Diagnostics](BareMetal.Diagnostics.md) |
 | [BareMetal.DJDeck](BareMetal.DJDeck.md) | `<script src="src/BareMetal.DJDeck.js"></script>` | `bpm`, `track`, `playing`, `elapsed`, `remaining`, `duration`, `beatGrid`, `waveform`, `hotCues`, `cuePoint`, `loop`, `pitchSemitones`, `tempoPercent`, `playbackRate` | [BareMetal.DJDeck](BareMetal.DJDeck.md) |
@@ -33,6 +33,7 @@ Generated implementation and function-calling catalog.
 | [BareMetal.DJMixer](BareMetal.DJMixer.md) | `<script src="src/BareMetal.DJMixer.js"></script>` | `enabled`, `mix`, `gain`, `channels` | [BareMetal.DJMixer](BareMetal.DJMixer.md) |
 | [BareMetal.DocChain](modules/BareMetal.DocChain.md) | `<script src="src/BareMetal.DocChain.js"></script>` | `defineType(name, schema)`, `create(type, data, options)`, `derive(parent, type, data)`, `transition(document, status)`, `validate(document)`, `lineage(id)`, `auditTrail(id)`, `store` | [BareMetal.DocChain](modules/BareMetal.DocChain.md) |
 | [BareMetal.Document](BareMetal.Document.md) | `<script src="src/BareMetal.Document.js"></script>` | `el`, `page`, `getHTML`, `setHTML`, `command`, `bold`, `italic`, `underline`, `heading`, `paragraph`, `list`, `color`, `hilite`, `font`, `fontSize`, `query` | [BareMetal.Document](BareMetal.Document.md) |
+| [BareMetal.DocumentRenderer](BareMetal.DocumentRenderer.md) | `<script src="src/BareMetal.DocumentRenderer.js"></script>` | `isSupported()`, `sanitizeHTML(html)`, `pageBreak()`, `render(html, options)`, `download(html, filename, options)` | [BareMetal.DocumentRenderer](BareMetal.DocumentRenderer.md) |
 | [BareMetal.DocumentWAL](BareMetal.DocumentWAL.md) | `<script src="src/BareMetal.DocumentWAL.js"></script>` | `create(options)`, `memoryTransport(seed?)`, `httpTransport(root)` | [BareMetal.DocumentWAL](BareMetal.DocumentWAL.md) |
 | [BareMetal.DragDrop](BareMetal.DragDrop.md) | `<script src="src/BareMetal.DragDrop.js"></script>` | `draggable(el, opts)`, `droppable(el, opts)`, `sortable(container, opts)` | [BareMetal.DragDrop](BareMetal.DragDrop.md) |
 | [BareMetal.Errors](BareMetal.Errors.md) | `<script src="src/BareMetal.Errors.js"></script>` | `new BareMetalError(code, message, opts)`, `create(code, message, opts)`, `classify(err)`, `isRetryable(err)`, `isTransient(err)`, `chain(err, cause)`, `getChain(err)`, `toUserSafe(err)`, `toJSON(err)`, `fromJSON(obj)`, `wrap(fn, opts)`, `assert(condition, code, message)`, `codes.register(code, defaults)`, `codes.lookup(code)`, `match(err, handlers)`, `aggregate(errors)`, `boundary(fn, fallback)` | [BareMetal.Errors](BareMetal.Errors.md) |
@@ -73,7 +74,7 @@ Generated implementation and function-calling catalog.
 | [BareMetal.Pipeline](BareMetal.Pipeline.md) | `<script src="src/BareMetal.Pipeline.js"></script>` | `create(...stages)`, `compose(...fns)`, `series(fns, input, ctx)`, `parallel(fns, input, ctx)`, `waterfall(fns)`, `stream(iterable)`, `backpressure(producer, consumer, opts)` | [BareMetal.Pipeline](BareMetal.Pipeline.md) |
 | [BareMetal.Pivot](BareMetal.Pivot.md) | `<script src="src/BareMetal.Pivot.js"></script>` | `fields`, `groupBy`, `valueField`, `op`, `sort`, `sortDir`, `filter` | [BareMetal.Pivot](BareMetal.Pivot.md) |
 | [BareMetal.Play](BareMetal.Play.md) | `<script src="src/BareMetal.Play.js"></script>` | `PACKS`, `mount(target, options?)`, `memoryClient(seed)`, `freshState()`, `matchConditions(state, conditions)`, `applyEffects(state, effects)`, `entryNode(nodes, choices, state)`, `offeredChoices(node, nodes, choices, state)`, `fillText(text, ctx)`, `sceneText(node, progress, persona)`, `withPersonaFacts(state, personas, storyId)`, `narratorOf(personas, storyId)`, `slipsFor(node, templates, progress, persona)`, `fireTriggers(node, templates, progress, persona)` | [BareMetal.Play](BareMetal.Play.md) |
-| [BareMetal.Print](modules/BareMetal.Print.md) | `<script src="src/BareMetal.Print.js"></script>` | `render(document, options)`, `paginate(document, options)`, `print(document, options)`, `preview(document, options)`, `receipt(data, options)`, `invoice(data, options)`, `document(data, options)`, `barcode(value, options)`, `qr(value, options)` | [BareMetal.Print](modules/BareMetal.Print.md) |
+| [BareMetal.Print](BareMetal.Print.md) | `<script src="src/BareMetal.Print.js"></script>` | `render(document, options)`, `paginate(document, options)`, `print(document, options)`, `preview(document, options)`, `receipt(data, options)`, `invoice(data, options)`, `document(data, options)`, `barcode(value, options)`, `qr(value, options)` | [BareMetal.Print](BareMetal.Print.md) |
 | [BareMetal.Progressive](BareMetal.Progressive.md) | `<script src="src/BareMetal.Progressive.js"></script>` | `register(swUrl, opts)`, `unregister()`, `getRegistration()`, `update()`, `onInstallPrompt(callback)`, `isInstalled()`, `isInstallable()`, `precache(urls)`, `clearCache(cacheName)`, `getCacheStatus()`, `isOnline()`, `onConnectivityChange(callback)`, `requestSync(tag)`, `subscribePush(vapidPublicKey)`, `unsubscribePush()`, `getPushSubscription()`, `generateManifest(opts)`, `injectManifest(opts)`, `postMessage(msg)`, `onMessage(callback)`, `register()`, `generateManifest()` | [BareMetal.Progressive](BareMetal.Progressive.md) |
 | [BareMetal.PubSub](BareMetal.PubSub.md) | `<script src="src/BareMetal.PubSub.js"></script>` | `create()`, `on(topic, handler, opts)`, `once(topic, handler, opts)`, `emit(topic, data, opts)`, `sticky(topic, data, opts)`, `off(topic, handler)`, `offAll(topic)`, `offNs(ns)`, `clear()`, `use(pattern, fn)`, `handle(topic, handler)`, `request(topic, data)`, `channel(topic, opts)`, `topics()`, `subscribers(topic)`, `has(topic)`, `channel.emit(data, emitOpts)`, `channel.subscribe(fn, subOpts)`, `channel.history()`, `channel.last()`, `channel.destroy()` | [BareMetal.PubSub](BareMetal.PubSub.md) |
 | [BareMetal.RBAC](BareMetal.RBAC.md) | `<script src="src/BareMetal.RBAC.js"></script>` | `WARNING`, `configure(options)`, `identity()`, `isAuthenticated()`, `hasRole(role)`, `hasAnyRole(roles)`, `hasAllRoles(roles)`, `inGroup(group)`, `inAnyGroup(groups)`, `inAllGroups(groups)`, `can(permission)`, `canAny(permissions)`, `canAll(permissions)`, `hasScope(scope)`, `hasAnyScope(scopes)`, `check(criteria)`, `checkAny(criteria)`, `guard(criteria)`, `applyDOM(rootElement)`, `setToken(token)`, `clearToken()`, `refresh()`, `onExpiry(callback)`, `tenant()`, `isTenant(value)`, `configure()` | [BareMetal.RBAC](BareMetal.RBAC.md) |
@@ -422,7 +423,7 @@ Implementation guide: [BareMetal.Communications.md](BareMetal.Communications.md)
 ```
 
 ```js
-BareMetal.ComponentFactories.create.message('Can you resend the quote?', { avatar: 'ðŸ§‘' });
+BareMetal.ComponentFactories.create.message('Can you resend the quote?', { avatar: '🧑' });
 ```
 
 ### Public API
@@ -492,6 +493,23 @@ const config = BareMetal.Config.create({
 
 Implementation guide: [BareMetal.Config.md](BareMetal.Config.md)
 
+## BareMetal.ControlSurface
+
+```html
+<script src="src/BareMetal.ControlSurface.js"></script>
+```
+
+```js
+const panel = BareMetal.ControlSurface.create({ title:'Settings', fields:[{ name:'level', type:'range', min:0, max:1, defaultValue:0.7 }] });
+document.querySelector('#app').append(panel.element);
+```
+
+### Public API
+
+`create(options)`
+
+Implementation guide: [modules/BareMetal.ControlSurface.md](modules/BareMetal.ControlSurface.md)
+
 ## BareMetal.Controls
 
 ```html
@@ -509,23 +527,6 @@ const moduleApi = BareMetal.Controls;
 ``
 
 Implementation guide: [BareMetal.Controls.md](BareMetal.Controls.md)
-
-## BareMetal.ControlSurface
-
-```html
-<script src="src/BareMetal.ControlSurface.js"></script>
-```
-
-```js
-const panel = BareMetal.ControlSurface.create({ title:'Settings', fields:[{ name:'level', type:'range', min:0, max:1, defaultValue:0.7 }] });
-document.querySelector('#app').append(panel.element);
-```
-
-### Public API
-
-`create(options)`
-
-Implementation guide: [modules/BareMetal.ControlSurface.md](modules/BareMetal.ControlSurface.md)
 
 ## BareMetal.Crypto
 
@@ -678,6 +679,32 @@ Implementation guide: [modules/BareMetal.DocChain.md](modules/BareMetal.DocChain
 `el`, `page`, `getHTML`, `setHTML`, `command`, `bold`, `italic`, `underline`, `heading`, `paragraph`, `list`, `color`, `hilite`, `font`, `fontSize`, `query`
 
 Implementation guide: [BareMetal.Document.md](BareMetal.Document.md)
+
+## BareMetal.DocumentRenderer
+
+```html
+<script src="src/BareMetal.DocumentRenderer.js"></script>
+```
+
+```js
+const result = await BareMetal.DocumentRenderer.render(invoiceHtml, {
+  title: 'Invoice INV-1042',
+  pageSize: 'A4',
+  orientation: 'portrait',
+  margin: 14,
+  scale: 1.5
+});
+
+const url = URL.createObjectURL(result.blob);
+downloadLink.href = url;
+downloadLink.download = 'invoice-1042.pdf';
+```
+
+### Public API
+
+`isSupported()`, `sanitizeHTML(html)`, `pageBreak()`, `render(html, options)`, `download(html, filename, options)`
+
+Implementation guide: [BareMetal.DocumentRenderer.md](BareMetal.DocumentRenderer.md)
 
 ## BareMetal.DocumentWAL
 
@@ -1539,16 +1566,21 @@ Implementation guide: [BareMetal.Play.md](BareMetal.Play.md)
 ```
 
 ```js
-const moduleApi = BareMetal.Print;
-// Source: ./src/BareMetal.Print.js
-// See the public API list below for call signatures.
+const result = await BareMetal.Print.print(invoiceHtml, {
+  device: 'pdf',
+  title: 'Invoice INV-1042',
+  pageSize: 'A4'
+});
+const url = URL.createObjectURL(result.blob);
+downloadLink.href = url;
+downloadLink.download = 'invoice-1042.pdf';
 ```
 
 ### Public API
 
 `render(document, options)`, `paginate(document, options)`, `print(document, options)`, `preview(document, options)`, `receipt(data, options)`, `invoice(data, options)`, `document(data, options)`, `barcode(value, options)`, `qr(value, options)`
 
-Implementation guide: [modules/BareMetal.Print.md](modules/BareMetal.Print.md)
+Implementation guide: [BareMetal.Print.md](BareMetal.Print.md)
 
 ## BareMetal.Progressive
 

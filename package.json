@@ -80,6 +80,7 @@
     "./clipboard": "./src/BareMetal.Clipboard.js",
     "./colour": "./src/BareMetal.Colour.js",
     "./document": "./src/BareMetal.Document.js",
+    "./document-renderer": "./src/BareMetal.DocumentRenderer.js",
     "./documentwal": "./src/BareMetal.DocumentWAL.js",
     "./font": "./src/BareMetal.Font.js",
     "./footerbar": "./src/BareMetal.FooterBar.js",

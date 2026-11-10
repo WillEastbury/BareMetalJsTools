@@ -342,7 +342,7 @@
                                     "chatEndpoint(messagesKey, url, opts)",
                                     "chatEndpoint()"
                                 ],
-                        "sample":  "BareMetal.ComponentFactories.create.message(\u0027Can you resend the quote?\u0027, { avatar: \u0027ðŸ§‘\u0027 });"
+                        "sample":  "BareMetal.ComponentFactories.create.message(\u0027Can you resend the quote?\u0027, { avatar: \u0027🧑\u0027 });"
                     },
                     {
                         "key":  "components",
@@ -553,6 +553,20 @@
                                     "query"
                                 ],
                         "sample":  "\u003cscript src=\"BareMetal.Document.js\"\u003e\u003c/script\u003e\r\n\u003cdiv id=\"doc\" style=\"height:24rem\"\u003e\u003c/div\u003e\r\n\u003cscript\u003e\r\n  const doc = BareMetal.Document.create(\u0027#doc\u0027, {\r\n    html: \u0027\u003ch1\u003eNotes\u003c/h1\u003e\u003cp\u003eSemantic HTML.\u003c/p\u003e\u0027,\r\n    onChange(html, prev) { console.log(html); }\r\n  });\r\n  doc.bold();\r\n\u003c/script\u003e"
+                    },
+                    {
+                        "key":  "document-renderer",
+                        "title":  "BareMetal.DocumentRenderer",
+                        "source":  "./src/BareMetal.DocumentRenderer.js",
+                        "docs":  "BareMetal.DocumentRenderer.md",
+                        "api":  [
+                            "isSupported()",
+                            "sanitizeHTML(html)",
+                            "pageBreak()",
+                            "render(html, options)",
+                            "download(html, filename, options)"
+                        ],
+                        "sample":  "const result = await BareMetal.DocumentRenderer.render(invoiceHtml, {\r\n  title: \u0027Invoice INV-1042\u0027,\r\n  pageSize: \u0027A4\u0027,\r\n  orientation: \u0027portrait\u0027,\r\n  margin: 14,\r\n  scale: 1.5\r\n});\r\n\r\nconst url = URL.createObjectURL(result.blob);\r\ndownloadLink.href = url;\r\ndownloadLink.download = \u0027invoice-1042.pdf\u0027;"
                     },
                     {
                         "key":  "documentwal",
@@ -1317,7 +1331,7 @@
                         "key":  "print",
                         "title":  "BareMetal.Print",
                         "source":  "./src/BareMetal.Print.js",
-                        "docs":  "modules/BareMetal.Print.md",
+                        "docs":  "BareMetal.Print.md",
                         "api":  [
                                     "render(document, options)",
                                     "paginate(document, options)",
@@ -2111,5 +2125,5 @@
                         "sample":  "BareMetal.Workflow.create(\u0027smoke\u0027, [\r\n  { type: \u0027SET\u0027, name: \u0027count\u0027, value: 1 }\r\n]);"
                     }
                 ],
-    "generated":  "2026-11-10T16:01:16Z"
+    "generated":  "2026-11-10T19:31:01Z"
 }

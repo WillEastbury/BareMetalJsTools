@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HTML Document Renderer | BareMetalJsTools</title>
+  <link rel="stylesheet" href="../../src/BareMetalStyles.css">
+  <link rel="stylesheet" href="../../src/fonts/fonts.css">
+  <link rel="stylesheet" href="../../src/themes/wavefunction.css">
+</head>
+<body>
+  <header class="nbar">
+    <div class="bx fx ai-c jc-b gp2">
+      <a class="nbar-b" href="./"><span class="bd bg-p">BM</span> BareMetal Lab</a>
+      <nav class="fx ai-c gp2" aria-label="Page navigation">
+        <a class="nl" href="../index.html">Showcase</a>
+        <a class="nl act" href="document-renderer.html">HTML to PDF</a>
+        <a class="nl" href="editor.html">HTML editor</a>
+      </nav>
+    </div>
+  </header>
+  <main class="bx py-4">
+    <header class="rw g3 ai-c mb-4">
+      <div class="cm8">
+        <span class="bd bg-p">DOCUMENT LAB / 09</span>
+        <h1 class="dp4 mt-2">HTML in. Real PDF out.</h1>
+        <p class="ld">A dependency-free JavaScript renderer: browser HTML layout, rasterized page artwork, and a searchable text layer written into a real PDF file.</p>
+      </div>
+      <aside class="cm4">
+        <div class="cd"><div class="cd-b">
+          <strong>No print dialog. No PDF libraries.</strong>
+          <p class="sm fg-m mt-2">The renderer creates an <code>application/pdf</code> Blob in JavaScript. Page artwork is rasterized; text is layered for search and selection.</p>
+          <span class="bd bg-in">HYBRID PDF</span>
+        </div></div>
+      </aside>
+    </header>
+    <div class="rw g3">
+      <section class="cm5">
+        <div class="cd">
+          <div class="cd-h"><h2 class="mb0">Document source</h2></div>
+          <div class="cd-b">
+            <label for="document-title">PDF title
+              <input id="document-title" class="fc" value="Northstar Supply - Invoice INV-1042">
+            </label>
+            <div class="rw g2 mt-2">
+              <label class="cm4">Paper
+                <select id="page-size" class="fc">
+                  <option value="A4">A4</option>
+                  <option value="Letter">Letter</option>
+                  <option value="A3">A3</option>
+                  <option value="A5">A5</option>
+                  <option value="Legal">Legal</option>
+                </select>
+              </label>
+              <label class="cm4">Orientation
+                <select id="orientation" class="fc">
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </label>
+              <label class="cm4">Raster scale
+                <select id="render-scale" class="fc">
+                  <option value="1">1x</option>
+                  <option value="1.5" selected>1.5x</option>
+                  <option value="2">2x</option>
+                </select>
+              </label>
+            </div>
+            <label for="html-source" class="mt-2">HTML content
+              <textarea id="html-source" class="fc" rows="18" spellcheck="false"></textarea>
+            </label>
+            <div class="fx fx-w gp2 mt-2">
+              <button id="insert-page-break" class="bt bt-os" type="button">Insert page break</button>
+              <button id="reset-document" class="bt bt-os" type="button">Reset sample</button>
+              <button id="render-pdf" class="bt bt-p" type="button">Generate PDF</button>
+            </div>
+            <a id="download-pdf" class="bt bt-op mt-2" href="#" download="document.pdf" hidden>Download PDF</a>
+            <p id="renderer-status" class="sm fg-m mt-2" role="status">Ready. HTML is sanitized locally before rendering.</p>
+          </div>
+        </div>
+        <details class="cd mt-3">
+          <summary class="cd-h">Implementation sample</summary>
+          <pre class="bg-bs fg-dk p-2">const result = await BareMetal.DocumentRenderer.render(html, {
+  pageSize: 'A4',
+  orientation: 'portrait',
+  scale: 1.5
+});
+console.log(result.blob.type, result.pages);
+// Download the generated application/pdf Blob.</pre>
+        </details>
+      </section>
+      <section class="cm7">
+        <div class="cd">
+          <div class="cd-h fx ai-c jc-b gp2"><h2 class="mb0">HTML preview</h2><span class="bd bg-s">SANDBOXED</span></div>
+          <div class="cd-b"><iframe id="html-preview" class="w-100 bo" title="Sanitized HTML preview" sandbox="" height="380"></iframe></div>
+        </div>
+        <div class="cd mt-3">
+          <div class="cd-h fx ai-c jc-b gp2"><h2 class="mb0">Generated PDF</h2><span id="pdf-meta" class="sm fg-m">Not rendered yet</span></div>
+          <div class="cd-b"><iframe id="pdf-preview" class="w-100 bo" title="Generated PDF preview" height="680"></iframe></div>
+        </div>
+      </section>
+    </div>
+    <div class="bd bg-wn p-2 mt-4">
+      Fidelity note: browser layout provides element and text positions; common backgrounds, borders, text, and embedded raster images are painted into page images. Advanced CSS effects and pseudo-elements may differ from the preview. The PDF is a real file, not a print-dialog handoff.
+    </div>
+  </main>
+  <footer class="bot p-3"><div class="bx fx fx-w jc-b gp2"><a href="./">All interactive apps</a><a href="https://github.com/WillEastbury/BareMetalJsTools">Source</a></div></footer>
+  <script src="../../src/BareMetal.DocumentRenderer.js"></script>
+  <script>
+    (function () {
+      var source = document.getElementById('html-source');
+      var htmlPreview = document.getElementById('html-preview');
+      var pdfPreview = document.getElementById('pdf-preview');
+      var status = document.getElementById('renderer-status');
+      var download = document.getElementById('download-pdf');
+      var pdfMeta = document.getElementById('pdf-meta');
+      var previousUrl = '';
+      var sample = [
+        '<header><p>Northstar Supply Co. / Accounts Receivable</p><h1>Invoice INV-1042</h1><p>Issued 10 November 2026</p></header>',
+        '<section><h2>Bill to</h2><p><strong>Northstar Audio</strong><br>14 Harbour Street<br>London, UK</p></section>',
+        '<section><h2>Line items</h2><table><thead><tr><th>Description</th><th>Qty</th><th>Unit price</th><th>Amount</th></tr></thead><tbody>',
+        '<tr><td>Four-channel mixer</td><td>1</td><td>GBP 890.50</td><td>GBP 890.50</td></tr>',
+        '<tr><td>Balanced cable</td><td>5</td><td>GBP 70.00</td><td>GBP 350.00</td></tr>',
+        '<tr><td>Studio setup</td><td>1</td><td>GBP 120.00</td><td>GBP 120.00</td></tr>',
+        '</tbody></table></section>',
+        '<section><h2>Payment summary</h2><p>Subtotal: GBP 1,360.50<br>VAT: GBP 272.10<br><strong>Total due: GBP 1,632.60</strong></p></section>',
+        '<div class="bm-pdf-page-break"></div>',
+        '<section><h2>Terms and remittance</h2><p>Payment is due within 30 days of issue. Please include invoice INV-1042 as the payment reference.</p>',
+        '<p>Bank: Northstar Commercial<br>Account: 01234567<br>Sort code: 10-20-30</p><p>Thank you for your business.</p></section>'
+      ].join('\n');
+
+      function options() {
+        return {
+          title: document.getElementById('document-title').value || 'Document',
+          pageSize: document.getElementById('page-size').value,
+          orientation: document.getElementById('orientation').value,
+          scale: Number(document.getElementById('render-scale').value),
+          margin: 14,
+          maxPages: 40
+        };
+      }
+
+      function renderHtmlPreview() {
+        var safe = BareMetal.DocumentRenderer.sanitizeHTML(source.value);
+        htmlPreview.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><style>' +
+          'body{font:14px/1.5 Arial,sans-serif;color:#1f2937;padding:24px}table{width:100%;border-collapse:collapse}' +
+          'td,th{border:1px solid #cbd5e1;padding:8px;text-align:left}h1{color:#4338ca}</style></head><body>' +
+          safe + '</body></html>';
+      }
+
+      async function generate() {
+        status.textContent = 'Rendering pages and writing PDF bytes…';
+        download.hidden = true;
+        try {
+          var result = await BareMetal.DocumentRenderer.render(source.value, options());
+          if (previousUrl) URL.revokeObjectURL(previousUrl);
+          previousUrl = URL.createObjectURL(result.blob);
+          pdfPreview.src = previousUrl;
+          download.href = previousUrl;
+          download.download = (document.getElementById('document-title').value || 'document')
+            .replace(/[^a-z0-9_-]+/gi, '-').replace(/^-|-$/g, '') + '.pdf';
+          download.hidden = false;
+          pdfMeta.textContent = result.pages + ' page(s) / ' + Math.ceil(result.bytes / 1024) + ' KB / searchable text';
+          status.textContent = 'PDF created locally. No print dialog or remote service was used.';
+          return result;
+        } catch (error) {
+          status.textContent = 'PDF generation failed: ' + (error.message || String(error));
+          throw error;
+        }
+      }
+
+      source.value = sample;
+      renderHtmlPreview();
+      source.addEventListener('input', renderHtmlPreview);
+      document.getElementById('insert-page-break').addEventListener('click', function () {
+        var marker = BareMetal.DocumentRenderer.pageBreak();
+        source.setRangeText('\n' + marker + '\n', source.selectionStart, source.selectionEnd, 'end');
+        renderHtmlPreview();
+      });
+      document.getElementById('reset-document').addEventListener('click', function () {
+        source.value = sample;
+        renderHtmlPreview();
+        status.textContent = 'Sample restored.';
+      });
+      document.getElementById('render-pdf').addEventListener('click', function () {
+        generate().catch(function () {});
+      });
+      window.addEventListener('pagehide', function () {
+        if (previousUrl) URL.revokeObjectURL(previousUrl);
+      }, { once: true });
+
+      window.__BM_APP__ = {
+        ready: true,
+        render: generate,
+        buildOptions: options,
+        getSource: function () { return source.value; },
+        setSource: function (html) { source.value = html; renderHtmlPreview(); }
+      };
+    })();
+  </script>
+</body>
+</html>

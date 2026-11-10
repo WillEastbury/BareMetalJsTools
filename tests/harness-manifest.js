@@ -9,6 +9,7 @@ window.BM_TEST_FILES = [
   'tests/browser/BareMetal.Diagnostics.browser.js',
   'tests/browser/BareMetal.DocChain.browser.js',
   'tests/browser/BareMetal.Document.browser.js',
+  'tests/browser/BareMetal.DocumentRenderer.browser.js',
   'tests/browser/BareMetal.DocumentWAL.browser.js',
   'tests/browser/BareMetal.DragDrop.browser.js',
   'tests/browser/BareMetal.Errors.browser.js',
