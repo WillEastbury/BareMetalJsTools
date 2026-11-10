@@ -357,6 +357,13 @@ small, .sm { font-size: .875em; }
 .tb-dk { color: #fff; background-color: var(--bs-dark); border-color: #4d5154; }
 .tb-lt { background-color: var(--bs-light); }
 .tb-p { background-color: rgba(var(--bs-primary-rgb), .1); }
+.bm-nested-table { margin: .5rem 0 0; background: var(--bs-surface-2); }
+.bm-nested-table th, .bm-nested-table td { white-space: nowrap; }
+.bm-table-empty { padding: 1rem; color: var(--bs-secondary-color); text-align: center; }
+.bm-many-checklist { display: flex; flex-wrap: wrap; gap: .5rem; }
+.bm-many-check { display: inline-flex; align-items: center; gap: .35rem; padding: .35rem .55rem; border: var(--bs-border-width) solid var(--bs-border-color); border-radius: var(--bs-border-radius); }
+.bm-many-option { padding: .35rem .55rem; border: var(--bs-border-width) solid var(--bs-border-color); border-radius: var(--bs-border-radius); background: transparent; color: var(--bs-body-color); }
+.bm-many-option[aria-pressed="true"] { background: var(--bs-primary); border-color: var(--bs-primary); color: #fff; }
 .tb-wn { background-color: rgba(var(--bs-warning-rgb), .1); }
 
 /* ============================================================

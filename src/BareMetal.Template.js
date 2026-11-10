@@ -51,6 +51,15 @@ BareMetal.Template = (() => {
     } else if (f.type === 'file') {
       inp = mk('input', { type: 'file', className: 'fc' });
       if (f.accept) inp.accept = f.accept;
+    } else if (f.type === 'many-select' || f.type === 'many-checklist') {
+      inp = f.type === 'many-select'
+        ? mk('select', { className: 'fsl', multiple: true })
+        : mk('div', { className: 'bm-many-checklist' });
+      inp.setAttribute(f.type === 'many-select' ? 'm-many-select' : 'm-many-checklist', name);
+      inp.setAttribute('m-options', f.optionsPath || f.lookupPath || name + 'Options');
+      inp.setAttribute('m-value-field', f.valueField || 'id');
+      inp.setAttribute('m-label-field', f.labelField || 'name');
+      if (f.options) inp.setAttribute('m-options-json', JSON.stringify(f.options));
     } else {
       inp = mk('input', { className: 'fc', type: INPUT_TYPES[f.type] || 'text' });
       if (f.type === 'Integer') inp.step = '1';
@@ -68,6 +77,22 @@ BareMetal.Template = (() => {
       className: 'fl fsb',
       textContent: f.label || name.replace(/([A-Z])/g, ' $1').trim()
     });
+  }
+
+  function inferFields(items) {
+    const fields = {};
+    (items || []).forEach(item => {
+      Object.keys(item || {}).forEach(name => {
+        if (!fields[name]) {
+          fields[name] = {
+            label: name.replace(/([A-Z])/g, ' $1').trim(),
+            type: typeof item[name] === 'boolean' ? 'boolean' :
+              typeof item[name] === 'number' ? 'number' : 'text'
+          };
+        }
+      });
+    });
+    return fields;
   }
 
   function buildForm(layout, fields) {
@@ -155,6 +180,23 @@ BareMetal.Template = (() => {
           td.innerHTML = (v === true || v === 'true' || v === 1)
             ? '<span class="bd bg-ok">✓</span>'
             : '<span class="bd bg-s">✗</span>';
+        } else if (fields[n]?.type === 'table' || fields[n]?.nested) {
+          const nestedFields = fields[n].fields || fields[n].nestedFields || {};
+          const nestedItems = Array.isArray(item[n]) ? item[n] : [];
+          if (Object.keys(nestedFields).length) {
+            td.appendChild(buildTable(nestedFields, nestedItems, fields[n].callbacks || {}));
+          } else if (nestedItems.length) {
+            td.appendChild(buildTable(inferFields(nestedItems[0]), nestedItems, fields[n].callbacks || {}));
+          } else {
+            td.textContent = '—';
+          }
+        } else if (fields[n]?.type === 'many' || fields[n]?.many) {
+          const many = Array.isArray(item[n]) ? item[n] : [];
+          const labelField = fields[n].labelField || 'name';
+          const valueField = fields[n].valueField || 'id';
+          td.textContent = many.map(v =>
+            typeof v === 'object' ? (v[labelField] ?? v[valueField] ?? '') : v
+          ).filter(Boolean).join(', ');
         } else {
           td.textContent = resolve(n, item[n]);
         }

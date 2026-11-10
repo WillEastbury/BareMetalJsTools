@@ -66,6 +66,22 @@ const table = BareMetal.Template.buildTable(fields, customers, {
 });
 ```
 
+Nested and many-to-many table fields:
+
+```js
+const table = BareMetal.Template.buildTable({
+  name: { label: 'Department' },
+  employees: {
+    type: 'table',
+    fields: {
+      name: { label: 'Name' },
+      role: { label: 'Role' }
+    }
+  },
+  tags: { type: 'many', labelField: 'name', valueField: 'id' }
+}, departments);
+```
+
 ### `buildInput(name, field)` → `HTMLElement`
 
 Builds the appropriate control for a single field. Supported types include text, number, textarea, select, boolean, file, `Country`, `Date`, `DateTime`, `Time`, `Email`, `Password`, and more.

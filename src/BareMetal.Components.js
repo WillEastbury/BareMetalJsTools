@@ -385,19 +385,68 @@ BareMetal.Components = (() => {
       const arrKey = n.getAttribute('m-table'), wk = topKey(arrKey);
       const selectFn = n.getAttribute('m-table-select') || '';
       const colsDef = n.getAttribute('m-table-cols') || '';
+      const nestedKey = n.getAttribute('m-table-nested') || '';
+      const nestedColsDef = n.getAttribute('m-table-nested-cols') || '';
+      const keyProp = n.getAttribute('m-table-key') || '';
+      const emptyText = n.getAttribute('m-table-empty') || 'No records';
+      const labelField = n.getAttribute('m-table-label') || 'name';
+      const valueField = n.getAttribute('m-table-value') || 'id';
       const sortable = !n.hasAttribute('m-table-nosort');
       let sortCol = null, sortAsc = true, selectedRow = null;
+      function getValue(obj, path) {
+        if (!path) return undefined;
+        return path.split('.').reduce((cur, key) => cur == null ? undefined : cur[key], obj);
+      }
+      function displayValue(value) {
+        if (value == null) return '';
+        if (Array.isArray(value)) {
+          return value.map(v => typeof v === 'object' && v ? (v[labelField] ?? v[valueField] ?? '') : v).filter(Boolean).join(', ');
+        }
+        if (typeof value === 'object') return value[labelField] ?? value[valueField] ?? JSON.stringify(value);
+        return String(value);
+      }
       function parseCol(s) {
         var i = s.indexOf(':');
         if (i > -1) return { header: s.substring(0, i).trim(), key: s.substring(i + 1).trim() };
         s = s.trim();
         return { header: s.charAt(0).toUpperCase() + s.slice(1), key: s };
       }
+      function nestedTable(items) {
+        var nested = document.createElement('table');
+        nested.className = 'tb tb-h tb-s vam bm-nested-table';
+        var nestedCols = nestedColsDef
+          ? nestedColsDef.split(',').map(parseCol)
+          : (items.length ? Object.keys(items[0]).slice(0, 6).map(k => ({ header: k.charAt(0).toUpperCase() + k.slice(1), key: k })) : []);
+        var nestedHead = nested.createTHead().insertRow();
+        nestedCols.forEach(col => nestedHead.appendChild(Object.assign(document.createElement('th'), { textContent: col.header })));
+        var nestedBody = nested.createTBody();
+        items.forEach(item => {
+          var nestedRow = nestedBody.insertRow();
+          nestedCols.forEach(col => {
+            var td = nestedRow.insertCell();
+            td.textContent = displayValue(getValue(item, col.key));
+          });
+        });
+        return nested;
+      }
       function render() {
         var arr = getPath(state, arrKey);
         n.innerHTML = '';
         selectedRow = null;
-        if (!Array.isArray(arr) || arr.length === 0) return;
+        n.classList.add('bm-table');
+        if (!Array.isArray(arr) || arr.length === 0) {
+          if (n.tagName === 'TABLE') {
+            var emptyCaption = n.createCaption();
+            emptyCaption.className = 'bm-table-empty';
+            emptyCaption.textContent = emptyText;
+          } else {
+            var empty = document.createElement('div');
+            empty.className = 'bm-table-empty';
+            empty.textContent = emptyText;
+            n.appendChild(empty);
+          }
+          return;
+        }
         var cols = colsDef
           ? colsDef.split(',').map(parseCol)
           : Object.keys(arr[0]).map(function(k) { return { header: k.charAt(0).toUpperCase() + k.slice(1), key: k }; });
@@ -405,7 +454,7 @@ BareMetal.Components = (() => {
         if (sortCol !== null) {
           var key = cols[sortCol].key;
           data.sort(function(a, b) {
-            var va = a[key], vb = b[key];
+            var va = getValue(a, key), vb = getValue(b, key);
             if (va == null) va = '';
             if (vb == null) vb = '';
             if (typeof va === 'number' && typeof vb === 'number') return sortAsc ? va - vb : vb - va;
@@ -435,10 +484,17 @@ BareMetal.Components = (() => {
         data.forEach(function(item) {
           var tr = document.createElement('tr');
           tr.className = 'bm-table-row';
+          if (keyProp) tr.dataset.key = String(getValue(item, keyProp) ?? '');
           cols.forEach(function(col) {
             var td = document.createElement('td');
-            var val = item[col.key];
-            td.textContent = val != null ? val : '';
+            var val = getValue(item, col.key);
+            if (nestedKey && col.key === nestedKey) {
+              var nestedItems = Array.isArray(val) ? val : [];
+              if (nestedItems.length) td.appendChild(nestedTable(nestedItems));
+              else td.textContent = '—';
+            } else {
+              td.textContent = displayValue(val);
+            }
             tr.appendChild(td);
           });
           tr.addEventListener('click', function(e) {

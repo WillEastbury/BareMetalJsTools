@@ -242,6 +242,12 @@ badge.textContent = 'New';
 | `m-each` | `items` or `items key:id` | Repeats a `<template>` over an array, optionally with keyed diffing. |
 | `m-click` | `handlerName` | Calls `state[handlerName](event)` on click. |
 | `m-submit` | `handlerName` | Calls `state[handlerName](event)` on form submit. |
+| `m-many-select="path"` | State path + `m-options`/`m-options-json` | Native multi-select or toggle-list binding. |
+| `m-many-checklist="path"` | State path + `m-options`/`m-options-json` | Checkbox binding for many-to-many relations. |
+
+Both many-to-many directives accept `m-value-field="id"` and
+`m-label-field="name"`. They preserve selected objects or primitive values
+according to the option representation.
 
 ### `m-each` scope helpers
 

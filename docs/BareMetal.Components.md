@@ -111,6 +111,12 @@ BareMetal.Components.bindComponents(document.getElementById('nav'), state, watch
 | `m-table-select` | string | `''` | State method called as `fn(item, event)`. |
 | `m-table-cols` | string | inferred | Comma-separated `Header:key` pairs. |
 | `m-table-nosort` | boolean attribute | off | Disables clickable sorting. |
+| `m-table-key` | string | `''` | Dotted row key used as stable row identity. |
+| `m-table-nested` | string | `''` | Dotted array field rendered as a nested table in the matching column. |
+| `m-table-nested-cols` | string | inferred | Comma-separated `Header:key` columns for nested tables. |
+| `m-table-empty` | string | `No records` | Empty-state text. |
+| `m-table-label` | string | `name` | Label field for object-valued or many-valued cells. |
+| `m-table-value` | string | `id` | Fallback value field for object-valued cells. |
 
 #### `m-tree`
 
@@ -172,6 +178,30 @@ const { state, watch } = BareMetal.Bind.reactive({
 BareMetal.Components.bindComponents(document.getElementById('sidebar'), state, watch);
 state.toasts.push({ title: 'Saved', message: 'Milestone updated', type: 'success', duration: '5s' });
 ```
+
+### JSON, nested and many-to-many table example
+
+```html
+<table
+  m-table="departments"
+  m-table-cols="Department:name,Employees:employees,Tags:tags"
+  m-table-nested="employees"
+  m-table-nested-cols="Name:name,Role:role"
+  m-table-select="openDepartment"
+  m-table-empty="No departments">
+</table>
+
+<div
+  m-many-checklist="selectedDepartments"
+  m-options="departmentOptions"
+  m-value-field="id"
+  m-label-field="name">
+</div>
+```
+
+The table renderer supports dotted JSON paths, object-valued relation cells,
+many-valued arrays and nested array tables. The checklist or multi-select
+directive maintains the selected relation objects or IDs in the reactive model.
 
 ## Notes
 - This module does not replace `BareMetal.Bind.bind()`; use both when a page has core directives and widget directives.

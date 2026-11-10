@@ -18,7 +18,7 @@ Every module follows the same pattern: small, obvious, fast. You can read the so
 
 | Module | What it does | Source | Min | Nearest equivalent for the not-quite-insane |
 |---|---|---|---|---|
-| [`BareMetal.Styles`](docs/BareMetal.Styles.md) | CSS framework. Grid, flex, buttons, forms, tables, cards, modals, alerts, toasts — all with short class names optimised for wire size. Zero JS. | [59.7 KB raw / 11.5 KB gzip](src/BareMetalStyles.css) | [44.4 KB raw / 8.9 KB gzip](src/BareMetalStyles.min.css) | *Bootstrap (227 KB)*, Tailwind (≈300 KB+), Fabric UI (≈350 KB), React (≈140 KB) |
+| [`BareMetal.Styles`](docs/BareMetal.Styles.md) | CSS framework. Grid, flex, buttons, forms, tables, cards, modals, alerts, toasts — all with short class names optimised for wire size. Zero JS. | [60.5 KB raw / 11.7 KB gzip](src/BareMetalStyles.css) | [45.1 KB raw / 9.0 KB gzip](src/BareMetalStyles.min.css) | *Bootstrap (227 KB)*, Tailwind (≈300 KB+), Fabric UI (≈350 KB), React (≈140 KB) |
 | [`BareMetal.Styles.BootstrapCompatibilityShim`](src/BareMetal.Styles.BootstrapCompatibilityShim.css) | Drop-in Bootstrap 5 class-name compatibility. Use standard Bootstrap classes (`.btn`, `.card`, `.row`, `.col-md-6`, etc.) without loading Bootstrap itself. Optional — only needed if migrating from Bootstrap. | [29.1 KB raw / 5.4 KB gzip](src/BareMetal.Styles.BootstrapCompatibilityShim.css) | [24.3 KB raw / 4.8 KB gzip](src/BareMetal.Styles.BootstrapCompatibilityShim.min.css) | *Bootstrap 5 (227 KB)* — this replaces it at 1/9th the size |
 | Themes | Swap the colour palette with a single `<link>`. ~800 bytes source, ~600 bytes min each. | | | *Bootswatch (≈8 KB per theme)* |
 
@@ -58,10 +58,10 @@ Every module follows the same pattern: small, obvious, fast. You can read the so
 
 | Module | What it does | Source | Min | Nearest equivalent for the not-quite-insane |
 |---|---|---|---|---|
-| [`BareMetal.Bind`](docs/BareMetal.Bind.md) | Reactive `Proxy` state + `m-*` directives. Two-way forms, lists, toasts, chatbot, calendar, Gantt charts, sortable tables, tree views. | [13.3 KB raw / 3.7 KB gzip](src/BareMetal.Bind.js) | [6.6 KB raw / 2.5 KB gzip](src/BareMetal.Bind.min.js) | Vue.js (≈40 KB min), Alpine.js (≈15 KB), Rivets.js ❤️, *Knockout.js ❤️*, TinyBind 💕 |
-| [`BareMetal.Components`](docs/BareMetal.Components.md) | Widget directives (m-img, m-toast, m-chatbot, m-calendar, m-gantt, m-table, m-tree, m-entity) that extend Bind. | [25.6 KB raw / 6.4 KB gzip](src/BareMetal.Components.js) | [17.3 KB raw / 5.4 KB gzip](src/BareMetal.Components.min.js) | PrimeVue, Vuetify, Material UI (hundreds of KB each) |
+| [`BareMetal.Bind`](docs/BareMetal.Bind.md) | Reactive `Proxy` state + `m-*` directives, keyed lists, JSON arrays and many-to-many bindings. | [18.2 KB raw / 4.7 KB gzip](src/BareMetal.Bind.js) | [12.3 KB raw / 3.8 KB gzip](src/BareMetal.Bind.min.js) | Vue.js (≈40 KB min), Alpine.js (≈15 KB), Rivets.js ❤️, *Knockout.js ❤️*, TinyBind 💕 |
+| [`BareMetal.Components`](docs/BareMetal.Components.md) | Widget directives including fast dotted-field tables, nested tables and many-valued relation cells. | [28.3 KB raw / 7.0 KB gzip](src/BareMetal.Components.js) | [19.3 KB raw / 6.0 KB gzip](src/BareMetal.Components.min.js) | PrimeVue, Vuetify, Material UI (hundreds of KB each) |
 | [`BareMetal.ComponentFactories`](docs/BareMetal.ComponentFactories.md) | `create.*` helpers and `chatEndpoint()` auto-wire for REST-backed chatbots. | [2.6 KB raw / 1.0 KB gzip](src/BareMetal.ComponentFactories.js) | [1.5 KB raw / 0.7 KB gzip](src/BareMetal.ComponentFactories.min.js) | *Hand-rolled boilerplate* |
-| [`BareMetal.Template`](docs/BareMetal.Template.md) | Schema-driven DOM builder. Hand it metadata, get a form or table back. | [7.8 KB raw / 2.7 KB gzip](src/BareMetal.Template.js) | [5.7 KB raw / 2.3 KB gzip](src/BareMetal.Template.min.js) | Formly (≈80 KB), *JSON Forms (≈200 KB)* |
+| [`BareMetal.Template`](docs/BareMetal.Template.md) | Schema-driven DOM builder for forms, flat tables, nested tables and many-relations. | [9.9 KB raw / 3.2 KB gzip](src/BareMetal.Template.js) | [7.2 KB raw / 2.7 KB gzip](src/BareMetal.Template.min.js) | Formly (≈80 KB), *JSON Forms (≈200 KB)* |
 | [`BareMetal.Chat`](docs/BareMetal.Chat.md) | Theme-aware sidebar, conversation list, transcript, composer, status, and response-control layout primitives. | [4.1 KB raw / 1.1 KB gzip](src/BareMetal.Chat.css) | — | App-local chat page styling |
 | [`BareMetal.Controls`](docs/BareMetal.Controls.md) | Shared accessible range, disclosure, and help controls. | [2.6 KB raw / 0.9 KB gzip](src/BareMetal.Controls.js) | [4.1 KB raw / 1.3 KB gzip](src/BareMetal.Controls.css) | No equivalent |
 | [`BareMetal.Modal`](docs/BareMetal.Modal.md) | Native dialog wrapper with focus restoration and busy state. | [2.0 KB raw / 0.9 KB gzip](src/BareMetal.Modal.js) | [0.5 KB raw / 0.3 KB gzip](src/BareMetal.Modal.css) | Bootstrap modal JS |
@@ -160,7 +160,7 @@ Every module follows the same pattern: small, obvious, fast. You can read the so
 | [`BareMetal.Inbox`](docs/BareMetal.Inbox.md) | Persistent notification center: channels, preferences, read/unread, grouping, priority, retention, search. | [22.5 KB raw / 5.2 KB gzip](src/BareMetal.Inbox.js) | [10.1 KB raw / 3.6 KB gzip](src/BareMetal.Inbox.min.js) | *Custom implementations* |
 | [`BareMetal.Blob`](docs/BareMetal.Blob.md) | File/blob lifecycle: chunked upload, resumable, hash/checksum, encrypt, store adapters, lifecycle policies. | [38.3 KB raw / 9.3 KB gzip](src/BareMetal.Blob.js) | [20.0 KB raw / 6.9 KB gzip](src/BareMetal.Blob.min.js) | *tus-js-client (≈30 KB)*, uppy (≈200 KB) |
 | [`BareMetal.Tenant`](docs/BareMetal.Tenant.md) | Multi-tenancy: isolation, context propagation, partitioning, hierarchy, limits, feature flags, suspend/activate. | [26.1 KB raw / 5.7 KB gzip](src/BareMetal.Tenant.js) | [10.6 KB raw / 3.8 KB gzip](src/BareMetal.Tenant.min.js) | *Custom implementations* |
-| **Total** | **The whole toolkit** | **≈2,317.9 KB raw / 590.2 KB gzip** | **≈984.8 KB raw / 332.2 KB gzip** | **≈6,000+ KB** (picking the smaller option from each row) |
+| **Total** | **The whole toolkit** | **≈2,328.5 KB raw / 592.4 KB gzip** | **≈994.8 KB raw / 334.6 KB gzip** | **≈6,000+ KB** (picking the smaller option from each row) |
 
 ### Architecture
 

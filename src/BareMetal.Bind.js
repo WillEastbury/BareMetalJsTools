@@ -219,6 +219,107 @@ BareMetal.Bind = (() => {
       });
     });
 
+    // m-many-select / m-many-checklist
+    // Many-to-many binding for arrays of selected IDs or selected objects.
+    // Options come from m-options="path"; value/label fields default to id/name.
+    root.querySelectorAll('[m-many-select],[m-many-checklist]').forEach(n => {
+      const isChecklist = n.hasAttribute('m-many-checklist');
+      const path = n.getAttribute(isChecklist ? 'm-many-checklist' : 'm-many-select');
+      const optionsPath = n.getAttribute('m-options') || '';
+      const optionsJson = n.getAttribute('m-options-json') || '';
+      const valueField = n.getAttribute('m-value-field') || 'id';
+      const labelField = n.getAttribute('m-label-field') || 'name';
+      const wk = topKey(path);
+      const optionsKey = topKey(optionsPath);
+      const optionValue = option => typeof option === 'object' && option ? option[valueField] : option;
+      const optionLabel = option => typeof option === 'object' && option ? (option[labelField] ?? option[valueField] ?? option) : option;
+      const selectedValue = item => typeof item === 'object' && item ? item[valueField] : item;
+
+      const sync = () => {
+        const selected = getPath(state, path);
+        const selectedIds = new Set((Array.isArray(selected) ? selected : []).map(selectedValue).map(String));
+        let options = optionsPath ? getPath(state, optionsPath) : [];
+        if (!options.length && optionsJson) {
+          try { options = JSON.parse(optionsJson); } catch (_) { options = []; }
+        }
+        n.innerHTML = '';
+        if (!Array.isArray(options)) return;
+        if (isChecklist) {
+          n.classList.add('bm-many-checklist');
+          options.forEach(option => {
+            const value = optionValue(option);
+            const label = document.createElement('label');
+            label.className = 'bm-many-check';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.value = String(value);
+            input.checked = selectedIds.has(String(value));
+            input.addEventListener('change', () => {
+              const current = getPath(state, path);
+              let next = (Array.isArray(current) ? current : []).slice();
+              if (input.checked) {
+                if (!next.some(item => String(selectedValue(item)) === String(value))) {
+                  next.push(typeof option === 'object' ? Object.assign({}, option) : value);
+                }
+              } else {
+                next = next.filter(item => String(selectedValue(item)) !== String(value));
+              }
+              setPath(state, path, next);
+            });
+            label.append(input, document.createTextNode(' ' + String(optionLabel(option))));
+            n.appendChild(label);
+          });
+        } else {
+          n.innerHTML = '';
+          if (n.tagName !== 'SELECT') {
+            n.setAttribute('role', 'group');
+          }
+          if (n.tagName === 'SELECT') {
+            n.multiple = true;
+            options.forEach(option => {
+              const value = optionValue(option);
+              const opt = document.createElement('option');
+              opt.value = String(value);
+              opt.textContent = String(optionLabel(option));
+              opt.selected = selectedIds.has(String(value));
+              n.appendChild(opt);
+            });
+            n.onchange = () => {
+              const map = new Map(options.map(option => [String(optionValue(option)), option]));
+              const next = Array.from(n.selectedOptions).map(option => {
+                const original = map.get(option.value);
+                return typeof original === 'object' ? Object.assign({}, original) : original;
+              });
+              setPath(state, path, next);
+            };
+          } else {
+            options.forEach(option => {
+              const value = optionValue(option);
+              const button = document.createElement('button');
+              button.type = 'button';
+              button.className = 'bm-many-option';
+              button.textContent = String(optionLabel(option));
+              button.setAttribute('aria-pressed', String(selectedIds.has(String(value))));
+              button.addEventListener('click', () => {
+                const current = getPath(state, path);
+                let next = (Array.isArray(current) ? current : []).slice();
+                if (next.some(item => String(selectedValue(item)) === String(value))) {
+                  next = next.filter(item => String(selectedValue(item)) !== String(value));
+                } else {
+                  next.push(typeof option === 'object' ? Object.assign({}, option) : value);
+                }
+                setPath(state, path, next);
+              });
+              n.appendChild(button);
+            });
+          }
+        }
+      };
+      sync();
+      watch(wk, sync);
+      if (optionsKey && optionsKey !== wk) watch(optionsKey, sync);
+    });
+
     // m-text
     root.querySelectorAll('[m-text]').forEach(n => {
       if (n.closest('[m-each],[m-navbar]')) return;

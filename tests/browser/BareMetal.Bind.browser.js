@@ -80,3 +80,45 @@ describe('BareMetal.Bind m-text', function () {
     expect(root.querySelector('span').textContent).toBe('');
   });
 });
+
+describe('BareMetal.Bind many-to-many relations', function () {
+  test('binds a checklist and updates selected objects', function () {
+    var bind = BareMetal.Bind;
+    var r = bind.reactive({
+      tags: [{ id: 1, name: 'Electronic' }],
+      tagOptions: [
+        { id: 1, name: 'Electronic' },
+        { id: 2, name: 'Live' }
+      ]
+    });
+    var root = document.createElement('div');
+    root.innerHTML = '<div m-many-checklist="tags" m-options="tagOptions" m-value-field="id" m-label-field="name"></div>';
+    bind.bind(root, r.state, r.watch);
+    var checks = root.querySelectorAll('input[type=checkbox]');
+    expect(checks).toHaveLength(2);
+    expect(checks[0].checked).toBe(true);
+    checks[1].checked = true;
+    checks[1].dispatchEvent(new Event('change'));
+    expect(r.state.tags.map(function (tag) { return tag.id; })).toEqual([1, 2]);
+  });
+
+  test('binds a native multi-select', function () {
+    var bind = BareMetal.Bind;
+    var r = bind.reactive({
+      artists: [2],
+      artistOptions: [
+        { id: 1, name: 'A' },
+        { id: 2, name: 'B' }
+      ]
+    });
+    var root = document.createElement('div');
+    root.innerHTML = '<select m-many-select="artists" m-options="artistOptions" m-value-field="id" m-label-field="name"></select>';
+    bind.bind(root, r.state, r.watch);
+    var select = root.querySelector('select');
+    expect(select.options[1].selected).toBe(true);
+    select.options[0].selected = true;
+    select.options[1].selected = false;
+    select.dispatchEvent(new Event('change'));
+    expect(r.state.artists).toEqual([{ id: 1, name: 'A' }]);
+  });
+});

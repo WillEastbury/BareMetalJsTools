@@ -123,4 +123,39 @@ describe('BareMetal.Components', () => {
     frag.appendChild(el);
     expect(() => Components.bindComponents(frag, { rows: [] }, mock.fn())).not.toThrow();
   });
+
+  test('m-table binds dotted JSON fields and many-valued relations', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<table m-table="rows" m-table-cols="Title:title,Artist:artist.name,Tags:tags"></table>';
+    Components.bindComponents(root, {
+      rows: [
+        { title: 'Blue Monday', artist: { name: 'New Order' }, tags: [{ id: 1, name: 'Electronic' }, { id: 2, name: '80s' }] }
+      ]
+    }, mock.fn());
+    const cells = root.querySelectorAll('tbody td');
+    expect(cells[0].textContent).toBe('Blue Monday');
+    expect(cells[1].textContent).toBe('New Order');
+    expect(cells[2].textContent).toContain('Electronic');
+    expect(cells[2].textContent).toContain('80s');
+  });
+
+  test('m-table renders nested tables from an array field', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<table m-table="departments" m-table-cols="Department:name,Employees:employees" m-table-nested="employees" m-table-nested-cols="Name:name,Role:role"></table>';
+    Components.bindComponents(root, {
+      departments: [
+        { name: 'Engineering', employees: [{ name: 'Ada', role: 'Lead' }, { name: 'Linus', role: 'Engineer' }] }
+      ]
+    }, mock.fn());
+    expect(root.querySelectorAll('table.bm-nested-table')).toHaveLength(1);
+    expect(root.querySelector('.bm-nested-table').textContent).toContain('Ada');
+    expect(root.querySelector('.bm-nested-table').textContent).toContain('Engineer');
+  });
+
+  test('m-table renders an empty-state caption', () => {
+    const root = document.createElement('div');
+    root.innerHTML = '<table m-table="rows" m-table-empty="No matching MP3 tracks"></table>';
+    Components.bindComponents(root, { rows: [] }, mock.fn());
+    expect(root.querySelector('caption').textContent).toBe('No matching MP3 tracks');
+  });
 });
