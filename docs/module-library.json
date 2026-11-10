@@ -1,0 +1,1692 @@
+{
+    "modules":  [
+                    {
+                        "key":  "3dxr",
+                        "title":  "BareMetal.3DXR",
+                        "source":  "./src/BareMetal.3DXR.js",
+                        "docs":  "BareMetal.3DXR.md",
+                        "api":  [
+                                    "VERSION",
+                                    "create",
+                                    "isSupported"
+                                ]
+                    },
+                    {
+                        "key":  "a11y",
+                        "title":  "BareMetal.A11y",
+                        "source":  "./src/BareMetal.A11y.js",
+                        "docs":  "BareMetal.A11y.md",
+                        "api":  [
+                                    "focusTrap",
+                                    "announce",
+                                    "skipNav",
+                                    "roving",
+                                    "prefersReducedMotion",
+                                    "prefersColorScheme",
+                                    "onMotionChange",
+                                    "onSchemeChange"
+                                ]
+                    },
+                    {
+                        "key":  "animate",
+                        "title":  "BareMetal.Animate",
+                        "source":  "./src/BareMetal.Animate.js",
+                        "docs":  "BareMetal.Animate.md",
+                        "api":  [
+                                    "enter",
+                                    "leave",
+                                    "toggle",
+                                    "move",
+                                    "list",
+                                    "prefersReducedMotion"
+                                ]
+                    },
+                    {
+                        "key":  "audio-mixer",
+                        "title":  "BareMetal.AudioMixer",
+                        "source":  "./src/BareMetal.AudioMixer.js",
+                        "docs":  null,
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "auth",
+                        "title":  "BareMetal.Auth",
+                        "source":  "./src/BareMetal.Auth.js",
+                        "docs":  "BareMetal.Auth.md",
+                        "api":  [
+                                    "configure",
+                                    "initialize",
+                                    "login",
+                                    "handleCallback",
+                                    "logout",
+                                    "clearSession",
+                                    "getToken",
+                                    "getIdToken",
+                                    "silentRefresh",
+                                    "handleSilentCallback",
+                                    "getUser",
+                                    "getUserInfo",
+                                    "isAuthenticated",
+                                    "onAuthChange",
+                                    "attachToRest",
+                                    "_setRedirect",
+                                    "parseJwt",
+                                    "createPkce",
+                                    "decodeJwtParts",
+                                    "renderLogin",
+                                    "renderLogout",
+                                    "renderWhoami",
+                                    "renderTokenInspector",
+                                    "renderUserTiles",
+                                    "renderAuthGate"
+                                ]
+                    },
+                    {
+                        "key":  "authenticator",
+                        "title":  "BareMetal.Authenticator",
+                        "source":  "./src/BareMetal.Authenticator.js",
+                        "docs":  null,
+                        "api":  [
+                                    "setup",
+                                    "verify",
+                                    "generate",
+                                    "challenge",
+                                    "protect",
+                                    "lastVerified",
+                                    "timeSinceVerify",
+                                    "replayGuard",
+                                    "backupVerify",
+                                    "qrSvg",
+                                    "base32encode",
+                                    "base32decode",
+                                    "hmacSha1",
+                                    "hotp",
+                                    "totp",
+                                    "policy",
+                                    "events",
+                                    "onSetup",
+                                    "onVerify",
+                                    "onFail",
+                                    "onChallenge"
+                                ]
+                    },
+                    {
+                        "key":  "binary",
+                        "title":  "BareMetal.Binary",
+                        "source":  "./src/BareMetal.Binary.js",
+                        "docs":  "BareMetal.Binary.md",
+                        "api":  [
+                                    "setSigningKey",
+                                    "deserialize",
+                                    "fetchLayout",
+                                    "SpanReader"
+                                ]
+                    },
+                    {
+                        "key":  "bind",
+                        "title":  "BareMetal.Bind",
+                        "source":  "./src/BareMetal.Bind.js",
+                        "docs":  "BareMetal.Bind.md",
+                        "api":  [
+                                    "reactive",
+                                    "getPath",
+                                    "resolveInScope",
+                                    "appendList"
+                                ]
+                    },
+                    {
+                        "key":  "blob",
+                        "title":  "BareMetal.Blob",
+                        "source":  "./src/BareMetal.Blob.js",
+                        "docs":  null,
+                        "api":  [
+                                    "usage",
+                                    "create",
+                                    "chunk",
+                                    "upload",
+                                    "resume",
+                                    "download",
+                                    "hash",
+                                    "store",
+                                    "lifecycle",
+                                    "transform",
+                                    "encrypt",
+                                    "decrypt",
+                                    "compress",
+                                    "decompress",
+                                    "toDataURL",
+                                    "fromDataURL",
+                                    "toBase64",
+                                    "fromBase64",
+                                    "slice",
+                                    "concat",
+                                    "diff",
+                                    "fingerprint",
+                                    "quota"
+                                ]
+                    },
+                    {
+                        "key":  "cache",
+                        "title":  "BareMetal.Cache",
+                        "source":  "./src/BareMetal.Cache.js",
+                        "docs":  "BareMetal.Cache.md",
+                        "api":  [
+                                    "get",
+                                    "set",
+                                    "has",
+                                    "delete",
+                                    "clear",
+                                    "size",
+                                    "keys",
+                                    "entries",
+                                    "wrap",
+                                    "invalidate",
+                                    "invalidateByTag",
+                                    "prune",
+                                    "stats",
+                                    "hits",
+                                    "misses",
+                                    "hitRate",
+                                    "evictions"
+                                ]
+                    },
+                    {
+                        "key":  "capabilities",
+                        "title":  "BareMetal.Capabilities",
+                        "source":  "./src/BareMetal.Capabilities.js",
+                        "docs":  "BareMetal.Capabilities.md",
+                        "api":  [
+                                    "compatible",
+                                    "missing",
+                                    "optional"
+                                ]
+                    },
+                    {
+                        "key":  "charts",
+                        "title":  "BareMetal.Charts",
+                        "source":  "./src/BareMetal.Charts.js",
+                        "docs":  "BareMetal.Charts.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "clipboard",
+                        "title":  "BareMetal.Clipboard",
+                        "source":  "./src/BareMetal.Clipboard.js",
+                        "docs":  "BareMetal.Clipboard.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "codes",
+                        "title":  "BareMetal.Codes",
+                        "source":  "./src/BareMetal.Codes.js",
+                        "docs":  "BareMetal.Codes.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "colour",
+                        "title":  "BareMetal.Colour",
+                        "source":  "./src/BareMetal.Colour.js",
+                        "docs":  "BareMetal.Colour.md",
+                        "api":  [
+                                    "el",
+                                    "get",
+                                    "set",
+                                    "open",
+                                    "close"
+                                ]
+                    },
+                    {
+                        "key":  "communications",
+                        "title":  "BareMetal.Communications",
+                        "source":  "./src/BareMetal.Communications.js",
+                        "docs":  "BareMetal.Communications.md",
+                        "api":  [
+                                    "records",
+                                    "setRoot",
+                                    "connectWs",
+                                    "setSecureTransport"
+                                ]
+                    },
+                    {
+                        "key":  "component-factories",
+                        "title":  "BareMetal.ComponentFactories",
+                        "source":  "./src/BareMetal.ComponentFactories.js",
+                        "docs":  "BareMetal.ComponentFactories.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "components",
+                        "title":  "BareMetal.Components",
+                        "source":  "./src/BareMetal.Components.js",
+                        "docs":  "BareMetal.Components.md",
+                        "api":  [
+                                    "header"
+                                ]
+                    },
+                    {
+                        "key":  "compress",
+                        "title":  "BareMetal.Compress",
+                        "source":  "./src/BareMetal.Compress.js",
+                        "docs":  "BareMetal.Compress.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "config",
+                        "title":  "BareMetal.Config",
+                        "source":  "./src/BareMetal.Config.js",
+                        "docs":  "BareMetal.Config.md",
+                        "api":  [
+                                    "create",
+                                    "priorities"
+                                ]
+                    },
+                    {
+                        "key":  "controls",
+                        "title":  "BareMetal.Controls",
+                        "source":  "./src/BareMetal.Controls.js",
+                        "docs":  "BareMetal.Controls.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "control-surface",
+                        "title":  "BareMetal.ControlSurface",
+                        "source":  "./src/BareMetal.ControlSurface.js",
+                        "docs":  null,
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "crypto",
+                        "title":  "BareMetal.Crypto",
+                        "source":  "./src/BareMetal.Crypto.js",
+                        "docs":  "BareMetal.Crypto.md",
+                        "api":  [
+                                    "name",
+                                    "modulusLength",
+                                    "publicExponent",
+                                    "hash",
+                                    "default",
+                                    "iv",
+                                    "baseKey",
+                                    "generateSymmetricKey",
+                                    "generateAsymmetricKey",
+                                    "digest",
+                                    "generateSigningKey",
+                                    "exportKey",
+                                    "toBase64Url"
+                                ]
+                    },
+                    {
+                        "key":  "diagnostics",
+                        "title":  "BareMetal.Diagnostics",
+                        "source":  "./src/BareMetal.Diagnostics.js",
+                        "docs":  "BareMetal.Diagnostics.md",
+                        "api":  [
+                                    "trace",
+                                    "span",
+                                    "timeline",
+                                    "inspect",
+                                    "why",
+                                    "watch",
+                                    "perf",
+                                    "counter",
+                                    "gauge",
+                                    "report",
+                                    "enable",
+                                    "disable",
+                                    "hook"
+                                ]
+                    },
+                    {
+                        "key":  "dj-deck",
+                        "title":  "BareMetal.DJDeck",
+                        "source":  "./src/BareMetal.DJDeck.js",
+                        "docs":  "BareMetal.DJDeck.md",
+                        "api":  [
+                                    "audio",
+                                    "loadFile",
+                                    "loadUrl",
+                                    "play",
+                                    "pause",
+                                    "cue",
+                                    "setCuePoint",
+                                    "setHotCue",
+                                    "jumpHotCue",
+                                    "seek",
+                                    "nudge",
+                                    "setPitch",
+                                    "setTempo",
+                                    "setLoop",
+                                    "getLoop",
+                                    "sync",
+                                    "state",
+                                    "onChange",
+                                    "destroy"
+                                ]
+                    },
+                    {
+                        "key":  "dj-library",
+                        "title":  "BareMetal.DJLibrary",
+                        "source":  "./src/BareMetal.DJLibrary.js",
+                        "docs":  "BareMetal.DJLibrary.md",
+                        "api":  [
+                                    "saveTrack",
+                                    "getTrack",
+                                    "listTracks",
+                                    "deleteTrack",
+                                    "search",
+                                    "saveCues",
+                                    "getCues",
+                                    "savePlaylist",
+                                    "getPlaylist",
+                                    "saveSetting",
+                                    "getSetting"
+                                ]
+                    },
+                    {
+                        "key":  "dj-mixer",
+                        "title":  "BareMetal.DJMixer",
+                        "source":  "./src/BareMetal.DJMixer.js",
+                        "docs":  "BareMetal.DJMixer.md",
+                        "api":  [
+                                    "context",
+                                    "addChannel",
+                                    "setChannel",
+                                    "setCrossfader",
+                                    "setPitch",
+                                    "setPitchBend",
+                                    "setMasterGain",
+                                    "setCrossfaderCurve",
+                                    "setLimiter",
+                                    "setCue",
+                                    "toggleCue",
+                                    "setCueGain",
+                                    "setPreviewMix",
+                                    "getCueState",
+                                    "cueMeter",
+                                    "createPreviewControl",
+                                    "meter",
+                                    "state",
+                                    "getState",
+                                    "destroy"
+                                ]
+                    },
+                    {
+                        "key":  "docchain",
+                        "title":  "BareMetal.Docchain",
+                        "source":  "./src/BareMetal.DocChain.js",
+                        "docs":  null,
+                        "api":  [
+                                    "type",
+                                    "id",
+                                    "data",
+                                    "status",
+                                    "parentId",
+                                    "children",
+                                    "created",
+                                    "updated",
+                                    "version",
+                                    "meta",
+                                    "auditTrail"
+                                ]
+                    },
+                    {
+                        "key":  "document",
+                        "title":  "BareMetal.Document",
+                        "source":  "./src/BareMetal.Document.js",
+                        "docs":  "BareMetal.Document.md",
+                        "api":  [
+                                    "el",
+                                    "page",
+                                    "getHTML",
+                                    "setHTML",
+                                    "command",
+                                    "bold",
+                                    "italic",
+                                    "underline",
+                                    "heading",
+                                    "paragraph",
+                                    "list",
+                                    "color",
+                                    "hilite",
+                                    "font",
+                                    "fontSize",
+                                    "query"
+                                ]
+                    },
+                    {
+                        "key":  "documentwal",
+                        "title":  "BareMetal.Documentwal",
+                        "source":  "./src/BareMetal.DocumentWAL.js",
+                        "docs":  "BareMetal.Documentwal.md",
+                        "api":  [
+                                    "create",
+                                    "memoryTransport",
+                                    "httpTransport",
+                                    "getPath",
+                                    "setPath"
+                                ]
+                    },
+                    {
+                        "key":  "drag-drop",
+                        "title":  "BareMetal.DragDrop",
+                        "source":  "./src/BareMetal.DragDrop.js",
+                        "docs":  "BareMetal.DragDrop.md",
+                        "api":  [
+                                    "draggable",
+                                    "droppable",
+                                    "sortable"
+                                ]
+                    },
+                    {
+                        "key":  "errors",
+                        "title":  "BareMetal.Errors",
+                        "source":  "./src/BareMetal.Errors.js",
+                        "docs":  "BareMetal.Errors.md",
+                        "api":  [
+                                    "BareMetalError",
+                                    "create",
+                                    "classify",
+                                    "isRetryable",
+                                    "isTransient",
+                                    "chain",
+                                    "getChain",
+                                    "toUserSafe",
+                                    "toJSON",
+                                    "fromJSON",
+                                    "wrap",
+                                    "assert",
+                                    "codes",
+                                    "register",
+                                    "lookup",
+                                    "match",
+                                    "aggregate",
+                                    "boundary"
+                                ]
+                    },
+                    {
+                        "key":  "expressions",
+                        "title":  "BareMetal.Expressions",
+                        "source":  "./src/BareMetal.Expressions.js",
+                        "docs":  "BareMetal.Expressions.md",
+                        "api":  [
+                                    "hex",
+                                    "description",
+                                    "pattern",
+                                    "examples",
+                                    "extract",
+                                    "detect",
+                                    "validate",
+                                    "prepare",
+                                    "list",
+                                    "info",
+                                    "register"
+                                ]
+                    },
+                    {
+                        "key":  "file-io",
+                        "title":  "BareMetal.FileIo",
+                        "source":  "./src/BareMetal.FileIO.js",
+                        "docs":  "BareMetal.FileIo.md",
+                        "api":  [
+                                    "destroy",
+                                    "open",
+                                    "save",
+                                    "dropZone",
+                                    "readAsText",
+                                    "pick",
+                                    "formatSize",
+                                    "slice",
+                                    "blobToArrayBuffer",
+                                    "hasFileSystemAccess"
+                                ]
+                    },
+                    {
+                        "key":  "font",
+                        "title":  "BareMetal.Font",
+                        "source":  "./src/BareMetal.Font.js",
+                        "docs":  "BareMetal.Font.md",
+                        "api":  [
+                                    "el",
+                                    "get",
+                                    "set"
+                                ]
+                    },
+                    {
+                        "key":  "footerbar",
+                        "title":  "BareMetal.Footerbar",
+                        "source":  "./src/BareMetal.FooterBar.js",
+                        "docs":  "BareMetal.Footerbar.md",
+                        "api":  [
+                                    "el",
+                                    "setStatus",
+                                    "setTabs",
+                                    "setZoom",
+                                    "getZoom"
+                                ]
+                    },
+                    {
+                        "key":  "forms",
+                        "title":  "BareMetal.Forms",
+                        "source":  "./src/BareMetal.Forms.js",
+                        "docs":  "BareMetal.Forms.md",
+                        "api":  [
+                                    "destroy",
+                                    "create",
+                                    "getState",
+                                    "serialize",
+                                    "deserialize",
+                                    "validate",
+                                    "mask",
+                                    "wizard",
+                                    "repeater",
+                                    "autosave",
+                                    "conditional",
+                                    "submit",
+                                    "fromJSON",
+                                    "toFormData",
+                                    "diff",
+                                    "focus"
+                                ]
+                    },
+                    {
+                        "key":  "gallery",
+                        "title":  "BareMetal.Gallery",
+                        "source":  "./src/BareMetal.Gallery.js",
+                        "docs":  "BareMetal.Gallery.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "gamepad",
+                        "title":  "BareMetal.Gamepad",
+                        "source":  "./src/BareMetal.Gamepad.js",
+                        "docs":  "BareMetal.Gamepad.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "geo",
+                        "title":  "BareMetal.Geo",
+                        "source":  "./src/BareMetal.Geo.js",
+                        "docs":  "BareMetal.Geo.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "graph",
+                        "title":  "BareMetal.Graph",
+                        "source":  "./src/BareMetal.Graph.js",
+                        "docs":  "BareMetal.Graph.md",
+                        "api":  [
+                                    "xmlns",
+                                    "style",
+                                    "y",
+                                    "svg",
+                                    "simulation",
+                                    "nodes",
+                                    "edges"
+                                ]
+                    },
+                    {
+                        "key":  "i18n",
+                        "title":  "BareMetal.I18n",
+                        "source":  "./src/BareMetal.I18n.js",
+                        "docs":  "BareMetal.I18n.md",
+                        "api":  [
+                                    "setLocale",
+                                    "getLocale",
+                                    "addMessages",
+                                    "t",
+                                    "loadMessages",
+                                    "isRTL",
+                                    "subscribe",
+                                    "configure"
+                                ]
+                    },
+                    {
+                        "key":  "id3",
+                        "title":  "BareMetal.ID3",
+                        "source":  "./src/BareMetal.ID3.js",
+                        "docs":  "BareMetal.ID3.md",
+                        "api":  [
+                                    "title",
+                                    "artist",
+                                    "album",
+                                    "year",
+                                    "comment",
+                                    "track",
+                                    "genre"
+                                ]
+                    },
+                    {
+                        "key":  "idb",
+                        "title":  "BareMetal.IDB",
+                        "source":  "./src/BareMetal.IDB.js",
+                        "docs":  "BareMetal.IDB.md",
+                        "api":  [
+                                    "set",
+                                    "get",
+                                    "delete",
+                                    "has",
+                                    "keys",
+                                    "clear",
+                                    "close"
+                                ]
+                    },
+                    {
+                        "key":  "inbox",
+                        "title":  "BareMetal.Inbox",
+                        "source":  "./src/BareMetal.Inbox.js",
+                        "docs":  null,
+                        "api":  [
+                                    "id",
+                                    "channel",
+                                    "title",
+                                    "body",
+                                    "data",
+                                    "priority",
+                                    "action",
+                                    "icon",
+                                    "group",
+                                    "read",
+                                    "timestamp",
+                                    "dismissed",
+                                    "pinned",
+                                    "summary",
+                                    "items"
+                                ]
+                    },
+                    {
+                        "key":  "input-router",
+                        "title":  "BareMetal.InputRouter",
+                        "source":  "./src/BareMetal.InputRouter.js",
+                        "docs":  null,
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "integrity",
+                        "title":  "BareMetal.Integrity",
+                        "source":  "./src/BareMetal.Integrity.js",
+                        "docs":  "BareMetal.Integrity.md",
+                        "api":  [
+                                    "sha256",
+                                    "verify",
+                                    "createManifest",
+                                    "verifyManifest"
+                                ]
+                    },
+                    {
+                        "key":  "launcher",
+                        "title":  "BareMetal.Launcher",
+                        "source":  "./src/BareMetal.Launcher.js",
+                        "docs":  "BareMetal.Launcher.md",
+                        "api":  [
+                                    "createStore",
+                                    "createApi",
+                                    "createSocket",
+                                    "attachTerminal",
+                                    "renderSessionCards",
+                                    "createLauncher"
+                                ]
+                    },
+                    {
+                        "key":  "local-kv-store",
+                        "title":  "BareMetal.LocalKvStore",
+                        "source":  "./src/BareMetal.LocalKVStore.js",
+                        "docs":  "BareMetal.LocalKvStore.md",
+                        "api":  [
+                                    "get",
+                                    "set",
+                                    "remove",
+                                    "has",
+                                    "clear",
+                                    "allEntries",
+                                    "getRaw",
+                                    "setRaw"
+                                ]
+                    },
+                    {
+                        "key":  "logger",
+                        "title":  "BareMetal.Logger",
+                        "source":  "./src/BareMetal.Logger.js",
+                        "docs":  "BareMetal.Logger.md",
+                        "api":  [
+                                    "create",
+                                    "console",
+                                    "beacon"
+                                ]
+                    },
+                    {
+                        "key":  "markdown",
+                        "title":  "BareMetal.Markdown",
+                        "source":  "./src/BareMetal.Markdown.js",
+                        "docs":  "BareMetal.Markdown.md",
+                        "api":  [
+                                    "meta",
+                                    "render",
+                                    "renderTo",
+                                    "renderSafe",
+                                    "createRenderer",
+                                    "toc",
+                                    "frontMatter",
+                                    "inline",
+                                    "escape"
+                                ]
+                    },
+                    {
+                        "key":  "media",
+                        "title":  "BareMetal.Media",
+                        "source":  "./src/BareMetal.Media.js",
+                        "docs":  "BareMetal.Media.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "mermaid-diagram-renderer",
+                        "title":  "BareMetal.MermaidDiagramRenderer",
+                        "source":  "./src/BareMetal.MermaidDiagramRenderer.js",
+                        "docs":  "BareMetal.MermaidDiagramRenderer.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "metadata",
+                        "title":  "BareMetal.Metadata",
+                        "source":  "./src/BareMetal.Metadata.js",
+                        "docs":  "BareMetal.Metadata.md",
+                        "api":  [
+                                    "register",
+                                    "get",
+                                    "list",
+                                    "remove",
+                                    "scanInline",
+                                    "fetchAndRegister",
+                                    "renderForm",
+                                    "renderTable",
+                                    "toTemplateFields",
+                                    "fromBinary"
+                                ]
+                    },
+                    {
+                        "key":  "midi",
+                        "title":  "BareMetal.MIDI",
+                        "source":  "./src/BareMetal.MIDI.js",
+                        "docs":  "BareMetal.MIDI.md",
+                        "api":  [
+                                    "request",
+                                    "onMessage",
+                                    "mapCC",
+                                    "mapPitchBend",
+                                    "getInputs",
+                                    "getOutputs",
+                                    "getDevices",
+                                    "send",
+                                    "destroy"
+                                ]
+                    },
+                    {
+                        "key":  "midi-profiles",
+                        "title":  "BareMetal.MIDIProfiles",
+                        "source":  "./src/BareMetal.MIDIProfiles.js",
+                        "docs":  "BareMetal.MIDIProfiles.md",
+                        "api":  [
+                                    "importJson",
+                                    "exportJson",
+                                    "activate",
+                                    "learn",
+                                    "cancelLearn",
+                                    "capture",
+                                    "resolveMessage",
+                                    "listProfiles",
+                                    "omnisDuoPlaceholder"
+                                ]
+                    },
+                    {
+                        "key":  "minifier",
+                        "title":  "BareMetal.Minifier",
+                        "source":  "./src/BareMetal.Minifier.js",
+                        "docs":  null,
+                        "api":  [
+                                    "end",
+                                    "minifyJS",
+                                    "minifyCSS",
+                                    "compressGzip",
+                                    "decompressGzip"
+                                ]
+                    },
+                    {
+                        "key":  "modal",
+                        "title":  "BareMetal.Modal",
+                        "source":  "./src/BareMetal.Modal.js",
+                        "docs":  "BareMetal.Modal.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "module-loader",
+                        "title":  "BareMetal.ModuleLoader",
+                        "source":  "./src/BareMetal.ModuleLoader.js",
+                        "docs":  "BareMetal.ModuleLoader.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "mp3",
+                        "title":  "BareMetal.MP3",
+                        "source":  "./src/BareMetal.MP3.js",
+                        "docs":  "BareMetal.MP3.md",
+                        "api":  [
+                                    "readTags",
+                                    "create",
+                                    "stream",
+                                    "loadCatalog"
+                                ]
+                    },
+                    {
+                        "key":  "mp3-catalog",
+                        "title":  "BareMetal.MP3Catalog",
+                        "source":  "./src/BareMetal.MP3Catalog.js",
+                        "docs":  "BareMetal.MP3Catalog.md",
+                        "api":  [
+                                    "add",
+                                    "addMany",
+                                    "update",
+                                    "remove",
+                                    "get",
+                                    "list",
+                                    "search",
+                                    "clear",
+                                    "manifest",
+                                    "onChange"
+                                ]
+                    },
+                    {
+                        "key":  "music-player",
+                        "title":  "BareMetal.MusicPlayer",
+                        "source":  "./src/BareMetal.MusicPlayer.js",
+                        "docs":  "BareMetal.MusicPlayer.md",
+                        "api":  [
+                                    "index",
+                                    "currentTime",
+                                    "volume",
+                                    "pitchBendSemitones",
+                                    "highDb",
+                                    "streaming"
+                                ]
+                    },
+                    {
+                        "key":  "notify",
+                        "title":  "BareMetal.Notify",
+                        "source":  "./src/BareMetal.Notify.js",
+                        "docs":  "BareMetal.Notify.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "observe",
+                        "title":  "BareMetal.Observe",
+                        "source":  "./src/BareMetal.Observe.js",
+                        "docs":  "BareMetal.Observe.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "pay",
+                        "title":  "BareMetal.Pay",
+                        "source":  "./src/BareMetal.Pay.js",
+                        "docs":  "BareMetal.Pay.md",
+                        "api":  [
+                                    "valid",
+                                    "canPay",
+                                    "request",
+                                    "card",
+                                    "googlePay",
+                                    "applePay",
+                                    "formatCurrency",
+                                    "cart",
+                                    "shipping",
+                                    "validate",
+                                    "abort",
+                                    "complete",
+                                    "retry"
+                                ]
+                    },
+                    {
+                        "key":  "picoscript",
+                        "title":  "BareMetal.PicoScript",
+                        "source":  "./src/BareMetal.PicoScript.js",
+                        "docs":  "BareMetal.PicoScript.md",
+                        "api":  [
+                                    "compile",
+                                    "compilePython",
+                                    "compileDebug",
+                                    "symbolize",
+                                    "VM",
+                                    "PicoCompress"
+                                ]
+                    },
+                    {
+                        "key":  "pipeline",
+                        "title":  "BareMetal.Pipeline",
+                        "source":  "./src/BareMetal.Pipeline.js",
+                        "docs":  "BareMetal.Pipeline.md",
+                        "api":  [
+                                    "create",
+                                    "stream",
+                                    "compose",
+                                    "series",
+                                    "parallel",
+                                    "waterfall",
+                                    "backpressure"
+                                ]
+                    },
+                    {
+                        "key":  "pivot",
+                        "title":  "BareMetal.Pivot",
+                        "source":  "./src/BareMetal.Pivot.js",
+                        "docs":  "BareMetal.Pivot.md",
+                        "api":  [
+                                    "lab",
+                                    "el",
+                                    "compute",
+                                    "setRecords",
+                                    "state"
+                                ]
+                    },
+                    {
+                        "key":  "play",
+                        "title":  "BareMetal.Play",
+                        "source":  "./src/BareMetal.Play.js",
+                        "docs":  "BareMetal.Play.md",
+                        "api":  [
+                                    "PACKS",
+                                    "freshState",
+                                    "matchConditions",
+                                    "applyEffects",
+                                    "entryNode",
+                                    "offeredChoices",
+                                    "fillText",
+                                    "withPersonaFacts",
+                                    "narratorOf",
+                                    "sceneText",
+                                    "slipsFor",
+                                    "fireTriggers",
+                                    "memoryClient",
+                                    "mount"
+                                ]
+                    },
+                    {
+                        "key":  "print",
+                        "title":  "BareMetal.Print",
+                        "source":  "./src/BareMetal.Print.js",
+                        "docs":  null,
+                        "api":  [
+                                    "subtotal",
+                                    "pageHeight",
+                                    "pageWidth",
+                                    "margins",
+                                    "headerHeight",
+                                    "footerHeight",
+                                    "render",
+                                    "paginate",
+                                    "print",
+                                    "preview",
+                                    "stylesheet",
+                                    "receipt",
+                                    "invoice",
+                                    "document",
+                                    "fromDocChain",
+                                    "grid",
+                                    "table",
+                                    "barcode",
+                                    "qr",
+                                    "label",
+                                    "header",
+                                    "footer",
+                                    "section",
+                                    "columns",
+                                    "image",
+                                    "spacer",
+                                    "_internals",
+                                    "tableHtml",
+                                    "barcodeSvg",
+                                    "qrSvg",
+                                    "qrMatrix",
+                                    "collectBlocks",
+                                    "htmlToThermalText"
+                                ]
+                    },
+                    {
+                        "key":  "progressive",
+                        "title":  "BareMetal.Progressive",
+                        "source":  "./src/BareMetal.Progressive.js",
+                        "docs":  "BareMetal.Progressive.md",
+                        "api":  [
+                                    "register",
+                                    "unregister",
+                                    "getRegistration",
+                                    "update",
+                                    "onInstallPrompt",
+                                    "isInstalled",
+                                    "isInstallable",
+                                    "precache",
+                                    "clearCache",
+                                    "getCacheStatus",
+                                    "isOnline",
+                                    "onConnectivityChange",
+                                    "requestSync",
+                                    "subscribePush",
+                                    "unsubscribePush",
+                                    "getPushSubscription",
+                                    "generateManifest",
+                                    "injectManifest",
+                                    "postMessage",
+                                    "onMessage"
+                                ]
+                    },
+                    {
+                        "key":  "pubsub",
+                        "title":  "BareMetal.Pubsub",
+                        "source":  "./src/BareMetal.PubSub.js",
+                        "docs":  "BareMetal.Pubsub.md",
+                        "api":  [
+                                    "emit",
+                                    "subscribe"
+                                ]
+                    },
+                    {
+                        "key":  "rbac",
+                        "title":  "BareMetal.RBAC",
+                        "source":  "./src/BareMetal.RBAC.js",
+                        "docs":  "BareMetal.RBAC.md",
+                        "api":  [
+                                    "WARNING",
+                                    "configure",
+                                    "identity",
+                                    "isAuthenticated",
+                                    "hasRole",
+                                    "hasAnyRole",
+                                    "hasAllRoles",
+                                    "inGroup",
+                                    "inAnyGroup",
+                                    "inAllGroups",
+                                    "can",
+                                    "canAny",
+                                    "canAll",
+                                    "hasScope",
+                                    "hasAnyScope",
+                                    "check",
+                                    "checkAny",
+                                    "guard",
+                                    "applyDOM",
+                                    "setToken",
+                                    "clearToken",
+                                    "refresh",
+                                    "onExpiry",
+                                    "tenant",
+                                    "isTenant"
+                                ]
+                    },
+                    {
+                        "key":  "rendering",
+                        "title":  "BareMetal.Rendering",
+                        "source":  "./src/BareMetal.Rendering.js",
+                        "docs":  "BareMetal.Rendering.md",
+                        "api":  [
+                                    "setRoot",
+                                    "createNewEntity",
+                                    "bind",
+                                    "state",
+                                    "listEntities"
+                                ]
+                    },
+                    {
+                        "key":  "ribbon",
+                        "title":  "BareMetal.Ribbon",
+                        "source":  "./src/BareMetal.Ribbon.js",
+                        "docs":  "BareMetal.Ribbon.md",
+                        "api":  [
+                                    "el",
+                                    "item",
+                                    "setActive",
+                                    "setDisabled",
+                                    "setColour",
+                                    "setFont"
+                                ]
+                    },
+                    {
+                        "key":  "routing",
+                        "title":  "BareMetal.Routing",
+                        "source":  "./src/BareMetal.Routing.js",
+                        "docs":  "BareMetal.Routing.md",
+                        "api":  [
+                                    "pathname",
+                                    "search"
+                                ]
+                    },
+                    {
+                        "key":  "scan",
+                        "title":  "BareMetal.Scan",
+                        "source":  "./src/BareMetal.Scan.js",
+                        "docs":  null,
+                        "api":  [
+                                    "text",
+                                    "stop"
+                                ]
+                    },
+                    {
+                        "key":  "scene-inspector",
+                        "title":  "BareMetal.SceneInspector",
+                        "source":  "./src/BareMetal.SceneInspector.js",
+                        "docs":  null,
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "schedule",
+                        "title":  "BareMetal.Schedule",
+                        "source":  "./src/BareMetal.Schedule.js",
+                        "docs":  null,
+                        "api":  [
+                                    "cron",
+                                    "interval",
+                                    "delay",
+                                    "at",
+                                    "every",
+                                    "queue",
+                                    "scheduler",
+                                    "parseCron",
+                                    "nextCron",
+                                    "matchesCron",
+                                    "parseDuration",
+                                    "formatDuration",
+                                    "debounce",
+                                    "throttle",
+                                    "rateLimit",
+                                    "retry",
+                                    "deadline"
+                                ]
+                    },
+                    {
+                        "key":  "schema",
+                        "title":  "BareMetal.Schema",
+                        "source":  "./src/BareMetal.Schema.js",
+                        "docs":  "BareMetal.Schema.md",
+                        "api":  [
+                                    "string",
+                                    "number",
+                                    "boolean",
+                                    "array",
+                                    "object",
+                                    "date",
+                                    "oneOf",
+                                    "nullable",
+                                    "optional",
+                                    "parse",
+                                    "validate",
+                                    "transform",
+                                    "coerce",
+                                    "defaults",
+                                    "extend",
+                                    "pick",
+                                    "omit",
+                                    "partial",
+                                    "version",
+                                    "toJSON",
+                                    "fromJSON",
+                                    "custom",
+                                    "toBinary",
+                                    "fromBinary"
+                                ]
+                    },
+                    {
+                        "key":  "search",
+                        "title":  "BareMetal.Search",
+                        "source":  "./src/BareMetal.Search.js",
+                        "docs":  null,
+                        "api":  [
+                                    "docCount",
+                                    "termCount",
+                                    "avgDocLength",
+                                    "indexSize"
+                                ]
+                    },
+                    {
+                        "key":  "secure-transport",
+                        "title":  "BareMetal.SecureTransport",
+                        "source":  "./src/BareMetal.SecureTransport.js",
+                        "docs":  "BareMetal.SecureTransport.md",
+                        "api":  [
+                                    "setPublicKey",
+                                    "loadPublicKey",
+                                    "encryptObject",
+                                    "decryptObject",
+                                    "fetch",
+                                    "getKeyId",
+                                    "getTunnelUrl"
+                                ]
+                    },
+                    {
+                        "key":  "service-worker",
+                        "title":  "BareMetal.ServiceWorker",
+                        "source":  "./src/BareMetal.ServiceWorker.js",
+                        "docs":  "BareMetal.ServiceWorker.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "session",
+                        "title":  "BareMetal.Session",
+                        "source":  "./src/BareMetal.Session.js",
+                        "docs":  "BareMetal.Session.md",
+                        "api":  [
+                                    "create",
+                                    "tabSync",
+                                    "guard",
+                                    "fingerprint",
+                                    "activity"
+                                ]
+                    },
+                    {
+                        "key":  "sheet",
+                        "title":  "BareMetal.Sheet",
+                        "source":  "./src/BareMetal.Sheet.js",
+                        "docs":  "BareMetal.Sheet.md",
+                        "api":  [
+                                    "el",
+                                    "addr",
+                                    "parseAddr",
+                                    "getData",
+                                    "setData",
+                                    "getCell",
+                                    "setCell",
+                                    "select",
+                                    "selected",
+                                    "selectedRange",
+                                    "styleSelected",
+                                    "styleRange",
+                                    "mergeSelected",
+                                    "insertRow",
+                                    "deleteRow",
+                                    "insertCol",
+                                    "deleteCol",
+                                    "setRowFilter",
+                                    "unmergeSelected",
+                                    "startEdit"
+                                ]
+                    },
+                    {
+                        "key":  "speech",
+                        "title":  "BareMetal.Speech",
+                        "source":  "./src/BareMetal.Speech.js",
+                        "docs":  "BareMetal.Speech.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "state-machine",
+                        "title":  "BareMetal.StateMachine",
+                        "source":  "./src/BareMetal.StateMachine.js",
+                        "docs":  "BareMetal.StateMachine.md",
+                        "api":  [
+                                    "send",
+                                    "getState",
+                                    "getContext",
+                                    "matches",
+                                    "subscribe"
+                                ]
+                    },
+                    {
+                        "key":  "story",
+                        "title":  "BareMetal.Story",
+                        "source":  "./src/BareMetal.Story.js",
+                        "docs":  "BareMetal.Story.md",
+                        "api":  [
+                                    "PACKS",
+                                    "validateConditions",
+                                    "validateEffects",
+                                    "validateTriggers",
+                                    "validateBaseFacts",
+                                    "graphData",
+                                    "memoryClient",
+                                    "mount"
+                                ]
+                    },
+                    {
+                        "key":  "sync",
+                        "title":  "BareMetal.Sync",
+                        "source":  "./src/BareMetal.Sync.js",
+                        "docs":  "BareMetal.Sync.md",
+                        "api":  [
+                                    "diff",
+                                    "patch",
+                                    "merge",
+                                    "conflict",
+                                    "resolve",
+                                    "queue",
+                                    "replay",
+                                    "echo",
+                                    "clock",
+                                    "crdt",
+                                    "version",
+                                    "subscribe",
+                                    "batch"
+                                ]
+                    },
+                    {
+                        "key":  "tabs",
+                        "title":  "BareMetal.Tabs",
+                        "source":  "./src/BareMetal.Tabs.js",
+                        "docs":  null,
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "template",
+                        "title":  "BareMetal.Template",
+                        "source":  "./src/BareMetal.Template.js",
+                        "docs":  "BareMetal.Template.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "tenant",
+                        "title":  "BareMetal.Tenant",
+                        "source":  "./src/BareMetal.Tenant.js",
+                        "docs":  null,
+                        "api":  [
+                                    "create",
+                                    "current",
+                                    "scope",
+                                    "middleware",
+                                    "store",
+                                    "add",
+                                    "get",
+                                    "remove",
+                                    "list",
+                                    "find",
+                                    "count",
+                                    "config",
+                                    "isolate",
+                                    "partition",
+                                    "hierarchy",
+                                    "limits",
+                                    "features",
+                                    "onSwitch",
+                                    "onChange",
+                                    "impersonate",
+                                    "export",
+                                    "import",
+                                    "resolve",
+                                    "seal",
+                                    "suspend",
+                                    "activate"
+                                ]
+                    },
+                    {
+                        "key":  "test-runner",
+                        "title":  "BareMetal.TestRunner",
+                        "source":  "./src/BareMetal.TestRunner.js",
+                        "docs":  "BareMetal.TestRunner.md",
+                        "api":  [
+                                    "ok",
+                                    "status",
+                                    "url",
+                                    "headers",
+                                    "json",
+                                    "text",
+                                    "clone"
+                                ]
+                    },
+                    {
+                        "key":  "theme-picker",
+                        "title":  "BareMetal.ThemePicker",
+                        "source":  "./src/BareMetal.ThemePicker.js",
+                        "docs":  null,
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "time",
+                        "title":  "BareMetal.Time",
+                        "source":  "./src/BareMetal.Time.js",
+                        "docs":  "BareMetal.Time.md",
+                        "api":  [
+                                    "days",
+                                    "timeZone",
+                                    "hour",
+                                    "fractionalSecondDigits",
+                                    "now",
+                                    "format",
+                                    "add",
+                                    "isBefore",
+                                    "diff",
+                                    "daysInMonth",
+                                    "dayOfWeek",
+                                    "toTimezone",
+                                    "hasTemporal"
+                                ]
+                    },
+                    {
+                        "key":  "timeline",
+                        "title":  "BareMetal.Timeline",
+                        "source":  "./src/BareMetal.Timeline.js",
+                        "docs":  null,
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "tokens",
+                        "title":  "BareMetal.Tokens",
+                        "source":  "./src/BareMetal.Tokens.js",
+                        "docs":  "BareMetal.Tokens.md",
+                        "api":  [
+                                    "sign",
+                                    "signSync",
+                                    "decode",
+                                    "verify",
+                                    "isExpired",
+                                    "expiresIn",
+                                    "claim",
+                                    "generateSecret",
+                                    "generateKeyPair",
+                                    "importKey",
+                                    "exportKey",
+                                    "importJWK",
+                                    "create",
+                                    "parseDuration",
+                                    "toBase64Url",
+                                    "fromBase64Url"
+                                ]
+                    },
+                    {
+                        "key":  "transport",
+                        "title":  "BareMetal.Transport",
+                        "source":  "./src/BareMetal.Transport.js",
+                        "docs":  "BareMetal.Transport.md",
+                        "api":  [
+                                    "retry",
+                                    "backoff",
+                                    "idempotencyKey",
+                                    "dedupe",
+                                    "coalesce",
+                                    "cancel",
+                                    "timeout",
+                                    "fetchWithTimeout",
+                                    "fetchWithRetry",
+                                    "race",
+                                    "cache",
+                                    "priority",
+                                    "queue",
+                                    "circuit",
+                                    "rateLimit"
+                                ]
+                    },
+                    {
+                        "key":  "types",
+                        "title":  "BareMetal.Types",
+                        "source":  "./src/BareMetal.Types.js",
+                        "docs":  "BareMetal.Types.md",
+                        "api":  [
+                                    "name",
+                                    "fields",
+                                    "methods",
+                                    "ancestors",
+                                    "serializable"
+                                ]
+                    },
+                    {
+                        "key":  "undo-redo",
+                        "title":  "BareMetal.UndoRedo",
+                        "source":  "./src/BareMetal.UndoRedo.js",
+                        "docs":  "BareMetal.UndoRedo.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "url",
+                        "title":  "BareMetal.URL",
+                        "source":  "./src/BareMetal.URL.js",
+                        "docs":  "BareMetal.URL.md",
+                        "api":  [
+                                    "parse",
+                                    "build",
+                                    "query",
+                                    "encode",
+                                    "decode",
+                                    "merge",
+                                    "remove",
+                                    "params",
+                                    "template",
+                                    "join",
+                                    "normalize",
+                                    "isAbsolute",
+                                    "isRelative",
+                                    "resolve",
+                                    "compare",
+                                    "slug",
+                                    "hash",
+                                    "get",
+                                    "set",
+                                    "origin",
+                                    "isValid",
+                                    "relative"
+                                ]
+                    },
+                    {
+                        "key":  "validate",
+                        "title":  "BareMetal.Validate",
+                        "source":  "./src/BareMetal.Validate.js",
+                        "docs":  "BareMetal.Validate.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "vector",
+                        "title":  "BareMetal.Vector",
+                        "source":  "./src/BareMetal.Vector.js",
+                        "docs":  null,
+                        "api":  [
+                                    "createCollection",
+                                    "upsert",
+                                    "remove",
+                                    "count",
+                                    "search",
+                                    "clear"
+                                ]
+                    },
+                    {
+                        "key":  "vectorsearch",
+                        "title":  "BareMetal.Vectorsearch",
+                        "source":  "./src/BareMetal.VectorSearch.js",
+                        "docs":  null,
+                        "api":  [
+                                    "upsert",
+                                    "remove",
+                                    "has",
+                                    "get",
+                                    "size",
+                                    "clear",
+                                    "topK",
+                                    "dims"
+                                ]
+                    },
+                    {
+                        "key":  "vt-terminal",
+                        "title":  "BareMetal.VTTerminal",
+                        "source":  "./src/BareMetal.VTTerminal.js",
+                        "docs":  "BareMetal.VTTerminal.md",
+                        "api":  [
+                                    "element",
+                                    "write",
+                                    "clear",
+                                    "resize",
+                                    "send",
+                                    "openWebSocket",
+                                    "onInput",
+                                    "getLines",
+                                    "destroy"
+                                ]
+                    },
+                    {
+                        "key":  "workers",
+                        "title":  "BareMetal.Workers",
+                        "source":  "./src/BareMetal.Workers.js",
+                        "docs":  "BareMetal.Workers.md",
+                        "api":  [
+
+                                ]
+                    },
+                    {
+                        "key":  "workflow",
+                        "title":  "BareMetal.Workflow",
+                        "source":  "./src/BareMetal.Workflow.js",
+                        "docs":  "BareMetal.Workflow.md",
+                        "api":  [
+                                    "VERSION",
+                                    "create",
+                                    "mount",
+                                    "parseTree",
+                                    "serialize",
+                                    "WORKFLOW_TYPES"
+                                ]
+                    }
+                ],
+    "generated":  "2026-11-10T15:34:10Z"
+}

@@ -75,6 +75,9 @@
     .card p { margin:0; color:var(--showcase-muted); font-size:.86rem; line-height:1.55; }
     .card-links { display:flex; gap:12px; margin-top:auto; padding-top:16px; }
     .card-links a { font-size:.78rem; text-decoration:none; font-weight:800; }
+    .card-example { margin-top:14px; border-top:1px solid rgba(170,182,207,.12); padding-top:10px; }
+    .card-example summary { color:#9bbcff; cursor:pointer; font-size:.78rem; font-weight:800; }
+    .card-example pre { max-height:180px; margin-top:8px; padding:10px; border-radius:8px; background:#080d18; overflow:auto; font-size:.72rem; }
     .footer { padding:34px 0 52px; border-top:1px solid rgba(170,182,207,.12); color:var(--showcase-muted); }
     .footer-inner { display:flex; justify-content:space-between; gap:20px; }
     @media(max-width:900px) {
@@ -101,6 +104,7 @@
       <div class="nav-links">
         <a href="#lab">Live lab</a>
         <a href="#catalog">Library</a>
+        <a href="API-Library.md">API library</a>
         <a href="../README.md">Readme</a>
         <a href="https://github.com/WillEastbury/BareMetalJsTools">GitHub</a>
       </div>
@@ -343,6 +347,38 @@ bus.emit('ui.status.ready', { ok: true });</pre></div>
       return suffix;
     }
 
+    function implementationFor(item) {
+      var namespace = item.title.replace('BareMetal.', '').replace(/[^A-Za-z0-9]/g, '');
+      var key = item.key;
+      var api = item.api || [];
+      var load = "<script src=\"" + item.path.replace('../','') + "\"></script>";
+      if (key === 'bind') {
+        return "const { state, watch } = BareMetal.Bind.reactive({ name: 'Ada' });\nBareMetal.Bind.bind(document.querySelector('#app'), state, watch);";
+      }
+      if (key === 'charts') {
+        return "BareMetal.Charts.bar('#chart-live', [{ label: 'A', value: 10 }, { label: 'B', value: 18 }]);";
+      }
+      if (key === 'state-machine') {
+        return "const machine = BareMetal.StateMachine.create({ initial:'idle', states:{ idle:{on:{NEXT:'done'}}, done:{} } });\nmachine.send('NEXT');";
+      }
+      if (key === 'markdown') {
+        return "BareMetal.Markdown.renderSafe(document.querySelector('#preview'), '# Hello', { sanitize:true });";
+      }
+      if (key === 'pubsub') {
+        return "const bus = BareMetal.PubSub.create();\nbus.on('ui.ready', value => console.log(value));\nbus.emit('ui.ready', { ok:true });";
+      }
+      if (key === 'types') {
+        return "BareMetal.Types.define('User', { fields:{ id:'number', name:'string' } });\nconsole.log(BareMetal.Types.check({ id:1, name:'Ada' }, 'User'));";
+      }
+      if (api.indexOf('create') >= 0) {
+        return "const instance = BareMetal." + namespace + ".create({});";
+      }
+      if (api.length) {
+        return "BareMetal." + namespace + "." + api[0] + "();";
+      }
+      return "// Load " + item.title + "\n" + load + "\n// Use its public API documented in the implementation guide.";
+    }
+
     var search=document.getElementById('catalog-search');
     var chips=document.getElementById('category-chips');
     var grid=document.getElementById('catalog-grid');
@@ -363,20 +399,36 @@ bus.emit('ui.status.ready', { ok: true });</pre></div>
         var group=groupFor(item.key);
         var docs=docsFor(item.key,item.path);
         var source='../'+item.path.replace(/^\.\//,'');
+        var implementation=implementationFor(item);
         return '<article class="card">'+
           '<div class="card-top"><span class="card-category">'+group.icon+' '+group.id+'</span></div>'+
           '<h3>'+item.title+'</h3>'+
           '<p>'+item.description+'</p>'+
-          '<div class="card-links"><a href="'+source+'">Source</a>'+ (docs ? '<a href="'+docs+'">Documentation</a>' : '') +'</div>'+
+          '<details class="card-example"><summary>Implemented usage</summary><pre>'+implementation.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</pre></details>'+
+          '<div class="card-links"><a href="'+source+'">Source</a>'+ (docs ? '<a href="'+docs+'">Documentation</a>' : '')+'<a href="API-Library.md">API guide</a></div>'+
         '</article>';
       }).join('');
     }
 
-    fetch('../package.json').then(function(r){return r.json();}).then(function(pkg){
+    Promise.all([
+      fetch('../package.json').then(function(r){return r.json();}),
+      fetch('module-library.json').then(function(r){return r.ok?r.json():{modules:[]};}).catch(function(){return {modules:[]};})
+    ]).then(function(parts){
+      var pkg=parts[0];
+      var library=parts[1];
+      var libraryMap={};
+      (library.modules||[]).forEach(function(module){libraryMap[module.key]=module;});
       var entries=Object.entries(pkg.exports||{});
       allExports=entries.map(function(entry){
         var key=entry[0].replace(/^\.\//,'');
-        return { key:key, path:entry[1], title:titleFor(key), description:descriptionFor(key) };
+        var indexed=libraryMap[key]||{};
+        return {
+          key:key,
+          path:entry[1],
+          title:indexed.title||titleFor(key),
+          description:descriptionFor(key),
+          api:indexed.api||[]
+        };
       });
       document.getElementById('metric-exports').textContent=allExports.length;
       var categories=['All'].concat(groups.map(function(g){return g.id;})).concat(['Utilities']);
