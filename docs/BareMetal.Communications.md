@@ -287,3 +287,20 @@ await orders.deltaFromTracker(tracker);
 - Binary and WebSocket paths are opportunistic; JSON/HTTP remains the fallback.
 - `walStream()` records are raw BSO1 payloads or `null` tombstones.
 - Compression only applies when `BareMetal.Compress` is loaded and produces a smaller payload.
+
+## Optional secure payload transport
+
+Load `BareMetal.SecureTransport.js`, configure the server-provided public key, and attach it to Communications:
+
+```js
+const secure = BareMetal.SecureTransport.create({
+  publicKeyUrl: '/api/security/public-key',
+  tunnelUrl: '/bmsecure',
+  keyId: '2026-11'
+});
+
+BareMetal.Communications.setSecureTransport(secure);
+await BareMetal.Communications.call('GET', '/api/profile');
+```
+
+When a secure transport is attached, HTTP calls use the encrypted tunnel and the opportunistic WebSocket path is disabled. The server must decrypt incoming envelopes, unwrap the AES key with its private RSA key, decrypt the payload, process the original method/URL, and encrypt the response with the same AES key.

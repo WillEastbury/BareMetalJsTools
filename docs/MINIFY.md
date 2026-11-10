@@ -50,6 +50,11 @@ If `minifyJS` / `minifyCSS` returns `unsupported: true` or non-empty `errors`, t
 
 Lexical compaction only: no mangling, no AST. Intended for known BareMetal sources, not arbitrary third-party JS.
 
+`BareMetal.Minifier.compressGzip(source)` and `decompressGzip(source)` use browser
+`CompressionStream`/`DecompressionStream` when available. This provides an optional
+load-time gzip layer for assets already received as bytes; it does not replace HTTP
+compression or TLS.
+
 ## When to regenerate
 
 1. After an accepted change to `BareMetal.Minifier.js`, re-run `-All -Check`. If drift is expected, `-All -Write` in a focused PR.

@@ -111,7 +111,7 @@ BareMetal.Communications = (() => {
     // Fetch route table for numeric HTTP dispatch
     if (!_routeTableReady) {
       try {
-        const r = await fetch('/bmw/routes');
+        const r = await _httpFetch('/bmw/routes');
         if (r.ok) {
           const routes = await r.json();
           _routeTable = new Map();
@@ -126,7 +126,7 @@ BareMetal.Communications = (() => {
     // Fetch BMW protocol descriptor for WebSocket opcode dispatch
     if (!_protocol) {
       try {
-        const r = await fetch('/bmw/protocol');
+        const r = await _httpFetch('/bmw/protocol');
         if (r.ok) {
           _protocol = await r.json();
           _opcodeMap = new Map();
@@ -138,7 +138,9 @@ BareMetal.Communications = (() => {
     }
 
     // Auto-connect WebSocket transport
-    try { await connectWs(); } catch { /* WebSocket optional */ }
+    if (!_secureTransport) {
+      try { await connectWs(); } catch { /* WebSocket optional */ }
+    }
   }
 
   function resolveRouteId(verb, path) {
@@ -154,7 +156,7 @@ BareMetal.Communications = (() => {
   async function ensureBinary() {
     if (_binaryReady || typeof BareMetal === 'undefined' || !BareMetal.Binary) return;
     try {
-      const r = await fetch(root + '_binary/_key');
+      const r = await _httpFetch(root + '_binary/_key');
       if (r.ok) {
         const key = await r.text();
         await BareMetal.Binary.setSigningKey(key.trim());
@@ -171,6 +173,25 @@ BareMetal.Communications = (() => {
   // Opt-in. Requires BareMetal.Compress global (load src/BareMetal.Compress.js or vendor/BareMetal.Compress.mjs).
   // Server must also support Content-Encoding: BareMetal.Compress (use the C# / Go / Rust port).
   let _compression = { enabled: false, profile: 'balanced', minSize: 256 };
+  let _secureTransport = null;
+  function setSecureTransport(transport) {
+    _secureTransport = transport || null;
+    if (_secureTransport) {
+      _wsReady = false;
+      if (_ws) {
+        try { _ws.close(); } catch (_) {}
+        _ws = null;
+      }
+    }
+    return _secureTransport;
+  }
+  function getSecureTransport() { return _secureTransport; }
+  function _httpFetch(url, opts) {
+    if (_secureTransport && typeof _secureTransport.fetch === 'function') {
+      return _secureTransport.fetch(url, opts);
+    }
+    return fetch(url, opts);
+  }
   function setCompression(opts) {
     _compression = Object.assign({}, _compression, opts || {});
     return _compression;
@@ -231,7 +252,7 @@ BareMetal.Communications = (() => {
       const csrfMeta = document.querySelector('meta[name="csrf-token"]');
       if (csrfMeta) opts.headers['X-CSRF-Token'] = csrfMeta.content;
     }
-    const r = await fetch(url, opts);
+    const r = await _httpFetch(url, opts);
     if (r.status === 401) {
       location.href = '/login?returnUrl=' + encodeURIComponent(location.href);
       throw new Error('Unauthorized');
@@ -262,7 +283,7 @@ BareMetal.Communications = (() => {
       const csrfMeta = document.querySelector('meta[name="csrf-token"]');
       if (csrfMeta) opts.headers['X-CSRF-Token'] = csrfMeta.content;
     }
-    const r = await fetch(url, opts);
+    const r = await _httpFetch(url, opts);
     if (r.status === 401) {
       location.href = '/login?returnUrl=' + encodeURIComponent(location.href);
       throw new Error('Unauthorized');
@@ -441,7 +462,7 @@ BareMetal.Communications = (() => {
   async function walStream(entityName) {
     if (!entityName) throw new Error('walStream: entityName is required — use walStreamAll() for all entities');
     const url = '/bmw/wal/stream?entity=' + encodeURIComponent(entityName);
-    const r   = await fetch(url);
+    const r   = await _httpFetch(url);
     if (r.status === 401) {
       location.href = '/login?returnUrl=' + encodeURIComponent(location.href);
       throw new Error('Unauthorized');
@@ -454,7 +475,7 @@ BareMetal.Communications = (() => {
   /// Fetch and parse the full WAL binary stream (all entity types combined).
   /// Returns a Promise<{ records: ArrayBuffer[], complete: boolean }>.
   async function walStreamAll() {
-    const r = await fetch('/bmw/wal/stream');
+    const r = await _httpFetch('/bmw/wal/stream');
     if (r.status === 401) {
       location.href = '/login?returnUrl=' + encodeURIComponent(location.href);
       throw new Error('Unauthorized');
@@ -464,6 +485,10 @@ BareMetal.Communications = (() => {
     return _parseWalStream(buf);
   }
 
-  return { setRoot, getRoot, entity, call, ensureBinary, isBinaryAvailable, init, byId, resolveRouteId, connectWs, isWsReady, walStream, walStreamAll, setCompression, getCompression };
+  return {
+    setRoot, getRoot, entity, call, ensureBinary, isBinaryAvailable, init, byId, resolveRouteId,
+    connectWs, isWsReady, walStream, walStreamAll, setCompression, getCompression,
+    setSecureTransport, getSecureTransport
+  };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = BareMetal.Communications;

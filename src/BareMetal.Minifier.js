@@ -469,7 +469,26 @@
     return { code: out.trim(), errors: errors };
   }
 
-  var api = { minifyJS: minifyJS, minifyCSS: minifyCSS };
+  async function compressGzip(source) {
+    if (typeof CompressionStream === "undefined") throw new Error("CompressionStream(gzip) is unavailable");
+    var bytes = typeof source === "string" ? new TextEncoder().encode(source) : new Uint8Array(source);
+    var stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  async function decompressGzip(source) {
+    if (typeof DecompressionStream === "undefined") throw new Error("DecompressionStream(gzip) is unavailable");
+    var bytes = typeof source === "string" ? new TextEncoder().encode(source) : new Uint8Array(source);
+    var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  var api = {
+    minifyJS: minifyJS,
+    minifyCSS: minifyCSS,
+    compressGzip: compressGzip,
+    decompressGzip: decompressGzip
+  };
   if (typeof root !== "undefined") {
     root.BareMetal = root.BareMetal || {};
     root.BareMetal.Minifier = api;
